@@ -2,16 +2,16 @@
 
 作为描述业务逻辑的起点，首先内部按照“存储”特性，和”重要性“分为3种：
 - State
- - 特性：读写快，每次都清空
- - 内存
+  - 特性：读写快，每次都清空
+  - 内存
 - Cache
- - 特性：读快，写快，没有锁，持久存储，但允许丢失
- - 缓存 （取决于依赖的数据链路的下游的是否为Model，决定
-  - 否，客户端
-  - 是，服务端
+  - 特性：读快，写快，没有锁，持久存储，但允许丢失
+  - 缓存 （取决于依赖的数据链路的下游的是否为Model，决定
+    - 否，客户端
+    - 是，服务端
 - Model（
- - 特性：读快，写可以慢，有锁，持久存储，不允许丢失
- - 数据库
+  - 特性：读快，写可以慢，有锁，持久存储，不允许丢失
+  - 数据库
 
 默认是都是响应式的数据，默认以 @vue/reactivity 为例
 
@@ -51,8 +51,8 @@ const state = new State(reactive({
 
 - 改善交互，“记住”用户操作行为，减少重复交互工程，提升页面加载的性能
 - 提升性能
- - 提升响应速度，读缓存比读Model快
- - 提升系统的吞吐量，降低Model的负载
+  - 提升响应速度，读缓存比读Model快
+  - 提升系统的吞吐量，降低Model的负载
 
 更新策略：乐观策略，不阻塞
 
@@ -89,16 +89,16 @@ class Cache {
 当数据变化的时候，根据变化的特性(create，update，remove)发起操作，将数据写回数据库
 
 - 读
- - Entity
- - QueryParameter = { where: {}, include: {}, select: {}, take, skip }
+  - Entity
+  - QueryParameter = { where: {}, include: {}, select: {}, take, skip }
 
 - 写
- - create
-  - 时机：当数据为空或where索引为空时，并且设置了新数据，
- - update
-  - 时机：当数据修改时，且不是create，发起update操作，精确的更新被修改的field
- - remove
-  - 时机：当数据被清空时，并且显示地调用了remove，则进行remove操作
+  - create
+    - 时机：当数据为空或where索引为空时，并且设置了新数据，
+  - update
+    - 时机：当数据修改时，且不是create，发起update操作，精确的更新被修改的field
+  - remove
+    - 时机：当数据被清空时，并且显示地调用了remove，则进行remove操作
 
 ```javascript
 class Model {
