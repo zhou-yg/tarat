@@ -61,19 +61,25 @@ const state = new State(reactive({
 ```javascript
 class Cache {
   construtor (value) {
-    super(value)
+    this.update(value)
   }
-  set value(v) {
-    this.internalValue = v
-    this.writeCache(this, v)
+  // 调用 this.update之后
+  async afterUpdate(v) {
+    writeCache(this, v)
   }
   get value () {
     this.updateFromCache()
+    if (Context.inputCompute) {
+      return produce(this.internalValue)
+    }
     return this.internalValue
   }
   async updateFromCache () {
-    const cacheValue = this.getCache(this)
+    const cacheValue = getCache(this)
     this.internalValue = v
+  }
+  clearCache () {
+    clearCache(this)
   }
 }
 ```
@@ -150,4 +156,31 @@ class Model {
 
 先更新Model，再清理Cache。当有读操作时，发现没有Cache不存在，则读取Model同时写入Cache（写入Cache时按照Cache自身的策略实现）
 
-这现有实现的基础上，需要额外增加Cache进行读写
+这现有实现的基础上，需要额外增加Cache进行读写（感觉可以有一点“巧妙”的设计，让Model能完全复用Cache的代码而不用重复写）
+
+```javascript
+class Model {
+    construtor ({ entity, query }) {
+    this.entity = entity
+    this.query = query;
+
+    this.execute()
+  }
+  get value () {
+    return this.internalValue.value // Context.inputCompute会在Cache里判断
+  }
+  async execute () {
+    // query有可能依赖了其它的State，需要先预处理下
+    const query = resolveReactive(this.query)
+
+    const result = await abstractModel.read(query)
+
+    this.internalValue = new Cache(result) // 引用了个Cache
+  }
+  // 乐观更新策略，这里有调整：原本是内存修改 -> 写入缓存，=（变成）=> 内存修改 -> update DB -> delete Cache
+  afterAfterUpdate () {
+    // 上面的Model.afterUpdate之后 
+    this.internalValue.clearCache()
+  }
+}
+```
