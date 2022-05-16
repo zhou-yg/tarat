@@ -65,6 +65,7 @@ inputCompute内部特性
   - 一边执行一边update（确定是否必要？）
 
 
+当inputCompute执行内部函数时，需要标记当前的Context
 
 ```javascript
 const computeState = inputCompute(async (args) => {
@@ -75,3 +76,21 @@ const computeState = inputCompute(async (args) => {
   cacheB.update(r)
 })
 ```
+
+## 对比React的onClick
+
+React的onClick里可以直接setState呢？为什么inputCompute第一时间不考虑这个
+
+我理解View框架的渲染是一个异步过程，虽然setState执行了并更新内存里的状态，但由于渲染的帧率问题，此时界面没更新，内存状态并没有被“用到”
+
+内部状态的消费是被动的过程
+
+即只有render发生时需要调用getState去获取状态，拼接成最新的dom树进行渲染，这是渲染和视图相关下才会有的计算数据逻辑
+
+而inputCompute是服务于业务逻辑模型，在计算的执行完结之前，单独的应用个别状态”没有意义“，意义只在于整个计算完成后才会产生，所以这个时候update(draft)才是完整的
+
+其次是考虑到as service的场景，逻辑上，一个函数调用不能返回2个返回值，同理接口不能处理到一半就返回部分结果（不考虑Content=chunk分块）
+
+但是最后还是在设计时，还是这个考虑这个特性，适应极端场景，也许真的有接口需要处理到一半就返回结果，例如获取执行进度之类的？
+
+毕竟现实里一个函数调用真的可以返回2个返回值
