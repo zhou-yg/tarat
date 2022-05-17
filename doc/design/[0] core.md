@@ -1,5 +1,7 @@
 # 世界观
 
+> 名字？
+
 基于响应式的，纯粹的，描述的业务逻辑执行模型（不限语言，环境），write once run any where
 
 > 参考： remix, solid-js,qwik，nextjs，dva，redux，react hooks，axii，vue setup，Proxy, event sourcing, immer
@@ -7,6 +9,8 @@
 - 内部状态是响应式，状态，计算的叉乘组合
 - 模型是一个计算整体，只有外界输入才能改变内部状态
 - 计算和内部状态会产生的副作用，但不能返过来
+
+
 
 ```javascript
 // V1
