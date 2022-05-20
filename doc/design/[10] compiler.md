@@ -42,7 +42,7 @@ function unit () {
 
 - hook.client + view.jsx (for CSR)
 - hook.server + view.jsx (for SSR)
-- hook.server as service (for api)
+- hook.server as service (for service)
 
 最终结构：
 
