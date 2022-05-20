@@ -26,10 +26,10 @@ class State {
   construtor (value) {
     this.internalValue = value
   }
-  // draft和events见下方
-  update (draft, events) {
+  // draft和patches见下方
+  update (draft, patches) {
     // 精确更新
-    events.forEach(([path, value]) => {
+    patches.forEach(([path, value]) => {
       lodash.set(this.internalValue, path, value)
     })
   }
@@ -123,8 +123,8 @@ class Model {
     this.internalValue = result
   }
   // 默认乐观更新，after update method
-  async afterUpdate (draft, events) {
-    const newData = combineEvents(events)
+  async afterUpdate (draft, patches) {
+    const newData = combinepatches(patches)
 
     const ids = await abstractModel.createOrUpdate(mergeDataToQuery(this.query, newData))
     
