@@ -1,2 +1,3 @@
 # tarot
-a simple useless
+
+a simple busness description DSL for frontend and serverless
