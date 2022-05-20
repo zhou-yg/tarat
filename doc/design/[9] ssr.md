@@ -16,5 +16,6 @@ SSR的场景下返回的是HTML，服务于是View 渲染
 
 所以这里的重点是如何”记住“ ，思考的路径是在SSR的过程里如何将internalState序列化到SSR的结果里，2个地方：
 
-- script tag里的js对象
-- html结构中
+- 模板的script tag里的js对象
+- html结构中，（  qwik.js ？ ）
+
