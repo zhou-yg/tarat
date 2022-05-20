@@ -32,8 +32,8 @@
   - react
   - vue
   - ...
-- reactvity -> @vue/reactivity
-- immerLike
+- reactvity -> [@vue/reactivity](https://github.com/vuejs/core/tree/main/packages/reactivity)
+- immer -> [immer](https://github.com/immerjs/immer)
 
 服务层
 
