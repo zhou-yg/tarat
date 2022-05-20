@@ -4,16 +4,36 @@
 
 业务层
 
-- main.js 主逻辑内容
+- hooks/
+  - main.js 主逻辑内容
 - models/
   - er.json 描述ER的文件
-
+- views/
+  - UI.jsx
+- include
+  - otherUnits 应该是依赖分析，自动索引生成
+    - (...recursion...)
 
 基础层
 
 - data.js 提供不同的hook方法
+  - useState
+  - useCache
+  - useModel
+  - useComputed
+  - useInputCompute
+  - watch
+    - watchBefore
+    - watchAfter
 - runtime.js “单元”的执行器，内含执行时所需的上下文全局变量
-
+  - CurrentHookStack
+- connect
+  - axii
+  - react
+  - vue
+  - ...
+- reactvity -> @vue/reactivity
+- immerLike
 
 服务层
 
