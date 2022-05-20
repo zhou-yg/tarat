@@ -5,3 +5,16 @@
 ## React
 
 function component每次更新的时候都会重新运行，但BM不行，所以BM只能写在 useEffect里了
+
+```javascript
+function useConnectBM () {
+  const [result, setResult] = useState({})
+  useEffect(() => {
+    runner(BMUnit)
+      .onMount(r => setResult(r))
+      .onUpdate(r => setResult(r))
+  }, [])
+
+  return { ...result }
+}
+```
