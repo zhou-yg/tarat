@@ -38,6 +38,12 @@ function unit () {
 
 其中一个办法是：单独编译一个SSR的产物，除了业务逻辑模型是用了 hook.server.js 其它跟client的产物相同
 
+所以围绕业务逻辑模型的相关产物就有3种
+
+- hook.client + view.jsx (for CSR)
+- hook.server + view.jsx (for SSR)
+- hook.server as service (for api)
+
 最终结构：
 
 - server/
