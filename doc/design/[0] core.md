@@ -56,8 +56,7 @@ function serverlessUnit () {
     // do something with draft：a,b,c
     
     // progress ? no 只有0，1的2种状态
-    
-    return { a, b, c } // commit draft
+    b.x = a.x + parameter    
   })
   
   // before compute
