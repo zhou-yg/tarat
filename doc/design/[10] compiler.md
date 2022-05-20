@@ -36,9 +36,9 @@ function unit () {
 
 但需要考虑个问题：SSR场景里，虽然hook.client.js是针对client的产物，但同样需要包含server逻辑，否则就无法SSR了
 
-其中一个办法是：单独编译一个SSR的产物，除了业务逻辑模型是用了 hook.server.js 其它跟client的产物相同
+其中一个办法是：单独编译一个SSR的产物，除了BM是用了 hook.server.js 其它跟client的产物相同
 
-所以围绕业务逻辑模型的相关产物就有3种
+所以围绕BM的相关产物就有3种
 
 - hook.client + view.jsx (for CSR)
 - hook.server + view.jsx (for SSR)

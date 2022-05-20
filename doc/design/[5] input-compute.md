@@ -87,7 +87,7 @@ React的onClick里可以直接setState呢？为什么inputCompute第一时间不
 
 即只有render发生时需要调用getState去获取状态，拼接成最新的dom树进行渲染，这是渲染和视图相关下才会有的计算数据逻辑
 
-而inputCompute是服务于业务逻辑模型，在计算的执行完结之前，单独的应用个别状态”没有意义“，意义只在于整个计算完成后才会产生，所以这个时候update(draft)才是完整的
+而inputCompute是服务于BM，在计算的执行完结之前，单独的应用个别状态”没有意义“，意义只在于整个计算完成后才会产生，所以这个时候update(draft)才是完整的
 
 其次是考虑到as service的场景，逻辑上，一个函数调用不能返回2个返回值，同理接口不能处理到一半就返回部分结果（不考虑Content=chunk分块）
 
