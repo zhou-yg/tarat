@@ -19,7 +19,22 @@
 
 ## State
 
-最基础的内存数据，接收一个数据（应为响应式数据
+最基础的内存数据，接收一个普通数据（如果是响应是数据，应进行toRaw处理）
+
+变成了响应式数据的时机？
+- constructor中reactive
+- get value时reactive 
+
+State可以视作一个大ref, 那如何监听数据？ （ps：如何区分是否shallow
+- construtor中增加watch
+  - 前提：必须已经是在constructor里reactive，才能监听到
+- get value中增加watch
+
+区别在于是否要lazy？ 是
+
+另外增加watch会有性能开销，是否可以在执行时自动merge，一次watch？（后续考虑）
+> watch(hook.memoizedList) 
+
 
 ```javascript
 class State {
@@ -37,12 +52,14 @@ class State {
     if (Context.inputeCompute) {
       return produce(internalValue) // draft
     }
-    return this.internalValue
+    return reactive(this.internalValue)
   }
 }
-const state = new State(reactive({
+const state = new State({
   name: 'zhouyg'
-}))
+})
+const state2 = new State(1)
+
 ```
 
 ## Cache
