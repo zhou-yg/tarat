@@ -44,9 +44,9 @@ const serverlessUnit = {
 
 // V2
 function serverlessUnit () {
-  const a = useState()
+  const a = state()
   const b = useCache()
-  const c = useModel('Entity')
+  const c = model('Entity')
   
   const d = computed(() => a().x + b().x)
   

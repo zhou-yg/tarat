@@ -8,7 +8,7 @@ function component每次更新的时候都会重新运行，但BM不行，所以
 
 ```javascript
 function useConnectBM () {
-  const [result, setResult] = useState({})
+  const [result, setResult] = state({})
   useEffect(() => {
     runner(BMUnit)
       .onMount(r => setResult(r))
