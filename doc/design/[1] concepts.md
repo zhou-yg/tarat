@@ -17,9 +17,9 @@
 基础层
 
 - data.js 提供不同的hook方法
-  - useState
+  - state
   - useCache
-  - useModel
+  - model
   - useComputed
   - useInputCompute
   - watch

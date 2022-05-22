@@ -4,7 +4,7 @@
 
 ```javascript
 function serverlessUnit () {
-  const b = useModel()
+  const b = model()
   const { a, computeA } = otherUnit()
 
   return { a, b, computeA }
