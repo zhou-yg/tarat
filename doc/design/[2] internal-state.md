@@ -30,7 +30,12 @@ State可以视作一个大ref, 那如何监听数据？ （ps：如何区分是�
   - 前提：必须已经是在constructor里reactive，才能监听到
 - get value中增加watch
 
-区别在于是否要lazy？ 是
+区别在于是否要lazy？
+- 是，每次get value都是新reactive对象，外面就无法修改被用在computed里的这个变量，等同于无法watch，必须手动构建watch方法
+  - example: effect(() => reactive(obj)); change new reactive(obj)  wont trigger effect callback
+  - solution: effectSelf(() => readonly(obj)), add subscripe relation, then change new reactive(obj) trigger watchSelf -> notify effectSelf
+  - conclusion: 过于复杂，后续考虑这个优化方案
+- 否，每次get value都是同一个reactive对象，可以直接使用effect作为watch
 
 另外增加watch会有性能开销，是否可以在执行时自动merge，一次watch？（后续考虑）
 > watch(hook.memoizedList) 
