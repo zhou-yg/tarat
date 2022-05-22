@@ -44,6 +44,12 @@ class State {
   // draft和patches见下方
   update (draft, patches) {
     // 精确更新
+
+    // [
+    //   { op: 'replace', path: [ 'age', 'num' ], value: 3 },
+    //   { op: 'add', path: [ 'age', 'v2' ], value: { v2: 2 } },
+    //   { op: 'remove', path: [ 'name' ] }
+    // ]
     patches.forEach(([path, value]) => {
       lodash.set(this.internalValue, path, value)
     })
@@ -122,6 +128,15 @@ class Cache {
     - 时机：当数据修改时，且不是create，发起update操作，精确的更新被修改的field
   - remove
     - 时机：当数据被清空时，并且显示地调用了remove，则进行remove操作
+
+
+combinepatches需要考虑的，在提交数据patches到server side之前，需要提前处理数据的新增和删除的情况：
+- 删除
+  - 列属性，set prop=null，这样对于数据库来说才是删除列，等同update
+  - 行数据，需要调用remove（支持批量
+- 新增
+  - 列属性，拼完数据，如果已经存在列数据，等价于调用update
+  - 行数据，需要调用create
 
 ```javascript
 class Model {
