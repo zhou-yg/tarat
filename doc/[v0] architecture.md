@@ -172,12 +172,16 @@ some features
 ## project structure
 
 - normal
+  - .tarot/ like dist but only serve for "dev"
+    - hooks/
+      - bm1.server.js
+      - bm1.client.js
   - db/
     - prisma.schema
   - hooks/  --> api: /bm1/inputCompute
     - bm1.ts
   - pages/  --> page: /tab1/my
-    - home.tsx (import bm1.ts)
+    - home.tsx (import bm1.ts) replaced to bm1.client.js 
     - tab1/
       - my.tsx
     - _app.tsx (custom or using default template html )
