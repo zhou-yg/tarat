@@ -95,3 +95,7 @@ React的onClick里可以直接setState呢？为什么inputCompute第一时间不
 毕竟现实里一个函数调用真的可以返回2个返回值
 
 
+
+## inputComputeSafe
+
+在以一个application启动的情况下，手动标记了safe，应优先提交到server执行

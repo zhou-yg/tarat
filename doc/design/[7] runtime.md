@@ -97,3 +97,21 @@ effect([clientInputCompute], () => {
   // 同上
 })
 ```
+
+## runner
+
+执行BM的驱动器，因为BM基于closure，只跑一次，不需要类似Fiber的实例对象来保存当前BM的数据
+
+但未来能够及时销毁，BM需要Scope，用来管理内部和销毁
+
+多层嵌套的BM使用同一个scope
+
+scope 包含release方法用以释放内存，off listener
+
+```javascript
+CurrentRunnerScope = new Scope()
+
+run(myBMFunction)
+
+CurrentRunnerScope = null
+```

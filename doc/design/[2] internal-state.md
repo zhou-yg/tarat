@@ -34,7 +34,7 @@ State可以视作一个大ref, 那如何监听数据？ （ps：如何区分是�
 - 是，每次get value都是新reactive对象，外面就无法修改被用在computed里的这个变量，等同于无法watch，必须手动构建watch方法
   - example: effect(() => reactive(obj)); change new reactive(obj)  wont trigger effect callback
   - solution: effectSelf(() => readonly(obj)), add subscripe relation, then change new reactive(obj) trigger watchSelf -> notify effectSelf
-  - conclusion: 过于复杂，后续考虑这个优化方案
+  - conclusion: 过于复杂，后续考虑这个优化
 - 否，每次get value都是同一个reactive对象，可以直接使用effect作为watch
 
 另外增加watch会有性能开销，是否可以在执行时自动merge，一次watch？（后续考虑）
@@ -222,3 +222,16 @@ class Model {
 }
 ```
 
+
+
+### client model
+
+client model不执行具体变更，会把patches post到当前的服务器，服务器地址信息可在build时配置
+
+这是在build时需要关心的概念，默认Model的数据在计算可以在 client/server进行，但Model的执行变更必须在serve
+
+所以在编译产物里则有 model 和 client model的差别
+
+考虑到BM可以在多个地方时，默认提供的是model版本，
+
+如果以默认的application来使用，则在页面里默认使用的是client model，可以加个配置来强行禁止
