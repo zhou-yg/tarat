@@ -164,6 +164,10 @@ some features
   - api data
 
 ## page router
+- spa 
+  - render mode: CSR
+  - 
+- mpa (to be continued)
 
 ## project structure
 
@@ -176,6 +180,8 @@ some features
     - home.tsx (import bm1.ts)
     - tab1/
       - my.tsx
+    - _app.tsx (custom or using default template html )
+
 
 - after building
   - dist/
