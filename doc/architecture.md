@@ -162,3 +162,27 @@ some features
 - response
   - page
   - api data
+
+## page router
+
+## project structure
+
+- normal
+  - db/
+    - prisma.schema
+  - hooks/  --> api: /bm1/inputCompute
+    - bm1.ts
+  - pages/  --> page: /tab1/my
+    - home.tsx (import bm1.ts)
+    - tab1/
+      - my.tsx
+
+- after building
+  - dist/
+    - hooks/
+      - bm1.server.js
+      - bm1.client.js
+    - pages/
+      - home.js (import bm1.client.js)
+      - tab1.my.js
+  - others, same above...
