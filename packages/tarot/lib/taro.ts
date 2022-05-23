@@ -1,7 +1,3 @@
-export class State {
-  
-}
+export class State {}
 
-export class Model {
-  
-}
+export class Model {}
