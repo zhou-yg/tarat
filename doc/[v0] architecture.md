@@ -18,6 +18,22 @@ some features
   - useCache hook
   - hot update
 
+development plan:
+- service about:
+  - page router
+  - runtime
+  - as service
+  - project structure
+  - bulding & packing
+
+- core about:
+  - BM
+  - internal-state
+  - inputCompute
+  - effect
+  - runner & scope
+
+
 
 ## BM
 
@@ -109,26 +125,7 @@ some features
     - state
     - inputCompute
 
-## CurrentRunnerScope
-
-- class
-  - constructor
-    - with serialized parameters
-- states and models
-  - array
-- listeners
-  - data structor unit: [state or model or inputCompute, scopeDefaultListener, {
-    before: effectListeners,
-    after: effectListeners
-  }]
-- addState
-  - add unit
-- addModel
-  - same above
-- addWatch
-  - parameters: target, callback, 'before' or 'after'
-
-## runtime
+## runner
 
 - runner
   - instantiate "CurrentRunnerScope" and recod
@@ -138,6 +135,25 @@ some features
     - response result
   - watch scope changing
   - trigger listener in runner
+- scope
+  - class CurrentRunnerScope
+    - constructor
+      - with serialized parameters
+  - states and models
+    - array
+  - listeners
+    - data structor unit: [state or model or inputCompute, scopeDefaultListener, {
+      before: effectListeners,
+      after: effectListeners
+    }]
+  - addState
+    - add unit
+  - addModel
+    - same above
+  - addWatch
+    - parameters: target, callback, 'before' or 'after'
+
+## runtime
 
 - client 
   - react connect lib
