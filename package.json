@@ -1,0 +1,31 @@
+{
+  "name": "tarot-project",
+  "version": "0.0.0",
+  "description": "maybe a useless simple busness description DSL for frontend and serverless",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "test-unit": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhou-yg/tarot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zhou-yg/tarot/issues"
+  },
+  "homepage": "https://github.com/zhou-yg/tarot#readme",
+  "devDependencies": {
+    "@types/jest": "^27.5.1",
+    "jest": "^28.1.0",
+    "ts-jest": "^28.0.2",
+    "typescript": "^4.6.4"
+  },
+  "dependencies": {
+    "babel": "^6.23.0"
+  }
+}

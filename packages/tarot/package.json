@@ -10,14 +10,12 @@
     "type": "git",
     "url": "git+https://github.com/zhou-yg/tarot.git"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "zhouyg",
   "bugs": {
     "url": "https://github.com/zhou-yg/tarot/issues"
   },
   "homepage": "https://github.com/zhou-yg/tarot#readme",
   "devDependencies": {
-    "mocha": "^10.0.0"
   },
   "dependencies": {
     "@vue/reactivity": "^3.2.35",
