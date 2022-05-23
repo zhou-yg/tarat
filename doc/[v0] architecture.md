@@ -171,6 +171,7 @@ development plan:
 
 - basic lib
   - [koa.js](https://github.com/koajs/koa)
+  - example: [next-server](https://github.com/vercel/next.js/blob/canary/packages/next/server/next-server.ts)
 - bootstrap
   - middleware load with a collection of BM.server.js
   - middleware load with a collection of pages (CSR)
