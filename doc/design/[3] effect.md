@@ -38,10 +38,13 @@ watch(
 )
 // state2变化前，计算执行前
 watch(
-  () => {
+  (inputCompute2Draft) => {
     // 记录日志，双写，逻辑拦截
+    if (someCase) {
+      freeze(inputCompute2Draft)
+    }
   },
-  [state2, inputCompute2]
+  [inputCompute2]
 )
 ```
 
