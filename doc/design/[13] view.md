@@ -30,4 +30,6 @@ function Main () {
 
 默认的处理策略是：视图组件在初始render时，state会重新初始化，而model也会重新获取并刷新到全局，其它相同的视图的model也会同步更新
 
+## runtime
 
+model的“全局”需要识别下runtime环境，在server端不需要这个处理，每个http request都应是pure context
