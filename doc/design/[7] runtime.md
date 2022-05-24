@@ -4,7 +4,7 @@
 
 在前面提到，数据主要是分成2类：State（内存），Model（DB）
 
-当涉及到Model数据的CRUD，那执行数据相关的逻辑是在server side
+当涉及到Model数据的CRUD，那执行数据相关的逻辑是在server side，（高级进阶：这里需要编译器的配合，能够识别出Model被使用了）
 
 当涉及State变更，可以在 client side or server side
 
