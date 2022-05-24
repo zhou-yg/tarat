@@ -47,6 +47,7 @@ development plan:
 
 - State class
   - freeze property, maybe useless in partial inputCompute in server side
+  - _intervalValue: any
   - parameter
     - data, not reactive -> [doc](https://vuejs.org/api/reactivity-core.html)
   - constructor 
@@ -66,10 +67,15 @@ development plan:
      - no: data (already reactive)
 - Model class
   - extends to "state"
-  - parameter
-    - ER.find's query language
-      - entity
-      - where
+  - constructor
+    - parameter
+      - ER.find's query language
+        - entity
+        - where
+      - queryAtConstructor(default=true)
+  - query
+    - execute query parameter
+      - set response to _internalValue
   - after "state.update", post patches to server side
     - ps: if there are any "remove" patch
       - remove property: should set it op="replace" and value="null" instead
@@ -139,8 +145,15 @@ development plan:
   - class CurrentRunnerScope
     - constructor
       - with serialized parameters
-  - states and models
+  - states
     - array
+  - models
+    - array
+    - if in client(or specify a optional parameter): check global data
+      - exist: set globalData to model._internalValue
+      - no: use query method to fetch
+  - model global data & subscribe
+    - only in client and optional
   - listeners
     - data structor unit: [state or model or inputCompute, scopeDefaultListener, {
       before: effectListeners,
