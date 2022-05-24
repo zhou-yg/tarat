@@ -15,10 +15,8 @@
     "url": "https://github.com/zhou-yg/tarot/issues"
   },
   "homepage": "https://github.com/zhou-yg/tarot#readme",
-  "devDependencies": {
-  },
   "dependencies": {
-    "@vue/reactivity": "^3.2.35",
+    "@vue/reactivity": "^3.2.36",
     "immer": "^9.0.14"
   }
 }

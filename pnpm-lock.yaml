@@ -25,7 +25,7 @@ importers:
 
   packages/tarot:
     specifiers:
-      '@vue/reactivity': ^3.2.35
+      '@vue/reactivity': ^3.2.36
       immer: ^9.0.14
     dependencies:
       '@vue/reactivity': 3.2.36

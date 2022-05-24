@@ -27,11 +27,11 @@ development plan:
   - bulding & packing
 
 - core about:
-  - BM
+  - runner & scope
   - internal-state
   - inputCompute
   - effect
-  - runner & scope
+  - BM
 
 
 
@@ -49,22 +49,18 @@ development plan:
   - freeze property, maybe useless in partial inputCompute in server side
   - _intervalValue: any
   - parameter
-    - data, not reactive -> [doc](https://vuejs.org/api/reactivity-core.html)
+    - data -> [doc](https://vuejs.org/api/reactivity-core.html)
   - constructor 
-    - reactive(toRaw(data))  as "internal-state"
+    - data as "_intervalValue"
     - call watchSelf
-  - watchSelf
-    - collect any patches in "internal-state", reference [watch api source](https://github.com/vuejs/core/blob/main/packages/runtime-core/src/apiWatch.ts#L173)
-    - batch calling "update" event in next tick (15ms)
-  - onUpdate
+  - onUpdate / offUpdate
     - add listener
   - update
+    - batch calling "update" event in next tick (15ms)
     - trigger "changed" event to "onUpdate" listener
       - state object
   - get value
-   - is under "input-compute"
-     - yes: draft, using "toRaw" so that it won't trigger "watch" during "input-compute", commit patches to "internal-state" after "input-compute"
-     - no: data (already reactive)
+   - return "_intervalValue"
 - Model class
   - extends to "state"
   - constructor
@@ -76,6 +72,7 @@ development plan:
   - query
     - execute query parameter
       - set response to _internalValue
+    - the model operate api should registed by outside
   - after "state.update", post patches to server side
     - ps: if there are any "remove" patch
       - remove property: should set it op="replace" and value="null" instead
@@ -92,7 +89,13 @@ development plan:
 
 - state factory
   - instantiate State class, binding to "CurrentRunnerScope"
-  - add listener for state
+  - retun
+    - getter, pass undef param
+    - setter, pass function that receive a draft, return latest value
+      - when setter end. but if under "input-compute"
+        - no: commit data to replace old "_intervalValue"
+        - yes: collect patches to "CurrentRunnerScope" (still return latest value), so that inputCompute can commit all patches
+
 - model factory
   - same above
 
@@ -107,13 +110,32 @@ development plan:
   - check is safety
     - yes: post to server side
     - no: continute execute
-      - record current inputCompute, set globalInputeCompute=[compute execution body]
-      - trigger "before event" and passive [compute execlute body]  to "CurrentRunnerScope"
+      - record current inputCompute, set currentInputeCompute=[compute execution body]
+      - trigger "before event" and pass [compute execlute body]  to "CurrentRunnerScope"
       - check freeze 
         - yes: dont execute, and unfreeze it
         - no: continue execute...
 - calling end
   - collect all state patches inside inputCompute, trigger their's 'update'
+  - use CurrentScope.applyComputePatches to commit patches from CurrentScope and clear
+- provide distinct hook for server/client
+  - inputCompute
+  - inputComputeServer
+
+- runtime
+  - server
+    - do compute directly
+  - client
+    - inputCompute
+      - same above
+    - inputComputeServer
+      - post context to server and wait response
+
+- context serialization
+  - hooks data for sort index, data structure
+    - { type: 'data' | 'patch', value: any }
+    - strinigfy data, skip input compute, but keep the position (consider long model data)
+  - compute hook index
 
 ## effect
 
@@ -134,6 +156,8 @@ development plan:
 ## runner
 
 - runner
+  - class
+    - so that can keep memory
   - instantiate "CurrentRunnerScope" and recod
     - maybe with "serialized parameters" in server side
   - get BM result
@@ -141,19 +165,28 @@ development plan:
     - response result
   - watch scope changing
   - trigger listener in runner
+
 - scope
   - class CurrentRunnerScope
     - constructor
       - with serialized parameters
-  - states
-    - array
-  - models
-    - array
-    - if in client(or specify a optional parameter): check global data
-      - exist: set globalData to model._internalValue
-      - no: use query method to fetch
-  - model global data & subscribe
-    - only in client and optional
+  - computePatches
+    - save state or model patches during inputCompute
+    - should cleared when inputCompute end
+  - applyComputePatches
+    - called by inputCompute at end
+  
+  - addHook, add State, Model, compute function to current scope
+  - hooks
+    - states
+      - array
+    - models
+      - array
+      - if in client(or specify a optional parameter): check global data
+        - exist: set globalData to model._internalValue
+        - no: use query method to fetch
+      - model global data & subscribe
+        - only in client and optional
   - listeners
     - data structor unit: [state or model or inputCompute, scopeDefaultListener, {
       before: effectListeners,
@@ -161,6 +194,7 @@ development plan:
     }]
   - addState
     - add unit
+    - subscribe onUpdate
   - addModel
     - same above
   - addWatch

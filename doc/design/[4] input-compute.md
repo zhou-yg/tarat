@@ -96,6 +96,8 @@ React的onClick里可以直接setState呢？为什么inputCompute第一时间不
 
 
 
-## inputComputeSafe
+## inputCompute for server
 
-在以一个application启动的情况下，手动标记了safe，应优先提交到server执行
+在以一个application启动的情况下，手动标记了server，应优先提交到server执行
+
+除了
