@@ -12,7 +12,9 @@ import {
   getModelConfig,
   IHookContext,
   isDef,
-  likeObject
+  likeObject,
+  isPromise,
+  nextTick
 } from './util'
 import {
   produceWithPatches,
@@ -24,7 +26,7 @@ import {
 
 enablePatches()
 
-type IScopeHook = State | InputComputeFn
+type IScopeHook = State | InputComputeHook
 
 export function freeze(target: { freezed?: boolean }) {
   target.freezed = true
@@ -50,6 +52,9 @@ class CurrentRunnerScope {
     ]
   > = []
   outerListeners: Function[] = []
+  stateChangeCallbackRunning = false
+  stateChangeCallbackCancel = () => {}
+  stateChangeWaitHooks: Array<IScopeHook> = []
   constructor() {}
   onUpdate(f: Function) {
     this.outerListeners.push(f)
@@ -60,13 +65,40 @@ class CurrentRunnerScope {
   notifyOuter() {
     this.outerListeners.forEach(f => f())
   }
-  stateChanged(s: State, v: any) {
-    this.internalListeners.forEach(([s2, listener]) => {
-      if (s2 === s) {
-        listener?.after?.forEach(f2 => f2(v))
+  stateChanged(s: IScopeHook, v?: any) {
+    this.stateChangeWaitHooks.push(s)
+    if (this.stateChangeCallbackRunning) {
+      return
+    }
+    this.batchRunInternalCallbacks()
+  }
+  batchRunInternalCallbacks () {
+    this.stateChangeCallbackCancel()
+    this.stateChangeCallbackCancel = nextTick(() => {
+      this.stateChangeCallbackRunning = true
+      const changedHooks = this.stateChangeWaitHooks
+      this.stateChangeWaitHooks = []
+
+      const callbackSet = new Set<Function>()
+
+      let hasStateHookChanged = false
+
+      changedHooks.forEach((s) => {
+        this.internalListeners.forEach(([s2, listener]) => {
+          if (s2 === s && listener?.after) {
+            listener.after.forEach(f => callbackSet.add(f))
+          }
+        })
+        hasStateHookChanged = s instanceof State || hasStateHookChanged
+      })
+      for (const f of callbackSet) {
+        f()
       }
+      if (hasStateHookChanged) {
+        this.notifyOuter()
+      }
+      this.stateChangeCallbackRunning = false
     })
-    this.notifyOuter()
   }
 
   addHook(v: IScopeHook, f?: FDataSetterGetterFunc) {
@@ -113,23 +145,19 @@ class CurrentRunnerScope {
       d.applyPatches(p)
     })
   }
-  beforeInputCompute(func: InputComputeFn) {
+  beforeInputCompute(h: InputComputeHook) {
     this.internalListeners.forEach(([v, listener]) => {
-      if (v === func) {
-        listener.before.forEach(f => f(func))
+      if (v === h) {
+        listener.before.forEach(f => f(h))
       }
     })
   }
-  afterInputCompute(func: InputComputeFn) {
-    this.internalListeners.forEach(([v, listener]) => {
-      if (v === func) {
-        listener.after.forEach(f => f(func))
-      }
-    })
+  afterInputCompute(h: InputComputeHook) {
+    this.stateChanged(h)
   }
-  createInputComputeContext(func: InputComputeFn, arg: any): IHookContext {
+  createInputComputeContext(h: InputComputeHook, arg: any): IHookContext {
     const { hooks } = this
-    const hookIndex = hooks.indexOf(func)
+    const hookIndex = hooks.indexOf(h)
     const hooksData: IHookContext['data'] = hooks.map(hook => {
       if (hook instanceof State) {
         return ['data', Object.assign(hook.value)]
@@ -271,8 +299,8 @@ let currentInputeCompute: InputComputeFn | null = null
 
 type IModifyFunction<T> = (draft: Draft<T>) => void
 
-function createStateSetterGetterFunc<T>(s: State<T>, scope: CurrentRunnerScope) {
-  return (paramter?: IModifyFunction<T>) => {
+function createStateSetterGetterFunc<T = any>(s: State<T>, scope: CurrentRunnerScope): ((arg?: IModifyFunction<T>) => T | undefined) {
+  return (paramter) => {
     if (paramter) {
       if (isFunc(paramter)) {
         if (currentInputeCompute) {
@@ -347,15 +375,15 @@ class ClientModel<T = any> extends Model<T> {
   }
 }
 
-export function state<T = any>(initialValue: T): FStateSetterGetterFunc {
+export function state<T>(initialValue: T): FStateSetterGetterFunc {
   if (!currentRunnerScope) {
     throw new Error('must under a tarot runner')
   }
 
-  const internalState = new State(initialValue)
+  const internalState = new State<T>(initialValue)
 
   
-  const setterGetter = createStateSetterGetterFunc(internalState, currentRunnerScope)
+  const setterGetter = createStateSetterGetterFunc<T>(internalState, currentRunnerScope)
   currentRunnerScope.addHook(internalState, setterGetter)
 
   return setterGetter
@@ -405,64 +433,70 @@ interface IInputComputeOption {
   safety: boolean
 }
 
-interface InputComputeFn<T = any> extends Function {
+type InputComputeFn = (...arg: any) => void | Promise<void>
+
+interface InputComputeHook extends Function {
   (...arg: any): void | Promise<void>
   freezed?: boolean
 }
 
 
 function inputFuncEnd<T> (
-  func: InputComputeFn<T>,
+  hook: InputComputeHook,
   scope: CurrentRunnerScope
 ) {
   currentInputeCompute = null
   scope.applyComputePatches()
-  scope.afterInputCompute(func)
-  unFreeze(func)
+  scope.afterInputCompute(hook)
+  unFreeze(hook)
 }
 
 function createInputComputeExecution<T>(
-  func: InputComputeFn<T>,
+  func: InputComputeFn,
   scope: CurrentRunnerScope
 ) {
 
-  return (...args: any) => {
+  const hook: InputComputeHook  = (...args: any) => {
+    scope.beforeInputCompute(hook)
     currentInputeCompute = func
-    scope.beforeInputCompute(func)
-    if (!checkFreeze(func)) {
-      if (isAsyncFunc(func)) {
-        // promisify
-        return Promise.resolve(func(...args)).then(() => {
-          inputFuncEnd(func, scope)
+    if (!checkFreeze(hook)) {
+      const funcResult = func(...args)
+      if (isPromise(funcResult)) {
+        return Promise.resolve(funcResult).then(() => {
+          inputFuncEnd(hook, scope)
         })
       }
       func(...args)
     }
-    inputFuncEnd(func, scope)
+    inputFuncEnd(hook, scope)
   }
+
+  return hook
 }
 
 function createServerInputComputeExecution<T>(
-  func: InputComputeFn<T>,
+  func: InputComputeFn,
   scope: CurrentRunnerScope
 ) {
-  return async (arg: T) => {
-    currentInputeCompute = func
-    scope.beforeInputCompute(func)
-    if (!checkFreeze(func)) {
-      const context = scope.createInputComputeContext(func, arg)
+  const hook: InputComputeHook = async (arg: T) => {
+    scope.beforeInputCompute(hook)
+    currentInputeCompute = hook
+    if (!checkFreeze(hook)) {
+      const context = scope.createInputComputeContext(hook, arg)
       const result = await getModelConfig().postComputeToServer(context)
       scope.applyContext(result)
     }
     currentInputeCompute = null
     scope.applyComputePatches()
-    scope.afterInputCompute(func)
-    unFreeze(func)
+    scope.afterInputCompute(hook)
+    unFreeze(hook)
   }
+
+  return hook
 }
 
 export function inputCompute<T>(
-  func: InputComputeFn<T>,
+  func: InputComputeFn,
   option?: IInputComputeOption
 ) {
   if (!currentRunnerScope) {
@@ -475,7 +509,7 @@ export function inputCompute<T>(
 }
 
 export function inputComputeServer<T>(
-  func: InputComputeFn<T>,
+  func: InputComputeFn,
   option: IInputComputeOption
 ) {
   if (!currentRunnerScope) {
@@ -527,6 +561,7 @@ export function before(
   }
   targets.forEach(hook => {
     const realHook = currentRunnerScope!.dataSetterGetterMap.get(hook as FDataSetterGetterFunc)
+    // TIP：useless, because can't before state changed
     if (realHook) {
       currentRunnerScope!.addWatch(realHook, fn, 'before')
     } else if (typeof hook === 'function') {

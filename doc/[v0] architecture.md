@@ -192,11 +192,12 @@ development plan:
       before: effectListeners,
       after: effectListeners
     }]
-  - addState
+  - addHook
     - add unit
-    - subscribe onUpdate
-  - addModel
-    - same above
+      - State
+      - Model
+      - inputCompute
+    - subscribe onUpdate (State or Model)
   - addWatch
     - parameters: target, callback, 'before' or 'after'
 

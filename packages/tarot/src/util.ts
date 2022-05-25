@@ -29,6 +29,14 @@ export function isFunc(f?: Function | any) {
 export function isAsyncFunc(f?: any) {
   return f && f[Symbol.toStringTag] === 'AsyncFunction'
 }
+export function isPromise(p?: any) {
+  return p && (p instanceof Promise || !!p.then)
+}
+
+export function nextTick (fn: () => void) {
+  const st = setTimeout(fn, 0)
+  return () => clearTimeout(st)
+}
 
 interface IQueryInclude {
   [k: string]:
