@@ -54,7 +54,7 @@ describe('runner basic', () => {
     expect(typeof initResult.f1).toBe('function')
     expect(runner.scope.hooks.length).toBe(1)
   })
-  it('run oneEffect with nested BM', () => {
+  it('run oneEffect with nested BM', async () => {
     const runner = new Runner(mockBM.oneEffect)
 
     const onRunnerUpdate = jest.fn(() => {
@@ -78,6 +78,7 @@ describe('runner basic', () => {
     expect(onRunnerUpdate).toHaveBeenCalledTimes(0)
 
     initResult.s1((draft: number) => draft + 1)
+    await mockBM.wait()
   
     expect(initResult.s1()).toBe(2)
     expect(arg.s1Changed).toHaveBeenCalledTimes(1)

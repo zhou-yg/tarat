@@ -3,6 +3,8 @@ import {
   model,
   inputCompute,
   after,
+  before,
+  freeze,
 } from '../src/core'
 import {
   setModelConfig
@@ -30,6 +32,10 @@ setModelConfig({
     return []
   }
 })
+
+export function wait (ms: number = 15) {
+  return new Promise(r => setTimeout(r, ms))
+}
 
 export function blank() {}
 export function returnArg(arg: any) {
@@ -81,6 +87,58 @@ export function oneEffect (arg: {
     s1: stateBM.s1
   }
 }
+export function beforeWithFreeze (v: number) {
+  const num = state(v)
+
+  const markBefore = { value: 0 }
+
+  const addNum = inputCompute((v) => {
+    num(d => {
+      return d + v
+    })
+  })
+
+  before(
+    () => {
+      markBefore.value++
+      let cur: any = num()
+      if (cur > 0) {
+        freeze(addNum)
+      }
+    },
+    [addNum]
+  )
+
+  return {
+    markBefore,
+    num,
+    addNum
+  }
+}
+export function effectAfter (v: number) {
+  const num = state(v)
+
+  const markBefore = { value: 0 }
+
+  const addNum = inputCompute((v) => {
+    num(d => {
+      return d + v
+    })
+  })
+
+  after(
+    () => {
+      markBefore.value++
+    },
+    [addNum, num]
+  )
+
+  return {
+    markBefore,
+    num,
+    addNum
+  }
+}
 
 export function plainObjectState (obj1: { num1: number }, num2: number) {
   const s1 = state<{ num1: number }>(obj1)
@@ -101,6 +159,33 @@ export function changeStateInputCompute (obj1: { num1: number }, num2: number) {
     s1((draft: any) => {
       draft.num1 = Math.random()
     })
+    s1((draft: any) => {
+      draft.num1 = v
+    })
+    if (v2) {
+      s2((d: any) => {
+        return d + v2
+      })
+    }
+  })
+  
+  return {
+    ...ps,
+    changeS1
+  }
+}
+
+export function changeStateAsyncInputCompute (obj1: { num1: number }, num2: number) {
+  const ps = plainObjectState(obj1, num2)
+
+  const { s1, s2 } = ps
+
+  const changeS1 = inputCompute(async (v: number, v2?: number) => {
+    s1((draft: any) => {
+      draft.num1 = Math.random()
+    })
+    await new Promise(resolve => setTimeout(resolve, 100))
+
     s1((draft: any) => {
       draft.num1 = v
     })
