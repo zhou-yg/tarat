@@ -9,7 +9,6 @@
     "moduleResolution": "node",
     "allowJs": false,
     "strict": true,
-    "noUnusedLocals": true,
     "experimentalDecorators": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
@@ -18,8 +17,5 @@
     "lib": ["esnext", "dom"],
     "types": ["jest", "node"],
     "rootDir": "."
-  },
-  "include": [
-    "types/global.d.ts",
-  ]
+  }
 }
