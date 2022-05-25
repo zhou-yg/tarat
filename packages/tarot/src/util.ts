@@ -11,6 +11,17 @@ export function map(
   return Object.values(target).map(callback)
 }
 
+export function likeObject(target: any) {
+  return target && typeof target === 'object'
+}
+
+export function isDef (v?: any) {
+  return typeof v !== 'undefined'
+}
+export function isUndef (v?: any) {
+  return typeof v === 'undefined'
+}
+
 export function isFunc(f?: Function | any) {
   return typeof f === 'function'
 }
