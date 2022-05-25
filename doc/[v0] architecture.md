@@ -107,12 +107,12 @@ development plan:
   - support asynchoronous
   - binding destroy to "CurrentRunnerScope"
 - calling inputCompute
-  - check is safety
+  - check is force running in server
     - yes: post to server side
     - no: continute execute
       - record current inputCompute, set currentInputeCompute=[compute execution body]
       - trigger "before event" and pass [compute execlute body]  to "CurrentRunnerScope"
-      - check freeze 
+      - check freeze
         - yes: dont execute, and unfreeze it
         - no: continue execute...
 - calling end
@@ -175,7 +175,7 @@ development plan:
     - should cleared when inputCompute end
   - applyComputePatches
     - called by inputCompute at end
-  
+  - hook <-> setterGetter maps
   - addHook, add State, Model, compute function to current scope
   - hooks
     - states
