@@ -5,33 +5,39 @@ import {
   after,
   before,
   freeze,
+  inputComputeServer,
 } from '../src/core'
 import {
   setModelConfig
 } from '../src/util'
 
-setModelConfig({
-  async find (e, w) {
-    return []
-  },
-  async update (e, w) {
-    return []
-  },
-  async remove (e, d) {
-    return []
-  },
-  async create (e, d) {
-    return {}
-  },
-  async executeDiff (d) {
+initModelConfig()
 
-  },
-  async postDiffToServer (d) {
-  },
-  async postComputeToServer (c) {
-    return []
-  }
-})
+export function initModelConfig (obj: any = {}) {
+  setModelConfig({
+    async find (e, w) {
+      return []
+    },
+    async update (e, w) {
+      return []
+    },
+    async remove (e, d) {
+      return []
+    },
+    async create (e, d) {
+      return {}
+    },
+    async executeDiff (d) {
+  
+    },
+    async postDiffToServer (d) {
+    },
+    async postComputeToServer (c) {
+      return []
+    },
+    ...obj
+  })
+}
 
 export function wait (ms: number = 15) {
   return new Promise(r => setTimeout(r, ms))
@@ -174,6 +180,22 @@ export function changeStateInputCompute (obj1: { num1: number }, num2: number) {
     changeS1
   }
 }
+export function changeStateInputComputeServer (obj1: { num1: number }, num2: number) {
+  const ps = plainObjectState(obj1, num2)
+
+  const { s1, s2 } = ps
+
+  const changeS1 = inputComputeServer((v: number, v2?: number) => {
+    s1((draft: any) => {
+      draft.num1 = v
+    })
+  })
+  
+  return {
+    ...ps,
+    changeS1
+  }
+}
 
 export function changeStateAsyncInputCompute (obj1: { num1: number }, num2: number) {
   const ps = plainObjectState(obj1, num2)
@@ -199,5 +221,20 @@ export function changeStateAsyncInputCompute (obj1: { num1: number }, num2: numb
   return {
     ...ps,
     changeS1
+  }
+}
+
+export function userModel () {
+  const users = model(
+    () => ({
+      entity: 'User',
+      where: {  }
+    }),
+    { immediate: true }
+  )
+
+
+  return {
+    users
   }
 }
