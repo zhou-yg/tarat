@@ -224,13 +224,13 @@ export function changeStateAsyncInputCompute (obj1: { num1: number }, num2: numb
   }
 }
 
-export function userModel () {
+export function userPessimisticModel () {
   const users = model(
     () => ({
       entity: 'User',
       where: {  }
     }),
-    { immediate: true }
+    { immediate: true, pessimisticUpdate: true }
   )
 
 
