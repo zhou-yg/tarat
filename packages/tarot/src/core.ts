@@ -326,6 +326,7 @@ interface IModelOption {
   immediate?: boolean
   unique?: boolean
   autoRollback?: boolean
+  pessimisticUpdate?: boolean
 }
 
 class Model<T = any> extends State<T> {
@@ -353,7 +354,9 @@ class Model<T = any> extends State<T> {
   }
   async updateWithPatches(v: T | undefined, patches: IPatch[]) {
     const oldValue = this._internalValue
-    this.update(v)
+    if (!this.options.pessimisticUpdate) {
+      this.update(v)
+    }
 
     const { entity } = this.getQueryWhere()
     try {

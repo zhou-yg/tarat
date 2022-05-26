@@ -1,17 +1,21 @@
+import isEqual from './isEqual';
+
 export function isArray (arr?: any) {
   return Array.isArray(arr)
 }
-
+export function last (arr: any[]) {
+  return arr[arr.length - 1]
+}
 export function cloneDeep (obj?: any) {
   return obj && JSON.parse(JSON.stringify(obj))
 }
 
 export function set (obj: any, path: string | (number | string)[], value: any) {
   let base = obj
-  const currentPath = Array.isArray(path) ? path.slice(0) : path.split('.')
-  if (currentPath.length > 0) {
-    const fieldName = currentPath.pop()
-    currentPath.forEach((p, i) => {
+  const currentFieldPath = Array.isArray(path) ? path.slice(0) : path.split('.')
+  if (currentFieldPath.length > 0) {
+    const fieldName = currentFieldPath.pop()
+    currentFieldPath.forEach((p, i) => {
       if (base[p] === undefined) base[p] = {}
       base = base[p]
     })
@@ -179,26 +183,102 @@ export interface IPatch {
   value?: any
 }
 
-function mergeStack (target: object, p: IPatch[]) {
-
-  
-}
-
-
 interface IStackUnit {
   value: {
     [k: string]: any
   }
-  currentPath: string 
+  source?: {
+    [k: string]: any
+  }
+  currentFieldPath: string 
+}
+
+/**
+ * 预处理patch，推导数组通过splice，找到被删除的元素。修正的patches语义已经跟immer冲突了，不能再二次使用
+ * arr.splice(0, 1) -> 0 后面的全部前移，最后length = length -1 完成
+ * 删除尾部，直接减少length 
+ * 删除非尾部, 尾部往前占位，再减少length
+ */
+function preparePatches (data: any | any[], ps: IPatch[]) {
+  const lengthPatchIndexes: Array<[number, any]> = []
+  ps.forEach((p, i) => {
+    const source = p.path.length === 1 ? data : get(data, p.path.slice(0, -1))
+    if (isArray(source) && last(p.path) === 'length') {
+      lengthPatchIndexes.push([i, source])
+    }
+  })
+  if (lengthPatchIndexes.length > 0) {
+
+    const newInsertPatches: Array<[number, number, IPatch[]]> = []
+
+    lengthPatchIndexes.forEach(([index, source]) => {
+      const newArrLength = ps[index].value
+      const willRemovedDataPath: (number | string)[][] = []
+      let reservedDataValues: any[] = []
+      let startMovingIndex = index - 1
+      for (index - 1; startMovingIndex >= 0; startMovingIndex--) {
+        const p = ps[startMovingIndex]
+        const currentSource = p.path.length === 1 ? data : get(data, p.path.slice(0, -1))
+        if (currentSource === source) {
+          willRemovedDataPath.push(p.path)
+          reservedDataValues.push(p.value)
+        } else {
+          break
+        }
+      }
+      // directly remove tail
+      if (willRemovedDataPath.length < source.length - newArrLength ) {
+        let si = newArrLength
+        while (si < source.length) {
+          const oldReservedLength = reservedDataValues.length
+          // 防止值被重复消费，尤其是简单类型
+          // @TODO: immer的object是重新生成的，并不相等
+          reservedDataValues = reservedDataValues.filter(v => !isEqual(source[si], v))
+          if (reservedDataValues.length === oldReservedLength) {
+            // 当前值是要保存的值
+            willRemovedDataPath.push(
+              ps[index].path.slice(0, -1).concat(si)
+            )
+          }
+          si++
+        }
+      }
+      const willRemovedPatches: IPatch[] = willRemovedDataPath.map(patchPath => {
+        return ({
+          op: 'remove',
+          path: patchPath,
+          value: get(data, patchPath)
+        })
+      })
+      newInsertPatches.push([
+        willRemovedDataPath.length === 0 ? index : startMovingIndex + 1,
+        willRemovedDataPath.length === 0 ? 1 : index - startMovingIndex,
+        willRemovedPatches
+      ])
+    })
+
+    let offset = 0
+    newInsertPatches.forEach(([st, length, arr]) => {
+      ps.splice(
+        st - offset,
+        length,
+        ...arr
+      )
+      offset = offset + length - arr.length
+    })
+  }
+
+  return ps
 }
 
 export type IDiff = ReturnType<typeof calculateDiff>
-
 /**
  * 根据patch计算diff，决定要进行的数据库操作
  */
 export function calculateDiff(data: any | any[], ps: IPatch[]) {
   data = cloneDeep(data)
+
+  ps = preparePatches(data, ps)
 
   let create: IStackUnit[] = []
   let update: IStackUnit[] = []
@@ -209,22 +289,29 @@ export function calculateDiff(data: any | any[], ps: IPatch[]) {
   .forEach(p => {
     if (p.path && p.path.length > 0) {
       const target = p.path.length === 1 ? data : get(data, p.path.slice(0, -1))
+      const source = target
       // CAUTION: 是不是太暴力
       const pathSkipArr = p.path.filter((k, i) => {
-        return !isArray(get(data, p.path.slice(0, i))) || i === p.path.length - 1
+        return !isArray(get(data, p.path.slice(0, i)))
       })
-
-      const currentPath = pathSkipArr.slice(0, -1).join('.')
+      /* 取到的是current对象, root = { a:{b:[x]} } -> root.a.b，数组情况下，pathSkipArr要取到，b，不能-1，因为前面把数组多过滤了一层
+       * root={a:{ b:x }} -> root.a.b 对象的情况下，要取到，a
+       */
+      const currentFieldPath = pathSkipArr.slice(0, isArray(source) ? Infinity : -1).join('.')
 
       const lastPathKey = p.path[p.path.length - 1]
 
       switch (p.op) {
         case 'replace':
           {
-            const exist = findWithDefault(update, (u) => u.currentPath === currentPath, {
-              
+            // cant handle the primitive patch in array
+            if (Array.isArray(target) && !likeObject(p.value)) {
+              return
+            }
+            const exist = findWithDefault(update, (u) => u.currentFieldPath === currentFieldPath, {
+              source,
               value: {},
-              currentPath,
+              currentFieldPath,
             })
             if (exist) {
               if (Array.isArray(target)) {
@@ -241,22 +328,21 @@ export function calculateDiff(data: any | any[], ps: IPatch[]) {
           {
             if (Array.isArray(target)) {
               create.push({
-                
                 value: p.value,
-                currentPath,
+                currentFieldPath,
               })
             } else {
               const addData = p.value
               if (likeObject(addData)) {
                 create.push({
                   value: addData,
-                  currentPath: p.path.join('.'), // add object into object, must have path
+                  currentFieldPath: p.path.join('.'), // add object into object, must have path
                 })
               } else {
-                const exist = findWithDefault(update, (u) => u.currentPath === currentPath, {
-                  
+                const exist = findWithDefault(update, (u) => u.currentFieldPath === currentFieldPath, {
+                  source,
                   value: {},
-                  currentPath,
+                  currentFieldPath,
                 })                                            
                 if (exist) {
                   Object.assign(exist.value, {
@@ -271,15 +357,22 @@ export function calculateDiff(data: any | any[], ps: IPatch[]) {
           {
             const removedData = get(data, p.path)
             if (likeObject(removedData)) {
-              remove.push({
-                value: removedData,
-                currentPath: p.path.join('.'), // remove obj from obj, muse have path
-            })
+              if (isArray(source)) {
+                remove.push({
+                  value: removedData,
+                  currentFieldPath: pathSkipArr.join('.'), // remove obj from obj, muse have path
+                })                
+              } else {
+                remove.push({
+                  value: removedData,
+                  currentFieldPath: p.path.join('.'), // remove obj from obj, muse have path
+                })
+              }
             } else {
-              const exist = findWithDefault(update, (u) => u.currentPath === currentPath, {
-                
+              const exist = findWithDefault(update, (u) => u.currentFieldPath === currentFieldPath, {
+                source,
                 value: {},
-                currentPath,
+                currentFieldPath,
               })                                
               if (exist) {
                 Object.assign(exist.value, {
@@ -295,8 +388,8 @@ export function calculateDiff(data: any | any[], ps: IPatch[]) {
 
   //combines
   remove.forEach(u => {
-    create = create.filter(c => c.currentPath === u.currentPath)
-    update = update.filter(c => c.currentPath === u.currentPath)
+    create = create.filter(c => c.currentFieldPath === u.currentFieldPath)
+    update = update.filter(c => c.currentFieldPath === u.currentFieldPath)
   })
 
   return {
