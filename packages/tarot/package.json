@@ -4,7 +4,7 @@
   "description": "useHook serverless framework",
   "main": "dist/index.js",
   "scripts": {
-    "test-unit": "jest",
+    "test-unit": "jest --watch",
     "test-ci": "TEST=CI jest",
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
     "build": "rollup --config rollup.config.mjs"

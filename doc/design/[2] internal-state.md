@@ -143,6 +143,12 @@ combinepatches需要考虑的，在提交数据patches到server side之前，需
   - 列属性，拼完数据，如果已经存在列数据，等价于调用update
   - 行数据，需要调用create
 
+
+在有server的情况下，处于安全考虑，所有的model都应该在server端完成“修改”
+
+但客户端结构里的情况下，比如client能访问到代理后的server操作（或者client本就能直连数据库），那就可以在client端完成"修改“
+
+
 ```javascript
 class Model {
   construtor ({ entity, query }) {
@@ -235,3 +241,41 @@ client model不执行具体变更，会把patches post到当前的服务器，�
 考虑到BM可以在多个地方时，默认提供的是model版本，
 
 如果以默认的application来使用，则在页面里默认使用的是client model，可以加个配置来强行禁止
+
+
+### patch到diff
+
+找到diff的目的是为了最终的数据库ER操作，所有的操作都是基于每条数据，所以最终都落到具体的object
+
+特例：deleteMany/createMany 批量的场景才需要考虑用到 array，这时候array也是当作单独入参来使用，还是没逃脱出object的范畴
+
+patch里都是细化化的操作，没有updateMany
+
+patch的类型包含： replace, add, path 
+
+按path找到对象，合并操作，因为是计算diff，所以可以不考虑原对象，而且所有draft的操作都一定是从根路径出发，所以一定能找到对象
+
+Draft只会是2种形式：object，array。array可以看着是带数字下标的object，所以可抽象成1种：object
+
+先通过 path -> 找到 { } -> 进入递归 ，直到只有一个path，判断op
+
+- replace：赋值，是更新逻辑
+  - 有可能修改的关联关系对象，最后执行diff的时候，entity也可能是关联关系的entity
+- add：在obj上增加属性，增加的属性有可能是obj，那这里可能会涉及到 关联关系的处理，如果存在relation关系
+  - 如果增加的obj 有 id，说明是addRelation，确认是否需要在原本的query参数里需要加入 include: { obj: true } 
+  - 如果没有id，说明要先create，再addRelation，再改变query参数
+- remove：删除对象，或删除属性
+  - 删除对象，如果对象存在id，且本身是entity，或者关联关系的entity，则执行remove操作
+  - 删除属性，如果当前对象是entity且有id，则是update操作，并且set prop = null
+   
+将上述的判断结果放到待执行的stack（update，create，remove），并且要判断，按顺序并合并stack
+
+合并策略：
+- 最后是remove的stack里的obj，不需要再update和create。
+- 如果是先create再remove，它们就可以都不执行，但这种情况应该不存在，因为如果没create过，remove里面是没有id的
+
+那种需要基于关联关系进行的消费的数据怎么解，比如要先create拿到id，再把id拿去关联其它数据？但这种场景应该也不存在，因为如果是关联关系，可以看add那里，如果没有关联关系
+
+那就不推荐这种使用方式，这应该要约束。如果是跟外部系统联动，那可以用effect。effect里也许可以透出差异的信息
+
+补充说明：在实际实现里，由于没有ER的相关信息，所以在diff中只能指出这是一个嵌套对象，不能确实是关联关系

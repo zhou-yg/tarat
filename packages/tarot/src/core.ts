@@ -1,6 +1,6 @@
 import {
   calculateDiff,
-  getExecuteDiff,
+  getDiffExecution,
   getModelFind,
   IModelQuery,
   IPatch,
@@ -155,24 +155,25 @@ class CurrentRunnerScope {
   afterInputCompute(h: InputComputeHook) {
     this.stateChanged(h)
   }
-  createInputComputeContext(h: InputComputeHook, arg: any): IHookContext {
+  createInputComputeContext(h: InputComputeHook, args: any): IHookContext {
     const { hooks } = this
     const hookIndex = hooks.indexOf(h)
     const hooksData: IHookContext['data'] = hooks.map(hook => {
       if (hook instanceof State) {
-        return ['data', Object.assign(hook.value)]
+        return ['data', hook.value]
       }
-      return ['data', null]
+      return ['inputCompute', null]
     })
     return {
       data: hooksData,
       index: hookIndex,
-      args: arg
+      args
     }
   }
-  applyContext(c: IHookContext['data']) {
+  applyContext(c: IHookContext) {
+    const contextData = c.data
     const { hooks } = this
-    c.forEach(([type, value], index) => {
+    contextData.forEach(([type, value], index) => {
       if (isDef(value)) {
         const state = hooks[index] as State
         switch (type) {
@@ -202,7 +203,7 @@ export class Runner {
   alreadInit = false
   constructor(
     public bm: BM,
-    public initialContext?: IHookContext['data']
+    public initialContext?: IHookContext
     ) {}
   onUpdate(f: Function) {
     return this.scope?.onUpdate(() => {
@@ -353,9 +354,11 @@ class Model<T = any> extends State<T> {
   async updateWithPatches(v: T | undefined, patches: IPatch[]) {
     const oldValue = this._internalValue
     this.update(v)
+
+    const { entity } = this.getQueryWhere()
     try {
-      const diff = calculateDiff(this._internalValue, patches)
-      await getExecuteDiff()(diff)
+      const diff = calculateDiff(oldValue, patches)
+      await getDiffExecution()(entity, diff)
     } catch (e) {
       console.error('[updateWithPatches] postPatches fail')
       if (this.options.autoRollback) {
@@ -369,8 +372,9 @@ class Model<T = any> extends State<T> {
 class ClientModel<T = any> extends Model<T> {
   async updateWithPatches(v: T, patches: IPatch[]) {
     this.update(v)
+    const { entity } = this.getQueryWhere()
     const diff = calculateDiff(v, patches)
-    await getPostDiffToServer()(diff)
+    await getPostDiffToServer()(entity, diff)
     await this.query()
   }
 }
@@ -429,10 +433,6 @@ function isInputCompute(v: any) {
   return v.__inputComputeTag
 }
 
-interface IInputComputeOption {
-  safety: boolean
-}
-
 type InputComputeFn = (...arg: any) => void | Promise<void>
 
 interface InputComputeHook extends Function {
@@ -478,11 +478,11 @@ function createServerInputComputeExecution<T>(
   func: InputComputeFn,
   scope: CurrentRunnerScope
 ) {
-  const hook: InputComputeHook = async (arg: T) => {
+  const hook: InputComputeHook = async (...args: T[]) => {
     scope.beforeInputCompute(hook)
     currentInputeCompute = hook
     if (!checkFreeze(hook)) {
-      const context = scope.createInputComputeContext(hook, arg)
+      const context = scope.createInputComputeContext(hook, args)
       const result = await getModelConfig().postComputeToServer(context)
       scope.applyContext(result)
     }
@@ -497,7 +497,6 @@ function createServerInputComputeExecution<T>(
 
 export function inputCompute<T>(
   func: InputComputeFn,
-  option?: IInputComputeOption
 ) {
   if (!currentRunnerScope) {
     throw new Error('must under a tarot runner')
@@ -510,7 +509,6 @@ export function inputCompute<T>(
 
 export function inputComputeServer<T>(
   func: InputComputeFn,
-  option: IInputComputeOption
 ) {
   if (!currentRunnerScope) {
     throw new Error('must under a tarot runner')
