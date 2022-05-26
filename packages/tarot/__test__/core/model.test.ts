@@ -9,7 +9,7 @@ import * as mockBM from '../mockBM'
 describe('model', () => {
 
   beforeEach(() => {
-    const mockUsersData = [
+    let mockUsersData = [
       { id: 1, name: 'a' },
       { id: 2, name: 'b' },
     ]
@@ -18,7 +18,7 @@ describe('model', () => {
         return cloneDeep(mockUsersData.slice())
       },
       async executeDiff (entity: string, diff: IDiff) {
-        console.log('diff: ', diff.update);
+        console.log('diff: ', diff);
 
         await mockBM.wait()
 
@@ -33,8 +33,8 @@ describe('model', () => {
           })
         })
         diff.remove.forEach((obj: any) => {
-          mockUsersData.filter(o2 => {
-            return o2.id === obj.value.id
+          mockUsersData = mockUsersData.filter(o2 => {
+            return o2.id !== obj.value.id
           })
         })
 
@@ -100,8 +100,6 @@ describe('model', () => {
       const result = runner.init()
       
       await mockBM.wait()
-
-      const newObj = { name: 'c', id: 3 }
 
       result.users((draft: any) => {
         draft.splice(0, 1)
