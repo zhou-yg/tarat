@@ -12,7 +12,7 @@ export function cloneDeep (obj?: any) {
 
 export function set (obj: any, path: string | (number | string)[], value: any) {
   let base = obj
-  const currentFieldPath = Array.isArray(path) ? path.slice(0) : path.split('.')
+  const currentFieldPath = Array.isArray(path) ? path.slice(0) : path.split ? path.split('.') : [path]
   if (currentFieldPath.length > 0) {
     const fieldName = currentFieldPath.pop()
     currentFieldPath.forEach((p, i) => {
@@ -25,7 +25,7 @@ export function set (obj: any, path: string | (number | string)[], value: any) {
 
 export function get (obj: any, path: string | (number | string)[]) {
   let base = obj
-  const pathArr = Array.isArray(path) ? path.slice(0) : path.split('.')
+  const pathArr = Array.isArray(path) ? path.slice(0) : path.split ? path.split('.') : [path]
   for (const p of pathArr) {
     if (base[p] === undefined) return undefined
     base = base[p]
@@ -213,13 +213,17 @@ function preparePatches (data: any | any[], ps: IPatch[]) {
 
     lengthPatchIndexes.forEach(([index, source]) => {
       const newArrLength = ps[index].value
-      const willRemovedDataPath: (number | string)[][] = []
+      let willRemovedDataPath: (number | string)[][] = []
       let reservedDataValues: any[] = []
+      
       let startMovingIndex = index - 1
       for (index - 1; startMovingIndex >= 0; startMovingIndex--) {
         const p = ps[startMovingIndex]
         const currentSource = p.path.length === 1 ? data : get(data, p.path.slice(0, -1))
         if (currentSource === source) {
+          willRemovedDataPath = willRemovedDataPath.filter(pathArr => {
+            return !isEqual(p.value, get(data, pathArr))
+          })
           willRemovedDataPath.push(p.path)
           reservedDataValues.push(p.value)
         } else {
@@ -231,8 +235,8 @@ function preparePatches (data: any | any[], ps: IPatch[]) {
         let si = newArrLength
         while (si < source.length) {
           const oldReservedLength = reservedDataValues.length
-          // 防止值被重复消费，尤其是简单类型
-          // @TODO: immer的object是重新生成的，并不相等
+          // @TODO: immer的object是重新生成的，在引用上并不相等，所以需要isEqual
+          // 防止值被重复消费，因为数组的值有可能是重复的
           reservedDataValues = reservedDataValues.filter(v => !isEqual(source[si], v))
           if (reservedDataValues.length === oldReservedLength) {
             // 当前值是要保存的值

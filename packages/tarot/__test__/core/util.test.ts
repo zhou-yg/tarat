@@ -220,6 +220,46 @@ describe('util', () => {
         }
       ])
     })
+    it('array remove: shift element', () => {
+      const origin = [
+        { num0: null, child: [{ num0: 1 }] },
+        { num0: 1 },
+        { num0: 2 },
+      ]
+      const [r, patches] = produceWithPatches(origin, (d: any) => {
+        d.shift()
+      })
+
+      const diff = calculateDiff(origin, patches)
+      expect(diff.update).toEqual([])
+      expect(diff.create).toEqual([])
+      expect(diff.remove).toEqual([
+        {
+          value: { num0: null, child: [{ num0: 1 }] },
+          currentFieldPath: '',
+        }
+      ])
+    })
+    it('array remove: pop element', () => {
+      const origin = [
+        { num0: null, child: [{ num0: 1 }] },
+        { num0: 1 },
+        { num0: 2 },
+      ]
+      const [r, patches] = produceWithPatches(origin, (d: any) => {
+        d.pop()
+      })
+
+      const diff = calculateDiff(origin, patches)
+      expect(diff.update).toEqual([])
+      expect(diff.create).toEqual([])
+      expect(diff.remove).toEqual([
+        {
+          value: { num0: 2 },
+          currentFieldPath: '',
+        }
+      ])
+    })
     it('array remove multi elements tail', () => {
       const origin = [
         { num0: null, child: [{ num0: 1 }] },
@@ -279,12 +319,34 @@ describe('util', () => {
     })
     it('array remove child one element', () => {
       const origin = [
-        { num0: null, child: [{ num0: 1 }] },
+        { num0: null, child: [{ num0: 1 }, { num0: 2 }, { num0: 3 }] },
         { num0: 1 },
         { num0: 2 },
       ]
       const [r, patches] = produceWithPatches(origin, (d: any) => {
-        d[0].child.splice(0, 1)
+        d[0].child.splice(1, 1)
+      })
+
+      const diff = calculateDiff(origin, patches)
+      expect(diff.update).toEqual([])
+      expect(diff.create).toEqual([])
+      expect(diff.remove).toEqual([
+        {
+          value: {
+            num0: 2,
+          },
+          currentFieldPath: 'child',
+        }
+      ])
+    })
+    it('array remove child shift element', () => {
+      const origin = [
+        { num0: null, child: [{ num0: 1 }, { num0: 2 }, { num0: 2 }] },
+        { num0: 1 },
+        { num0: 2 },
+      ]
+      const [r, patches] = produceWithPatches(origin, (d: any) => {
+        d[0].child.shift()
       })
 
       const diff = calculateDiff(origin, patches)
