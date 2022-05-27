@@ -72,7 +72,7 @@ class CurrentRunnerScope {
     }
     this.batchRunInternalCallbacks()
   }
-  batchRunInternalCallbacks () {
+  batchRunInternalCallbacks() {
     this.stateChangeCallbackCancel()
     this.stateChangeCallbackCancel = nextTick(() => {
       this.stateChangeCallbackRunning = true
@@ -83,7 +83,7 @@ class CurrentRunnerScope {
 
       let hasStateHookChanged = false
 
-      changedHooks.forEach((s) => {
+      changedHooks.forEach(s => {
         this.internalListeners.forEach(([s2, listener]) => {
           if (s2 === s && listener?.after) {
             listener.after.forEach(f => callbackSet.add(f))
@@ -130,7 +130,7 @@ class CurrentRunnerScope {
   }
 
   addComputePatches(data: State, p: IPatch[]) {
-    let exist = this.computePatches.find((arr) => arr[0] === data)
+    let exist = this.computePatches.find(arr => arr[0] === data)
     if (!exist) {
       exist = [data, []]
       this.computePatches.push(exist)
@@ -201,10 +201,7 @@ export type IHookContextData = IHookContext['data']
 export class Runner {
   scope = new CurrentRunnerScope()
   alreadInit = false
-  constructor(
-    public bm: BM,
-    public initialContext?: IHookContext
-    ) {}
+  constructor(public bm: BM, public initialContext?: IHookContext) {}
   onUpdate(f: Function) {
     return this.scope?.onUpdate(() => {
       f()
@@ -300,13 +297,16 @@ let currentInputeCompute: InputComputeFn | null = null
 
 type IModifyFunction<T> = (draft: Draft<T>) => void
 
-function createStateSetterGetterFunc<T = any>(s: State<T>, scope: CurrentRunnerScope): ((arg?: IModifyFunction<T>) => T | undefined) {
-  return (paramter) => {
+function createStateSetterGetterFunc<T = any>(
+  s: State<T>,
+  scope: CurrentRunnerScope
+): (arg?: IModifyFunction<T>) => T | undefined {
+  return paramter => {
     if (paramter) {
       if (isFunc(paramter)) {
         if (currentInputeCompute) {
           const [result, patches] = produceWithPatches(s.value, paramter)
-  
+
           scope.addComputePatches(s, patches)
         } else {
           const result = produce(s.value, paramter)
@@ -389,14 +389,19 @@ export function state<T>(initialValue: T): FStateSetterGetterFunc {
 
   const internalState = new State<T>(initialValue)
 
-  
-  const setterGetter = createStateSetterGetterFunc<T>(internalState, currentRunnerScope)
+  const setterGetter = createStateSetterGetterFunc<T>(
+    internalState,
+    currentRunnerScope
+  )
   currentRunnerScope.addHook(internalState, setterGetter)
 
   return setterGetter
 }
 
-function createModelSetterGetterFunc<T>(m: Model<T>, scope: CurrentRunnerScope) {
+function createModelSetterGetterFunc<T>(
+  m: Model<T>,
+  scope: CurrentRunnerScope
+) {
   return (paramter?: IModifyFunction<T>) => {
     if (paramter && isFunc(paramter)) {
       const [result, patches] = produceWithPatches(m.value, paramter)
@@ -427,7 +432,10 @@ export function model<T = any>(
     ? new ClientModel(q, op)
     : new Model(q, op)
 
-  const setterGetter = createModelSetterGetterFunc<T>(internalModel, currentRunnerScope)
+  const setterGetter = createModelSetterGetterFunc<T>(
+    internalModel,
+    currentRunnerScope
+  )
   currentRunnerScope.addHook(internalModel, setterGetter)
   return setterGetter
 }
@@ -443,11 +451,7 @@ interface InputComputeHook extends Function {
   freezed?: boolean
 }
 
-
-function inputFuncEnd<T> (
-  hook: InputComputeHook,
-  scope: CurrentRunnerScope
-) {
+function inputFuncEnd<T>(hook: InputComputeHook, scope: CurrentRunnerScope) {
   currentInputeCompute = null
   scope.applyComputePatches()
   scope.afterInputCompute(hook)
@@ -458,8 +462,7 @@ function createInputComputeExecution<T>(
   func: InputComputeFn,
   scope: CurrentRunnerScope
 ) {
-
-  const hook: InputComputeHook  = (...args: any) => {
+  const hook: InputComputeHook = (...args: any) => {
     scope.beforeInputCompute(hook)
     currentInputeCompute = func
     if (!checkFreeze(hook)) {
@@ -498,9 +501,7 @@ function createServerInputComputeExecution<T>(
   return hook
 }
 
-export function inputCompute<T>(
-  func: InputComputeFn,
-) {
+export function inputCompute<T>(func: InputComputeFn) {
   if (!currentRunnerScope) {
     throw new Error('[inputCompute] must under a tarot runner')
   }
@@ -510,9 +511,7 @@ export function inputCompute<T>(
   return wrapCompute
 }
 
-export function inputComputeServer<T>(
-  func: InputComputeFn,
-) {
+export function inputComputeServer<T>(func: InputComputeFn) {
   if (!currentRunnerScope) {
     throw new Error('[inputComputeServer] must under a tarot runner')
   }
@@ -528,15 +527,14 @@ export function inputComputeServer<T>(
 
 type IWatchTarget = FDataSetterGetterFunc | InputComputeFn
 
-export function after(
-  callback: () => void,
-  targets: IWatchTarget[]
-) {
+export function after(callback: () => void, targets: IWatchTarget[]) {
   const fn = () => {
     callback()
   }
   targets.forEach(hook => {
-    const realHook = currentRunnerScope!.dataSetterGetterMap.get(hook as FDataSetterGetterFunc)
+    const realHook = currentRunnerScope!.dataSetterGetterMap.get(
+      hook as FDataSetterGetterFunc
+    )
     if (realHook) {
       currentRunnerScope!.addWatch(realHook, fn, 'after')
     } else if (typeof hook === 'function') {
@@ -545,15 +543,14 @@ export function after(
   })
 }
 
-export function before(
-  callback: () => void,
-  targets: IWatchTarget[]
-) {
+export function before(callback: () => void, targets: IWatchTarget[]) {
   const fn = () => {
     callback()
   }
   targets.forEach(hook => {
-    const realHook = currentRunnerScope!.dataSetterGetterMap.get(hook as FDataSetterGetterFunc)
+    const realHook = currentRunnerScope!.dataSetterGetterMap.get(
+      hook as FDataSetterGetterFunc
+    )
     // TIP：useless, because can't before state changed
     if (realHook) {
       currentRunnerScope!.addWatch(realHook, fn, 'before')

@@ -5,41 +5,36 @@ import {
   after,
   before,
   freeze,
-  inputComputeServer,
+  inputComputeServer
 } from '../src/core'
-import {
-  setModelConfig
-} from '../src/util'
+import { setModelConfig } from '../src/util'
 
 initModelConfig()
 
-export function initModelConfig (obj: any = {}) {
+export function initModelConfig(obj: any = {}) {
   setModelConfig({
-    async find (e, w) {
+    async find(e, w) {
       return []
     },
-    async update (e, w) {
+    async update(e, w) {
       return []
     },
-    async remove (e, d) {
+    async remove(e, d) {
       return []
     },
-    async create (e, d) {
+    async create(e, d) {
       return {}
     },
-    async executeDiff (d) {
-  
-    },
-    async postDiffToServer (d) {
-    },
-    async postComputeToServer (c) {
+    async executeDiff(d) {},
+    async postDiffToServer(d) {},
+    async postComputeToServer(c) {
       return []
     },
     ...obj
   })
 }
 
-export function wait (ms: number = 15) {
+export function wait(ms: number = 15) {
   return new Promise(r => setTimeout(r, ms))
 }
 
@@ -47,73 +42,57 @@ export function blank() {}
 export function returnArg(arg: any) {
   return arg
 }
-export function oneState (arg: { a: number }) {
+export function oneState(arg: { a: number }) {
   const s1 = state(arg.a)
-  
+
   return {
     s1
   }
 }
-export function oneModel (arg: { a: number }) {
-  const m1 = model(
-    () => ({
-      entity: 'test-model',
-      where: {
-
-      }
-    })
-  )
+export function oneModel(arg: { a: number }) {
+  const m1 = model(() => ({
+    entity: 'test-model',
+    where: {}
+  }))
   return {
     m1
   }
 }
-export function oneCompute (arg?: { a: number }) {
-  const f1 = inputCompute((arg: any) => {
-
-  })
+export function oneCompute(arg?: { a: number }) {
+  const f1 = inputCompute((arg: any) => {})
   return {
     f1
   }
 }
-export function oneEffect (arg: {
-  a: number,
-  s1Changed: Function
-}) {
-
+export function oneEffect(arg: { a: number; s1Changed: Function }) {
   const stateBM = oneState(arg)
 
-  after(
-    () => {
-      arg.s1Changed()
-    },
-    [stateBM.s1]
-  )
+  after(() => {
+    arg.s1Changed()
+  }, [stateBM.s1])
 
   return {
     s1: stateBM.s1
   }
 }
-export function beforeWithFreeze (v: number) {
+export function beforeWithFreeze(v: number) {
   const num = state(v)
 
   const markBefore = { value: 0 }
 
-  const addNum = inputCompute((v) => {
+  const addNum = inputCompute(v => {
     num(d => {
       return d + v
     })
   })
 
-  before(
-    () => {
-      markBefore.value++
-      let cur: any = num()
-      if (cur > 0) {
-        freeze(addNum)
-      }
-    },
-    [addNum]
-  )
+  before(() => {
+    markBefore.value++
+    let cur: any = num()
+    if (cur > 0) {
+      freeze(addNum)
+    }
+  }, [addNum])
 
   return {
     markBefore,
@@ -121,23 +100,20 @@ export function beforeWithFreeze (v: number) {
     addNum
   }
 }
-export function effectAfter (v: number) {
+export function effectAfter(v: number) {
   const num = state(v)
 
   const markBefore = { value: 0 }
 
-  const addNum = inputCompute((v) => {
+  const addNum = inputCompute(v => {
     num(d => {
       return d + v
     })
   })
 
-  after(
-    () => {
-      markBefore.value++
-    },
-    [addNum, num]
-  )
+  after(() => {
+    markBefore.value++
+  }, [addNum, num])
 
   return {
     markBefore,
@@ -146,7 +122,7 @@ export function effectAfter (v: number) {
   }
 }
 
-export function plainObjectState (obj1: { num1: number }, num2: number) {
+export function plainObjectState(obj1: { num1: number }, num2: number) {
   const s1 = state<{ num1: number }>(obj1)
   const s2 = state(num2)
 
@@ -156,7 +132,7 @@ export function plainObjectState (obj1: { num1: number }, num2: number) {
   }
 }
 
-export function changeStateInputCompute (obj1: { num1: number }, num2: number) {
+export function changeStateInputCompute(obj1: { num1: number }, num2: number) {
   const ps = plainObjectState(obj1, num2)
 
   const { s1, s2 } = ps
@@ -174,13 +150,16 @@ export function changeStateInputCompute (obj1: { num1: number }, num2: number) {
       })
     }
   })
-  
+
   return {
     ...ps,
     changeS1
   }
 }
-export function changeStateInputComputeServer (obj1: { num1: number }, num2: number) {
+export function changeStateInputComputeServer(
+  obj1: { num1: number },
+  num2: number
+) {
   const ps = plainObjectState(obj1, num2)
 
   const { s1, s2 } = ps
@@ -190,14 +169,17 @@ export function changeStateInputComputeServer (obj1: { num1: number }, num2: num
       draft.num1 = v
     })
   })
-  
+
   return {
     ...ps,
     changeS1
   }
 }
 
-export function changeStateAsyncInputCompute (obj1: { num1: number }, num2: number) {
+export function changeStateAsyncInputCompute(
+  obj1: { num1: number },
+  num2: number
+) {
   const ps = plainObjectState(obj1, num2)
 
   const { s1, s2 } = ps
@@ -217,22 +199,21 @@ export function changeStateAsyncInputCompute (obj1: { num1: number }, num2: numb
       })
     }
   })
-  
+
   return {
     ...ps,
     changeS1
   }
 }
 
-export function userPessimisticModel () {
+export function userPessimisticModel() {
   const users = model(
     () => ({
       entity: 'User',
-      where: {  }
+      where: {}
     }),
     { immediate: true, pessimisticUpdate: true }
   )
-
 
   return {
     users
