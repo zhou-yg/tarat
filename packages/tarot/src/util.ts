@@ -78,7 +78,7 @@ export function isPromise(p?: any) {
 }
 
 export function nextTick(fn: () => void) {
-  const st = setTimeout(fn, 0)
+  const st = setTimeout(fn, 2)
   return () => clearTimeout(st)
 }
 
@@ -492,6 +492,31 @@ export function calculateDiff(data: any | any[], ps: IPatch[]) {
     remove
   }
 }
+export type TPath = (string | number)[]
+/**
+ * 修改了对象或数组的patch，计算
+ * 如果修改了数组的子元素，就上升到整个数组，因为数组的变化通过patch来反推太不准确了
+ * patch本身已经是按计算并合并过的，这里不需要考虑合并问题
+ * a.0.b.0.c --> a 变化
+ * a.b.c --> a.b.c 变化，需要通知到a.b吗？因为如果不是进一步的依赖，那说明b就是primitive的
+ */
+export function calculateChangedPath (source: any, ps: IPatch[]): TPath[] {
+  if (Array.isArray(source)) {
+    return [['']] // root
+  }
+  const result: TPath[] = []
+  ps.forEach(p => {
+    const i = p.path.findIndex((v, i) => {
+      return typeof v === 'number' && isArray(get(source, p.path.slice(0, i + 1)))
+    })
+    if (i > -1) {
+      result.push(p.path.slice(0, i))      
+    } else {
+      result.push(p.path.slice())
+    }
+  })
+  return result
+}
 
 // execute in server side
 export function getDiffExecution() {
@@ -512,4 +537,13 @@ export function getEnv() {
     client: currentEnv === 'client',
     server: currentEnv === 'server'
   }
+}
+
+export function traverseValues (target: any, callback: (v: any) => void) {
+  map(target, v => {
+    callback(v)
+    if (likeObject(v)) {
+      traverseValues(v, callback)
+    }
+  }) 
 }

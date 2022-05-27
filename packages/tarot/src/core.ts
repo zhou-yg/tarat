@@ -14,7 +14,11 @@ import {
   isDef,
   likeObject,
   isPromise,
-  nextTick
+  nextTick,
+  get,
+  set,
+  traverseValues,
+  calculateChangedPath
 } from './util'
 import {
   produceWithPatches,
@@ -105,7 +109,7 @@ class CurrentRunnerScope {
     this.hooks.push(v)
 
     if (v instanceof State) {
-      v.onUpdate(this.stateChanged.bind(this, v))
+      v.on(this.stateChanged.bind(this, v))
       this.dataSetterGetterMap.set(f!, v)
     }
   }
@@ -246,37 +250,80 @@ function executeBM(f: BM, args: any) {
   return bmResult
 }
 
-type IStateListener<T = any> = (v: T) => void
+type IStateListener<T = any> = ((v: T) => void)
+
+interface IStateListeners {
+  [key: string]: IStateListener[] | undefined | IStateListeners
+}
+
+function internalProxy<T extends { [k: string]: any }> (source: State<T>, _internalValue: T | undefined, path: (string | number)[] = []): T | undefined {
+  if (currentComputed) {
+    currentComputed.addDeps(source, path)
+    if (_internalValue && likeObject(_internalValue)) {
+      return new Proxy<T>(_internalValue, {
+        get (target, p: string) {
+          return internalProxy(source, target[p], path.concat(p))
+        }
+      })
+    }
+  }
+  return _internalValue
+}
 
 export class State<T = any> {
   _internalValue: T | undefined
-  listeners: IStateListener[] = []
+  listeners: IStateListeners = {}
   freezed?: boolean
   constructor(data?: T) {
     this._internalValue = data
   }
-  notify() {
-    this.listeners.forEach(f => f(this._internalValue))
-  }
-  onUpdate(fn: IStateListener<T>) {
-    if (this.listeners.indexOf(fn) === -1) {
-      this.listeners.push(fn)
+  notify(path: (number | string)[] = []) {
+    if (path.length === 0) {
+      path = ['']
     }
-    return () => this.offUpdate(fn)
+    const listeners: IStateListener[] | undefined = get(this.listeners, path)
+    listeners?.forEach(f => f(this._internalValue))
   }
-  offUpdate(fn?: IStateListener) {
-    if (fn) {
-      this.listeners = this.listeners.filter(f => f !== fn)
-    } else {
-      this.listeners = []
+
+  on(fn: IStateListener<T>, path: (number | string)[] = []) {
+    if (path.length === 0) {
+      path = ['']
+    }
+    let listeners: IStateListener[] | undefined = get(this.listeners, path)
+    if (!listeners) {
+      listeners = []
+      set(this.listeners, path, listeners)
+    }
+    if (listeners.indexOf(fn) === -1) {
+      listeners.push(fn)
+    }
+    return () => {
+      const i = listeners!.indexOf(fn)
+      if (i > -1) {
+        listeners?.splice(i, 1)
+      }
     }
   }
-  get value() {
-    return this._internalValue
+  off(fn: IStateListener) {
+    traverseValues(this.listeners, (listeners: IStateListener[]) => {
+      const i = listeners!.indexOf(fn)
+      if (i > -1) {
+        listeners?.splice(i, 1)
+      }
+    })
   }
-  update(v?: T) {
+  get value(): T | undefined {
+    return internalProxy(this, this._internalValue)
+  }
+  update(v?: T, patches: IPatch[] = []) {
+    const oldValue = this._internalValue
     this._internalValue = v
-    this.notify()
+    if (patches.length === 0) {
+      this.notify()
+    } else {
+      const changedPathArr = calculateChangedPath(oldValue, patches)
+      changedPathArr.forEach(path => this.notify(path))
+    }
   }
   // @TODO, lots of case should be upgrade
   applyPatches(p: IPatch[]) {
@@ -309,8 +356,8 @@ function createStateSetterGetterFunc<T = any>(
 
           scope.addComputePatches(s, patches)
         } else {
-          const result = produce(s.value, paramter)
-          s.update(result)
+          const [result, patches] = produceWithPatches(s.value, paramter)
+          s.update(result, patches)
         }
       } else {
         throw new Error('[change state] pass a function')
@@ -355,7 +402,7 @@ class Model<T = any> extends State<T> {
   async updateWithPatches(v: T | undefined, patches: IPatch[]) {
     const oldValue = this._internalValue
     if (!this.options.pessimisticUpdate) {
-      this.update(v)
+      this.update(v, patches)
     }
 
     const { entity } = this.getQueryWhere()
@@ -558,4 +605,46 @@ export function before(callback: () => void, targets: IWatchTarget[]) {
       currentRunnerScope!.addWatch(hook as InputComputeFn, fn, 'before')
     }
   })
+}
+
+type FComputedFunc<T> = () => T | Promise<T>
+
+class Computed<T> extends State {
+  getterPromise: Promise<T> | null = null
+  batchRunCancel: () => void = () => {}
+  constructor (
+    public getter: FComputedFunc<T>
+  ) {
+    super()
+  }
+  run () {
+    const r: any = this.getter()
+    if (r.then || r instanceof Promise) {
+      r.then((asyncResult: T) => {
+        this.update(asyncResult)
+      })
+    } else {
+      this.update(r)
+    }
+  }
+  addDeps (source: State, path: (number | string)[] = []) {
+    source.on(this.depHasChanged.bind(this), path)
+  }
+  depHasChanged () {
+    this.batchRunCancel()
+    this.batchRunCancel = nextTick(() => {
+      this.run()
+    })
+  }
+}
+
+let currentComputed: null | Computed<any> = null
+export function computed<T> (fn: FComputedFunc<T>) {
+  const hook = new Computed(fn)
+  currentComputed = hook
+  currentRunnerScope!.addHook(hook)
+
+  hook.run()
+
+  return () => hook.value
 }

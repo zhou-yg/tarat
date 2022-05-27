@@ -45,6 +45,14 @@ development plan:
 
 ## internal-state
 
+- stateValueProxy func
+  - parameter
+    - state._internalValue
+  - check if under computed hook
+    - y: return Proxy
+      - watch get operation, and set to State ?
+    - n; return state._internalValue
+
 - State class
   - freeze property, maybe useless in partial inputCompute in server side
   - _intervalValue: any
@@ -54,13 +62,16 @@ development plan:
     - data as "_intervalValue"
     - call watchSelf
   - onUpdate / offUpdate
-    - add listener
+    - add listener for whole _internalValue
+    - upgrade: add listener for _internalValue's property path
   - update
     - batch calling "update" event in next tick (15ms)
     - trigger "changed" event to "onUpdate" listener
       - state object
   - get value
-   - return "_intervalValue"
+    - return StateProxy(_internalValue)
+
+
 - Model class
   - extends to "state"
   - constructor
@@ -82,6 +93,7 @@ development plan:
         - rollback patches
   - remove method
     - support batch remove
+
 - cache (not necessary)
 - computed (like vue.computed)
   - asynchronous: support async/await in compute body
@@ -98,6 +110,25 @@ development plan:
 
 - model factory
   - same above
+
+## computed factory
+(like vue.computed)
+
+- ComputedState
+  - extends to State
+  - getterPromise
+    - if the getter is Aysnc, should wait until getter done
+  - getter function
+    - set in constructor
+  - addDeps
+
+- current is hook = new State
+  - hook = internal state, need not pass data from server/client to another side
+- running function body
+  - set currentComputed=currentHook that created inside State
+- asynchronous: support async/await in compute body，like 'useRequest'
+- collect to internalState.property
+  - re-run when nternalState.property changed
 
 ## input-compute
 

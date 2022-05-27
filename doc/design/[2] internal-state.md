@@ -13,7 +13,7 @@
   - 特性：读快，写可以慢，有锁，持久存储，不允许丢失
   - 数据库
 
-默认是都是响应式的数据，默认以 @vue/reactivity 为例
+默认是都是普通数据，通过显示的update进行数据更新，和 监听通知
 
 > 如何解决二进制文件数据？
 
@@ -21,7 +21,17 @@
 
 最基础的内存数据，接收一个普通数据（如果是响应是数据，应进行toRaw处理）
 
-变成了响应式数据的时机？
+后面去掉“响应式”的原因是
+
+响应式库本身就自成身一体的，，在BM里的响应式部分在于，state本身，而不在于它的value部分，所以这个意义将BM跟reactvity之类的响应式是并列关系，不是可以二次封装的关系
+
+BM内部本就需要通过immer来收集patches，再根据patches来前后判断，数据的修改情况，并手动调用update，所以响应式的意义就不大了
+
+即BM来说，是只有有限的响应式结构，即state,cache,model，等同于@vue/reactivity的 ref增强版，所以是并列关系
+
+所以后续的基于reactive的computed，也是同样需要基于State的机制再实现一层，不能使用现有的框架
+
+<!-- 变成了响应式数据的时机？
 - constructor中reactive
 - get value时reactive 
 
@@ -38,7 +48,7 @@ State可以视作一个大ref, 那如何监听数据？ （ps：如何区分是�
 - 否，每次get value都是同一个reactive对象，可以直接使用effect作为watch
 
 另外增加watch会有性能开销，是否可以在执行时自动merge，一次watch？（后续考虑）
-> watch(hook.memoizedList) 
+> watch(hook.memoizedList)  -->
 
 
 ```javascript
