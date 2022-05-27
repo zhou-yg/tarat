@@ -1,4 +1,4 @@
-import { cloneDeep, IDiff, IQueryWhere, setEnv } from '../../src/util'
+import { cloneDeep, IDiff, IQueryWhere, set, setEnv } from '../../src/util'
 import {
   Runner,
   State
@@ -18,12 +18,15 @@ describe('model', () => {
         return cloneDeep(mockUsersData.slice())
       },
       async executeDiff (entity: string, diff: IDiff) {
-        console.log('diff: ', diff);
-
         await mockBM.wait()
 
         diff.create.forEach((obj) => {
-          mockUsersData.push(obj.value as any)
+          if (obj.currentFieldPath) {
+            const target = mockUsersData.find(u => u.id === obj.source.id)
+            set(target, obj.currentFieldPath, obj.value)
+          } else {
+            mockUsersData.push(obj.value as any)
+          }
         })
         diff.update.forEach((obj) => {
           mockUsersData.forEach(o2 => {
@@ -81,6 +84,42 @@ describe('model', () => {
       
       await mockBM.wait()
 
+      const newObj = { name: 'c', id: 3, child: true }
+
+      result.users((draft: any) => {
+        draft[0].child = newObj
+      })
+
+      await mockBM.wait()
+
+      expect(result.users()).toEqual([
+        { id: 1, name: 'a', child: newObj },
+        { id: 2, name: 'b' },
+      ])
+    })
+    it('object:remove property', async () => {
+      const runner = new Runner(mockBM.userPessimisticModel)
+      const result = runner.init()
+      
+      await mockBM.wait()
+
+      result.users((draft: any) => {
+        delete draft[1].name
+      })
+
+      await mockBM.wait()
+
+      expect(result.users()).toEqual([
+        { id: 1, name: 'a' },  
+        { id: 2, name: null },  
+      ])
+    })
+    it('array:create new element', async () => {
+      const runner = new Runner(mockBM.userPessimisticModel)
+      const result = runner.init()
+      
+      await mockBM.wait()
+
       const newObj = { name: 'c', id: 3 }
 
       result.users((draft: any) => {
@@ -91,11 +130,11 @@ describe('model', () => {
 
       expect(result.users()).toEqual([
         { id: 1, name: 'a' },
-        { id: 2, name: 'b' },  
+        { id: 2, name: 'b' },
         newObj
       ])
     })
-    it.only('object:remove', async () => {
+    it ('array:remove element', async () => {
       const runner = new Runner(mockBM.userPessimisticModel)
       const result = runner.init()
       
@@ -110,10 +149,6 @@ describe('model', () => {
       expect(result.users()).toEqual([
         { id: 2, name: 'b' },  
       ])
-    })
-    it ('array:create new element', async () => {
-    })
-    it ('array:remove element', async () => {
     })
   })
 })

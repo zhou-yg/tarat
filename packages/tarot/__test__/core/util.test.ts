@@ -41,6 +41,7 @@ describe('util', () => {
       expect(diff.update).toEqual([])
       expect(diff.create).toEqual([
         {
+          source: origin,
           value: {
             num: 0,
             child2: {
@@ -114,7 +115,7 @@ describe('util', () => {
       expect(diff.create).toEqual([])
       expect(diff.remove).toEqual([
         {
-          
+          source: origin,
           value: {
             num: '0'
           },
@@ -122,7 +123,7 @@ describe('util', () => {
         }
       ])
     })
-    it ('array', () => {
+    it('array', () => {
       const origin = [{ num0: null }]
       const [r, patches] = produceWithPatches(origin, (d: any) => {
         d[0].num0 = 0
@@ -135,7 +136,7 @@ describe('util', () => {
       const diff = calculateDiff(origin, patches)
       expect(diff.update).toEqual([
         {
-          source: { num0: null },
+          source: origin[0],
           value: {
             num0: 0,
             num1: 1
@@ -145,7 +146,7 @@ describe('util', () => {
       ])
       expect(diff.create).toEqual([
         {
-          
+          source: origin,          
           value: {
             num2: 2
           },
@@ -165,7 +166,7 @@ describe('util', () => {
       const diff = calculateDiff(origin, patches)
       expect(diff.update).toEqual([
         {
-          source: { num0: null },
+          source: origin[0].child,
           value: {
             num0: 0,
             num1: 1
@@ -189,7 +190,7 @@ describe('util', () => {
       expect(diff.update).toEqual([])
       expect(diff.create).toEqual([
         {
-          
+          source: origin[0].child,
           value: {
             num2: 2,
           },
@@ -213,6 +214,7 @@ describe('util', () => {
       expect(diff.create).toEqual([])
       expect(diff.remove).toEqual([
         {
+          source: origin,
           value: {
             num0: 1,
           },
@@ -235,6 +237,7 @@ describe('util', () => {
       expect(diff.create).toEqual([])
       expect(diff.remove).toEqual([
         {
+          source: origin,
           value: { num0: null, child: [{ num0: 1 }] },
           currentFieldPath: '',
         }
@@ -255,6 +258,7 @@ describe('util', () => {
       expect(diff.create).toEqual([])
       expect(diff.remove).toEqual([
         {
+          source: origin,
           value: { num0: 2 },
           currentFieldPath: '',
         }
@@ -275,12 +279,14 @@ describe('util', () => {
       expect(diff.create).toEqual([])
       expect(diff.remove).toEqual([
         {
+          source: origin,
           value: {
             num0: 1,
           },
           currentFieldPath: '',
         },
         {
+          source: origin,
           value: {
             num0: 2,
           },
@@ -304,12 +310,14 @@ describe('util', () => {
       expect(diff.create).toEqual([])
       expect(diff.remove).toEqual([
         {
+          source: origin,
           value: {
             num0: 1,
           },
           currentFieldPath: '',
         },
         {
+          source: origin,
           value: {
             num0: 2,
           },
@@ -332,6 +340,7 @@ describe('util', () => {
       expect(diff.create).toEqual([])
       expect(diff.remove).toEqual([
         {
+          source: origin[0].child,
           value: {
             num0: 2,
           },
@@ -354,11 +363,43 @@ describe('util', () => {
       expect(diff.create).toEqual([])
       expect(diff.remove).toEqual([
         {
+          source: origin[0].child,
           value: {
             num0: 1,
           },
           currentFieldPath: 'child',
         }
+      ])
+    })
+    it('array remove all', () => {
+      const origin = [
+        { num0: null },
+        { num0: 1 },
+        { num0: 2 },
+      ]
+      const [r, patches] = produceWithPatches(origin, (d: any) => {
+        d.splice(0, d.length)
+      })
+
+      const diff = calculateDiff(origin, patches)
+      expect(diff.update).toEqual([])
+      expect(diff.create).toEqual([])
+      expect(diff.remove).toEqual([
+        {
+          source: origin,
+          value: { num0: null },
+          currentFieldPath: '',
+        },
+        {
+          source: origin,
+          value: { num0: 1 },
+          currentFieldPath: '',
+        },
+        {
+          source: origin,
+          value: { num0: 2 },
+          currentFieldPath: '',
+        },
       ])
     })
   })
