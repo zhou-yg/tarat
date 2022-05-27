@@ -67,7 +67,7 @@ export function oneModel (arg: { a: number }) {
     m1
   }
 }
-export function oneCompute (arg: { a: number }) {
+export function oneCompute (arg?: { a: number }) {
   const f1 = inputCompute((arg: any) => {
 
   })

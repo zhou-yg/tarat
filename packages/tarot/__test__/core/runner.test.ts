@@ -35,6 +35,15 @@ describe('runner basic', () => {
     expect(runner.scope.hooks.length).toStrictEqual(1)
     expect((runner.scope.hooks[0] as State).value).toBe(arg.a)
   })
+  it('run oneState without Runner', () => {
+    const arg = { a: 1 }
+
+    try {
+      const runner = mockBM.oneState(arg)
+    } catch (e: any) {
+      expect(e.message).toBe('[state] must under a tarot runner')
+    }
+  })
   it('run oneModel', () => {
     const runner = new Runner(mockBM.oneModel)
 
@@ -46,6 +55,15 @@ describe('runner basic', () => {
     expect(runner.scope.hooks.length).toBe(1)
     expect((runner.scope.hooks[0] as State).value).toBe(undefined)
   })
+  it('run oneModel without Runner', () => {
+    const arg = { a: 1 }
+
+    try {
+      const runner = mockBM.oneModel(arg)
+    } catch (e: any) {
+      expect(e.message).toBe('[model] must under a tarot runner')
+    }
+  })
   it('run oneCompute', () => {
     const runner = new Runner(mockBM.oneCompute)
 
@@ -53,6 +71,13 @@ describe('runner basic', () => {
 
     expect(typeof initResult.f1).toBe('function')
     expect(runner.scope.hooks.length).toBe(1)
+  })
+  it('run oneCompute', () => {
+    try {
+      const runner = mockBM.oneCompute()
+    } catch (e: any) {
+      expect(e.message).toBe('[inputCompute] must under a tarot runner')
+    }
   })
   it('run oneEffect with nested BM', async () => {
     const runner = new Runner(mockBM.oneEffect)

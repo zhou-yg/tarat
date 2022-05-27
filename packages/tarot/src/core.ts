@@ -384,7 +384,7 @@ class ClientModel<T = any> extends Model<T> {
 
 export function state<T>(initialValue: T): FStateSetterGetterFunc {
   if (!currentRunnerScope) {
-    throw new Error('must under a tarot runner')
+    throw new Error('[state] must under a tarot runner')
   }
 
   const internalState = new State<T>(initialValue)
@@ -420,7 +420,7 @@ export function model<T = any>(
   op?: IModelOption
 ): FModelSetterGetterFunc {
   if (!currentRunnerScope) {
-    throw new Error('must under a tarot runner')
+    throw new Error('[model] must under a tarot runner')
   }
 
   const internalModel = getEnv().client
@@ -502,7 +502,7 @@ export function inputCompute<T>(
   func: InputComputeFn,
 ) {
   if (!currentRunnerScope) {
-    throw new Error('must under a tarot runner')
+    throw new Error('[inputCompute] must under a tarot runner')
   }
   const wrapCompute = createInputComputeExecution(func, currentRunnerScope)
   currentRunnerScope.addHook(wrapCompute)
@@ -514,7 +514,7 @@ export function inputComputeServer<T>(
   func: InputComputeFn,
 ) {
   if (!currentRunnerScope) {
-    throw new Error('must under a tarot runner')
+    throw new Error('[inputComputeServer] must under a tarot runner')
   }
 
   const wrapCompute = createServerInputComputeExecution(
@@ -532,10 +532,6 @@ export function after(
   callback: () => void,
   targets: IWatchTarget[]
 ) {
-  if (!currentRunnerScope) {
-    throw new Error('must under a tarot runner')
-  }
-
   const fn = () => {
     callback()
   }
@@ -553,10 +549,6 @@ export function before(
   callback: () => void,
   targets: IWatchTarget[]
 ) {
-  if (!currentRunnerScope) {
-    throw new Error('must under a tarot runner')
-  }
-
   const fn = () => {
     callback()
   }
