@@ -294,19 +294,60 @@ describe('util', () => {
         }
       ])
     })
-    it('array remove multi elements not tail', () => {
+    it('array remove multi elements not tail & unshift', () => {
       const origin = [
+        // 1
         { num0: null, child: [{ num0: 1 }] },
         { num0: 1 },
         { num0: 2 },
         { num0: 3 }
       ]
       const [r, patches] = produceWithPatches(origin, (d: any) => {
+        d[0].num0 = 0
+        d.unshift(1)
         d.splice(1, 2)
       })
 
       const diff = calculateDiff(origin, patches)
       expect(diff.update).toEqual([])
+      expect(diff.create).toEqual([])
+      expect(diff.remove).toEqual([
+        {
+          source: origin,
+          value: origin[0],
+          currentFieldPath: '',
+        },
+        {
+          source: origin,
+          value: origin[1],
+          currentFieldPath: '',
+        }
+      ])
+    })
+    it('array remove multi elements not tail & push', () => {
+      const origin = [
+        // 1
+        { num0: null, child: [{ num0: 1 }] },
+        { num0: 1 },
+        { num0: 2 },
+        { num0: 3 }
+      ]
+      const [r, patches] = produceWithPatches(origin, (d: any) => {
+        d[0].num0 = 0
+        d.splice(1, 2)
+        d.push(1)
+      })
+
+      const diff = calculateDiff(origin, patches)
+      expect(diff.update).toEqual([
+        {
+          source: origin[0],
+          value: {
+            num0: 0,
+          },
+          currentFieldPath: '',
+        }
+      ])
       expect(diff.create).toEqual([])
       expect(diff.remove).toEqual([
         {
