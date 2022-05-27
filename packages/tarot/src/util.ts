@@ -187,7 +187,7 @@ interface IStackUnit {
   value: {
     [k: string]: any
   }
-  source?: {
+  source: {
     [k: string]: any
   }
   currentFieldPath: string 
@@ -292,16 +292,32 @@ export function calculateDiff(data: any | any[], ps: IPatch[]) {
   .filter(p => p.path.length > 0)
   .forEach(p => {
     if (p.path && p.path.length > 0) {
-      const target = p.path.length === 1 ? data : get(data, p.path.slice(0, -1))
-      const source = target
+      const source = p.path.length === 1 ? data : get(data, p.path.slice(0, -1))
       // CAUTION: 是不是太暴力
       const pathSkipArr = p.path.filter((k, i) => {
         return !isArray(get(data, p.path.slice(0, i)))
       })
-      /* 取到的是current对象, root = { a:{b:[x]} } -> root.a.b，数组情况下，pathSkipArr要取到，b，不能-1，因为前面把数组多过滤了一层
-       * root={a:{ b:x }} -> root.a.b 对象的情况下，要取到，a
+
+      const patchValue = Reflect.has(p,'value') ? p.value : get(data, p.path)
+
+      /** 4种情况（针对model，没有数组 -> 数组的情况）
+       * 
+       * 重点是区分: a.0.b  a.b  a.b.0   0.a.b ， 因为前面数组被过滤了，所以最终都是 a.b
+       * 
+       * 取到的是current对象, root = { a:{ b:[x]} } -> root.a.b.0，对象->数组, source=array
+       *   x=object --> a.b
+       *   x=primitiv --> invalid
+       * root={a:{ b:x }} -> root.a.b 对象->对象, source=object
+       *   x=object --> a.b
+       *   x=primitive --> a
+       * root=[{ a: { b: x } }] -> root.0.a.b， 数组->对象->对象, source=object
+       *   x=object --> a.b
+       *   x=primitive --> a
+       * root=[{ a: [{ b: x }] }] -> root.a.0.b， 数组->对象, source=array
+       *   x=object -> a.b
+       *   x=primtive --> a
        */
-      const currentFieldPath = pathSkipArr.slice(0, isArray(source) ? Infinity : -1).join('.')
+      const currentFieldPath = pathSkipArr.slice(0, likeObject(patchValue) ? Infinity : -1).join('.')
 
       const lastPathKey = p.path[p.path.length - 1]
 
@@ -309,7 +325,7 @@ export function calculateDiff(data: any | any[], ps: IPatch[]) {
         case 'replace':
           {
             // cant handle the primitive patch in array
-            if (Array.isArray(target) && !likeObject(p.value)) {
+            if (Array.isArray(source) && !likeObject(patchValue)) {
               return
             }
             const exist = findWithDefault(update, (u) => u.currentFieldPath === currentFieldPath, {
@@ -318,11 +334,11 @@ export function calculateDiff(data: any | any[], ps: IPatch[]) {
               currentFieldPath,
             })
             if (exist) {
-              if (Array.isArray(target)) {
-                exist.value = p.value // should bring "id"
+              if (Array.isArray(source)) {
+                exist.value = patchValue // should bring "id"
               } else {
                 Object.assign(exist.value, {
-                  [lastPathKey]: p.value
+                  [lastPathKey]: patchValue
                 })
               }
             }
@@ -330,17 +346,18 @@ export function calculateDiff(data: any | any[], ps: IPatch[]) {
           break;
         case 'add':
           {
-            if (Array.isArray(target)) {
+            if (Array.isArray(source)) {
               create.push({
-                value: p.value,
+                source,
+                value: patchValue,
                 currentFieldPath,
               })
             } else {
-              const addData = p.value
-              if (likeObject(addData)) {
+              if (likeObject(patchValue)) {
                 create.push({
-                  value: addData,
-                  currentFieldPath: p.path.join('.'), // add object into object, must have path
+                  source,
+                  value: patchValue,
+                  currentFieldPath,
                 })
               } else {
                 const exist = findWithDefault(update, (u) => u.currentFieldPath === currentFieldPath, {
@@ -350,7 +367,7 @@ export function calculateDiff(data: any | any[], ps: IPatch[]) {
                 })                                            
                 if (exist) {
                   Object.assign(exist.value, {
-                    [lastPathKey]: p.value
+                    [lastPathKey]: patchValue
                   })
                 }  
               }
@@ -359,17 +376,18 @@ export function calculateDiff(data: any | any[], ps: IPatch[]) {
           break;
         case 'remove':
           {
-            const removedData = get(data, p.path)
-            if (likeObject(removedData)) {
+            if (likeObject(patchValue)) {
               if (isArray(source)) {
                 remove.push({
-                  value: removedData,
-                  currentFieldPath: pathSkipArr.join('.'), // remove obj from obj, muse have path
+                  source,
+                  value: patchValue,
+                  currentFieldPath,
                 })                
               } else {
                 remove.push({
-                  value: removedData,
-                  currentFieldPath: p.path.join('.'), // remove obj from obj, muse have path
+                  source,
+                  value: patchValue,
+                  currentFieldPath,
                 })
               }
             } else {
