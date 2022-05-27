@@ -1,3 +1,4 @@
+import { applyPatches } from 'immer'
 import isEqual from './isEqual'
 
 export function isArray(arr?: any) {
@@ -209,22 +210,27 @@ interface IStackUnit {
  * arr.splice(0, 1) -> 0 后面的全部前移，最后length = length -1 完成
  * 删除尾部，直接减少length
  * 删除非尾部, 尾部往前占位，再减少length
+ * 
+ * 考虑新增：如果在删除的过程中又有新增，则新增会去占位已经删除的数据位置，如果通过equal来检查，有可能新增的值跟之前是一样的，如何确认这个数据是新增的还是旧的？
+ *  站在DB的场景里思考：如果是含有id的一样，那对于DB来说就不是新增
+ *    但可能的异常是：在乐观更新的机制下，新增了无id对象，在更新数据库的异步期间，又新增了，但是因为跟之前的本地内存里的，无id对象一样，误判成了是移动，最后导致异步期间的新增都无效了
+ *      解决方法：乐观更新的model，在生产patch需要维护一个本地序列来生产
  */
-function preparePatches(data: any | any[], ps: IPatch[]) {
-  const lengthPatchIndexes: Array<[number, any]> = []
+
+function preparePatches2(data: any | any[], ps: IPatch[]) {
+  const lengthPatchIndexes: Array<[number, any, (string | number)[]]> = []
   ps.forEach((p, i) => {
     const source = p.path.length === 1 ? data : get(data, p.path.slice(0, -1))
     if (isArray(source) && last(p.path) === 'length') {
-      lengthPatchIndexes.push([i, source])
+      lengthPatchIndexes.push([i, source, p.path.slice(0, -1)])
     }
   })
   if (lengthPatchIndexes.length > 0) {
-    const newInsertPatches: Array<[number, number, IPatch[]]> = []
+    const allInsertPatches: Array<[number, number, IPatch[]]> = []
 
-    lengthPatchIndexes.forEach(([index, source]) => {
+    lengthPatchIndexes.forEach(([index, source, currentPath]) => {
       const newArrLength = ps[index].value
-      let willRemovedDataPath: (number | string)[][] = []
-      let reservedDataValues: any[] = []
+      const sourcePatches: IPatch[] = []
 
       let startMovingIndex = index - 1
       for (index - 1; startMovingIndex >= 0; startMovingIndex--) {
@@ -232,50 +238,93 @@ function preparePatches(data: any | any[], ps: IPatch[]) {
         const currentSource =
           p.path.length === 1 ? data : get(data, p.path.slice(0, -1))
         if (currentSource === source) {
-          willRemovedDataPath = willRemovedDataPath.filter(pathArr => {
-            return !isEqual(p.value, get(data, pathArr))
+          sourcePatches.unshift({
+            ...p,
+            path: p.path.slice(-1)
           })
-          willRemovedDataPath.push(p.path)
-          reservedDataValues.push(p.value)
         } else {
           break
         }
       }
+      const newSource = applyPatches(source, sourcePatches)
+
+      const reservedPatches: IPatch[] = []
+      const newInsertPatches: IPatch[] = []
+
+      sourcePatches.forEach(p => {
+        // value: maybe add, reserve
+        // path: maybe remove, reserve (including length)
+        const { path, value } = p
+        const existInOldIndex = source.findIndex((v:any) => isEqual(v, value))
+        const existInNewIndex = newSource.findIndex((v:any) => isEqual(v, value))
+        const alreadyReversed1 = reservedPatches.find(p => isEqual(p.value, value))
+        // add
+        if (existInOldIndex === -1 && existInNewIndex > -1) {
+          newInsertPatches.push({
+            op: 'add',
+            value,
+            path: currentPath.concat(path)
+          })
+        } else if(existInOldIndex > -1 && existInNewIndex > -1) {
+          if (!alreadyReversed1) {
+            reservedPatches.push({
+              op: 'replace',
+              value,
+              path: currentPath.concat(path)
+            })
+          }
+        }
+        const oldPathValue = get(source, path)
+        const oldExistInNewIndex = newSource.findIndex((v:any) => isEqual(v, oldPathValue))
+        const alreadyReversed2 = reservedPatches.find(p => isEqual(p.value, oldPathValue))
+        if (oldExistInNewIndex > -1) {
+          if (!alreadyReversed2) {
+            reservedPatches.push({
+              op: 'replace',
+              value: oldPathValue,
+              path: currentPath.concat(path)
+            })
+          }
+        } else {
+          newInsertPatches.push({
+            op: 'remove',
+            value: oldPathValue,
+            path: currentPath.concat(path)
+          })
+        }
+      })
       // directly remove tail
-      if (willRemovedDataPath.length < source.length - newArrLength) {
+      if (newArrLength < source.length) {
         let si = newArrLength
+
+        let reservedDataValuesMarks = reservedPatches.map(({ value }) => value)
         while (si < source.length) {
-          const oldReservedLength = reservedDataValues.length
+          const oldReservedLength = reservedDataValuesMarks.length
           // @TODO: immer的object是重新生成的，在引用上并不相等，所以需要isEqual
           // 防止值被重复消费，因为数组的值有可能是重复的
-          reservedDataValues = reservedDataValues.filter(
+          reservedDataValuesMarks = reservedDataValuesMarks.filter(
             v => !isEqual(source[si], v)
           )
-          if (reservedDataValues.length === oldReservedLength) {
-            // 当前值是要保存的值
-            willRemovedDataPath.push(ps[index].path.slice(0, -1).concat(si))
+          if (reservedDataValuesMarks.length === oldReservedLength) {
+            // 当前值不是要保留的值，标记“删除”
+            newInsertPatches.push({
+              op: 'remove',
+              value: source[si],
+              path: currentPath.concat(si)
+            })
           }
           si++
         }
       }
-      const willRemovedPatches: IPatch[] = willRemovedDataPath.map(
-        patchPath => {
-          return {
-            op: 'remove',
-            path: patchPath,
-            value: get(data, patchPath)
-          }
-        }
-      )
-      newInsertPatches.push([
-        willRemovedDataPath.length === 0 ? index : startMovingIndex + 1,
-        willRemovedDataPath.length === 0 ? 1 : index - startMovingIndex,
-        willRemovedPatches
+      // newInsertPatches.length must gt 1
+      allInsertPatches.push([
+        startMovingIndex + 1,
+        index - startMovingIndex,
+        newInsertPatches
       ])
     })
-
     let offset = 0
-    newInsertPatches.forEach(([st, length, arr]) => {
+    allInsertPatches.forEach(([st, length, arr]) => {
       ps.splice(st - offset, length, ...arr)
       offset = offset + length - arr.length
     })
@@ -291,7 +340,7 @@ export type IDiff = ReturnType<typeof calculateDiff>
 export function calculateDiff(data: any | any[], ps: IPatch[]) {
   data = cloneDeep(data)
 
-  ps = preparePatches(data, ps)
+  ps = preparePatches2(data, ps)
 
   let create: IStackUnit[] = []
   let update: IStackUnit[] = []
@@ -360,11 +409,13 @@ export function calculateDiff(data: any | any[], ps: IPatch[]) {
         case 'add':
           {
             if (Array.isArray(source)) {
-              create.push({
-                source,
-                value: patchValue,
-                currentFieldPath
-              })
+              if (likeObject(patchValue)) {
+                create.push({
+                  source,
+                  value: patchValue,
+                  currentFieldPath
+                })
+              }
             } else {
               if (likeObject(patchValue)) {
                 create.push({
