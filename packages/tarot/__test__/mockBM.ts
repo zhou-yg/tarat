@@ -5,7 +5,8 @@ import {
   after,
   before,
   freeze,
-  inputComputeServer
+  inputComputeServer,
+  computed
 } from '../src/core'
 import { setModelConfig } from '../src/util'
 
@@ -122,8 +123,8 @@ export function effectAfter(v: number) {
   }
 }
 
-export function plainObjectState(obj1: { num1: number }, num2: number) {
-  const s1 = state<{ num1: number }>(obj1)
+export function plainObjectState(obj1: { [key: string]: any }, num2: number) {
+  const s1 = state(obj1)
   const s2 = state(num2)
 
   return {
@@ -218,4 +219,18 @@ export function userPessimisticModel() {
   return {
     users
   }
+}
+
+export function blankComputed (v: number) {
+  const c = computed(() => {
+    return v
+  })
+  return { c }
+}
+export function onePrimitiveStateComputed (v1: number, v2: number) {
+  const s = state(v1)
+  const c = computed(() => {
+    return s() + v2
+  })
+  return { s, c }
 }
