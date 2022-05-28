@@ -78,7 +78,7 @@ export function isPromise(p?: any) {
 }
 
 export function nextTick(fn: () => void) {
-  const st = setTimeout(fn, 2)
+  const st = setTimeout(fn, 0)
   return () => clearTimeout(st)
 }
 

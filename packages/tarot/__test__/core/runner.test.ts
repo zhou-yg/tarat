@@ -35,6 +35,28 @@ describe('runner basic', () => {
     expect(runner.scope.hooks.length).toStrictEqual(1)
     expect((runner.scope.hooks[0] as State).value).toBe(arg.a)
   })
+  it('run onUpdate', async () => {
+    const runner = new Runner(mockBM.oneState)
+    const onUpdate = jest.fn(() => {
+    })
+    runner.onUpdate(onUpdate)
+
+    const arg = { a: 1 }
+
+    const initResult = runner.init(arg)
+
+    expect(initResult.s1()).toEqual(arg.a)
+    expect(runner.scope.hooks.length).toStrictEqual(1)
+    expect((runner.scope.hooks[0] as State).value).toBe(arg.a)
+
+    initResult.s1((d: any) => {
+      return d +  1
+    })
+    await mockBM.wait()
+
+    expect(initResult.s1()).toEqual(arg.a + 1)
+    expect(onUpdate).toHaveBeenCalledTimes(1)
+  })
   it('run oneState without Runner', () => {
     const arg = { a: 1 }
 
