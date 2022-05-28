@@ -27,10 +27,10 @@ describe('computed', () => {
     console.log('result.s._state.listeners:', result.s._state.listeners['']);
     expect(result.s._state).toBeInstanceOf(State)
     expect(result.s._state.listeners[''].length).toBe(2)
-    expect(result.s._state.listeners[''][0].name).toBe('bound ' + CurrentRunnerScope.prototype.stateChanged.name)
-    expect(result.s._state.listeners[''][1].name).toBe('bound ' + Computed.prototype.depHasChanged.name)
+    expect(result.s._state.listeners[''][0]).toBe(runner.scope.watcher)
+    expect(result.s._state.listeners[''][1]).toBe(result.c._state.watcher)
   })
-  it.only('use primitive state, change on time', async () => {
+  it('use primitive state, change on time', async () => {
     const num1 = 1
     const num2 = 2
     const runner = new Runner(mockBM.onePrimitiveStateComputed)
@@ -44,10 +44,9 @@ describe('computed', () => {
     result.s((v: number) => v + 1)
     await mockBM.wait()
 
-    console.log('result.s._state.listeners:', result.s._state.listeners[''].length);
     expect(result.c()).toBe(num1 + num2 + 1)
     expect(result.s._state.listeners[''].length).toBe(2)
-    expect(result.s._state.listeners[''][0].name).toBe('bound ' + CurrentRunnerScope.prototype.stateChanged.name)
-    expect(result.s._state.listeners[''][1].name).toBe('bound ' + Computed.prototype.depHasChanged.name)
+    expect(result.s._state.listeners[''][0]).toBe(runner.scope.watcher)
+    expect(result.s._state.listeners[''][1]).toBe(result.c._state.watcher)
   })
 })

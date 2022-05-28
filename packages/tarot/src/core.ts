@@ -59,6 +59,7 @@ export class CurrentRunnerScope {
   stateChangeCallbackRunning = false
   stateChangeCallbackCancel = () => {}
   stateChangeWaitHooks: Array<IScopeHook> = []
+  watcher = new Watcher<IScopeHook>(this)
   constructor() {}
   onUpdate(f: Function) {
     this.outerListeners.push(f)
@@ -69,7 +70,7 @@ export class CurrentRunnerScope {
   notifyOuter() {
     this.outerListeners.forEach(f => f())
   }
-  stateChanged(s: IScopeHook, v?: any) {
+  notify(s: IScopeHook) {
     this.stateChangeWaitHooks.push(s)
     if (this.stateChangeCallbackRunning) {
       return
@@ -87,13 +88,13 @@ export class CurrentRunnerScope {
 
       let hasStateHookChanged = false
 
-      changedHooks.forEach(s => {
+      changedHooks.forEach(hook => {
         this.internalListeners.forEach(([s2, listener]) => {
-          if (s2 === s && listener?.after) {
+          if (s2 === hook && listener?.after) {
             listener.after.forEach(f => callbackSet.add(f))
           }
         })
-        hasStateHookChanged = s instanceof State || hasStateHookChanged
+        hasStateHookChanged = hook instanceof State || hasStateHookChanged
       })
       for (const f of callbackSet) {
         f()
@@ -109,7 +110,7 @@ export class CurrentRunnerScope {
     this.hooks.push(v)
 
     if (v instanceof State) {
-      v.on(this.stateChanged.bind(this, v))
+      v.on(this.watcher)
       this.dataSetterGetterMap.set(f!, v)
     }
   }
@@ -157,7 +158,7 @@ export class CurrentRunnerScope {
     })
   }
   afterInputCompute(h: InputComputeHook) {
-    this.stateChanged(h)
+    this.notify(h)
   }
   createInputComputeContext(h: InputComputeHook, args: any): IHookContext {
     const { hooks } = this
@@ -250,10 +251,8 @@ function executeBM(f: BM, args: any) {
   return bmResult
 }
 
-type IStateListener<T = any> = ((v: T) => void)
-
 interface IStateListeners {
-  [key: string]: IStateListener[] | undefined | IStateListeners
+  [key: string]: Watcher<any>[] | undefined | IStateListeners
 }
 
 function internalProxy<T extends { [k: string]: any }> (source: State<T>, _internalValue: T, path: (string | number)[] = []): T {
@@ -277,38 +276,40 @@ export class State<T = any> {
   constructor(data: T) {
     this._internalValue = data
   }
-  notify(path: (number | string)[] = []) {
+  trigger(path: (number | string)[] = []) {
     if (path.length === 0) {
       path = ['']
     }
-    const listeners: IStateListener[] | undefined = get(this.listeners, path)
-    listeners?.forEach(f => f(this._internalValue))
+    const listeners: Watcher<typeof this>[] | undefined = get(this.listeners, path)
+    listeners?.forEach(w => w.notify(this))
   }
 
-  on(fn: IStateListener<T>, path: (number | string)[] = []) {
+  on(w: Watcher<typeof this>, path: (number | string)[] = []) {
     if (path.length === 0) {
       path = ['']
     }
-    let listeners: IStateListener[] | undefined = get(this.listeners, path)
+    let listeners: Watcher<typeof this>[] | undefined = get(this.listeners, path)
     if (!listeners) {
       listeners = []
       set(this.listeners, path, listeners)
     }
-    if (listeners.indexOf(fn) === -1) {
-      listeners.push(fn)
+    if (listeners.indexOf(w) === -1) {
+      listeners.push(w)
     }
     return () => {
-      const i = listeners!.indexOf(fn)
+      const i = listeners!.indexOf(w)
       if (i > -1) {
         listeners?.splice(i, 1)
       }
     }
   }
-  off(fn: IStateListener) {
-    traverseValues(this.listeners, (listeners: IStateListener[]) => {
-      const i = listeners!.indexOf(fn)
-      if (i > -1) {
-        listeners?.splice(i, 1)
+  off(w: Watcher<typeof this>) {
+    traverseValues(this.listeners, (listeners: Watcher<typeof this>[]) => {
+      if (listeners) {
+        const i = listeners.indexOf(w)
+        if (i > -1) {
+          listeners?.splice(i, 1)
+        }
       }
     })
   }
@@ -319,10 +320,10 @@ export class State<T = any> {
     const oldValue = this._internalValue
     this._internalValue = v
     if (patches.length === 0) {
-      this.notify()
+      this.trigger()
     } else {
       const changedPathArr = calculateChangedPath(oldValue, patches)
-      changedPathArr.forEach(path => this.notify(path))
+      changedPathArr.forEach(path => this.trigger(path))
     }
   }
   // @TODO, lots of case should be upgrade
@@ -401,7 +402,7 @@ class Model<T> extends State<T | undefined> {
   }
   updateFromRemote(v: T) {
     this._internalValue = v
-    this.notify()
+    this.trigger()
   }
   async updateWithPatches(v: T | undefined, patches: IPatch[]) {
     const oldValue = this._internalValue
@@ -612,9 +613,10 @@ export function before(callback: () => void, targets: IWatchTarget[]) {
 
 type FComputedFunc<T> = () => T | Promise<T>
 
-export class Computed<T> extends State {
+export class Computed<T> extends State<T | undefined> {
   getterPromise: Promise<T> | null = null
   batchRunCancel: () => void = () => {}
+  watcher = new Watcher<State<any>>(this)
   constructor (
     public getter: FComputedFunc<T>
   ) {
@@ -632,10 +634,10 @@ export class Computed<T> extends State {
       this.update(r)
     }
   }
-  addDeps (source: State, path: (number | string)[] = []) {
-    source.on(this.depHasChanged.bind(this), path)
+  addDeps (source: State<any>, path: (number | string)[] = []) {
+    source.on(this.watcher, path)
   }
-  depHasChanged () {
+  notify (state: State<any>) {
     this.batchRunCancel()
     this.batchRunCancel = nextTick(() => {
       this.run()
@@ -644,6 +646,10 @@ export class Computed<T> extends State {
 }
 
 let currentComputed: null | Computed<any> = null
+interface FComputedGetterFunc<T> extends Function {
+  (): T
+  _state?: State<T>
+}
 export function computed<T> (fn: FComputedFunc<T>) {
   const hook = new Computed(fn)
   currentComputed = hook
@@ -653,5 +659,20 @@ export function computed<T> (fn: FComputedFunc<T>) {
 
   currentComputed = null
 
-  return () => hook.value
+  const getter: FComputedGetterFunc<T | undefined> = () => hook.value
+  getter._state = hook
+  return getter
+}
+
+interface ISource<T> {
+  notify: (hook: T) => void
+}
+
+class Watcher<T> {
+  constructor (
+    public source: ISource<T>
+  ) {}
+  notify (h: T) {
+    this.source.notify(h)
+  }
 }
