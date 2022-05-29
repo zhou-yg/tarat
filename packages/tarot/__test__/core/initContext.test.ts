@@ -1,7 +1,6 @@
 import { IHookContext } from 'packages/tarot/src/util'
 import {
   Runner,
-  State
 } from '../../src/core'
 
 import * as mockBM from '../mockBM'

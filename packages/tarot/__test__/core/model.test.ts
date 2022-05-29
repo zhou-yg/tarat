@@ -1,7 +1,6 @@
 import { cloneDeep, IDiff, IQueryWhere, set, setEnv } from '../../src/util'
 import {
   Runner,
-  State
 } from '../../src/core'
 
 import * as mockBM from '../mockBM'

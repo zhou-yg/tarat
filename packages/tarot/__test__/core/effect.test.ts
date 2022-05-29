@@ -1,7 +1,5 @@
 import {
-  IHookContextData,
   Runner,
-  State
 } from '../../src/core'
 
 import * as mockBM from '../mockBM'
@@ -18,7 +16,7 @@ describe('effect', () => {
 
     expect(result.num()).toBe(initNum)
     expect(result.markBefore).toEqual({ value: 0 })
-    expect(runner.scope.hooks.length).toBe(2)
+    expect(runner.scope.hooks.length).toBe(3)
 
     const plusValue = 2
     result.addNum(plusValue)
@@ -48,7 +46,7 @@ describe('effect', () => {
 
     expect(result.num()).toBe(initNum)
     expect(result.markBefore).toEqual({ value: 0 })
-    expect(runner.scope.hooks.length).toBe(2)
+    expect(runner.scope.hooks.length).toBe(3)
 
     const plusValue = 2
     result.addNum(plusValue)

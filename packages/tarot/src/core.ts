@@ -108,7 +108,10 @@ class State<T = any> extends Hook {
     super()
     this._internalValue = data
   }
-  trigger(path: (number | string)[] = []) {
+  trigger(path: (number | string)[] = ['']) {
+    if (path.length === 0) {
+      path = ['']
+    }
     this.watchers.forEach(w => {
       w.notify(this, path)
     })
@@ -273,18 +276,23 @@ class Effect<T> extends Hook {
   getterPromise: Promise<T> | null = null
   batchRunCancel: () => void = () => {}
   watcher: Watcher<Hook> = new Watcher<Hook>(this)
+  cancelNotify = () => {}
   constructor (
-    public callback: () => void
+    public callback: () => void,
+    public scope: CurrentRunnerScope
   ) {
     super()
+    scope.addHook(this)
   }
   notify () {
-    this.callback()
+    this.cancelNotify()
+    this.cancelNotify = nextTick(() => {
+      this.callback()
+    })
   }
 }
 
 export class CurrentRunnerScope {
-  dataSetterGetterMap = new Map<FStateSetterGetterFunc<any>, State>()
   hooks: Hook[] = []
   computePatches: Array<[State, IPatch[]]> = []
   outerListeners: Function[] = []
@@ -303,8 +311,10 @@ export class CurrentRunnerScope {
     this.outerListeners.forEach(f => f())
   }
   notify(s?: Hook) {
-    if (s) {
-    }
+    this.stateChangeCallbackCancel()
+    this.stateChangeCallbackCancel = nextTick(() => {
+      this.notifyOuter()
+    })
   }
 
   addHook(v: Hook) {
@@ -312,6 +322,7 @@ export class CurrentRunnerScope {
       throw new Error('add repeat hook')
     }
     this.hooks.push(v)
+    this.watcher.addDep(v)
   }
 
   addComputePatches(data: State, p: IPatch[]) {
@@ -505,7 +516,7 @@ type FComputedFunc<T> = () => T | Promise<T>
 
 interface FComputedGetterFunc<T> extends Function {
   (): T
-  _state?: State<T>
+  _hook?: State<T>
 }
 let currentComputed: null | Computed<any> = null
 
@@ -561,7 +572,7 @@ export function computed<T> (fn: FComputedFunc<T>) {
   currentComputed = null
 
   const getter: FComputedGetterFunc<T | undefined> = () => hook.value
-  getter._state = hook
+  getter._hook = hook
   return getter
 }
 
@@ -573,7 +584,7 @@ export function inputCompute<T>(func: InputComputeFn) {
   const hook = new InputCompute(func, currentRunnerScope)
 
   const wrapFunc: FInputComputeFunc = (...args: any) => {
-    hook.run(...args)
+    return hook.run(...args)
   }
   wrapFunc._hook = hook
   return wrapFunc
@@ -594,21 +605,27 @@ export function inputComputeServer<T>(func: InputComputeFn) {
 }
 
 export function after(callback: () => void, targets: { _hook?: Hook }[]) {
-  const hook = new Effect(callback)
+  const hook = new Effect(callback, currentRunnerScope!)
 
   targets.forEach(target => {
     if (target._hook) {
-      hook.watcher.addDep(target._hook, ['after'])
+      if (target._hook instanceof InputCompute) {
+        hook.watcher.addDep(target._hook, ['after'])
+      } else {
+        hook.watcher.addDep(target._hook, [''])
+      }
     }
   })
 }
 
 export function before(callback: () => void, targets: { _hook?: Hook }[]) {
-  const hook = new Effect(callback)
+  const hook = new Effect(callback, currentRunnerScope!)
 
   targets.forEach(target => {
     if (target._hook) {
-      hook.watcher.addDep(target._hook, ['before'])
+      if (target._hook instanceof InputCompute) {
+        hook.watcher.addDep(target._hook, ['before'])
+      }
     }
   })
 }
