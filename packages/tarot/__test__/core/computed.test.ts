@@ -1,4 +1,3 @@
-import { IHookContext } from 'packages/tarot/src/util'
 import {
   Runner,
 } from '../../src/core'
@@ -21,11 +20,11 @@ describe('computed', () => {
 
     expect(result.c()).toBe(num1 + num2)
 
-    expect(result.s._state.watchers.size).toBe(2)
-    expect(result.s._state.watchers.has(runner.scope.watcher)).toBe(true)
-    expect(result.s._state.watchers.has(result.c._state.watcher)).toBe(true)
+    expect(result.s._hook.watchers.size).toBe(2)
+    expect(result.s._hook.watchers.has(runner.scope.watcher)).toBe(true)
+    expect(result.s._hook.watchers.has(result.c._hook.watcher)).toBe(true)
   })
-  it('use primitive state, change on time', async () => {
+  it('use primitive state, change one time', async () => {
     const num1 = 1
     const num2 = 2
     const runner = new Runner(mockBM.onePrimitiveStateComputed)
@@ -40,8 +39,8 @@ describe('computed', () => {
     await mockBM.wait()
 
     expect(result.c()).toBe(num1 + num2 + 1)
-    expect(result.s._state.watchers.size).toBe(2)
-    expect(result.s._state.watchers.has(runner.scope.watcher)).toBe(true)
-    expect(result.s._state.watchers.has(result.c._state.watcher)).toBe(true)
+    expect(result.s._hook.watchers.size).toBe(2)
+    expect(result.s._hook.watchers.has(runner.scope.watcher)).toBe(true)
+    expect(result.s._hook.watchers.has(result.c._hook.watcher)).toBe(true)
   })
 })

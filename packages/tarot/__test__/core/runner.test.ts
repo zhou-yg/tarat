@@ -1,6 +1,5 @@
 import {
   Runner,
-  State
 } from '../../src/core'
 
 import * as mockBM from '../mockBM'
@@ -33,7 +32,7 @@ describe('runner basic', () => {
 
     expect(initResult.s1()).toEqual(arg.a)
     expect(runner.scope.hooks.length).toStrictEqual(1)
-    expect((runner.scope.hooks[0] as State).value).toBe(arg.a)
+    expect((runner.scope.hooks[0] as any).value).toBe(arg.a)
   })
   it('run onUpdate', async () => {
     const runner = new Runner(mockBM.oneState)
@@ -47,7 +46,7 @@ describe('runner basic', () => {
 
     expect(initResult.s1()).toEqual(arg.a)
     expect(runner.scope.hooks.length).toStrictEqual(1)
-    expect((runner.scope.hooks[0] as State).value).toBe(arg.a)
+    expect((runner.scope.hooks[0] as any).value).toBe(arg.a)
 
     initResult.s1((d: any) => {
       return d +  1
@@ -75,7 +74,7 @@ describe('runner basic', () => {
 
     expect(initResult.m1()).toBe(undefined)
     expect(runner.scope.hooks.length).toBe(1)
-    expect((runner.scope.hooks[0] as State).value).toBe(undefined)
+    expect((runner.scope.hooks[0] as any).value).toBe(undefined)
   })
   it('run oneModel without Runner', () => {
     const arg = { a: 1 }
@@ -101,7 +100,7 @@ describe('runner basic', () => {
       expect(e.message).toBe('[inputCompute] must under a tarot runner')
     }
   })
-  it('run oneEffect with nested BM', async () => {
+  it.only('run oneEffect with nested BM', async () => {
     const runner = new Runner(mockBM.oneEffect)
 
     const onRunnerUpdate = jest.fn(() => {
@@ -117,10 +116,7 @@ describe('runner basic', () => {
     const initResult = runner.init(arg)
 
     expect(initResult.s1()).toBe(arg.a)
-    expect(runner.scope.hooks.length).toBe(1)
-    expect(runner.scope.dataSetterGetterMap.size).toBe(1)
-    expect(runner.scope.internalListeners.length).toBe(1)
-    expect(runner.scope.internalListeners[0][1].after.length).toBe(1)
+    expect(runner.scope.hooks.length).toBe(2)
     
     expect(onRunnerUpdate).toHaveBeenCalledTimes(0)
 

@@ -1,6 +1,5 @@
 import {
   Runner,
-  State
 } from '../../src/core'
 
 import * as mockBM from '../mockBM'

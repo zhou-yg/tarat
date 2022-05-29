@@ -1,7 +1,6 @@
 import { cloneDeep, IHookContext } from '../../src/util'
 import {
   Runner,
-  State
 } from '../../src/core'
 
 import * as mockBM from '../mockBM'
