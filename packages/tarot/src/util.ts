@@ -1,6 +1,8 @@
 import { applyPatches } from 'immer'
 import isEqual from './isEqual'
 
+export { default as isEqual } from './isEqual'
+
 export function isArray(arr?: any) {
   return Array.isArray(arr)
 }
