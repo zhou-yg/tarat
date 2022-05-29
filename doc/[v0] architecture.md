@@ -43,6 +43,27 @@ development plan:
     - input-compute
     - effect
 
+
+## Watcher
+new abstract Class
+
+Watcher
+
+- target
+  - who need to be notified
+- deps
+  - the target's dependencies
+- addDep (dep: Hook)
+  - add hook to current, so that when hook changed, this watcher can notify current watcher's target
+
+Hook
+- basic class, every hook can be subscribed
+- watchers
+  - if this hook changed, should notify these watchers
+- addWatcher
+  - add subsriber to current hook
+  
+
 ## internal-state
 
 - stateValueProxy func
@@ -54,6 +75,7 @@ development plan:
     - n; return state._internalValue
 
 - State class
+  - extends to Hook
   - freeze property, maybe useless in partial inputCompute in server side
   - _intervalValue: any
   - parameter
@@ -111,6 +133,12 @@ development plan:
 - model factory
   - same above
 
+
+## effect factory
+
+Effect Class 
+
+
 ## computed factory
 (like vue.computed)
 
@@ -132,7 +160,8 @@ development plan:
 
 ## input-compute
 
-- inputCompute hook method
+InputCompute Class
+  - extends to Hook
   - receive a function as [compute execution body]
   - return a runner function, so that can collect execute situation
   - support asynchoronous
@@ -149,9 +178,14 @@ development plan:
 - calling end
   - collect all state patches inside inputCompute, trigger their's 'update'
   - use CurrentScope.applyComputePatches to commit patches from CurrentScope and clear
-- provide distinct hook for server/client
-  - inputCompute
-  - inputComputeServer
+- provide distinct running method for server/client
+  - run 
+  - runInServer
+
+- inputCompute factory
+  - build InputCompute instance
+  - return execution entry func
+
 
 - runtime
   - server
