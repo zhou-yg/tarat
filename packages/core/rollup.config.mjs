@@ -1,12 +1,22 @@
-import tsPlugin from '@rollup/plugin-typescript'
+import tsPlugin from 'rollup-plugin-typescript2'
+import dts from "rollup-plugin-dts"
 
-export default {
+export default [{
   plugins: [
-    tsPlugin()
+    tsPlugin({
+      clean: true,
+      tsconfig: './tsconfig.json',
+    })
   ],
   input: 'src/core.ts',
   output: {
-    file: 'dist/bundle.js',
+    file: 'dist/index.esm.js',
     format: 'esm'
   }
-}
+},
+  {
+    input: "src/core.ts",
+    output: [{ file: "dist/index.esm.d.ts", format: "es" }],
+    plugins: [dts()],
+  }
+]

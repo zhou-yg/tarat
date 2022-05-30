@@ -2,13 +2,14 @@
   "name": "@tarot-run/core",
   "version": "0.0.1",
   "description": "useHook serverless framework",
-  "main": "dist/index.js",
+  "main": "./dist/index.esm.js",
+  "types": "./dist/index.esm.d.ts",
   "type": "module",
   "scripts": {
     "test-unit": "jest --watch",
     "test-ci": "TEST=CI jest",
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
-    "build": "rollup --config rollup.config.mjs"
+    "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs"
   },
   "repository": {
     "type": "git",
@@ -21,11 +22,14 @@
   "homepage": "https://github.com/zhou-yg/tarot#readme",
   "dependencies": {
     "@vue/reactivity": "^3.2.36",
-    "immer": "^9.0.14"
+    "immer": "^9.0.14",
+    "rollup-plugin-dts": "^4.2.2",
+    "tslib": "^2.4.0"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^8.3.2",
     "execa": "6.x.x",
-    "rollup": "^2.74.1"
+    "rollup": "^2.74.1",
+    "rollup-plugin-typescript2": "^0.31.2"
   }
 }
