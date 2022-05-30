@@ -51,24 +51,22 @@ interface ITarget<T> {
   notify: (hook?: T) => void
 }
 
-interface ISource<U>{
+interface ISource<U> {
   watchers: Set<Watcher<U>>
   addWatcher: (w: Watcher<U>) => void
 }
 
 class Watcher<T> {
   deps: Map<ISource<T>, (string | number)[][]> = new Map()
-  constructor (
-    public target: ITarget<ISource<T>>
-  ) {}
-  notify (dep: ISource<T>, path: TPath) {
+  constructor(public target: ITarget<ISource<T>>) {}
+  notify(dep: ISource<T>, path: TPath) {
     const paths = this.deps.get(dep)
     const matched = paths?.some(p => isEqual(p, path))
     if (matched) {
       this.target.notify(dep)
     }
   }
-  addDep (dep: ISource<T>, path: (number | string)[] = []) {
+  addDep(dep: ISource<T>, path: (number | string)[] = []) {
     dep.addWatcher(this)
     if (path.length === 0) {
       path = ['']
@@ -96,7 +94,7 @@ class Watcher<T> {
 class Hook {
   freezed?: boolean
   watchers = new Set<Watcher<typeof this>>()
-  addWatcher (w: Watcher<typeof this>) {
+  addWatcher(w: Watcher<Hook>) {
     this.watchers.add(w)
   }
 }
@@ -201,12 +199,10 @@ class Computed<T> extends State<T | undefined> {
   getterPromise: Promise<T> | null = null
   batchRunCancel: () => void = () => {}
   watcher: Watcher<State<any>> = new Watcher<State<any>>(this)
-  constructor (
-    public getter: FComputedFunc<T>
-  ) {
+  constructor(public getter: FComputedFunc<T>) {
     super(undefined)
   }
-  run () {
+  run() {
     currentComputed = this
     const r: any = this.getter()
     currentComputed = null
@@ -218,7 +214,7 @@ class Computed<T> extends State<T | undefined> {
       this.update(r)
     }
   }
-  notify () {
+  notify() {
     this.batchRunCancel()
     this.batchRunCancel = nextTick(() => {
       this.run()
@@ -226,23 +222,18 @@ class Computed<T> extends State<T | undefined> {
   }
 }
 class InputCompute extends Hook {
-  constructor (
-    public getter: InputComputeFn,
-    public scope: CurrentRunnerScope
-  ) {
+  constructor(public getter: InputComputeFn, public scope: CurrentRunnerScope) {
     super()
     scope.addHook(this)
   }
-  inputFuncStart() {
-
-  }
-  inputFuncEnd () {
+  inputFuncStart() {}
+  inputFuncEnd() {
     currentInputeCompute = null
     this.scope.applyComputePatches()
     unFreeze({ _hook: this })
     this.triggerEvent('after')
   }
-  run (...args: any) {
+  run(...args: any) {
     currentInputeCompute = this
     this.triggerEvent('before')
     if (!checkFreeze({ _hook: this })) {
@@ -256,7 +247,7 @@ class InputCompute extends Hook {
     }
     this.inputFuncEnd()
   }
-  async runInServer (...args: any) {
+  async runInServer(...args: any) {
     currentInputeCompute = this
     this.triggerEvent('before')
     if (!checkFreeze({ _hook: this })) {
@@ -266,7 +257,7 @@ class InputCompute extends Hook {
     }
     this.inputFuncEnd()
   }
-  triggerEvent (timing: 'before' | 'after') {
+  triggerEvent(timing: 'before' | 'after') {
     this.watchers.forEach(w => {
       w.notify(this, [timing])
     })
@@ -277,14 +268,11 @@ class Effect<T> extends Hook {
   batchRunCancel: () => void = () => {}
   watcher: Watcher<Hook> = new Watcher<Hook>(this)
   cancelNotify = () => {}
-  constructor (
-    public callback: () => void,
-    public scope: CurrentRunnerScope
-  ) {
+  constructor(public callback: () => void, public scope: CurrentRunnerScope) {
     super()
     scope.addHook(this)
   }
-  notify () {
+  notify() {
     this.cancelNotify()
     this.cancelNotify = nextTick(() => {
       this.callback()
@@ -433,13 +421,17 @@ function executeBM(f: BM, args: any) {
   return bmResult
 }
 
-function internalProxy<T extends { [k: string]: any }> (source: State<T>, _internalValue: T, path: (string | number)[] = []): T {
+function internalProxy<T>(
+  source: State<T>,
+  _internalValue: T,
+  path: (string | number)[] = []
+): T {
   if (currentComputed) {
     currentComputed.watcher.addDep(source, path)
     if (_internalValue && likeObject(_internalValue)) {
-      return new Proxy<T>(_internalValue, {
-        get (target, p: string) {
-          return internalProxy(source, target[p], path.concat(p))
+      return new Proxy(_internalValue as any, {
+        get(target, p: string) {
+          return internalProxy(source, (target as any)[p], path.concat(p))
         }
       })
     }
@@ -452,7 +444,7 @@ let currentInputeCompute: Hook | null = null
 type IModifyFunction<T> = (draft: Draft<T>) => void
 
 interface FStateSetterGetterFunc<SV = any> extends Function {
-  (arg?: IModifyFunction<SV>): SV;
+  (arg?: IModifyFunction<SV>): SV
   _hook?: Hook
 }
 
@@ -478,7 +470,6 @@ function createStateSetterGetterFunc<SV>(
     return s.value
   }
 }
-
 
 interface IModelOption {
   immediate?: boolean
@@ -511,7 +502,6 @@ function isInputCompute(v: any) {
 
 type InputComputeFn = (...arg: any) => void | Promise<void>
 
-
 type FComputedFunc<T> = () => T | Promise<T>
 
 interface FComputedGetterFunc<T> extends Function {
@@ -522,7 +512,7 @@ let currentComputed: null | Computed<any> = null
 
 interface FInputComputeFunc extends Function {
   (...args: any): void
-  _hook?: Hook 
+  _hook?: Hook
 }
 
 export function state<S>(initialValue: S): FStateSetterGetterFunc<S> {
@@ -562,7 +552,7 @@ export function model<T>(
   setterGetter._hook = internalModel
   return setterGetter
 }
-export function computed<T> (fn: FComputedFunc<T>) {
+export function computed<T>(fn: FComputedFunc<T>) {
   const hook = new Computed(fn)
   currentComputed = hook
   currentRunnerScope!.addHook(hook)

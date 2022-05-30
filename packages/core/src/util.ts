@@ -261,7 +261,7 @@ interface IStackUnit {
  * arr.splice(0, 1) -> 0 后面的全部前移，最后length = length -1 完成
  * 删除尾部，直接减少length
  * 删除非尾部, 尾部往前占位，再减少length
- * 
+ *
  * 考虑新增：如果在删除的过程中又有新增，则新增会去占位已经删除的数据位置，如果通过equal来检查，有可能新增的值跟之前是一样的，如何确认这个数据是新增的还是旧的？
  *  站在DB的场景里思考：如果是含有id的一样，那对于DB来说就不是新增
  *    但可能的异常是：在乐观更新的机制下，新增了无id对象，在更新数据库的异步期间，又新增了，但是因为跟之前的本地内存里的，无id对象一样，误判成了是移动，最后导致异步期间的新增都无效了
@@ -306,9 +306,13 @@ function preparePatches2(data: any | any[], ps: IPatch[]) {
         // value: maybe add, reserve
         // path: maybe remove, reserve (including length)
         const { path, value } = p
-        const existInOldIndex = source.findIndex((v:any) => isEqual(v, value))
-        const existInNewIndex = newSource.findIndex((v:any) => isEqual(v, value))
-        const alreadyReversed1 = reservedPatches.find(p => isEqual(p.value, value))
+        const existInOldIndex = source.findIndex((v: any) => isEqual(v, value))
+        const existInNewIndex = newSource.findIndex((v: any) =>
+          isEqual(v, value)
+        )
+        const alreadyReversed1 = reservedPatches.find(p =>
+          isEqual(p.value, value)
+        )
         // add
         if (existInOldIndex === -1 && existInNewIndex > -1) {
           newInsertPatches.push({
@@ -316,7 +320,7 @@ function preparePatches2(data: any | any[], ps: IPatch[]) {
             value,
             path: currentPath.concat(path)
           })
-        } else if(existInOldIndex > -1 && existInNewIndex > -1) {
+        } else if (existInOldIndex > -1 && existInNewIndex > -1) {
           if (!alreadyReversed1) {
             reservedPatches.push({
               op: 'replace',
@@ -326,8 +330,12 @@ function preparePatches2(data: any | any[], ps: IPatch[]) {
           }
         }
         const oldPathValue = get(source, path)
-        const oldExistInNewIndex = newSource.findIndex((v:any) => isEqual(v, oldPathValue))
-        const alreadyReversed2 = reservedPatches.find(p => isEqual(p.value, oldPathValue))
+        const oldExistInNewIndex = newSource.findIndex((v: any) =>
+          isEqual(v, oldPathValue)
+        )
+        const alreadyReversed2 = reservedPatches.find(p =>
+          isEqual(p.value, oldPathValue)
+        )
         if (oldExistInNewIndex > -1) {
           if (!alreadyReversed2) {
             reservedPatches.push({
@@ -551,17 +559,19 @@ export type TPath = (string | number)[]
  * a.0.b.0.c --> a 变化
  * a.b.c --> a.b.c 变化，需要通知到a.b吗？因为如果不是进一步的依赖，那说明b就是primitive的
  */
-export function calculateChangedPath (source: any, ps: IPatch[]): TPath[] {
+export function calculateChangedPath(source: any, ps: IPatch[]): TPath[] {
   if (Array.isArray(source)) {
     return [['']] // root
   }
   const result: TPath[] = []
   ps.forEach(p => {
     const i = p.path.findIndex((v, i) => {
-      return typeof v === 'number' && isArray(get(source, p.path.slice(0, i + 1)))
+      return (
+        typeof v === 'number' && isArray(get(source, p.path.slice(0, i + 1)))
+      )
     })
     if (i > -1) {
-      result.push(p.path.slice(0, i))      
+      result.push(p.path.slice(0, i))
     } else {
       result.push(p.path.slice())
     }
@@ -590,11 +600,11 @@ export function getEnv() {
   }
 }
 
-export function traverseValues (target: any, callback: (v: any) => void) {
+export function traverseValues(target: any, callback: (v: any) => void) {
   map(target, v => {
     callback(v)
     if (likeObject(v)) {
       traverseValues(v, callback)
     }
-  }) 
+  })
 }

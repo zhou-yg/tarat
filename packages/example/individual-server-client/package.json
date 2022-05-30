@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/zhou-yg/tarot#readme",
   "dependencies": {
+    "@tarot-run/core": "workspace:^0.0.1",
     "koa": "^2.13.4"
   },
   "devDependencies": {

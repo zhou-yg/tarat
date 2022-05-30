@@ -221,13 +221,13 @@ export function userPessimisticModel() {
   }
 }
 
-export function blankComputed (v: number) {
+export function blankComputed(v: number) {
   const c = computed(() => {
     return v
   })
   return { c }
 }
-export function onePrimitiveStateComputed (v1: number, v2: number) {
+export function onePrimitiveStateComputed(v1: number, v2: number) {
   const s = state(v1)
   const c = computed(() => {
     return s() + v2
