@@ -247,7 +247,7 @@ class InputCompute extends Hook {
     }
     this.inputFuncEnd()
   }
-  async runInServer(...args: any) {
+  async runInServer(...args: any[]) {
     currentInputeCompute = this
     this.triggerEvent('before')
     if (!checkFreeze({ _hook: this })) {
@@ -288,6 +288,7 @@ export class CurrentRunnerScope {
   stateChangeCallbackCancel = () => {}
   stateChangeWaitHooks: Set<Hook> = new Set<Hook>()
   watcher: Watcher<Hook> = new Watcher(this)
+  initialArgList: any[] = []
   constructor() {}
   onUpdate(f: Function) {
     this.outerListeners.push(f)
@@ -303,6 +304,9 @@ export class CurrentRunnerScope {
     this.stateChangeCallbackCancel = nextTick(() => {
       this.notifyOuter()
     })
+  }
+  setIntialArgs (argList: any[]) {
+    this.initialArgList = argList || []
   }
 
   addHook(v: Hook) {
@@ -330,9 +334,9 @@ export class CurrentRunnerScope {
     })
   }
 
-  createInputComputeContext(h: Hook, args: any): IHookContext {
+  createInputComputeContext(h?: Hook, args?: any[]): IHookContext {
     const { hooks } = this
-    const hookIndex = hooks.indexOf(h)
+    const hookIndex = h ? hooks.indexOf(h) : -1
     const hooksData: IHookContext['data'] = hooks.map(hook => {
       if (hook instanceof State) {
         return ['data', hook.value]
@@ -340,9 +344,10 @@ export class CurrentRunnerScope {
       return ['inputCompute', null]
     })
     return {
+      initialArgList: this.initialArgList,
       data: hooksData,
       index: hookIndex,
-      args
+      args: args || []
     }
   }
   applyContext(c: IHookContext) {
@@ -387,6 +392,7 @@ export class Runner {
       throw new Error('can not init repeat')
     }
     currentRunnerScope = this.scope
+    currentRunnerScope.setIntialArgs(args)
 
     const result: ReturnType<BM> = executeBM(this.bm, args)
     if (this.initialContext) {
@@ -398,10 +404,10 @@ export class Runner {
 
     return result
   }
-  async callHook(hookIndex: number, arg: any) {
+  async callHook(hookIndex: number, args: any[]) {
     const hook = this.scope.hooks[hookIndex]
     if (hook) {
-      await (hook as InputCompute).run(arg)
+      await (hook as InputCompute).run(...args)
     }
   }
 }
@@ -588,7 +594,7 @@ export function inputComputeServer<T>(func: InputComputeFn) {
   const hook = new InputCompute(func, currentRunnerScope)
 
   const wrapFunc: FInputComputeFunc = (...args: any) => {
-    hook.runInServer(...args)
+    return hook.runInServer(...args)
   }
   wrapFunc._hook = hook
   return wrapFunc

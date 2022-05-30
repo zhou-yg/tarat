@@ -6,7 +6,8 @@
   "types": "./dist/index.esm.d.ts",
   "type": "module",
   "scripts": {
-    "test-unit": "jest --watch",
+    "watch-unit": "jest --watch -- __test__/core/deliverContext.test.ts",
+    "test-unit": "jest",
     "test-ci": "TEST=CI jest",
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
     "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs"
