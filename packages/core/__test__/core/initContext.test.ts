@@ -1,4 +1,4 @@
-import { IHookContext } from 'packages/tarot/src/util'
+import { IHookContext } from '../../src/util'
 import {
   Runner,
 } from '../../src/core'
