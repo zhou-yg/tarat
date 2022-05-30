@@ -1,13 +1,9 @@
 {
-  "name": "tarot.ts",
-  "version": "0.0.1",
+  "name": "@tarot-run/connect",
+  "version": "0.0.2",
   "description": "useHook serverless framework",
   "main": "dist/index.js",
   "scripts": {
-    "test-unit": "jest --watch",
-    "test-ci": "TEST=CI jest",
-    "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
-    "build": "rollup --config rollup.config.mjs"
   },
   "repository": {
     "type": "git",
