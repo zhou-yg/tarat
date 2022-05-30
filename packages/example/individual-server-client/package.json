@@ -3,9 +3,10 @@
   "version": "0.0.1",
   "description": "useHook serverless framework",
   "main": "dist/index.js",
-  "module": "es6",
+  "type": "module",
   "scripts": {
-    "server": "ts-node server/app.ts"
+    "server": "ts-node --skip-project server/app.ts",
+    "server2": "node --loader ts-node/esm server/app.ts"
   },
   "repository": {
     "type": "git",
@@ -18,7 +19,10 @@
   "homepage": "https://github.com/zhou-yg/tarot#readme",
   "dependencies": {
     "@tarot-run/core": "workspace:^0.0.1",
-    "koa": "^2.13.4"
+    "axii": "^1.5.8",
+    "execa": "6.x.x",
+    "koa": "^2.13.4",
+    "vite": "^2.9.9"
   },
   "devDependencies": {
     "@types/koa": "^2.13.4",
