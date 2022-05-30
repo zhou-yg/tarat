@@ -1,17 +1,11 @@
 import Koa from 'koa'
-import { Runner } from '@tarot-run/core'
-import hook from './hook.js'
+import tarotMiddleware from './middleware'
+import koaBody from 'koa-body'
 
 const app = new Koa()
 
-app.use(async (ctx, next) => {
-  if (/hook/.test(ctx.request.path)) {
-    const runner = new Runner(hook)
-    runner.init()
-  } else {
-    await next()
-  }
-})
+app.use(koaBody())
+app.use(tarotMiddleware())
 
 app.use(async (ctx) => {
   ctx.body = 'hello'

@@ -1,0 +1,59 @@
+import { IHookContext } from '../../src/util'
+import {
+  Runner,
+} from '../../src/core'
+
+import * as mockBM from '../mockBM'
+
+describe('initContext', () => {
+  it('init context to state', () => {
+    const args = [
+      { num1: 0 },
+      10
+    ]
+    const context: IHookContext = {
+      initialArgList: [],
+      args: [],
+      data: [
+        ['data', { numStr: 'from context' }],
+        ['data', null]
+      ]
+    }
+    const runner = new Runner(mockBM.plainObjectState, context)
+    const result = runner.init(...args)
+
+    expect(result.s1()).toEqual(context.data[0][1])
+    expect(result.s2()).toEqual(context.data[1][1])
+  })
+  it('callHook remote', async () => {
+
+    mockBM.initModelConfig({
+      async postComputeToServer (c: IHookContext) {
+        const serverRunner = new Runner(mockBM.changeStateInputComputeServer, c)
+        serverRunner.init(...c.initialArgList)
+
+        if (c.index) {
+          await serverRunner.callHook(c.index, c.args)
+        }
+        const context = serverRunner.scope.createInputComputeContext()
+
+        return context
+      }
+    })
+    const args = [
+      { num1: 0 },
+      1
+    ]
+    const clientRunner = new Runner(mockBM.changeStateInputComputeServer)
+    const r = clientRunner.init(...args)
+
+    expect(r.s1()).toEqual(args[0])
+    expect(r.s2()).toEqual(args[1])
+
+    const newVal = 10
+    await r.changeS1(newVal)
+
+    expect(r.s1()).toEqual({ num1: newVal })
+    expect(r.s2()).toEqual(args[1])
+  })
+})
