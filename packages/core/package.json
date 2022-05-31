@@ -1,6 +1,6 @@
 {
   "name": "@tarot-run/core",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "useHook serverless framework",
   "main": "./dist/index.server.js",
   "types": "./dist/index.d.ts",
@@ -10,7 +10,8 @@
     "test-unit": "jest",
     "test-ci": "TEST=CI jest",
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
-    "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs"
+    "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs",
+    "release": "npm run build && bump --commit \"release: @tarot-run/core v%s\" --push && npm publish --no-git-checks"
   },
   "repository": {
     "type": "git",
@@ -28,7 +29,8 @@
     "tslib": "^2.4.0"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "^8.3.2",
+    "@jsdevtools/version-bump-prompt": "6.1.0",
+    "@rollup/plugin-typescript": "^6.1.0",
     "execa": "6.x.x",
     "rollup": "^2.74.1",
     "rollup-plugin-replace": "^2.2.0",
