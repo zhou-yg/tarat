@@ -1,5 +1,5 @@
 import { IHookContext, isState, Runner, setModelConfig } from '@tarot-run/core'
-import hook from '../server/hook'
+import hook from '../hooks/hook'
 import {
   atom, reactive, watch, traverse, isReactive, isAtom
 } from 'axii'
@@ -7,6 +7,9 @@ import { cloneDeep } from 'lodash'
 
 const hostConfig = `http://localhost:9001/hook`
 
+/**
+ * @TODO should provide by @tarot-run by default
+ */
 setModelConfig({
   async find(e, w) {
     return []
@@ -33,6 +36,9 @@ setModelConfig({
   },
 })
 
+/**
+ * @TODO should provide by @tarot-run by default
+ */
 export default (...args: any[]) => {
   const runner = new Runner(hook)
   console.log('runner: ', runner);
