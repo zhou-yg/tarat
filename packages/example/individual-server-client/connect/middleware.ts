@@ -1,7 +1,10 @@
 import { IHookContext, Runner } from '@tarot-run/core'
 import Application from 'koa'
-import hook from '../server/hook.js'
+import hook from '../hooks/hook.js'
 
+/**
+ * @TODO should provide by @tarot-run by default
+ */
 export default function tarotMiddleware () : Application.Middleware{
   return async (ctx, next) => {
     if (/hook/.test(ctx.request.path) && ctx.request.method === 'POST') {
