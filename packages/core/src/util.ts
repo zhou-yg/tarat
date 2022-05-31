@@ -183,7 +183,7 @@ interface IModelData {
 type IModelCreateData = Omit<IModelData, 'where'> | Omit<IModelData, 'where'>[]
 
 export interface IHookContext {
-  initialArgList: any[];
+  initialArgList: any[]
   data: Array<
     ['data' | 'patch' | 'inputCompute' | 'model', any | IPatch[] | null]
   >
