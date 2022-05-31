@@ -11,7 +11,7 @@
     "test-ci": "TEST=CI jest",
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
     "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs",
-    "release": "npm run build && bump --commit \"release: @tarot-run/core v%s\" --push && npm publish --no-git-checks"
+    "release": "npm run build && bump --commit \"release: @tarot-run/core v%s\" --push && npm publish --access public"
   },
   "repository": {
     "type": "git",
