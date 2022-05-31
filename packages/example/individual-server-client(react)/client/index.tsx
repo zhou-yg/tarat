@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 
-import useTarot from '../connect/useReactHook'
+import hook from '../hooks/hook'
+import useHook from '../connect/useReactHook'
 
 const Plus: React.FC = () => {
 
-  const r = useTarot()
+  const r = useHook(hook)
   
   const v1  = r?.s1()
   const v2  = r?.s2()

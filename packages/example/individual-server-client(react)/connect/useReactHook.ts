@@ -1,7 +1,5 @@
 import { IHookContext, isState, Runner, setModelConfig } from '@tarot-run/core'
-import hook from '../hooks/hook'
 import { useEffect, useState } from 'react'
-import { cloneDeep } from 'lodash'
 
 const hostConfig = `http://localhost:9001/_hook`
 
@@ -37,7 +35,7 @@ setModelConfig({
 /**
  * @TODO should provide by @tarot-run by default
  */
-export default (...args: any[]) => {
+export default (hook: () => void, ...args: any[]) => {
 
   const [hookResult, setHookResult] = useState<null | { [k: string]: any }>(null)
 

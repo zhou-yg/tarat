@@ -1,5 +1,4 @@
 import { IHookContext, isState, Runner, setModelConfig } from '@tarot-run/core'
-import hook from '../hooks/hook'
 import {
   atom, reactive, watch, traverse, isReactive, isAtom
 } from 'axii'
@@ -39,7 +38,7 @@ setModelConfig({
 /**
  * @TODO should provide by @tarot-run by default
  */
-export default (...args: any[]) => {
+export default (hook: () => void, ...args: any[]) => {
   const runner = new Runner(hook)
   console.log('runner: ', runner);
   const r = runner.init(...args)
