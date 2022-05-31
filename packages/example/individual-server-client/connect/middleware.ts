@@ -7,7 +7,7 @@ import hook from '../hooks/hook.js'
  */
 export default function tarotMiddleware () : Application.Middleware{
   return async (ctx, next) => {
-    if (/hook/.test(ctx.request.path) && ctx.request.method === 'POST') {
+    if (/_hook/.test(ctx.request.path) && ctx.request.method === 'POST') {
       const c: IHookContext = JSON.parse(ctx.request.body)
       const runner = new Runner(hook, c)
       runner.init(...c.initialArgList)
