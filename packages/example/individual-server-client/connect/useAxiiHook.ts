@@ -5,7 +5,7 @@ import {
 } from 'axii'
 import { cloneDeep } from 'lodash'
 
-const hostConfig = `http://localhost:9001/hook`
+const hostConfig = `http://localhost:9001/_hook`
 
 /**
  * @TODO should provide by @tarot-run by default
