@@ -81,6 +81,84 @@ importers:
       ts-node: 10.8.0_typescript@4.6.4
       typescript: 4.6.4
 
+  packages/example/individual-server-client(axii):
+    specifiers:
+      '@koa/cors': ^3.3.0
+      '@tarot-run/core': workspace:^0.0.1
+      '@types/koa': ^2.13.4
+      '@types/koa__cors': ^3.3.0
+      '@types/lodash': ^4.14.182
+      axii: ^1.5.8
+      execa: 6.x.x
+      immer: ^9.0.14
+      koa: ^2.13.4
+      koa-body: ^5.0.0
+      lodash: ^4.17.21
+      react: ^18.1.0
+      react-dom: ^18.1.0
+      ts-node: ^10.8.0
+      typescript: ^4.6.4
+      vite: ^2.9.9
+    dependencies:
+      '@koa/cors': 3.3.0
+      '@tarot-run/core': link:../../core
+      '@types/koa__cors': 3.3.0
+      axii: 1.5.8
+      execa: 6.1.0
+      immer: 9.0.14
+      koa: 2.13.4
+      koa-body: 5.0.0
+      lodash: 4.17.21
+      react: 18.1.0
+      react-dom: 18.1.0_react@18.1.0
+      vite: 2.9.9
+    devDependencies:
+      '@types/koa': 2.13.4
+      '@types/lodash': 4.14.182
+      ts-node: 10.8.0_typescript@4.6.4
+      typescript: 4.6.4
+
+  packages/example/individual-server-client(react):
+    specifiers:
+      '@koa/cors': ^3.3.0
+      '@tarot-run/core': workspace:^0.0.1
+      '@types/koa': ^2.13.4
+      '@types/koa__cors': ^3.3.0
+      '@types/lodash': ^4.14.182
+      '@types/react': ^18.0.9
+      '@types/react-dom': ^18.0.5
+      axii: ^1.5.8
+      execa: 6.x.x
+      immer: ^9.0.14
+      koa: ^2.13.4
+      koa-body: ^5.0.0
+      lodash: ^4.17.21
+      react: ^18.1.0
+      react-dom: ^18.1.0
+      ts-node: ^10.8.0
+      typescript: ^4.6.4
+      vite: ^2.9.9
+    dependencies:
+      '@koa/cors': 3.3.0
+      '@tarot-run/core': link:../../core
+      '@types/koa__cors': 3.3.0
+      '@types/react': 18.0.9
+      '@types/react-dom': 18.0.5
+      axii: 1.5.8
+      execa: 6.1.0
+      immer: 9.0.14
+      koa: 2.13.4
+      koa-body: 5.0.0
+      lodash: 4.17.21
+      react: 18.1.0
+      react-dom: 18.1.0_react@18.1.0
+      vite: 2.9.9
+    devDependencies:
+      '@types/koa': 2.13.4
+      '@types/lodash': 4.14.182
+      ts-node: 10.8.0_typescript@4.6.4
+      typescript: 4.6.4
+
   packages/tarot:
     specifiers:
       '@rollup/plugin-typescript': ^8.3.2
@@ -996,11 +1074,33 @@ packages:
     resolution: {integrity: sha512-XFjFHmaLVifrAKaZ+EKghFHtHSUonyw8P2Qmy2/+osBnrKbH9UYtlK10zg8/kCt47MFilll/DEDKy3DHfJ0URw==}
     dev: true
 
+  /@types/prop-types/15.7.5:
+    resolution: {integrity: sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==}
+    dev: false
+
   /@types/qs/6.9.7:
     resolution: {integrity: sha512-FGa1F62FT09qcrueBA6qYTrJPVDzah9a+493+o2PCXsesWHIn27G98TsSMs3WPNbZIEj4+VJf6saSFpvD+3Zsw==}
 
   /@types/range-parser/1.2.4:
     resolution: {integrity: sha512-EEhsLsD6UsDM1yFhAvy0Cjr6VwmpMWqFBCb9w07wVugF7w9nfajxLuVmngTIpgS6svCnm6Vaw+MZhoDCKnOfsw==}
+
+  /@types/react-dom/18.0.5:
+    resolution: {integrity: sha512-OWPWTUrY/NIrjsAPkAk1wW9LZeIjSvkXRhclsFO8CZcZGCOg2G0YZy4ft+rOyYxy8B7ui5iZzi9OkDebZ7/QSA==}
+    dependencies:
+      '@types/react': 18.0.9
+    dev: false
+
+  /@types/react/18.0.9:
+    resolution: {integrity: sha512-9bjbg1hJHUm4De19L1cHiW0Jvx3geel6Qczhjd0qY5VKVE2X5+x77YxAepuCwVh4vrgZJdgEJw48zrhRIeF4Nw==}
+    dependencies:
+      '@types/prop-types': 15.7.5
+      '@types/scheduler': 0.16.2
+      csstype: 3.1.0
+    dev: false
+
+  /@types/scheduler/0.16.2:
+    resolution: {integrity: sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew==}
+    dev: false
 
   /@types/serve-static/1.13.10:
     resolution: {integrity: sha512-nCkHGI4w7ZgAdNkrEu0bv+4xNV/XDqW+DydknebMOQwkpDGx8G+HTlj7R7ABI8i8nKxVw0wtKPi1D+lPOkh4YQ==}
@@ -3054,6 +3154,13 @@ packages:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
     dev: false
 
+  /loose-envify/1.4.0:
+    resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
+    hasBin: true
+    dependencies:
+      js-tokens: 4.0.0
+    dev: false
+
   /lru-cache/6.0.0:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
     engines: {node: '>=10'}
@@ -3420,6 +3527,16 @@ packages:
       unpipe: 1.0.0
     dev: false
 
+  /react-dom/18.1.0_react@18.1.0:
+    resolution: {integrity: sha512-fU1Txz7Budmvamp7bshe4Zi32d0ll7ect+ccxNu9FlObT605GOEB8BfO4tmRJ39R5Zj831VCpvQ05QPBW5yb+w==}
+    peerDependencies:
+      react: ^18.1.0
+    dependencies:
+      loose-envify: 1.4.0
+      react: 18.1.0
+      scheduler: 0.22.0
+    dev: false
+
   /react-is/17.0.2:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
     dev: true
@@ -3427,6 +3544,13 @@ packages:
   /react-is/18.1.0:
     resolution: {integrity: sha512-Fl7FuabXsJnV5Q1qIOQwx/sagGF18kogb4gpfcG4gjLBWO0WDiiz1ko/ExayuxE7InyQkBLkxRFG5oxY6Uu3Kg==}
     dev: true
+
+  /react/18.1.0:
+    resolution: {integrity: sha512-4oL8ivCz5ZEPyclFQXaNksK3adutVS8l2xzZU0cqEFrE9Sb7fC0EFK5uEk74wIreL1DERyjvsU915j1pcT2uEQ==}
+    engines: {node: '>=0.10.0'}
+    dependencies:
+      loose-envify: 1.4.0
+    dev: false
 
   /regexpp/3.2.0:
     resolution: {integrity: sha512-pq2bWo9mVD43nbts2wGv17XLiNLya+GklZ8kaDLV2Z08gDCsGpnKn9BFMepvWuHCbyVvY7J5o5+BVvoQbmlJLg==}
@@ -3546,6 +3670,12 @@ packages:
 
   /safer-buffer/2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
+    dev: false
+
+  /scheduler/0.22.0:
+    resolution: {integrity: sha512-6QAm1BgQI88NPYymgGQLCZgvep4FyePDWFpXVK+zNSUgHwlqpJy8VEh8Et0KxTACS4VWwMousBElAZOH9nkkoQ==}
+    dependencies:
+      loose-envify: 1.4.0
     dev: false
 
   /semver/6.3.0:
