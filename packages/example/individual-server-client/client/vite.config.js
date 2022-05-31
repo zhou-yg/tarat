@@ -10,15 +10,10 @@ const config = defineConfig(({ mode }) => {
       open: 'http://localhost:9002/index.html',
       port: 9002,
     },
-    css: {
-      preprocessorOptions: {
-        less: {
-          javascriptEnabled: true 
-        }
+    resolve: {
+      alias: {
+        '@tarot-run/core': '@tarot-run/core/dist/index.client.js'
       }
-    },
-    optimizeDeps: {
-      exclude: ['axii']
     }
   }
 })

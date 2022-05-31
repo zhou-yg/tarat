@@ -4,11 +4,13 @@ import {
 } from '@tarot-run/core'
 
 export default function hook () {
-  const s1 = state(1)
+  const s1 = state({ num: 0 })
   const s2 = state(2)
   
   const add = inputCompute((v) => {
-    s1(d => d + v)
+    s1(d => {
+      d.num += v
+    })
     s2(d => d + v)
   })
   

@@ -30,6 +30,8 @@ import {
   applyPatches
 } from 'immer'
 
+export { setModelConfig, IHookContext } from './util'
+
 enablePatches()
 
 export function freeze(target: { _hook?: { freezed?: boolean } }) {
@@ -98,7 +100,9 @@ class Hook {
     this.watchers.add(w)
   }
 }
-
+export function isState(h: { _hook?: State }) {
+  return h && (h._hook ? h._hook instanceof State : h instanceof State)
+}
 class State<T = any> extends Hook {
   _internalValue: T
   freezed?: boolean
@@ -120,12 +124,11 @@ class State<T = any> extends Hook {
   update(v: T, patches: IPatch[] = []) {
     const oldValue = this._internalValue
     this._internalValue = v
-    if (patches.length === 0) {
-      this.trigger()
-    } else {
-      const changedPathArr = calculateChangedPath(oldValue, patches)
-      changedPathArr.forEach(path => this.trigger(path))
-    }
+
+    this.trigger()
+
+    const changedPathArr = calculateChangedPath(oldValue, patches)
+    changedPathArr.forEach(path => this.trigger(path))
   }
   // @TODO, lots of case should be upgrade
   applyPatches(p: IPatch[]) {
@@ -243,7 +246,6 @@ class InputCompute extends Hook {
           this.inputFuncEnd()
         })
       }
-      this.getter(...args)
     }
     this.inputFuncEnd()
   }
@@ -305,7 +307,7 @@ export class CurrentRunnerScope {
       this.notifyOuter()
     })
   }
-  setIntialArgs (argList: any[]) {
+  setIntialArgs(argList: any[]) {
     this.initialArgList = argList || []
   }
 
@@ -375,8 +377,6 @@ export class CurrentRunnerScope {
 type BM = (...prop: any) => any
 
 let currentRunnerScope: CurrentRunnerScope | null = null
-
-export type IHookContextData = IHookContext['data']
 
 export class Runner {
   scope = new CurrentRunnerScope()
@@ -546,9 +546,10 @@ export function model<T>(
     throw new Error('[model] must under a tarot runner')
   }
 
-  const internalModel = getEnv().client
-    ? new ClientModel<T>(q, op)
-    : new Model<T>(q, op)
+  const internalModel =
+    process.env.TARGET === 'client'
+      ? new ClientModel<T>(q, op)
+      : new Model<T>(q, op)
 
   const setterGetter = createModelSetterGetterFunc<T>(
     internalModel,
@@ -575,6 +576,9 @@ export function computed<T>(fn: FComputedFunc<T>) {
 export function inputCompute<T>(func: InputComputeFn) {
   if (!currentRunnerScope) {
     throw new Error('[inputCompute] must under a tarot runner')
+  }
+  if (process.env.TARGET === 'client') {
+    return inputComputeServer<T>(func)
   }
 
   const hook = new InputCompute(func, currentRunnerScope)

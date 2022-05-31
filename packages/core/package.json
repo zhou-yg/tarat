@@ -2,8 +2,8 @@
   "name": "@tarot-run/core",
   "version": "0.0.1",
   "description": "useHook serverless framework",
-  "main": "./dist/index.esm.js",
-  "types": "./dist/index.esm.d.ts",
+  "main": "./dist/index.server.js",
+  "types": "./dist/index.d.ts",
   "type": "module",
   "scripts": {
     "watch-unit": "jest --watch -- __test__/core/deliverContext.test.ts",
@@ -31,6 +31,7 @@
     "@rollup/plugin-typescript": "^8.3.2",
     "execa": "6.x.x",
     "rollup": "^2.74.1",
+    "rollup-plugin-replace": "^2.2.0",
     "rollup-plugin-typescript2": "^0.31.2"
   }
 }
