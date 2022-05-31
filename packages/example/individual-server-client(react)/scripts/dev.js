@@ -1,4 +1,3 @@
-import { execa } from 'execa'
 import childProcess from 'node:child_process';
 
 import * as path from 'path'
