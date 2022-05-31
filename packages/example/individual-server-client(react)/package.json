@@ -1,0 +1,41 @@
+{
+  "name": "@tarot-run/example-individual-server-client",
+  "version": "0.0.1",
+  "description": "useHook serverless framework",
+  "main": "dist/index.server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhou-yg/tarot.git"
+  },
+  "author": "zhouyg",
+  "bugs": {
+    "url": "https://github.com/zhou-yg/tarot/issues"
+  },
+  "homepage": "https://github.com/zhou-yg/tarot#readme",
+  "dependencies": {
+    "@koa/cors": "^3.3.0",
+    "@tarot-run/core": "workspace:^0.0.1",
+    "@types/koa__cors": "^3.3.0",
+    "@types/react": "^18.0.9",
+    "@types/react-dom": "^18.0.5",
+    "axii": "^1.5.8",
+    "execa": "6.x.x",
+    "immer": "^9.0.14",
+    "koa": "^2.13.4",
+    "koa-body": "^5.0.0",
+    "lodash": "^4.17.21",
+    "react": "^18.1.0",
+    "react-dom": "^18.1.0",
+    "vite": "^2.9.9"
+  },
+  "devDependencies": {
+    "@types/koa": "^2.13.4",
+    "@types/lodash": "^4.14.182",
+    "ts-node": "^10.8.0",
+    "typescript": "^4.6.4"
+  }
+}
