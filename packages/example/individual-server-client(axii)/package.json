@@ -21,14 +21,13 @@
     "@tarot-run/core": "workspace:^0.0.3",
     "@types/koa__cors": "^3.3.0",
     "axii": "^1.5.8",
-    "execa": "6.x.x",
     "immer": "^9.0.14",
     "koa": "^2.13.4",
     "koa-body": "^5.0.0",
     "lodash": "^4.17.21",
-    "vite": "^2.9.9"
   },
   "devDependencies": {
+    "vite": "^2.9.9",
     "@types/koa": "^2.13.4",
     "@types/lodash": "^4.14.182",
     "ts-node": "^10.8.0",
