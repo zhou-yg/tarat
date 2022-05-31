@@ -5,11 +5,12 @@ import {
 } from 'axii'
 
 
-import useTarot from '../connect/useAxiiHook'
+import hook from '../hooks/hook'
+import useHook from '../connect/useAxiiHook'
 
 function Plus () {
 
-  const r = useTarot()
+  const r = useHook(hook)
   
   const v1  = r.s1
   const v2  = r.s2
