@@ -291,6 +291,7 @@ export class CurrentRunnerScope {
   stateChangeWaitHooks: Set<Hook> = new Set<Hook>()
   watcher: Watcher<Hook> = new Watcher(this)
   initialArgList: any[] = []
+  hookRunnerName = ''
   constructor() {}
   onUpdate(f: Function) {
     this.outerListeners.push(f)
@@ -307,8 +308,9 @@ export class CurrentRunnerScope {
       this.notifyOuter()
     })
   }
-  setIntialArgs(argList: any[]) {
+  setIntialArgs(argList: any[], name: string) {
     this.initialArgList = argList || []
+    this.hookRunnerName = name
   }
 
   addHook(v: Hook) {
@@ -347,9 +349,10 @@ export class CurrentRunnerScope {
     })
     return {
       initialArgList: this.initialArgList,
+      name: this.hookRunnerName,
       data: hooksData,
       index: hookIndex,
-      args: args || []
+      args: args || [],
     }
   }
   applyContext(c: IHookContext) {
@@ -392,7 +395,7 @@ export class Runner {
       throw new Error('can not init repeat')
     }
     currentRunnerScope = this.scope
-    currentRunnerScope.setIntialArgs(args)
+    currentRunnerScope.setIntialArgs(args, this.bm.name)
 
     const result: ReturnType<BM> = executeBM(this.bm, args)
     if (this.initialContext) {
