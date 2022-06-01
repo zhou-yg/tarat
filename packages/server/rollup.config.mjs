@@ -1,21 +1,20 @@
 import tsPlugin from 'rollup-plugin-typescript2'
 import dts from "rollup-plugin-dts"
 import replace from '@rollup/plugin-replace';
+import json from '@rollup/plugin-json'
 
 export default [
   {
     plugins: [
+      json(),
       tsPlugin({
         clean: true,
         tsconfig: './tsconfig.json',
       }),
-      replace({
-        'process.env.TARGET': '"server"'
-      })
     ],
-    input: 'src/core.ts',
+    input: 'cli/index.ts',
     output: {
-      file: 'dist/index.server.js',
+      file: 'dist/cli/index.js',
       format: 'esm'
     }
   },
@@ -25,21 +24,10 @@ export default [
         clean: true,
         tsconfig: './tsconfig.json',
       }),
-      replace({
-        'process.env.TARGET': '"client"'
-      })
     ],
-    input: 'src/core.ts',
-    output: {
-      file: 'dist/index.client.js',
-      format: 'esm'
-    }
-  },
-  {
-    input: "src/core.ts",
+    input: "src/base.ts",
     output: [
-      { file: "dist/index.d.ts", format: "es" }
+      { file: "dist/base.js", format: "es" }
     ],
-    plugins: [dts()],
   }
 ]
