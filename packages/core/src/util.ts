@@ -189,6 +189,7 @@ export interface IHookContext {
   >
   index?: number
   args: any[]
+  name: string
 }
 
 interface IModelConfig {

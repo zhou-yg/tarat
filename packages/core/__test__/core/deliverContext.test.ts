@@ -12,6 +12,7 @@ describe('initContext', () => {
       10
     ]
     const context: IHookContext = {
+      name: mockBM.plainObjectState.name,
       initialArgList: [],
       args: [],
       data: [
