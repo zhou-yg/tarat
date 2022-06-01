@@ -65,3 +65,8 @@ target: can run with react or axii with a server,
   - client should keep same config
   - client can use custom Router component
 - ssr (not neccesary)
+
+# compiler
+why compiler ? the service maybe load the ts file
+
+- load file and compile it if needed
