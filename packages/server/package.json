@@ -1,0 +1,38 @@
+{
+  "name": "@tarot-run/server",
+  "version": "0.0.1",
+  "description": "tarot ssr framework server side",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "tarot": "./dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "rollup --config rollup.config.mjs",
+    "watch": "rollup --config rollup.config.mjs --watch"
+  },
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhou-yg/tarot.git"
+  },
+  "author": "zhouyg",
+  "bugs": {
+    "url": "https://github.com/zhou-yg/tarot/issues"
+  },
+  "homepage": "https://github.com/zhou-yg/tarot#readme",
+  "devDependencies": {
+    "@rollup/plugin-replace": "^4.0.0",
+    "rollup": "^2.74.1",
+    "rollup-plugin-dts": "^4.2.2",
+    "rollup-plugin-typescript2": "^0.31.2",
+    "tslib": "^2.4.0"
+  },
+  "dependencies": {
+    "@koa/cors": "^3.3.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@tarot-run/core": "workspace:^0.0.3",
+    "cac": "^6.7.12",
+    "koa-body": "^5.0.0"
+  }
+}
