@@ -67,7 +67,7 @@ importers:
 
   packages/example/todos-app:
     specifiers:
-      '@tarot-run/core': workspace:^0.0.3
+      '@tarot-run/core': workspace:^0.0.5
       '@tarot-run/server': workspace:^0.0.1
       react: ^18.1.0
       react-dom: ^18.1.0
@@ -83,7 +83,7 @@ importers:
       '@koa/cors': ^3.3.0
       '@rollup/plugin-json': ^4.1.0
       '@rollup/plugin-replace': ^4.0.0
-      '@tarot-run/core': workspace:^0.0.3
+      '@tarot-run/core': workspace:^0.0.5
       '@types/ejs': ^3.1.1
       '@types/express-to-koa': ^1.0.0
       cac: ^6.7.12

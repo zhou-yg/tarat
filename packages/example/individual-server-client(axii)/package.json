@@ -7,6 +7,11 @@
   "scripts": {
     "dev": "node scripts/dev.js"
   },
+  "files": [
+    "src",
+    "dist",
+    "package.json"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zhou-yg/tarot.git"
@@ -18,7 +23,7 @@
   "homepage": "https://github.com/zhou-yg/tarot#readme",
   "dependencies": {
     "@koa/cors": "^3.3.0",
-    "@tarot-run/core": "workspace:^0.0.3",
+    "@tarot-run/core": "workspace:^0.0.5",
     "@types/koa__cors": "^3.3.0",
     "axii": "^1.5.8",
     "immer": "^9.0.14",
