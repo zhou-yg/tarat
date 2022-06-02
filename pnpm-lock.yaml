@@ -79,6 +79,7 @@ importers:
 
   packages/server:
     specifiers:
+      '@jsdevtools/version-bump-prompt': 6.1.0
       '@koa/cors': ^3.3.0
       '@rollup/plugin-json': ^4.1.0
       '@rollup/plugin-replace': ^4.0.0
@@ -110,6 +111,7 @@ importers:
       shelljs: 0.8.5
       vite: 2.9.9
     devDependencies:
+      '@jsdevtools/version-bump-prompt': 6.1.0
       '@rollup/plugin-replace': 4.0.0_rollup@2.74.1
       '@types/ejs': 3.1.1
       '@types/express-to-koa': 1.0.0
@@ -3514,7 +3516,7 @@ packages:
     dev: false
 
   /os-tmpdir/1.0.2:
-    resolution: {integrity: sha1-u+Z0BseaqFxc/sdm/lc0VV36EnQ=}
+    resolution: {integrity: sha512-D2FR03Vir7FIu45XBY20mTb+/ZSWB00sjU9jdQXt83gDrI4Ztz5Fs7/yy74g2N5SVQY4xY1qDr4rNddwYRVX0g==}
     engines: {node: '>=0.10.0'}
     dev: true
 
