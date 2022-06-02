@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
-    "watch": "rollup --config rollup.config.mjs --watch"
+    "watch": "rollup --config rollup.config.mjs --watch",
+    "release": "npm run build && bump --commit \"release: @tarot-run/core v%s\" --push && npm publish --access public"
   },
   "license": "ISC",
   "repository": {
@@ -22,6 +23,7 @@
   },
   "homepage": "https://github.com/zhou-yg/tarot#readme",
   "devDependencies": {
+    "@jsdevtools/version-bump-prompt": "6.1.0",
     "@rollup/plugin-replace": "^4.0.0",
     "@types/ejs": "^3.1.1",
     "@types/express-to-koa": "^1.0.0",
