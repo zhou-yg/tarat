@@ -2,7 +2,7 @@ import cacFactory from "cac";
 import pkg from '../package.json'
 
 import { readConfig } from "../src/config";
-import { createDevServer } from "../src";
+import { createDevServer } from "../src/server";
 
 const cac = cacFactory('@tarot-run/server')
 

@@ -25,9 +25,9 @@ export default [
         tsconfig: './tsconfig.json',
       }),
     ],
-    input: "src/index.ts",
+    input: "src/server.ts",
     output: [
-      { file: "dist/index.js", format: "es" }
+      { file: "dist/server.js", format: "es" }
     ],
   }
 ]

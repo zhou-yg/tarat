@@ -23,8 +23,9 @@ export default function tarotMiddleware (args: {
     if (pre === args.apiPre && ctx.request.method === 'POST') {      
       const hookConfig = args.hooks.find(h => h.name === hookName)
       if (hookConfig) {        
+        const hookFunc = await hookConfig.hookFunc
         const c: IHookContext = JSON.parse(ctx.request.body)
-        let runner = new Runner(hookConfig.hookFunc, c)
+        let runner = new Runner(hookFunc.default, c)
         runner.init(...c.initialArgList)
   
         if (c.index) {

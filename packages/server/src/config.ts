@@ -6,28 +6,77 @@ const defaultConfig = () => ({
   viewsDirectory: 'views', // in tarot the display unit maybe page or component, they should belong to "views"
   hooksDirectory: 'hooks',
 
-  apiPre: '/_hook'
-})
+  apiPre: '_hook',
 
-export interface IConfig extends IDefaultConfig{
-  
-}
+  port: 9100,
+})
 
 const configFile = 'tarot.config.js'
 
+export interface IViewConfig {
+  /**
+   * The unique id for this route, named like its `file` but without the
+   * extension. So `app/routes/gists/$username.jsx` will have an `id` of
+   * `routes/gists/$username`.
+   */
+  id: string
+  parentId?: string
+  /**
+   * The path this route uses to match on the URL pathname.
+   */
+  path: string
+  /**
+   * single file name with file extension
+   */
+  name: string
 
-async function readPages (dir: string) {
-  console.log('not read pages now')
+  index?: boolean
+  // file absolute path in system
+  file: string
+}
+
+const isIndexFlagn = (f: string) => /^index.(j|t)sx$/.test(f) || /\/index.(j|t)sx$/.test(f)
+
+function defineView (viewDir: string, file: string, name: string, parent?: IViewConfig): IViewConfig[] {
+  const configs: IViewConfig[] = []
+  const currentFileOrDirPath = path.join(viewDir, file)
+  const current: IViewConfig = {
+    id: file,
+    parentId: parent?.id,
+    path: file.replace(/\.\w+/, ''),
+    file,
+    name,
+    index: isIndexFlagn(file)
+  }
+  if (fs.lstatSync(currentFileOrDirPath).isDirectory()) {
+    const childConfigs = readViews(viewDir, file, current)
+    configs.push(...childConfigs)
+  } else {
+    configs.push(current)
+  }
+
+  return configs
+}
+
+function readViews (viewDir: string, dir: string, parent?: IViewConfig) {
+  const views = fs.readdirSync(path.join(viewDir, dir))
+
+  const viewConfigs = views.map(f => {
+    const file = path.join(dir, f)
+    return defineView(viewDir, file, f, parent)
+  })
+
+  return viewConfigs.flat()
 } 
 
 export interface IServerHookConfig {
   filePath: string
   file: string
   name: string
-  hookFunc: (...args: any[]) => any
+  hookFunc: Promise<{ default: (...args: any[]) => any }>
 }
 
-async function readHooks(dir: string) {
+function readHooks(dir: string) {
   const hooks = fs.readdirSync(dir)
   // check hooks
   hooks.forEach(f => {
@@ -43,8 +92,8 @@ async function readHooks(dir: string) {
     return {
       filePath,
       file: f,
-      name: f.replace(/\.(t|j)s/, ''),
-      hookFunc: require(filePath)
+      name: f.replace(/\.\w+/, ''),
+      hookFunc: import(filePath)
     }
   })
 
@@ -75,12 +124,16 @@ export async function readConfig (arg: {
   const viewsDirectory = path.join(cwd, config.viewsDirectory)
   const hooksDirectory = path.join(cwd, config.hooksDirectory)
 
-  await readPages(viewsDirectory)
+  const views = readViews(viewsDirectory, '/')
+  views.forEach(c => {
+    c.file = path.join('./', config.viewsDirectory, c.file)
+  })
 
-  const hooks = await readHooks(hooksDirectory)
+  const hooks = readHooks(hooksDirectory)
 
   return {
-    apiPre: config.apiPre,
-    hooks
+    ...config,
+    hooks,
+    views,
   }
 }
