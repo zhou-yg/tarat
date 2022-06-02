@@ -26,8 +26,7 @@ export async function createDevServer (c: IConfig) {
   setupBasicServer(app)
 
   app.use(tarotRunner({
-    apiPre: c.apiPre,
-    hooks: c.hooks
+    config: c
   }))
 
   const vite = await createServer({

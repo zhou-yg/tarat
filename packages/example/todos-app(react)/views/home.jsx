@@ -1,6 +1,6 @@
 import { useHook } from '@tarot-run/core'
 import React from 'react'
-import { render } from '../utils/runtime'
+import { render } from '../utils/clientRuntime'
 import todoHook from '../hooks/todo.mjs'
 
 const Home = () => {
