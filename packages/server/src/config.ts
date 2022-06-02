@@ -1,15 +1,26 @@
 import * as path from 'path'
 import * as fs from 'fs'
-
+import l from 'lodash'
+const { merge } = l
 const defaultConfig = () => ({
   // client about
   viewsDirectory: 'views', // in tarot the display unit maybe page or component, they should belong to "views"
   hooksDirectory: 'hooks',
 
+  // server side
   apiPre: '_hook',
-
   port: 9100,
+  model: {
+    engine: 'prisma'
+  }
 })
+
+type IDefaultConfig = ReturnType<typeof defaultConfig> & {
+  model: {
+    engine: 'prisma' | 'er'
+  }
+}
+
 
 const configFile = 'tarot.config.js'
 
@@ -102,12 +113,13 @@ function readHooks(dir: string) {
 
 type UnPromisify<T> = T extends Promise<infer R> ? R : T;
 
-type IDefaultConfig = UnPromisify<ReturnType<typeof readConfig>>
+type IReadConfigResult = UnPromisify<ReturnType<typeof readConfig>>
 
-export interface IConfig extends IDefaultConfig{
-  
+export interface IConfig extends IReadConfigResult{
+  model: {
+    engine: 'prisma' | 'er'
+  }
 }
-
 
 export async function readConfig (arg: {
   cwd: string
@@ -115,10 +127,10 @@ export async function readConfig (arg: {
   const { cwd } = arg
   const configFileInPath = path.join(cwd, configFile)
 
-  let config = defaultConfig()
+  let config = defaultConfig() as IDefaultConfig
   if (fs.existsSync(configFileInPath)) {
     const configInFile = require(configFileInPath)
-    Object.assign(config, configInFile)
+    merge(config, configInFile)
   }
 
   const viewsDirectory = path.join(cwd, config.viewsDirectory)

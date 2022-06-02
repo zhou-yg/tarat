@@ -1,7 +1,7 @@
-import { IHookContext, Runner } from '@tarot-run/core'
+import { IHookContext, Runner, setModelConfig } from '@tarot-run/core'
 import Application from 'koa'
-import type { IServerHookConfig } from '../config'
-
+import type { IConfig, IServerHookConfig } from '../config'
+import { setPrisma } from '../../adaptors/prisma'
 function matchHookName (path: string) {
   const arr = path.split('/').filter(Boolean)
   return {
@@ -14,14 +14,18 @@ function matchHookName (path: string) {
  * @TODO should provide by @tarot-run by default
  */
 export default function tarotMiddleware (args: {
-  apiPre: string
-  hooks: IServerHookConfig[]
+  config: IConfig
 }) : Application.Middleware{
+  const { hooks, apiPre } = args.config
+
+  if (args.config.model.engine === 'prisma') {
+    setPrisma()
+  }
 
   return async (ctx, next) => {
     const { pre, hookName } = matchHookName(ctx.request.path)
-    if (pre === args.apiPre && ctx.request.method === 'POST') {      
-      const hookConfig = args.hooks.find(h => h.name === hookName)
+    if (pre === apiPre && ctx.request.method === 'POST') {      
+      const hookConfig = hooks.find(h => h.name === hookName)
       if (hookConfig) {        
         const hookFunc = await hookConfig.hookFunc
         const c: IHookContext = JSON.parse(ctx.request.body)
