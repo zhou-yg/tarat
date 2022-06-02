@@ -1,4 +1,6 @@
 import { applyPatches } from 'immer'
+import { useAxiiHook } from './connect/axii'
+import { useReactHook } from './connect/react'
 
 /* HELPERS */
 const getKeys = Object.keys
@@ -190,6 +192,24 @@ export interface IHookContext {
   index?: number
   args: any[]
   name: string
+}
+
+let hookAdaptorRuntime: any = null
+let hookAdaptorType: 'react' | 'axii' | null = null
+export function setHookAdaptor(runtime: any, type: 'react' | 'axii') {
+  hookAdaptorRuntime = runtime
+  hookAdaptorType = type
+}
+
+export type BM = (...prop: any) => any
+
+export function useHook(bm: BM) {
+  switch (hookAdaptorType) {
+    case 'react':
+      return useReactHook(hookAdaptorRuntime, bm)
+    case 'axii':
+      return useAxiiHook(hookAdaptorRuntime, bm)
+  }
 }
 
 interface IModelConfig {
