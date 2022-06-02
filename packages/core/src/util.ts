@@ -64,6 +64,51 @@ export function cloneDeep(obj?: any) {
   return obj && JSON.parse(JSON.stringify(obj))
 }
 
+export function applyPatchesToObject(target: any, patches: IPatch[]) {
+  patches.forEach((p: IPatch) => {
+    switch (p.op) {
+      case 'add':
+        set(target, p.path, p.value)
+        break
+      case 'remove':
+        deleteKey(target, p)
+        break
+      case 'replace':
+        set(target, p.path, p.value)
+        break
+    }
+  })
+}
+
+export function isPrimtive(v: any) {
+  if (v === null) {
+    return true
+  }
+  const type = typeof v
+  return [
+    'undefined',
+    'number',
+    'symbol',
+    'string',
+    'bigint',
+    'boolean'
+  ].includes(type)
+}
+
+export function deleteKey(obj: any, p: IPatch) {
+  const { path, value } = p
+  let tail = path.length > 0 ? get(obj, path.slice(0, -1)) : obj
+  const key = last(path)
+  if (tail instanceof Set) {
+    tail.delete(value)
+  }
+  if (tail instanceof Map) {
+    tail.delete(key)
+  } else {
+    delete tail[key]
+  }
+}
+
 export function set(obj: any, path: string | (number | string)[], value: any) {
   let base = obj
   const currentFieldPath = Array.isArray(path)
@@ -77,7 +122,13 @@ export function set(obj: any, path: string | (number | string)[], value: any) {
       if (base[p] === undefined) base[p] = {}
       base = base[p]
     })
-    base[fieldName!] = value
+    if (base instanceof Map) {
+      base.set(fieldName, value)
+    } else if (base instanceof Set) {
+      base.add(value)
+    } else {
+      base[fieldName!] = value
+    }
   }
 }
 
@@ -88,11 +139,19 @@ export function get(obj: any, path: string | (number | string)[]) {
     : path.split
     ? path.split('.')
     : [path]
-  for (const p of pathArr) {
+  if (pathArr.length === 0) {
+    return obj
+  }
+  const currentPathArr = pathArr.slice(0, -1)
+  const key = last(pathArr)
+  for (const p of currentPathArr) {
     if (base[p] === undefined) return undefined
     base = base[p]
   }
-  return base
+  if (base instanceof Map) {
+    return base.get(key)
+  }
+  return base[key]
 }
 
 export function map(

@@ -48,7 +48,7 @@ function checkFreeze(target: { _hook?: { freezed?: boolean } }) {
 
 interface ITarget<T> {
   watcher: Watcher<T>
-  notify: (hook?: T) => void
+  notify: (hook?: T, patches?: IPatch[]) => void
 }
 
 interface ISource<U> {
@@ -56,14 +56,14 @@ interface ISource<U> {
   addWatcher: (w: Watcher<U>) => void
 }
 
-class Watcher<T> {
+export class Watcher<T> {
   deps: Map<ISource<T>, (string | number)[][]> = new Map()
   constructor(public target: ITarget<ISource<T>>) {}
-  notify(dep: ISource<T>, path: TPath) {
+  notify(dep: ISource<T>, path: TPath, patches?: IPatch[]) {
     const paths = this.deps.get(dep)
     const matched = paths?.some(p => isEqual(p, path))
     if (matched) {
-      this.target.notify(dep)
+      this.target.notify(dep, patches)
     }
   }
   addDep(dep: ISource<T>, path: (number | string)[] = []) {
@@ -91,7 +91,7 @@ class Watcher<T> {
   }
 }
 
-class Hook {
+export class Hook {
   freezed?: boolean
   watchers = new Set<Watcher<typeof this>>()
   addWatcher(w: Watcher<Hook>) {
@@ -101,32 +101,34 @@ class Hook {
 export function isState(h: { _hook?: State }) {
   return h && (h._hook ? h._hook instanceof State : h instanceof State)
 }
-class State<T = any> extends Hook {
+export class State<T = any> extends Hook {
   _internalValue: T
   freezed?: boolean
   constructor(data: T) {
     super()
     this._internalValue = data
   }
-  trigger(path: (number | string)[] = ['']) {
-    if (path.length === 0) {
+  trigger(path: (number | string)[] = [''], patches?: IPatch[]) {
+    if (!path || path.length === 0) {
       path = ['']
     }
     this.watchers.forEach(w => {
-      w.notify(this, path)
+      w.notify(this, path, patches)
     })
   }
   get value(): T {
     return internalProxy(this, this._internalValue)
   }
-  update(v: T, patches: IPatch[] = []) {
+  update(v: T, patches?: IPatch[]) {
     const oldValue = this._internalValue
     this._internalValue = v
 
     this.trigger()
 
-    const changedPathArr = calculateChangedPath(oldValue, patches)
-    changedPathArr.forEach(path => this.trigger(path))
+    if (patches && patches.length > 0) {
+      const changedPathArr = calculateChangedPath(oldValue, patches)
+      changedPathArr.forEach(path => this.trigger(path, patches))
+    }
   }
   // @TODO, lots of case should be upgrade
   applyPatches(p: IPatch[]) {
@@ -143,7 +145,7 @@ class State<T = any> extends Hook {
   }
 }
 
-class Model<T> extends State<T | undefined> {
+export class Model<T> extends State<T | undefined> {
   constructor(
     public getQueryWhere: () => IModelQuery,
     public options: IModelOption = {}
@@ -259,7 +261,7 @@ class InputCompute extends Hook {
   }
   triggerEvent(timing: 'before' | 'after') {
     this.watchers.forEach(w => {
-      w.notify(this, [timing])
+      w.notify(this, [timing], [])
     })
   }
 }
@@ -451,7 +453,7 @@ let currentInputeCompute: Hook | null = null
 type IModifyFunction<T> = (draft: Draft<T>) => void
 
 interface FStateSetterGetterFunc<SV = any> extends Function {
-  (arg?: IModifyFunction<SV>): SV
+  (arg?: IModifyFunction<SV>): SV | [SV, IPatch[]]
   _hook?: Hook
 }
 
@@ -462,14 +464,13 @@ function createStateSetterGetterFunc<SV>(
   return paramter => {
     if (paramter) {
       if (isFunc(paramter)) {
+        const [result, patches] = produceWithPatches(s.value, paramter)
         if (currentInputeCompute) {
-          const [result, patches] = produceWithPatches(s.value, paramter)
-
           scope.addComputePatches(s, patches)
         } else {
-          const [result, patches] = produceWithPatches(s.value, paramter)
           s.update(result, patches)
         }
+        return [result, patches]
       } else {
         throw new Error('[change state] pass a function')
       }
