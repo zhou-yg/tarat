@@ -29,7 +29,7 @@
     "immer": "^9.0.14",
     "koa": "^2.13.4",
     "koa-body": "^5.0.0",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "vite": "^2.9.9",
