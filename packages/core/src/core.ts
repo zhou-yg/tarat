@@ -452,16 +452,14 @@ let currentInputeCompute: Hook | null = null
 
 type IModifyFunction<T> = (draft: Draft<T>) => void
 
-interface FStateSetterGetterFunc<SV = any> extends Function {
-  (arg?: IModifyFunction<SV>): SV | [SV, IPatch[]]
-  _hook?: Hook
-}
-
 function createStateSetterGetterFunc<SV>(
   s: State<SV>,
   scope: CurrentRunnerScope
-): FStateSetterGetterFunc<SV> {
-  return paramter => {
+): {
+  (): SV,
+  (paramter: IModifyFunction<SV>): [SV, IPatch[]],
+} & { _hook?: Hook } {
+  return (paramter?: any): any => {
     if (paramter) {
       if (isFunc(paramter)) {
         const [result, patches] = produceWithPatches(s.value, paramter)
@@ -489,8 +487,11 @@ interface IModelOption {
 function createModelSetterGetterFunc<T>(
   m: Model<T>,
   scope: CurrentRunnerScope
-): FStateSetterGetterFunc<T | undefined> {
-  return (paramter?: IModifyFunction<T>) => {
+): {
+  (): T | undefined,
+  (paramter: IModifyFunction<T | undefined>): [T | undefined, IPatch[]],
+} & { _hook?: Hook }  {
+  return (paramter?: any): any => {
     if (paramter && isFunc(paramter)) {
       const [result, patches] = produceWithPatches(m.value, paramter)
 
@@ -499,6 +500,7 @@ function createModelSetterGetterFunc<T>(
       } else {
         m.updateWithPatches(result, patches)
       }
+      return [result, patches]
     }
     return m.value
   }
@@ -523,7 +525,7 @@ interface FInputComputeFunc extends Function {
   _hook?: Hook
 }
 
-export function state<S>(initialValue: S): FStateSetterGetterFunc<S> {
+export function state<S>(initialValue: S) {
   if (!currentRunnerScope) {
     throw new Error('[state] must under a tarot runner')
   }
@@ -543,7 +545,7 @@ export function state<S>(initialValue: S): FStateSetterGetterFunc<S> {
 export function model<T>(
   q: () => IModelQuery,
   op?: IModelOption
-): FStateSetterGetterFunc<T | undefined> {
+) {
   if (!currentRunnerScope) {
     throw new Error('[model] must under a tarot runner')
   }

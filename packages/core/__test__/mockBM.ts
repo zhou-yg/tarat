@@ -234,3 +234,21 @@ export function onePrimitiveStateComputed(v1: number, v2: number) {
   })
   return { s, c }
 }
+
+
+// function a (x: number): {
+//   (): number,
+//   (a: string): string
+// } {
+//   return (v?: any): any => {
+//     if (v) {
+//       return v
+//     }
+//     return 0
+//   }
+// }
+// const fn = a(1)
+// const r = fn()
+// const r2 = fn('a')
+
+// const c: number = r + 1
