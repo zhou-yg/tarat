@@ -1,6 +1,6 @@
 import { IHookContext, Runner } from '@tarot-run/core'
 import Application from 'koa'
-import { IServerHookConfig } from '../config'
+import type { IServerHookConfig } from '../config'
 
 function matchHookName (path: string) {
   const arr = path.split('/').filter(Boolean)
