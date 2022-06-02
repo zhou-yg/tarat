@@ -34,7 +34,9 @@ target: can run with react or axii with a server,
 
 - dev
   - intergration with [vite ssr](https://cn.vitejs.dev/guide/ssr.html)
-  - load pages/*.ts
+  - visitor pages/*.(j|t)sx
+    - defineRouter config to client
+    - todo: load them for ssr
   - provide html template as base
   - Model
     - planet.ER
