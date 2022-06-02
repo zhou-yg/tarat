@@ -30,8 +30,6 @@ import {
   applyPatches
 } from 'immer'
 
-export { setModelConfig, IHookContext } from './util'
-
 enablePatches()
 
 export function freeze(target: { _hook?: { freezed?: boolean } }) {
@@ -352,7 +350,7 @@ export class CurrentRunnerScope {
       name: this.hookRunnerName,
       data: hooksData,
       index: hookIndex,
-      args: args || [],
+      args: args || []
     }
   }
   applyContext(c: IHookContext) {

@@ -13,7 +13,7 @@ export default [
         'process.env.TARGET': '"server"'
       })
     ],
-    input: 'src/core.ts',
+    input: 'src/index.ts',
     output: {
       file: 'dist/index.server.js',
       format: 'esm'
@@ -29,14 +29,14 @@ export default [
         'process.env.TARGET': '"client"'
       })
     ],
-    input: 'src/core.ts',
+    input: 'src/index.ts',
     output: {
       file: 'dist/index.client.js',
       format: 'esm'
     }
   },
   {
-    input: "src/core.ts",
+    input: "src/index.ts",
     output: [
       { file: "dist/index.d.ts", format: "es" }
     ],
