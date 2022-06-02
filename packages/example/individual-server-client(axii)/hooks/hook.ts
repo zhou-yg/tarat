@@ -11,7 +11,9 @@ export default function hook () {
     s1(d => {
       d.num += v
     })
-    s2(d => d + v)
+    s2(d => {
+      return d + v
+    })
   })
   
   return {
