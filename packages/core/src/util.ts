@@ -227,7 +227,7 @@ export interface IQueryWhere {
 
 export interface IModelQuery {
   entity: string
-  where: IQueryWhere
+  query: IQueryWhere
 }
 interface IModelData {
   where: { id: number }
@@ -272,15 +272,16 @@ export function useHook(bm: BM) {
 }
 
 interface IModelConfig {
-  find: (entity: string, where: IModelQuery['where']) => Promise<any>
-  update: (entity: string, where: IModelData) => Promise<number[]>
+  find: (entity: string, query: IModelQuery['query']) => Promise<any>
+  update: (entity: string, query: IModelData) => Promise<number[]>
   create: (entity: string, data: IModelCreateData) => Promise<any>
   remove: (entity: string, data: Omit<IModelData, 'data'>) => Promise<number[]>
-  //
+  // @depcated
   executeDiff: (entity: string, d: IDiff) => Promise<void>
   postDiffToServer: (entity: string, d: IDiff) => Promise<void>
   //
   postComputeToServer: (c: IHookContext) => Promise<IHookContext>
+  postQueryToServer: (c: IHookContext) => Promise<IHookContext>
 }
 
 let modelConfig: null | IModelConfig | (() => IModelConfig) = null
