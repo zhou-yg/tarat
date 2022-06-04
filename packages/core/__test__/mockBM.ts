@@ -5,8 +5,9 @@ import {
   after,
   before,
   freeze,
-  inputComputeServer,
-  computed
+  inputComputeClient,
+  computed,
+  modelClient
 } from '../src/core'
 import { setModelConfig } from '../src/util'
 
@@ -31,6 +32,9 @@ export function initModelConfig(obj: any = {}) {
     async postComputeToServer(c) {
       return []
     },
+    async postQueryToServer (c) {
+      return []
+    },
     ...obj
   })
 }
@@ -53,7 +57,7 @@ export function oneState(arg: { a: number }) {
 export function oneModel(arg: { a: number }) {
   const m1 = model(() => ({
     entity: 'test-model',
-    where: {}
+    query: {}
   }))
   return {
     m1
@@ -165,7 +169,7 @@ export function changeStateInputComputeServer(
 
   const { s1, s2 } = ps
 
-  const changeS1 = inputComputeServer((v: number) => {
+  const changeS1 = inputComputeClient((v: number) => {
     s1((draft: any) => {
       draft.num1 = v
     })
@@ -211,7 +215,25 @@ export function userPessimisticModel() {
   const users = model(
     () => ({
       entity: 'User',
-      where: {}
+      query: {}
+    }),
+    { immediate: true, pessimisticUpdate: true }
+  )
+
+  return {
+    users
+  }
+}
+export function userModelClient() {
+  const num = state(0)
+  const users = modelClient(
+    () => ({
+      entity: 'User',
+      query: {
+        where: {
+          num: num(),
+        }
+      }
     }),
     { immediate: true, pessimisticUpdate: true }
   )

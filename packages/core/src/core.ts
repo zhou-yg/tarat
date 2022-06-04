@@ -148,16 +148,18 @@ export class State<T = any> extends Hook {
 export class Model<T> extends State<T | undefined> {
   constructor(
     public getQueryWhere: () => IModelQuery,
-    public options: IModelOption = {}
+    public options: IModelOption = {},
+    public scope: CurrentRunnerScope
   ) {
     super(undefined)
+    scope.addHook(this)
     if (options.immediate) {
       this.query()
     }
   }
   async query() {
     const q = this.getQueryWhere()
-    const result = await getModelFind()(q.entity, q.where)
+    const result = await getModelFind()(q.entity, q.query)
     if (this.options.unique) {
       this.updateFromRemote(result[0])
     } else {
@@ -189,7 +191,12 @@ export class Model<T> extends State<T | undefined> {
 }
 
 class ClientModel<T = any> extends Model<T> {
-  async updateWithPatches(v: T, patches: IPatch[]) {
+  override async query () {
+    const context = this.scope.createInputComputeContext(this)
+    const result = await getModelConfig().postQueryToServer(context)
+    this.scope.applyContext(result)
+  }
+  override async updateWithPatches(v: T, patches: IPatch[]) {
     this.update(v)
     const { entity } = this.getQueryWhere()
     const diff = calculateDiff(v, patches)
@@ -249,7 +256,14 @@ class InputCompute extends Hook {
     }
     this.inputFuncEnd()
   }
-  async runInServer(...args: any[]) {
+  triggerEvent(timing: 'before' | 'after') {
+    this.watchers.forEach(w => {
+      w.notify(this, [timing], [])
+    })
+  }
+}
+class InputComputeClient extends InputCompute {
+  async run(...args: any[]) {
     currentInputeCompute = this
     this.triggerEvent('before')
     if (!checkFreeze({ _hook: this })) {
@@ -258,11 +272,6 @@ class InputCompute extends Hook {
       this.scope.applyContext(result)
     }
     this.inputFuncEnd()
-  }
-  triggerEvent(timing: 'before' | 'after') {
-    this.watchers.forEach(w => {
-      w.notify(this, [timing], [])
-    })
   }
 }
 class Effect<T> extends Hook {
@@ -407,10 +416,18 @@ export class Runner {
 
     return result
   }
+  /**
+   * call the executable hook: Model, InputCompute
+   * @TODO the executable hook maybe need a abstract base class
+   */
   async callHook(hookIndex: number, args: any[]) {
     const hook = this.scope.hooks[hookIndex]
     if (hook) {
-      await (hook as InputCompute).run(...args)
+      if (hook instanceof Model) {
+        await (hook as Model<any>).query()
+      } else {
+        await (hook as InputCompute).run(...args)
+      }
     }
   }
 }
@@ -548,16 +565,31 @@ export function model<T>(q: () => IModelQuery, op?: IModelOption) {
   }
 
   const internalModel =
-    process.env.TARGET === 'client'
-      ? new ClientModel<T>(q, op)
-      : new Model<T>(q, op)
+    process.env.TARGET === 'server'
+      ? new Model<T>(q, op, currentRunnerScope)
+      : new ClientModel<T>(q, op, currentRunnerScope)
 
   const setterGetter = createModelSetterGetterFunc<T>(
     internalModel,
     currentRunnerScope
   )
-  currentRunnerScope.addHook(internalModel)
   setterGetter._hook = internalModel
+
+  return setterGetter
+}
+export function modelClient<T>(q: () => IModelQuery, op?: IModelOption) {
+  if (!currentRunnerScope) {
+    throw new Error('[model] must under a tarot runner')
+  }
+
+  const internalModel = new ClientModel<T>(q, op, currentRunnerScope)
+
+  const setterGetter = createModelSetterGetterFunc<T>(
+    internalModel,
+    currentRunnerScope
+  )
+  setterGetter._hook = internalModel
+
   return setterGetter
 }
 export function computed<T>(fn: FComputedFunc<T>) {
@@ -588,7 +620,7 @@ export function inputCompute<T>(func: InputComputeFn) {
   return wrapFunc
 }
 
-export function inputComputeServer<T>(func: InputComputeFn) {
+export function inputComputeClient<T>(func: InputComputeFn) {
   if (!currentRunnerScope) {
     throw new Error('[inputComputeServer] must under a tarot runner')
   }
@@ -600,10 +632,10 @@ export function inputComputeServer<T>(func: InputComputeFn) {
     return inputCompute<T>(func)
   }
 
-  const hook = new InputCompute(func, currentRunnerScope)
+  const hook = new InputComputeClient(func, currentRunnerScope)
 
   const wrapFunc: FInputComputeFunc = (...args: any) => {
-    return hook.runInServer(...args)
+    return hook.run(...args)
   }
   wrapFunc._hook = hook
   return wrapFunc
