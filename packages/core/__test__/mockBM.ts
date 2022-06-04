@@ -32,7 +32,7 @@ export function initModelConfig(obj: any = {}) {
     async postComputeToServer(c) {
       return []
     },
-    async postQueryToServer (c) {
+    async postQueryToServer(c) {
       return []
     },
     ...obj
@@ -231,7 +231,7 @@ export function userModelClient() {
       entity: 'User',
       query: {
         where: {
-          num: num(),
+          num: num()
         }
       }
     }),
