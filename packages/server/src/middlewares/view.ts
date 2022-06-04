@@ -30,7 +30,8 @@ const template = compile(fs.readFileSync(templateFilePath).toString())
       let html = template({
         src: viewConfig.file,
         configJSON: JSON.stringify({
-          apiPre: args.config.apiPre
+          apiPre: args.config.apiPre,
+          diffPath: args.config.diffPath,
         })
       })
       html = await args.vite.transformIndexHtml(path, html)

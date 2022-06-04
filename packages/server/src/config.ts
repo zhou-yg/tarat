@@ -6,9 +6,12 @@ const defaultConfig = () => ({
   // client about
   viewsDirectory: 'views', // in tarot the display unit maybe page or component, they should belong to "views"
   hooksDirectory: 'hooks',
-
+  
   // server side
   apiPre: '_hook',
+
+  diffPath: '_diff',
+
   port: 9100,
   model: {
     engine: 'prisma'
@@ -145,6 +148,7 @@ export async function readConfig (arg: {
 
   return {
     ...config,
+    cwd,
     hooks,
     views,
   }
