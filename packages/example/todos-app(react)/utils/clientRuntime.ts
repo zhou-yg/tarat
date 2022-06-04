@@ -6,6 +6,7 @@ import { createRoot } from 'react-dom/client'
 setHookAdaptor(React, 'react')
 
 const hostConfig = `/${(window as any).tarotConfig.apiPre}`
+const diffPath = `/${(window as any).tarotConfig.diffPath}`
 
 /**
  * @TODO should provide by @tarot-run by default
@@ -24,7 +25,15 @@ setModelConfig({
     return {}
   },
   async executeDiff(d) {},
-  async postDiffToServer(d) {},
+  async postDiffToServer(entity, diff) {
+    await fetch(`${diffPath}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        entity,
+        diff
+      })
+    })
+  },
   async postComputeToServer(c) {
 
     const newContext: IHookContext = await fetch(`${hostConfig}/${c.name}`, {
@@ -34,6 +43,15 @@ setModelConfig({
 
     return newContext
   },
+  async postQueryToServer(c) {
+    console.log('postQueryToServer: ');
+    const newContext: IHookContext = await fetch(`${hostConfig}/${c.name}`, {
+      method: 'POST',
+      body: JSON.stringify(c)
+    }).then(r => r.json())
+
+    return newContext
+  }
 })
 
 
