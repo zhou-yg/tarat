@@ -100,7 +100,7 @@ describe('runner basic', () => {
       expect(e.message).toBe('[inputCompute] must under a tarot runner')
     }
   })
-  it.only('run oneEffect with nested BM', async () => {
+  it('run oneEffect with nested BM', async () => {
     const runner = new Runner(mockBM.oneEffect)
 
     const onRunnerUpdate = jest.fn(() => {

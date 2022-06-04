@@ -456,8 +456,8 @@ function createStateSetterGetterFunc<SV>(
   s: State<SV>,
   scope: CurrentRunnerScope
 ): {
-  (): SV,
-  (paramter: IModifyFunction<SV>): [SV, IPatch[]],
+  (): SV
+  (paramter: IModifyFunction<SV>): [SV, IPatch[]]
 } & { _hook?: Hook } {
   return (paramter?: any): any => {
     if (paramter) {
@@ -488,9 +488,9 @@ function createModelSetterGetterFunc<T>(
   m: Model<T>,
   scope: CurrentRunnerScope
 ): {
-  (): T | undefined,
-  (paramter: IModifyFunction<T | undefined>): [T | undefined, IPatch[]],
-} & { _hook?: Hook }  {
+  (): T | undefined
+  (paramter: IModifyFunction<T | undefined>): [T | undefined, IPatch[]]
+} & { _hook?: Hook } {
   return (paramter?: any): any => {
     if (paramter && isFunc(paramter)) {
       const [result, patches] = produceWithPatches(m.value, paramter)
@@ -542,10 +542,7 @@ export function state<S>(initialValue: S) {
 
   return setterGetter
 }
-export function model<T>(
-  q: () => IModelQuery,
-  op?: IModelOption
-) {
+export function model<T>(q: () => IModelQuery, op?: IModelOption) {
   if (!currentRunnerScope) {
     throw new Error('[model] must under a tarot runner')
   }
@@ -581,9 +578,6 @@ export function inputCompute<T>(func: InputComputeFn) {
   if (!currentRunnerScope) {
     throw new Error('[inputCompute] must under a tarot runner')
   }
-  if (process.env.TARGET === 'client') {
-    return inputComputeServer<T>(func)
-  }
 
   const hook = new InputCompute(func, currentRunnerScope)
 
@@ -597,6 +591,13 @@ export function inputCompute<T>(func: InputComputeFn) {
 export function inputComputeServer<T>(func: InputComputeFn) {
   if (!currentRunnerScope) {
     throw new Error('[inputComputeServer] must under a tarot runner')
+  }
+  /**
+   * running in client should post request to server
+   * if already in server, should execute directly
+   */
+  if (process.env.TARGET === 'server') {
+    return inputCompute<T>(func)
   }
 
   const hook = new InputCompute(func, currentRunnerScope)

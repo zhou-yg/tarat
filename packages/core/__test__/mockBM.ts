@@ -235,7 +235,6 @@ export function onePrimitiveStateComputed(v1: number, v2: number) {
   return { s, c }
 }
 
-
 // function a (x: number): {
 //   (): number,
 //   (a: string): string
