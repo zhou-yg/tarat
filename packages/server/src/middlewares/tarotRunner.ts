@@ -1,7 +1,8 @@
-import { IHookContext, Runner, setModelConfig } from '@tarot-run/core'
+import { IHookContext, Runner, getModelConfig, IDiff } from '@tarot-run/core'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'
 import { setPrisma } from '../../adaptors/prisma'
+
 function matchHookName (path: string) {
   const arr = path.split('/').filter(Boolean)
   return {
@@ -16,10 +17,10 @@ function matchHookName (path: string) {
 export default function tarotMiddleware (args: {
   config: IConfig
 }) : Application.Middleware{
-  const { hooks, apiPre } = args.config
+  const { hooks, apiPre, diffPath, cwd } = args.config
 
   if (args.config.model.engine === 'prisma') {
-    setPrisma()
+    setPrisma(cwd)
   }
 
   return async (ctx, next) => {
@@ -43,6 +44,10 @@ export default function tarotMiddleware (args: {
       } else {
         await next()        
       }
+    } else if (pre === diffPath && ctx.request.method === 'POST') {
+      const c: { entity: string, diff: IDiff } = JSON.parse(ctx.request.body)
+      await getModelConfig().executeDiff(c.entity, c.diff)
+      ctx.body = JSON.stringify({})
     } else {
       await next()
     }  
