@@ -1,36 +1,68 @@
 import { useHook } from '@tarot-run/core'
-import React from 'react'
+import React, { useState } from 'react'
 import { render } from '../utils/clientRuntime'
 import todoHook from '../hooks/todo.mjs'
+import '../styles/home.less'
 
-const Home = () => {
-
-  const r = useHook(todoHook)
-  
-  const v1  = r?.s1()
-  const v2  = r?.s2()
-
-  function plus () {
-    r.add(1)
-  }
-  function plusV2 () {
-    r.s2?.((v) => v + 1)
-  }
-
+const TodoItem = (props) => {
+  const checked = props.status === 'done'
   return (
-    <div style={{ padding: '8px' }}>
-      <div style={{ padding: '8px' }}>      
-        v1.num：{v1?.num}
+    <div className="todoItem">
+      <input className='status' type="checkbox" checked={checked} onChange={() => {
+        props.onStatus(checked ? 'undone' : 'done')
+      }} />
+      <div className={"text " + (checked ? 'done' : '')}>
+        {props.description}
       </div>
-      <div style={{ padding: '8px' }}>      
-        v2：{v2}
-      </div>
-      <div style={{ padding: '8px' }}>
-        <button onClick={plus}>all plus 1</button>
-        <br/>
-        <button onClick={plusV2}>plus v2 1</button>
+      <div className="remove" onClick={props.onRemove}>
+        X
       </div>
     </div>
   )
 }
+
+const Home = () => {
+
+  const todo = useHook(todoHook)
+  
+  const [inputText, setInputText] = useState('')
+
+  function keydownCreate (e) {
+    if (e.keyCode === 13 || e.key === 'Enter') {
+      todo?.createTodoItem(e.target.value)
+      setInputText('')
+    }
+  }
+
+  return (
+    <div className="home">
+      <div className='newItem'>
+        <input
+          onKeyDown={keydownCreate}
+          onChange={e => setInputText(e.target.value)}
+          value={inputText}
+          placeholder="what needs to be done?" />
+      </div>
+      {todo?.items()?.map((item, i) => {
+        return <TodoItem
+          onStatus={(s) => {
+            todo.items(d => {
+              d[i].status = s
+            })
+          }}
+          onRemove={() => {
+            todo.items(d => {
+              d.splice(i, 1)
+            })            
+          }}
+          key={item.id}
+          description={item.description}
+          status={item.status} />
+      })}
+    </div>
+  )
+}
+
+document.title = 'todos'
+
 export default render(Home)
