@@ -30,6 +30,7 @@ describe('initContext', () => {
 
     mockBM.initModelConfig({
       async postComputeToServer (c: IHookContext) {
+        process.env.TARGET = 'server'
         const serverRunner = new Runner(mockBM.changeStateInputComputeServer, c)
         serverRunner.init(...c.initialArgList)
 
@@ -37,6 +38,8 @@ describe('initContext', () => {
           await serverRunner.callHook(c.index, c.args)
         }
         const context = serverRunner.scope.createInputComputeContext()
+
+        process.env.TARGET = ''
 
         return context
       }

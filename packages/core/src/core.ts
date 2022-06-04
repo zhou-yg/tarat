@@ -130,7 +130,7 @@ export class State<T = any> extends Hook {
       changedPathArr.forEach(path => this.trigger(path, patches))
     }
   }
-  // @TODO, lots of case should be upgrade
+  // @TODO should be upgrade for some badcase maybe
   applyPatches(p: IPatch[]) {
     if (likeObject(this._internalValue)) {
       const newValue = applyPatches(this._internalValue!, p)
@@ -170,6 +170,14 @@ export class Model<T> extends State<T | undefined> {
     this._internalValue = v
     this.trigger()
   }
+  override async applyPatches(patches: IPatch[]) {
+    console.log('this._internalValue: ', this._internalValue)
+    if (this._internalValue) {
+      const newValue = applyPatches(this._internalValue, patches)
+      console.log('newValue: ', newValue);
+      await this.updateWithPatches(newValue, patches)
+    }
+  }
   async updateWithPatches(v: T | undefined, patches: IPatch[]) {
     const oldValue = this._internalValue
     if (!this.options.pessimisticUpdate) {
@@ -179,9 +187,10 @@ export class Model<T> extends State<T | undefined> {
     const { entity } = this.getQueryWhere()
     try {
       const diff = calculateDiff(oldValue, patches)
+      console.log('[Model.updateWithPatches] diff: ', diff);
       await getDiffExecution()(entity, diff)
     } catch (e) {
-      console.error('[updateWithPatches] postPatches fail')
+      console.error('[updateWithPatches] postPatches fail', e)
       if (this.options.autoRollback) {
         this.update(oldValue)
       }
@@ -191,15 +200,19 @@ export class Model<T> extends State<T | undefined> {
 }
 
 class ClientModel<T = any> extends Model<T> {
-  override async query () {
+  override async query() {
     const context = this.scope.createInputComputeContext(this)
     const result = await getModelConfig().postQueryToServer(context)
     this.scope.applyContext(result)
   }
   override async updateWithPatches(v: T, patches: IPatch[]) {
-    this.update(v)
+    const oldValue = this._internalValue
+    if (!this.options.pessimisticUpdate) {
+      this.update(v, patches)
+    }
+    // cal diff
     const { entity } = this.getQueryWhere()
-    const diff = calculateDiff(v, patches)
+    const diff = calculateDiff(oldValue, patches)
     await getPostDiffToServer()(entity, diff)
     await this.query()
   }
@@ -237,24 +250,24 @@ class InputCompute extends Hook {
     scope.addHook(this)
   }
   inputFuncStart() {}
-  inputFuncEnd() {
+  async inputFuncEnd() {
+    console.log('inputFuncEnd: ');
     currentInputeCompute = null
-    this.scope.applyComputePatches()
+    await this.scope.applyComputePatches()
     unFreeze({ _hook: this })
     this.triggerEvent('after')
   }
-  run(...args: any) {
+  async run(...args: any): Promise<void> {
     currentInputeCompute = this
     this.triggerEvent('before')
     if (!checkFreeze({ _hook: this })) {
       const funcResult = this.getter(...args)
       if (isPromise(funcResult)) {
-        return Promise.resolve(funcResult).then(() => {
-          this.inputFuncEnd()
-        })
+        await Promise.resolve(funcResult)
+        return await this.inputFuncEnd()
       }
     }
-    this.inputFuncEnd()
+    return this.inputFuncEnd()
   }
   triggerEvent(timing: 'before' | 'after') {
     this.watchers.forEach(w => {
@@ -338,13 +351,16 @@ export class CurrentRunnerScope {
     }
     exist[1] = exist[1].concat(p)
   }
-  applyComputePatches() {
+  async applyComputePatches() {
     const dataWithPatches = this.computePatches
+    console.log('dataWithPatches: ', dataWithPatches);
     this.computePatches = []
 
-    dataWithPatches.forEach(([d, p]) => {
-      d.applyPatches(p)
-    })
+    await Promise.all(
+      dataWithPatches.map(([d, p]) => {
+        return d.applyPatches(p)
+      })
+    )
   }
 
   createInputComputeContext(h?: Hook, args?: any[]): IHookContext {
@@ -511,6 +527,7 @@ function createModelSetterGetterFunc<T>(
   return (paramter?: any): any => {
     if (paramter && isFunc(paramter)) {
       const [result, patches] = produceWithPatches(m.value, paramter)
+      console.log('[model setter] result, patches: ', !!currentInputeCompute, JSON.stringify(patches, null, 2));
 
       if (currentInputeCompute) {
         scope.addComputePatches(m, patches)

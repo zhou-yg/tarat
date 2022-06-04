@@ -8,6 +8,7 @@ import * as mockBM from '../mockBM'
 describe('model', () => {
 
   beforeEach(() => {
+    process.env.TARGET = 'server'
     let mockUsersData = [
       { id: 1, name: 'a' },
       { id: 2, name: 'b' },
@@ -42,6 +43,9 @@ describe('model', () => {
 
       }
     })
+  })
+  afterAll(() => {
+    process.env.TARGET = ''
   })
 
   it('find immediate', async () => {
