@@ -43,19 +43,19 @@ describe('computed', () => {
     expect(result.s._hook.watchers.has(runner.scope.watcher)).toBe(true)
     expect(result.s._hook.watchers.has(result.c._hook.watcher)).toBe(true)
   })
-  it.only('use array', async () => {
+  it('use array', async () => {
     const runner = new Runner(mockBM.computedWithArray)
     const result = runner.init()
 
-    expect(result.arr()).toEqual([0,1,2,3,4,5,6,7,8,9])
+    expect(result.arr()).toEqual([{ num: 0 }, { num: 1 }, { num: 2 }, { num: 3 }, { num: 4 }])
     expect(result.guard()).toBe(2)
-    expect(result.arr2()).toEqual([0, 1])
+    expect(result.arr2()).toEqual([{ num: 0 }, { num: 1 }])
     
     result.guard((d: number) => d + 1)
     await mockBM.wait()
     
-    expect(result.arr()).toEqual([0,1,2,3,4,5,6,7,8,9])
+    expect(result.arr()).toEqual([{ num: 0 }, { num: 1 }, { num: 2 }, { num: 3 }, { num: 4 }])
     expect(result.guard()).toBe(3)
-    expect(result.arr2()).toEqual([0, 1, 2])
+    expect(result.arr2()).toEqual([{ num: 0 }, { num: 1 }, { num: 2 }])
   })
 })
