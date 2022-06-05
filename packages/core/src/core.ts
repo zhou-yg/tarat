@@ -132,6 +132,7 @@ export class State<T = any> extends Hook {
   }
   // @TODO should be upgrade for some badcase maybe
   applyPatches(p: IPatch[]) {
+    console.log('[state.applyPatches]', p)
     if (likeObject(this._internalValue)) {
       const newValue = applyPatches(this._internalValue!, p)
       this.update(newValue)
@@ -159,9 +160,9 @@ export class Model<T> extends State<T | undefined> {
   }
   async query() {
     const q = this.getQueryWhere()
-    console.log('[model.query] q.entity, q.query: ', q.entity, q.query);
+    console.log('[model.query] q.entity, q.query: ', q.entity, q.query)
     const result = await getModelFind()(q.entity, q.query)
-    console.log('[model.query] result: ', result);
+    console.log('[model.query] result: ', result)
     if (this.options.unique) {
       this.update(result[0])
     } else {
@@ -171,6 +172,7 @@ export class Model<T> extends State<T | undefined> {
   override async applyPatches(patches: IPatch[]) {
     if (this._internalValue) {
       const newValue = applyPatches(this._internalValue, patches)
+      console.log('[model.applyPatches]', newValue, Object.isFrozen(newValue))
       await this.updateWithPatches(newValue, patches)
     }
   }
@@ -184,7 +186,7 @@ export class Model<T> extends State<T | undefined> {
     const { entity } = this.getQueryWhere()
     try {
       const diff = calculateDiff(oldValue, patches)
-      console.log('[Model.updateWithPatches] diff: ', diff);
+      console.log('[Model.updateWithPatches] diff: ', diff)
       await getDiffExecution()(entity, diff)
     } catch (e) {
       console.error('[updateWithPatches] postPatches fail', e)
@@ -248,7 +250,7 @@ class InputCompute extends Hook {
   }
   inputFuncStart() {}
   async inputFuncEnd() {
-    console.log('inputFuncEnd: ');
+    console.log('inputFuncEnd: ')
     currentInputeCompute = null
     await this.scope.applyComputePatches()
     unFreeze({ _hook: this })
@@ -350,7 +352,7 @@ export class CurrentRunnerScope {
   }
   async applyComputePatches() {
     const dataWithPatches = this.computePatches
-    console.log('dataWithPatches: ', dataWithPatches);
+    console.log('dataWithPatches: ', dataWithPatches)
     this.computePatches = []
 
     await Promise.all(
@@ -362,7 +364,7 @@ export class CurrentRunnerScope {
 
   createInputComputeContext(h?: Hook, args?: any[]): IHookContext {
     const { hooks } = this
-    console.log('[createInputComputeContext] hooks: ', hooks);
+    console.log('[createInputComputeContext] hooks: ', hooks)
     const hookIndex = h ? hooks.indexOf(h) : -1
     const hooksData: IHookContext['data'] = hooks.map(hook => {
       if (hook instanceof State) {
@@ -525,7 +527,11 @@ function createModelSetterGetterFunc<T>(
   return (paramter?: any): any => {
     if (paramter && isFunc(paramter)) {
       const [result, patches] = produceWithPatches(m.value, paramter)
-      console.log('[model setter] result, patches: ', !!currentInputeCompute, JSON.stringify(patches, null, 2));
+      console.log(
+        '[model setter] result, patches: ',
+        !!currentInputeCompute,
+        JSON.stringify(patches, null, 2)
+      )
 
       if (currentInputeCompute) {
         scope.addComputePatches(m, patches)
