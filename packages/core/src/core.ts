@@ -159,28 +159,25 @@ export class Model<T> extends State<T | undefined> {
   }
   async query() {
     const q = this.getQueryWhere()
+    console.log('[model.query] q.entity, q.query: ', q.entity, q.query);
     const result = await getModelFind()(q.entity, q.query)
+    console.log('[model.query] result: ', result);
     if (this.options.unique) {
-      this.updateFromRemote(result[0])
+      this.update(result[0])
     } else {
-      this.updateFromRemote(result)
+      this.update(result)
     }
   }
-  updateFromRemote(v: T) {
-    this._internalValue = v
-    this.trigger()
-  }
   override async applyPatches(patches: IPatch[]) {
-    console.log('this._internalValue: ', this._internalValue)
     if (this._internalValue) {
       const newValue = applyPatches(this._internalValue, patches)
-      console.log('newValue: ', newValue);
       await this.updateWithPatches(newValue, patches)
     }
   }
   async updateWithPatches(v: T | undefined, patches: IPatch[]) {
     const oldValue = this._internalValue
     if (!this.options.pessimisticUpdate) {
+      console.log('[Model.updateWithPatches] update internal')
       this.update(v, patches)
     }
 
@@ -229,7 +226,7 @@ class Computed<T> extends State<T | undefined> {
     currentComputed = this
     const r: any = this.getter()
     currentComputed = null
-    if (r.then || r instanceof Promise) {
+    if (r && (r.then || r instanceof Promise)) {
       r.then((asyncResult: T) => {
         this.update(asyncResult)
       })
@@ -365,6 +362,7 @@ export class CurrentRunnerScope {
 
   createInputComputeContext(h?: Hook, args?: any[]): IHookContext {
     const { hooks } = this
+    console.log('[createInputComputeContext] hooks: ', hooks);
     const hookIndex = h ? hooks.indexOf(h) : -1
     const hooksData: IHookContext['data'] = hooks.map(hook => {
       if (hook instanceof State) {
