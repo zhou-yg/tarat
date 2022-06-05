@@ -1,6 +1,7 @@
 import tsPlugin from 'rollup-plugin-typescript2'
 import dts from "rollup-plugin-dts"
 import replace from '@rollup/plugin-replace';
+// import { nodeResolve } from '@rollup/plugin-node-resolve';
 
 export default [
   {
@@ -11,13 +12,13 @@ export default [
       }),
       replace({
         'process.env.TARGET': '"server"'
-      })
+      }),
     ],
     input: 'src/index.ts',
     output: {
       file: 'dist/index.server.js',
       format: 'esm'
-    }
+    },
   },
   {
     plugins: [
@@ -27,7 +28,7 @@ export default [
       }),
       replace({
         'process.env.TARGET': '"client"'
-      })
+      }),
     ],
     input: 'src/index.ts',
     output: {
@@ -40,6 +41,8 @@ export default [
     output: [
       { file: "dist/index.d.ts", format: "es" }
     ],
-    plugins: [dts()],
+    plugins: [
+      dts(),
+    ],
   }
 ]
