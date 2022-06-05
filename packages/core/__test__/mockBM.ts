@@ -257,11 +257,11 @@ export function onePrimitiveStateComputed(v1: number, v2: number) {
   return { s, c }
 }
 
-export function computedWithArray () {
-  const arr = state(new Array(10).fill('_').map((_, i) => i))
+export function computedWithArray() {
+  const arr = state(new Array(5).fill('_').map((_, i) => ({ num: i })))
   const guard = state(2)
   const arr2 = computed(() => {
-    return arr().filter(v => v < guard())
+    return arr().filter(v => v.num < guard())
   })
 
   return {
@@ -287,4 +287,3 @@ export function computedWithArray () {
 // const r2 = fn('a')
 
 // const c: number = r + 1
-
