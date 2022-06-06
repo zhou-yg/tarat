@@ -108,3 +108,4 @@ dist
 packages/example/*/*/*.db
 *.toml
 packages/example/**/*.sql
+packages/example/**/*.db-journal
