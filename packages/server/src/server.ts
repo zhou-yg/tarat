@@ -49,5 +49,5 @@ export async function createDevServer (c: IConfig) {
 
   app.listen(c.port)
 
-  console.log(`start listen on:${c.port}`)
+  console.log(`start listen on http://localhost:${c.port}`)
 }

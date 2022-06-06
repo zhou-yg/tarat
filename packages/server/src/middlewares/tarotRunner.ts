@@ -33,7 +33,7 @@ export default function tarotMiddleware (args: {
         let runner = new Runner(hookFunc.default, c)
         runner.init(...c.initialArgList)
   
-        if (c.index) {
+        if (c.index !== undefined) {
           await runner.callHook(c.index, c.args)
         }
         const context = runner.scope.createInputComputeContext()
