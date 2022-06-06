@@ -1,7 +1,7 @@
 import { IHookContext, Runner, getModelConfig, IDiff } from '@tarot-run/core'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'
-import { setPrisma } from '../../adaptors/prisma'
+import { setPrisma } from '../adaptors/prisma'
 
 function matchHookName (path: string) {
   const arr = path.split('/').filter(Boolean)
