@@ -1,4 +1,7 @@
-import { IHookContext, isState, Runner, setModelConfig } from '@tarot-run/core'
+import { IHookContext, isState, Runner, setHookAdaptor, setModelConfig } from '@tarot-run/core'
+import * as axii from 'axii'
+
+setHookAdaptor(axii, 'axii');
 
 const hostConfig = `http://localhost:9001/_hook`
 
