@@ -275,7 +275,7 @@ class InputCompute extends Hook {
     })
   }
 }
-class InputComputeClient extends InputCompute {
+class InputComputeInServer extends InputCompute {
   async run(...args: any[]) {
     currentInputeCompute = this
     this.triggerEvent('before')
@@ -365,7 +365,6 @@ export class CurrentRunnerScope {
 
   createInputComputeContext(h?: Hook, args?: any[]): IHookContext {
     const { hooks } = this
-    console.log('[createInputComputeContext] hooks: ', hooks)
     const hookIndex = h ? hooks.indexOf(h) : -1
     const hooksData: IHookContext['data'] = hooks.map(hook => {
       if (hook instanceof State) {
@@ -604,7 +603,7 @@ export function model<T>(q: () => IModelQuery, op?: IModelOption) {
 
   return setterGetter
 }
-export function modelClient<T>(q: () => IModelQuery, op?: IModelOption) {
+export function clientModel<T>(q: () => IModelQuery, op?: IModelOption) {
   if (!currentRunnerScope) {
     throw new Error('[model] must under a tarot runner')
   }
@@ -647,7 +646,7 @@ export function inputCompute<T>(func: InputComputeFn) {
   return wrapFunc
 }
 
-export function inputComputeClient<T>(func: InputComputeFn) {
+export function inputComputeInServer<T>(func: InputComputeFn) {
   if (!currentRunnerScope) {
     throw new Error('[inputComputeServer] must under a tarot runner')
   }
@@ -659,7 +658,7 @@ export function inputComputeClient<T>(func: InputComputeFn) {
     return inputCompute<T>(func)
   }
 
-  const hook = new InputComputeClient(func, currentRunnerScope)
+  const hook = new InputComputeInServer(func, currentRunnerScope)
 
   const wrapFunc: FInputComputeFunc = (...args: any) => {
     return hook.run(...args)

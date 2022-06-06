@@ -5,9 +5,9 @@ import {
   after,
   before,
   freeze,
-  inputComputeClient,
+  inputComputeInServer,
   computed,
-  modelClient
+  clientModel
 } from '../src/core'
 import { setModelConfig } from '../src/util'
 
@@ -169,7 +169,7 @@ export function changeStateInputComputeServer(
 
   const { s1, s2 } = ps
 
-  const changeS1 = inputComputeClient((v: number) => {
+  const changeS1 = inputComputeInServer((v: number) => {
     s1((draft: any) => {
       draft.num1 = v
     })
@@ -226,7 +226,7 @@ export function userPessimisticModel() {
 }
 export function userModelClient() {
   const num = state(0)
-  const users = modelClient(
+  const users = clientModel(
     () => ({
       entity: 'User',
       query: {
