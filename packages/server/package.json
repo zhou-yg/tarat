@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "description": "tarot ssr framework server side",
   "type": "module",
-  "main": "index.js",
+  "main": "./dist/server.js",
+  "types": "./dist/index.d.ts",
   "bin": {
     "tarot": "./dist/cli/index.js"
   },

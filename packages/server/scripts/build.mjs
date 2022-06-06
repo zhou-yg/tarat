@@ -12,6 +12,7 @@ const { cp } = shelljs;
   })
   
   cp('src/middlewares/viewTemplate.ejs', 'dist/cli/')
+  cp('src/middlewares/viewTemplate.ejs', 'dist/')
 
   console.log('build end')
 
