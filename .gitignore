@@ -102,3 +102,9 @@ dist
 
 # TernJS port file
 .tern-port
+
+*.db
+*/migrations
+packages/example/*/*/*.db
+*.toml
+packages/example/**/*.sql
