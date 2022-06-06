@@ -36,5 +36,4 @@ describe('model', () => {
       { id: 2, name: 'b' },
     ])
   })
-  it('post diff to server')
 })
