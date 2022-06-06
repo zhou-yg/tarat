@@ -25,9 +25,18 @@ export default [
         tsconfig: './tsconfig.json',
       }),
     ],
-    input: "src/server.ts",
+    input: "src/index.ts",
     output: [
-      { file: "dist/server.js", format: "es" }
+      { file: "dist/index.js", format: "es" }
+    ],
+  },
+  {
+    plugins: [
+      dts()
+    ],
+    input: "src/index.ts",
+    output: [
+      { file: "dist/index.d.ts", format: "es" }
     ],
   }
 ]

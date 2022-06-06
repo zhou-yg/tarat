@@ -2,7 +2,7 @@ import * as path from 'path'
 import * as fs from 'fs'
 import l from 'lodash'
 const { merge } = l
-const defaultConfig = () => ({
+export const defaultConfig = () => ({
   // client about
   viewsDirectory: 'views', // in tarot the display unit maybe page or component, they should belong to "views"
   hooksDirectory: 'hooks',
@@ -18,8 +18,8 @@ const defaultConfig = () => ({
   }
 })
 
-type IDefaultConfig = ReturnType<typeof defaultConfig> & {
-  model: {
+export type IDefaultConfig = ReturnType<typeof defaultConfig> & {
+  model?: {
     engine: 'prisma' | 'er'
   }
 }
@@ -90,7 +90,7 @@ export interface IServerHookConfig {
   hookFunc: Promise<{ default: (...args: any[]) => any }>
 }
 
-function readHooks(dir: string) {
+export function readHooks(dir: string) {
   const hooks = fs.readdirSync(dir)
   // check hooks
   hooks.forEach(f => {

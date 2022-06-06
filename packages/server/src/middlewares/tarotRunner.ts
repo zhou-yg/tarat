@@ -15,11 +15,11 @@ function matchHookName (path: string) {
  * @TODO should provide by @tarot-run by default
  */
 export default function tarotMiddleware (args: {
-  config: IConfig
+  config: Pick<IConfig, 'hooks' | 'apiPre' | 'diffPath' | 'cwd'> & { model?: IConfig['model'] }
 }) : Application.Middleware{
-  const { hooks, apiPre, diffPath, cwd } = args.config
+  const { hooks, apiPre, diffPath, cwd, model } = args.config
 
-  if (args.config.model.engine === 'prisma') {
+  if (model?.engine === 'prisma') {
     setPrisma(cwd)
   }
 
