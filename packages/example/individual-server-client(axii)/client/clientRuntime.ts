@@ -22,11 +22,20 @@ setModelConfig({
   async postDiffToServer(d) {},
   async postComputeToServer(c) {
 
-    const newContext: IHookContext = await fetch(hostConfig, {
+    const newContext: IHookContext = await fetch(`${hostConfig}/${c.name}`, {
       method: 'POST',
       body: JSON.stringify(c)
     }).then(r => r.json())
 
     return newContext
   },
+  async postQueryToServer (c) {
+    return {
+      initialArgList: [],
+      name: 'x',
+      data: [],
+      index: 1,
+      args: []
+    }
+  }
 })
