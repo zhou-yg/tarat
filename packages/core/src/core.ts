@@ -21,7 +21,8 @@ import {
   calculateChangedPath,
   isEqual,
   TPath,
-  shallowCopy
+  shallowCopy,
+  log
 } from './util'
 import {
   produceWithPatches,
@@ -133,7 +134,7 @@ export class State<T = any> extends Hook {
   }
   // @TODO should be upgrade for some badcase maybe
   applyPatches(p: IPatch[]) {
-    console.log('[state.applyPatches]', p)
+    log('[state.applyPatches]', p)
     if (likeObject(this._internalValue)) {
       const newValue = applyPatches(this._internalValue!, p)
       this.update(newValue)
@@ -161,9 +162,9 @@ export class Model<T> extends State<T | undefined> {
   }
   async query() {
     const q = this.getQueryWhere()
-    console.log('[model.query] q.entity, q.query: ', q.entity, q.query)
+    log('[model.query] 1 q.entity, q.query: ', q.entity, q.query)
     const result = await getModelFind()(q.entity, q.query)
-    console.log('[model.query] result: ', result)
+    log('[model.query] 2 result: ', result)
     if (this.options.unique) {
       this.update(result[0])
     } else {
@@ -173,21 +174,20 @@ export class Model<T> extends State<T | undefined> {
   override async applyPatches(patches: IPatch[]) {
     if (this._internalValue) {
       const newValue = applyPatches(this._internalValue, patches)
-      console.log('[model.applyPatches]', newValue, Object.isFrozen(newValue))
       await this.updateWithPatches(newValue, patches)
     }
   }
   async updateWithPatches(v: T | undefined, patches: IPatch[]) {
     const oldValue = this._internalValue
     if (!this.options.pessimisticUpdate) {
-      console.log('[Model.updateWithPatches] update internal')
+      log('[Model.updateWithPatches] update internal v=', v)
       this.update(v, patches)
     }
 
     const { entity } = this.getQueryWhere()
     try {
       const diff = calculateDiff(oldValue, patches)
-      console.log('[Model.updateWithPatches] diff: ', diff)
+      log('[Model.updateWithPatches] diff: ', diff)
       await getDiffExecution()(entity, diff)
     } catch (e) {
       console.error('[updateWithPatches] postPatches fail', e)
@@ -251,7 +251,6 @@ class InputCompute extends Hook {
   }
   inputFuncStart() {}
   async inputFuncEnd() {
-    console.log('inputFuncEnd: ')
     currentInputeCompute = null
     await this.scope.applyComputePatches()
     unFreeze({ _hook: this })
@@ -353,7 +352,6 @@ export class CurrentRunnerScope {
   }
   async applyComputePatches() {
     const dataWithPatches = this.computePatches
-    console.log('dataWithPatches: ', dataWithPatches)
     this.computePatches = []
 
     await Promise.all(
@@ -528,7 +526,7 @@ function createModelSetterGetterFunc<T>(
   return (paramter?: any): any => {
     if (paramter && isFunc(paramter)) {
       const [result, patches] = produceWithPatches(m.value, paramter)
-      console.log(
+      log(
         '[model setter] result, patches: ',
         !!currentInputeCompute,
         JSON.stringify(patches, null, 2)
