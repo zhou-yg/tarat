@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
-    "watch": "npm run build && rollup --config rollup.config.mjs --watch",
+    "build:watch": "npm run build && rollup --config rollup.config.mjs --watch",
     "release": "npm run build && bump --commit \"release: @tarot-run/core v%s\" --push && npm publish --access public"
   },
   "license": "ISC",
@@ -27,6 +27,7 @@
     "@rollup/plugin-replace": "^4.0.0",
     "@types/ejs": "^3.1.1",
     "@types/express-to-koa": "^1.0.0",
+    "@types/koa__cors": "^3.3.0",
     "@types/lodash": "^4.14.182",
     "rollup": "^2.74.1",
     "rollup-plugin-dts": "^4.2.2",
