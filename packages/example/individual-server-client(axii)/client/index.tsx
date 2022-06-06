@@ -6,11 +6,8 @@ import {
 } from 'axii'
 
 import hook from '../hooks/hook.js'
-import { setHookAdaptor,  useHook } from '@tarot-run/core'
-import * as axii from 'axii'
+import { useHook } from '@tarot-run/core'
 import './clientRuntime'
-
-setHookAdaptor(axii, 'axii');
 
 function Plus () {
 
