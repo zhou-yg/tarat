@@ -20,7 +20,8 @@ import {
   traverseValues,
   calculateChangedPath,
   isEqual,
-  TPath
+  TPath,
+  shallowCopy
 } from './util'
 import {
   produceWithPatches,
@@ -217,7 +218,7 @@ class ClientModel<T = any> extends Model<T> {
   }
 }
 
-class Computed<T> extends State<T | undefined> {
+export class Computed<T> extends State<T | undefined> {
   getterPromise: Promise<T> | null = null
   batchRunCancel: () => void = () => {}
   watcher: Watcher<State<any>> = new Watcher<State<any>>(this)
@@ -463,7 +464,7 @@ function executeBM(f: BM, args: any) {
   return bmResult
 }
 
-function internalProxy<T>(
+export function internalProxy<T>(
   source: State<T>,
   _internalValue: T,
   path: (string | number)[] = []
@@ -471,9 +472,10 @@ function internalProxy<T>(
   if (currentComputed) {
     currentComputed.watcher.addDep(source, path)
     if (_internalValue && likeObject(_internalValue)) {
-      return new Proxy(_internalValue as any, {
+      const copyValue = shallowCopy(_internalValue)
+      return new Proxy(copyValue as any, {
         get(target, p: string) {
-          return internalProxy(source, (target as any)[p], path.concat(p))
+          return internalProxy(source, Reflect.get(target, p), path.concat(p))
         }
       })
     }
@@ -557,6 +559,10 @@ interface FComputedGetterFunc<T> extends Function {
   _hook?: State<T>
 }
 let currentComputed: null | Computed<any> = null
+
+export function setCurrentComputed(c: Computed<any> | null) {
+  currentComputed = c
+}
 
 interface FInputComputeFunc extends Function {
   (...args: any): void

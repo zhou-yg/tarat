@@ -2,9 +2,38 @@ import { applyPatches } from 'immer'
 import { useAxiiHook } from './connect/axii'
 import { useReactHook } from './connect/react'
 
+export const isArray = Array.isArray
+/* copy from immer's common.ts  */
+export type AnyObject = { [key: string]: any }
+export const ownKeys: (target: AnyObject) => PropertyKey[] = Reflect.ownKeys
+export const getOwnPropertyDescriptors = Object.getOwnPropertyDescriptors
+
+export function shallowCopy(base: any) {
+  if (isArray(base)) return Array.prototype.slice.call(base)
+  const descriptors = getOwnPropertyDescriptors(base)
+  let keys = ownKeys(descriptors)
+  for (let i = 0; i < keys.length; i++) {
+    const key: any = keys[i]
+    const desc = descriptors[key]
+    if (desc.writable === false) {
+      desc.writable = true
+      desc.configurable = true
+    }
+    // like object.assign, we will read any _own_, get/set accessors. This helps in dealing
+    // with libraries that trap values, like mobx or vue
+    // unlike object.assign, non-enumerables will be copied as well
+    if (desc.get || desc.set)
+      descriptors[key] = {
+        configurable: true,
+        writable: true, // could live with !!desc.set as well here...
+        enumerable: desc.enumerable,
+        value: base[key]
+      }
+  }
+  return Object.create(Object.getPrototypeOf(base), descriptors)
+}
 /* HELPERS */
 const getKeys = Object.keys
-export const isArray = Array.isArray
 
 export const isEqual = (x: any, y: any): boolean => {
   if (x === y) return true
@@ -111,7 +140,7 @@ export function deleteKey(obj: any, p: IPatch) {
 
 export function set(obj: any, path: string | (number | string)[], value: any) {
   let base = obj
-  const currentFieldPath = Array.isArray(path)
+  const currentFieldPath = isArray(path)
     ? path.slice(0)
     : path.split
     ? path.split('.')
@@ -134,7 +163,7 @@ export function set(obj: any, path: string | (number | string)[], value: any) {
 
 export function get(obj: any, path: string | (number | string)[]) {
   let base = obj
-  const pathArr = Array.isArray(path)
+  const pathArr = isArray(path)
     ? path.slice(0)
     : path.split
     ? path.split('.')
@@ -161,7 +190,7 @@ export function map(
   if (!target || typeof target !== 'object') {
     throw new Error('can not map')
   }
-  if (Array.isArray(target)) {
+  if (isArray(target)) {
     return target.map(callback)
   }
   return Object.values(target).map(callback)
@@ -524,7 +553,7 @@ export function calculateDiff(data: any | any[], ps: IPatch[]) {
         case 'replace':
           {
             // cant handle the primitive patch in array
-            if (Array.isArray(source) && !likeObject(patchValue)) {
+            if (isArray(source) && !likeObject(patchValue)) {
               return
             }
             const exist = findWithDefault(
@@ -537,7 +566,7 @@ export function calculateDiff(data: any | any[], ps: IPatch[]) {
               }
             )
             if (exist) {
-              if (Array.isArray(source)) {
+              if (isArray(source)) {
                 exist.value = patchValue // should bring "id"
               } else {
                 Object.assign(exist.value, {
@@ -549,7 +578,7 @@ export function calculateDiff(data: any | any[], ps: IPatch[]) {
           break
         case 'add':
           {
-            if (Array.isArray(source)) {
+            if (isArray(source)) {
               if (likeObject(patchValue)) {
                 create.push({
                   source,
@@ -642,7 +671,7 @@ export type TPath = (string | number)[]
  * a.b.c --> a.b.c 变化，需要通知到a.b吗？因为如果不是进一步的依赖，那说明b就是primitive的
  */
 export function calculateChangedPath(source: any, ps: IPatch[]): TPath[] {
-  if (Array.isArray(source)) {
+  if (isArray(source)) {
     return [['']] // root
   }
   const result: TPath[] = []
