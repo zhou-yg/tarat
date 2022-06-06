@@ -1,6 +1,6 @@
 {
   "name": "@tarot-run/server",
-  "version": "0.0.1",
+  "version": "0.0.8",
   "description": "tarot ssr framework server side",
   "type": "module",
   "main": "./dist/server.js",
@@ -8,6 +8,13 @@
   "bin": {
     "tarot": "./dist/cli/index.js"
   },
+  "files": [
+    "src",
+    "cli",
+    "adaptors",
+    "pacakge.json",
+    "dist"
+  ],
   "scripts": {
     "build": "node scripts/build.mjs",
     "build:watch": "npm run build && rollup --config rollup.config.mjs --watch",
