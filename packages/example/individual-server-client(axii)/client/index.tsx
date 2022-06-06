@@ -5,10 +5,10 @@ import {
   render
 } from 'axii'
 
-import hook from '../hooks/hook'
+import hook from '../hooks/hook.js'
 import { setHookAdaptor,  useHook } from '@tarot-run/core'
 import * as axii from 'axii'
-import '../connect/useAxiiHookRuntime'
+import './clientRuntime'
 
 setHookAdaptor(axii, 'axii');
 
