@@ -2,7 +2,8 @@ import {
   inputCompute,
   state,
   model,
-  inputComputeClient
+  inputComputeInServer,
+  computed
 } from '@tarot-run/core'
 
 function newTodoItem(description) {
@@ -13,8 +14,6 @@ function newTodoItem(description) {
 }
 
 export default function todo () {
-  const s1 = state({ num: 0 })
-  const s2 = state(2)
 
   const items = model(() => ({
     entity: 'todoItem',
@@ -22,9 +21,16 @@ export default function todo () {
       status: 'undone'
     }
   }), { immediate: true })
-  
 
-  const createTodoItem = inputComputeClient(async description => {
+  const undoneItems = computed(() => {
+    const arr = items()
+    if (arr) {
+      return arr.filter(item => item.status === 'undone')
+    }
+    return []
+  })
+
+  const createTodoItem = inputComputeInServer(async description => {
     items(d => {
       d.push(newTodoItem(description))
     })
@@ -33,7 +39,6 @@ export default function todo () {
   return {
     items,
     createTodoItem,
-    s1,
-    s2,
+    undoneItems,
   }
 }

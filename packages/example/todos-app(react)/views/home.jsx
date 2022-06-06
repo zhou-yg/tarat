@@ -34,6 +34,9 @@ const Home = () => {
     }
   }
 
+  const undoneItemsNum = todo?.undoneItems()?.length
+  console.log('undoneItemsNum: ', undoneItemsNum);
+
   return (
     <div className="home">
       <div className='newItem'>
@@ -59,6 +62,13 @@ const Home = () => {
           description={item.description}
           status={item.status} />
       })}
+      {undoneItemsNum !== undefined ? (
+        <div className='footer'>
+          <span className='leftItems'>
+            {undoneItemsNum} item left
+          </span>
+        </div>
+      ) : ''}
     </div>
   )
 }
