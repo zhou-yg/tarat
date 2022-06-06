@@ -1,6 +1,6 @@
 {
   "name": "@tarot-run/core",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "useHook serverless framework",
   "main": "./dist/index.server.js",
   "types": "./dist/index.d.ts",
@@ -14,6 +14,11 @@
     "build:watch": "npm run format && rollup --config rollup.config.mjs --watch",
     "release": "npm run build && bump --commit \"release: @tarot-run/core v%s\" --push && npm publish --access public"
   },
+  "files": [
+    "src",
+    "dist",
+    "package.json"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zhou-yg/tarot.git"
