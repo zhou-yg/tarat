@@ -1,6 +1,5 @@
 import { useHook } from '@tarot-run/core'
 import React, { useState } from 'react'
-import { render } from '../utils/clientRuntime'
 import todoHook from '../hooks/todo.js'
 import '../styles/home.less'
 
@@ -75,4 +74,4 @@ const Home = () => {
 
 document.title = 'todos'
 
-export default render(Home)
+export default Home
