@@ -5,6 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "init": "pnpm install && npm run prisma:dev",
     "dev": "tarot dev",
     "prisma:dev": "prisma migrate dev && prisma generate",
     "prisma:deploy": "prisma migrate deploy",
