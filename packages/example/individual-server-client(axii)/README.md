@@ -13,16 +13,19 @@ this example dependent on @tarot/core in workspace, so you should build core lib
 
 build @tarot-run/core local dist
 
-> cd ../../core
-> pnpm install
-> npm run build
-
+```
+cd ../../core
+pnpm install
+npm run build
+```
+ 
 build @tarot-run/server local dist
 
-> cd ../../server
-> pnpm install
-> npm run build
-
+```
+cd ../../server
+pnpm install
+npm run build
+```
 
 ## get start 
 
