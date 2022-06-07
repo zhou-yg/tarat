@@ -2,7 +2,7 @@
 
 ## get start
 
-> pnpm install
+> pnpm run init
 
 > npm run dev
 
