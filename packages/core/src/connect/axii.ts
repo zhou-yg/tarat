@@ -29,7 +29,6 @@ export function useAxiiHook (axii: any, hook: () => void, ...args: any[]) {
     Object.keys(r).forEach(k => {
       if (isState(r[k])) {
         const valueGetter = r[k]
-        console.log('valueGetter: ', valueGetter);
         const v = valueGetter()
 
         const primitive = isPrimtive(v)
