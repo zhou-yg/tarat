@@ -17,6 +17,7 @@
   ],
   "scripts": {
     "build": "node scripts/build.mjs",
+    "build:dev": "rollup --config rollup.config.mjs",
     "build:watch": "npm run build && rollup --config rollup.config.mjs --watch",
     "release": "npm run build && bump --commit \"release: @tarot-run/core v%s\" --push && npm publish --access public"
   },
