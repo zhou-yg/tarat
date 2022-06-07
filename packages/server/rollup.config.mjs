@@ -32,6 +32,18 @@ export default [
   },
   {
     plugins: [
+      tsPlugin({
+        clean: true,
+        tsconfig: './tsconfig.json',
+      }),
+    ],
+    input: "src/adaptors/runtime-helper/clientRuntime.ts",
+    output: [
+      { file: "dist/adaptors/runtime-helper/clientRuntime.js", format: "es" }
+    ],
+  },
+  {
+    plugins: [
       dts()
     ],
     input: "src/index.ts",

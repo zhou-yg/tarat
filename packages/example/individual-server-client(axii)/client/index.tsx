@@ -7,7 +7,14 @@ import {
 
 import hook from '../hooks/hook.js'
 import { useHook } from '@tarot-run/core'
-import './clientRuntime'
+import clientRuntime from '@tarot-run/server/dist/adaptors/runtime-helper/clientRuntime'
+import * as axii from 'axii'
+
+clientRuntime({
+  collection: axii,
+  name: 'axii',
+  host: 'http://localhost:9001/'
+});
 
 function Plus () {
 
