@@ -1,11 +1,18 @@
 # tarot-server-js
 
+## get start
+
+> pnpm install
+
+> npm run dev
+
+visit default page http://localhost:9100/todos
 
 ## directory structure
 
-- pages/
-  - home.jsx
+- views/
+  - todos.jsx
 - hooks/
-  - plus.js
-- models
+  - todo.js
+- models/
   - schema.prisma

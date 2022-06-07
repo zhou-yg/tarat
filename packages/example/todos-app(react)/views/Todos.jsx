@@ -1,7 +1,7 @@
 import { useHook } from '@tarot-run/core'
 import React, { useState } from 'react'
 import todoHook from '../hooks/todo.js'
-import '../styles/home.less'
+import '../styles/todos.less'
 
 const TodoItem = (props) => {
   const checked = props.status === 'done'
