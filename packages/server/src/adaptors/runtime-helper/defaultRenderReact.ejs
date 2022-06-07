@@ -1,12 +1,11 @@
-import { IHookContext, setHookAdaptor, setModelConfig } from '@tarot-run/core'
-import React, { createElement } from 'react'
-import { createRoot } from 'react-dom/client'
-import Page from '<%= resolutionId %>';
+<%- viewCode %>
+import { setHookAdaptor, setModelConfig } from '@tarot-run/core'
+import * as _runtimeReact from 'react'
+import * as _runtimeReactDOM from 'react-dom/client'
 
+setHookAdaptor(_runtimeReact, 'react')
 
-setHookAdaptor(React, 'react')
-
-render(Page)
+render(<%- exportDefaultName %>)
 
 const hostConfig = `/${window.tarotConfig?.apiPre || '_hook'}`
 const diffPath = `/${window.tarotConfig?.diffPath || '_diff'}`
@@ -60,8 +59,9 @@ setModelConfig({
 
 function render (f) {
 
-  const ele = createElement(f)
+  const ele = _runtimeReact.createElement(f)
 
-  const app = createRoot(document.getElementById('<%= mountedAppId %>'))
+  const app = _runtimeReactDOM.createRoot(document.getElementById('<%= mountedAppId %>'))
   app.render(ele)
 }
+
