@@ -1,11 +1,8 @@
 import Koa from 'koa'
 import { middlewares } from '@tarot-run/server/dist/index.js'
-console.log('middlewares: ', middlewares);
 import koaBody from 'koa-body'
 import cors from '@koa/cors'
 import * as path from 'path'
-import * as fs from 'fs'
-import { ViteDevServer } from "vite";
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
