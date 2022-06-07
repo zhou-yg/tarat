@@ -10,6 +10,8 @@ import view from "./middlewares/view";
 import { createServer } from "vite";
 import { IConfig } from "./config";
 
+import rollupPluginTarotRuntime from './adaptors/runtime-helper/rollup-plugin-tarot-runtime'
+
 export function setupBasicServer (app: Application) {
 
   app.use(async (ctx, next) => {
@@ -32,6 +34,12 @@ export async function createDevServer (c: IConfig) {
   const vite = await createServer({
     root: process.cwd(),
     server:{ middlewareMode: 'ssr' },
+    plugins: [
+      {
+        ...rollupPluginTarotRuntime(),
+        enforce: 'pre',
+      } 
+    ],
     resolve: {
       alias: {
         '@tarot-run/core': '@tarot-run/core/dist/index.client.js'

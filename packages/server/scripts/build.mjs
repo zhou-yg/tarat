@@ -13,6 +13,8 @@ const { cp } = shelljs;
   
   cp('src/middlewares/viewTemplate.ejs', 'dist/cli/')
   cp('src/middlewares/viewTemplate.ejs', 'dist/')
+  cp('src/adaptors/runtime-helper/defaultRenderReact.ejs', 'dist/cli/')
+  cp('src/adaptors/runtime-helper/defaultRenderReact.ejs', 'dist/')
 
   console.log('build end')
 
