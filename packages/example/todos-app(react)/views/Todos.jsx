@@ -20,7 +20,7 @@ const TodoItem = (props) => {
   )
 }
 
-const Home = () => {
+const Todos = () => {
 
   const todo = useHook(todoHook)
   
@@ -34,7 +34,6 @@ const Home = () => {
   }
 
   const undoneItemsNum = todo?.undoneItems()?.length
-  console.log('undoneItemsNum: ', undoneItemsNum);
 
   return (
     <div className="home">
@@ -72,6 +71,6 @@ const Home = () => {
   )
 }
 
-document.title = 'todos'
+document.title = 'Todos'
 
-export default Home
+export default Todos
