@@ -1,6 +1,6 @@
 {
   "name": "@tarot-run/core",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "useHook serverless framework",
   "main": "./dist/index.server.js",
   "types": "./dist/index.d.ts",
