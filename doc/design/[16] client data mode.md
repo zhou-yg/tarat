@@ -134,9 +134,8 @@ bm1和bm2产生了针对复用问题冲突的问题，解决思路是：
 
 看看数据，重点思考state和model的数据复用特性
 
-- model，那就一定是global的，
+- model，那就一定是global的，但query条件可能存在不同
 - state 可以是global 或 context
 - 未来的cache，也一定是global的
-
 
 不同类型的数据层面容易确定清楚，上层的BM单元就可以用最简单的实现来做
