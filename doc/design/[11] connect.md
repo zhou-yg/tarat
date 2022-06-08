@@ -18,3 +18,13 @@ function useConnectBM () {
   return { ...result }
 }
 ```
+
+## axii
+
+axii是一次执行，这里考虑的是如何建立 BM数据到axii响应式数据的映射，
+
+根据值的类型不同，2个映射规则：
+- primtive
+  - 映射为 atom(x)
+- 非primtive
+  - 映射为 reactive(x)
