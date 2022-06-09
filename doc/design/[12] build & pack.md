@@ -20,11 +20,17 @@
               - response .Js
 
 
-## 编译BM
+## 编译core
 
-拆分为 BM.server ，BM.client
+拆分为 core.server ，core.client
 
-拆分的逻辑主要差别在Model层，因为无法在代码里里识别Model，所以会根据 build target，alias 2种不同的model
+拆分的逻辑主要差别在Model层 和 inputCompute
+
+因为无法在代码里里识别Model，所以会根据 build target，alias 2种不同的model，
+
+默认使用的是可以直接计算和改数据的 core.server，client端通过alias指向到 core.client
+
+这样就可以实现相同的BM代码在运行时的不同执行
 
 - target
   - client

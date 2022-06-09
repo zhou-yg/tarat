@@ -32,6 +32,45 @@ function Main () {
 
 默认的处理策略是：视图组件在初始render时，state会重新初始化，而model也会重新获取并刷新到全局，其它相同的视图的model也会同步更新
 
-## runtime
+参考"client data mode.md"，除了默认的方式，还视图里的数据还可以有其它的选择
 
-model的“全局”需要识别下runtime环境，在server端不需要这个处理，每个http request都应是pure context
+
+## 页面 or 组件
+
+这里的主要是区别在于页面是入口，页面需要手动render(Page) 才能mount到html里
+
+1个view 包含 N个view，被引用的是组件，被mount的则是页面
+
+当指定mount的时候需要声明一个mount dom容器
+
+当mount 容器需要关心的是主要是client端的基本信息：
+
+- Web
+  - Head/Meta/Title
+    - 头信息相关
+  - Body
+    - 容器样式信息header/footer
+  - PWA
+  - SSR/CSR
+- 跨端
+  - 其它如小程序/Android/iOS等
+
+
+## 组件内BM
+
+当引入一个BM里的view时，也同步引入了view内部使用的hook
+
+有时候不仅仅是 import view就完事了，还需要关心到view内的状态情况
+
+必要时甚至希望能watch内部事件，获取state，这需要view层的组件在运行时能够暴露一些通用的钩子
+
+钩子有2类：
+
+- view层的修改
+  - dom的修改
+  - 问题：修改的时机能重要
+    - mount前修改，那就得像axii一样，暴露vnode结构，如
+    - mount后修改，较为简单，可以使用dom api，缺点是UI会多次重绘
+- hook
+  - 读/写/监听
+  - 问题：通过ref之类的通用api，暴露当前组件的hook result，这样就能监听state，调用inputCompute，需要结合connect一起做
