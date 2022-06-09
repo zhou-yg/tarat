@@ -1,5 +1,6 @@
-# 同步context的一些问题
+# Context状态同步
 
+同步context遇到的一些问题
 
 ## M,S顺序
 
@@ -27,7 +28,7 @@ function h () {
 
 由于代码是相同的，所以Server的Model也会immediate的执行query，并且在执行时，由于被callHook了，所以这个Model会再执行query，最后现象就是需要被同步的Model会执行2次
 
-### 解决方案
+### N次计算
 
 有点复杂，不能单纯的在Server端禁止掉immediate（虽然这能解决问题），因为这种不一致的执行逻辑，会引发很多意向不到的效果，这里需要思考的是如何保持hook的初心，即context对cleint/server的无感同步，尽量通过runtime的机制来解决
 
@@ -44,3 +45,12 @@ function h () {
 batch提供的是一种基于N次计算之间，可以快速在server端执行的快捷封装，
 
 可以应用于：跨BM的组合，二次封装
+
+#### batch方法
+
+```javascript
+batchInputCompute(async () => {
+  await hook1.icMethod()
+  await hook1.icMethod2()
+})
+```

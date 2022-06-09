@@ -1,4 +1,4 @@
-# 数据模式
+# client数据模式
 
 不同于server side的无状态特性，可以默认是每次运行的时候都重新初始化 with context
 
