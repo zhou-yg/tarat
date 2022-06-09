@@ -100,4 +100,13 @@ React的onClick里可以直接setState呢？为什么inputCompute第一时间不
 
 在以一个application启动的情况下，手动标记了server，应优先提交到server执行
 
-除了
+提供显式的api：inputComputeInServer ，表示这个函数逻辑只在server端运行
+
+## http header问题
+
+由于 inputCompute完全屏蔽了http，那无法实现往header里写cookie的这种操作呢？
+
+- 暴露ctx，作为参数到inputComputeInServer里
+  - 问题：怎么支持后期的经过AST分析自动化处理后的ic里，那时候默认可以不需要显式的inputComputeInServer
+- 提供server/writeHeader 这种api，仅允许在显式的inputCompute里调用
+  - 问题：不能用全局钩子，因为inptuCompute内部可以是异步执行的，到writeHeader时，全局钩子可能已经被其它请求覆盖了，有并发的问题

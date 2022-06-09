@@ -1,4 +1,4 @@
-# runtime
+# 运行时
 
 在常规web app里，一般原则是：client端不能直连DB，相关数据依赖server直连进行
 
@@ -14,36 +14,71 @@
 
 基于前面的原则，就需要识别出哪些数据是State，哪些是Model，这样才可以决定是不是要把这条draft提交到server端处理
 
-## Model的关系
+因为BM内的函数逻辑对于框架来说是不可知的，这里需要思考清楚2个问题：
+- 在client和server端执行，涉及BM的一些函数和各种监听回调
+- client -> server端的过程中如何精简所需的context，做到最小化
+  - 未来会碰到的衍生问题：对于超大的，以至于无法传输的context数据，能提供什么样的解法呢？
+
+BM内会涉及到的函数，监听回调：
+- computed
+- inputCompute
+- effect
+  - before
+  - after
+
+此处应该有至少一个4x4表格，加上嵌套的存在，实际会非常复杂，可能的2个问题：
+- 响应式链路的丢失，c/s/c/s 不断切换，中间可能会断
+- 性能问题，即时不丢失，中间会经历多个接口请求无法停下，雪崩
+
+下面先单独讨论
+
+## Staet 和 Model
+
+在有配置开关允许Model直连的情况下，情况会更复杂
+
+没允许直连的时候，主要工作是识别Model
+
+但不管是前端直连还是server only，Model始终都依赖远端的DB，数据更新后都需要一次query来同步最新的数据
+
+总结：
 
 - State
-  - client & server均可
+  - client & server均可，始终是当前环境即可，较为简单
 - Model
   - server only
+    - runtime: server
+      - 因为仅能通过inputComputeInServer修改
+  - client直连 手动开启配置，允许client直连，这样model就有可能跑在2端
+    - runtime: client
+      - UI端发起的直接修改
+      - UI段调用inputCompute修改
+    - runtime: server
+      - 发起的inputComputeInServer的修改
 
-主要工作是识别Model
 
-以及Model被引用的computed，inputCompute
+## computed
+
+computed的getter是允许异步的，这是为了能够支持到类似useRequest的效果
+
+所以computed有4个依赖源：
+- state
+- model
+- 外部数据，client/server独有的，如DOM api，server 内网RPC
+- 其它computed
+
+注意：computed的触发是nextTick过, 不是同步执行，所以在server端在返回时可以wait一个tick时间
+
+computed的runtime执行环境就取决于依赖源和依赖源的组合而决定：
+
+- 优先级1：外部数据，跟外部数据的runtime一致
+  - 策略：需要开发者手动告诉框架，提供显式的computedInServer/computedInClient
+- 优先级2：
+  - state/model/依赖的computed
+    - 策略：前computed的触发时, 上面这些state都是已经apply patches了，已经有_internalValue，所以可以直接使用，不用关心runtime
+    - 未来的问题：当context是细颗粒度同步时，可能会出现computed依赖的state没有被同步，这时候要避免触发
 
 
-### computed
-
-```javascript
-// 依赖里包含了Model
-const computedData1 = computed(() => {
-  return state.value + model.value
-})
-// 不包含了Model
-const computedData2 = computed(() => {
-  return state.value
-})
-```
-
-当前computed的触发时机是内部依赖修改之后，此时依赖已经 draft commit 了，
-
-对于 computed 而言始终是可以在当前环境里立即执行 在当前”环境“直接执行 （ client or server)
-
-### inputCompute
+## inputCompute
 
 inputCompute 会修改内部状态，所以可能就涉及到Model
 
@@ -57,7 +92,6 @@ inputCompute 会修改内部状态，所以可能就涉及到Model
 
 拓展问题：
 > 有些inputCompute出于特殊目的，如安全，虽然不涉及Model，是否应该也可以指定跑在Server端
-
 
 ### effect
 
