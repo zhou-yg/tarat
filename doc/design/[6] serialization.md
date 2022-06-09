@@ -9,28 +9,21 @@
 而状态就是基本数据类型构成，所以用JSON即可，后续的优化可能也是朝着优化体积的方向进行，如：压缩字符串
 
 ```javascript
-// 请求，全量传输
-RequestSerializationContext = {
-  internalValues: [
-    stateA.value,
-    stateB.value
-  ],
-
-  inputCompute: [
-    {
-      name: 'inputCompute',
-      args: [
-        foo,
-        123
-      ]
-    }
-  ],
-}
-// 返回，全量状态
-ResponseSerializationContext = {
-  internalValues: [
-    stateA.value,
-    stateB.value
-  ],
+// 请求，每次都是全量传输 pacakges/core/scr/util.ts
+interface IHookContext {
+  initialArgList: any[]
+  data: Array<
+    ['data' | 'patch' | 'inputCompute' | 'model', any | IPatch[] | null]
+  >
+  index?: number
+  args: any[]
+  name: string
 }
 ```
+
+## 缺陷
+
+JSON只能支持有限数据类型，这决定了在BM中不能存储复杂数据类型，如以下几类：
+- DOM
+- function
+- 依赖prototype
