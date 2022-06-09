@@ -327,3 +327,76 @@ function hook() {
   })
 }
 ```
+
+### model的订阅关系
+
+上述说到model的query条件不能能用相等来判断，但从另一个角度来看query可以视作是model对DB的一种订阅
+
+query就是订阅条件，类似于computed对于state的订阅，query是state的属性key path
+
+当然query的订阅条件是可以的非常复杂的，至少要分成2个部分讨论：
+- entity本体的query
+- 关联的entity的query
+
+query查询通常有2类：
+- 基于属性的查询
+  - 精确查询 where={ name: 'xx', age: 'xx' } 或者空
+  - 模糊搜索 where={ name:{ like: 'xxx' } }
+- 基于属性的计算查询，排序，count，取最大/最小，前几/后几
+  - 这种可以视作基于前2种查询的结果的二次取值，基于排序的，基于结果长度的
+
+可以得知查询总是依赖于属性和属性条件，那么当query的时候就可以将查询依赖收集并作为一种监听，如同computed
+
+```javascript
+// hook1.js 中
+const m1 = Model.query({
+  entity: 'user',
+  where: {
+    name: 'xx',
+    age: {
+      gt: 10 //调用函数判断
+    },
+  }
+})
+// hook2.js 中
+const m2 = Model.query({
+  entity: 'user',
+  where: {
+    age: {
+      lt: 10 //调用函数判断
+    },
+  }
+})
+// 依赖映射
+EntityUserDepMap = {
+  {
+    name: 'xx',
+    age: {
+      gt: 10
+    } 
+  } -> m1,
+  {
+    age: {
+      lt: 10
+    } 
+  } -> m2
+}
+
+Model.create({
+  entity: 'user',
+  where: {
+    data: {
+      gender: 0,
+      age: 9, 
+      naem: 'xx',
+    } // 这个data可以match到2，match不到m1，因为gt条件不符合
+  }
+})
+```
+create的时候就需要遍历 EntityUserDepMap 找到符合条件订阅的Model，然后针对性的对Model进行更新
+
+通常情况下数据查询做的时候是 根据查询条件 -> 符合条件的数据
+
+但这里却反过来，通过变更的数据 -> 检查是否符合条件，这是逆向的过程，
+
+所以这个逆向查询的实现难度应该不亚于"正向的查询"，也具备非常大的实现难度和成本
