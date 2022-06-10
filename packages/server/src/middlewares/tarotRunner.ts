@@ -1,4 +1,4 @@
-import { IHookContext, Runner, getModelConfig, IDiff } from '@tarot-run/core'
+import { IHookContext, Runner, getModelConfig, IDiff } from 'tarat-core'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'
 import { setPrisma } from '../adaptors/prisma'

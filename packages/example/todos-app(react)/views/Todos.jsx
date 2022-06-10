@@ -1,4 +1,4 @@
-import { useHook } from '@tarot-run/core'
+import { useHook } from 'tarat-core'
 import React, { useState } from 'react'
 import todoHook from '../hooks/todo.js'
 import '../styles/todos.less'

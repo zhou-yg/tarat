@@ -42,7 +42,7 @@ export async function createDevServer (c: IConfig) {
     ],
     resolve: {
       alias: {
-        '@tarot-run/core': '@tarot-run/core/dist/index.client.js'
+        'tarat-core': 'tarat-core/dist/index.client.js'
       }
     }
   })

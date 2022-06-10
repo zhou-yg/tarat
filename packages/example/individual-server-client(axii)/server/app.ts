@@ -1,5 +1,5 @@
 import Koa from 'koa'
-import { middlewares } from '@tarot-run/server/dist/index.js'
+import { middlewares } from 'tarat-server/dist/index.js'
 import koaBody from 'koa-body'
 import cors from '@koa/cors'
 import * as path from 'path'

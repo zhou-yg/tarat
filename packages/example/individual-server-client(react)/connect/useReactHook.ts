@@ -1,4 +1,4 @@
-import { IHookContext, isState, Runner, setModelConfig } from '@tarot-run/core'
+import { IHookContext, isState, Runner, setModelConfig } from 'tarat-core'
 import { useEffect, useState } from 'react'
 
 const hostConfig = `http://localhost:9001/_hook`
