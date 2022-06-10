@@ -66,11 +66,11 @@ function Main () {
 
 钩子有2类：
 
-- view层的修改
-  - dom的修改
+- view层
+  - 侵入dom的修改
   - 问题：修改的时机能重要
     - mount前修改，那就得像axii一样，暴露vnode结构，如
     - mount后修改，较为简单，可以使用dom api，缺点是UI会多次重绘
-- hook
+- hook层
   - 读/写/监听
   - 问题：通过ref之类的通用api，暴露当前组件的hook result，这样就能监听state，调用inputCompute，需要结合connect一起做

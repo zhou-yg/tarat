@@ -96,3 +96,28 @@ function userData () {
 }
 
 ```
+# features
+
+sort by priority
+
+- 1.new feature
+  - core part
+    - "cache" hook
+      - cookie
+      - redis
+    - "model" directive
+      - exist
+    - "model" lazy query
+    - "context" synchronism with 0 compute
+  - connect part
+    - access hook in "views" component
+  - server part
+    - static compose dependent hook into current project
+      - extra relation description
+    - view mount container config entry
+- 2.upgrade performance
+  - "model" global referrence
+- 3.upgrade development experience
+  - cleint data mode
+  - run production
+  - page router / view router

@@ -118,7 +118,7 @@ Hook
 
 - cache (not necessary)
 - computed (like vue.computed)
-  - asynchronous: support async/await in compute body
+  - asynchronism: support async/await in compute body
 
 
 - state factory
@@ -154,7 +154,7 @@ Effect Class
   - hook = internal state, need not pass data from server/client to another side
 - running function body
   - set currentComputed=currentHook that created inside State
-- asynchronous: support async/await in compute body，like 'useRequest'
+- asynchronism: support async/await in compute body，like 'useRequest'
 - collect to internalState.property
   - re-run when nternalState.property changed
 
@@ -164,7 +164,7 @@ InputCompute Class
   - extends to Hook
   - receive a function as [compute execution body]
   - return a runner function, so that can collect execute situation
-  - support asynchoronous
+  - support asynchronism
   - binding destroy to "CurrentRunnerScope"
 - calling inputCompute
   - check is force running in server
