@@ -1,4 +1,4 @@
-# tarot-server-js
+# tarat-server-js
 
 ## get start
 

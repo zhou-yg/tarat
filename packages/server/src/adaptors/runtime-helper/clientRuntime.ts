@@ -17,11 +17,11 @@ export default function clientRuntime (c: {
  
   setHookAdaptor(framework, name)
 
-  const hostConfig = `${host}${(window as any).tarotConfig?.apiPre || '_hook'}`
-  const diffPath = `${host}${(window as any).tarotConfig?.diffPath || '_diff'}`
+  const hostConfig = `${host}${(window as any).taratConfig?.apiPre || '_hook'}`
+  const diffPath = `${host}${(window as any).taratConfig?.diffPath || '_diff'}`
 
   /**
-   * @TODO should provide by @tarot-run by default
+   * @TODO should provide by @tarat-run by default
    */
   setModelConfig({
     async find(e, w) {

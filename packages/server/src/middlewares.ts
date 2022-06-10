@@ -1,7 +1,7 @@
 /**
  * a middleware mode for existed Koa Server
  */
-import tarotRunner from "./middlewares/tarotRunner";
+import taratRunner from "./middlewares/taratRunner";
 import { defaultConfig, IDefaultConfig, readHooks } from "./config";
 
 type IMiddleConfig = {
@@ -19,7 +19,7 @@ export function middlewares (c: IMiddleConfig) {
 
   const mergedConfig = Object.assign(defaultConfig(), c)
 
-  return tarotRunner({
+  return taratRunner({
     config: {
       hooks,
       apiPre: mergedConfig.apiPre,

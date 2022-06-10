@@ -12,9 +12,9 @@ function matchHookName (path: string) {
 }
 
 /**
- * @TODO should provide by @tarot-run by default
+ * @TODO should provide by @tarat-run by default
  */
-export default function tarotMiddleware (args: {
+export default function taratMiddleware (args: {
   config: Pick<IConfig, 'hooks' | 'apiPre' | 'diffPath' | 'cwd'> & { model?: IConfig['model'] }
 }) : Application.Middleware{
   const { hooks, apiPre, diffPath, cwd, model } = args.config

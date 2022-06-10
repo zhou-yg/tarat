@@ -4,7 +4,7 @@ import l from 'lodash'
 const { merge } = l
 export const defaultConfig = () => ({
   // client about
-  viewsDirectory: 'views', // in tarot the display unit maybe page or component, they should belong to "views"
+  viewsDirectory: 'views', // in tarat the display unit maybe page or component, they should belong to "views"
   hooksDirectory: 'hooks',
   
   // server side
@@ -25,7 +25,7 @@ export type IDefaultConfig = ReturnType<typeof defaultConfig> & {
 }
 
 
-const configFile = 'tarot.config.js'
+const configFile = 'tarat.config.js'
 
 export interface IViewConfig {
   /**

@@ -1,5 +1,5 @@
 {
-  "name": "@tarot-run/example-individual-server-client",
+  "name": "example-individual-server-client",
   "version": "0.0.1",
   "description": "useHook serverless framework",
   "main": "dist/index.server.js",
@@ -9,13 +9,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zhou-yg/tarot.git"
+    "url": "git+https://github.com/zhou-yg/tarat.git"
   },
   "author": "zhouyg",
   "bugs": {
-    "url": "https://github.com/zhou-yg/tarot/issues"
+    "url": "https://github.com/zhou-yg/tarat/issues"
   },
-  "homepage": "https://github.com/zhou-yg/tarot#readme",
+  "homepage": "https://github.com/zhou-yg/tarat#readme",
   "dependencies": {
     "@koa/cors": "^3.3.0",
     "tarat-core": "workspace:^0.0.8",

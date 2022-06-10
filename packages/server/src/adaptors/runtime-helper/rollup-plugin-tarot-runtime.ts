@@ -19,14 +19,14 @@ function isPage (cwd: string, viewsDirectory: string, id: string) {
 const viewsDirectory = 'views'
 const mountedAppId = 'app'
 
-const tarotRuntimeEntryFlag = '?tarotRuntime'
+const taratRuntimeEntryFlag = '?taratRuntime'
 
-export default function tarotRuntimeRollupPlugin (): any {
+export default function taratRuntimeRollupPlugin (): any {
   const cwd = process.cwd()
   return {
-    name: 'tarot-runtime',
+    name: 'tarat-runtime',
     async resolveId (source: string, importer?: string, options?: any): Promise<any> {
-      if (source?.endsWith(tarotRuntimeEntryFlag)) {
+      if (source?.endsWith(taratRuntimeEntryFlag)) {
         return source
       }
       const resolution = await this.resolve(source, importer, { skipSelf: true, ...options });
@@ -35,12 +35,12 @@ export default function tarotRuntimeRollupPlugin (): any {
       const page = isPage(cwd, viewsDirectory, resolution.id)
         
       if (page) {
-        return `${resolution.id}${tarotRuntimeEntryFlag}`        
+        return `${resolution.id}${taratRuntimeEntryFlag}`        
       }
     },
     load (id: string) {
-      if (id?.endsWith(tarotRuntimeEntryFlag)) {
-        const originalId = id.slice(0, -tarotRuntimeEntryFlag.length)
+      if (id?.endsWith(taratRuntimeEntryFlag)) {
+        const originalId = id.slice(0, -taratRuntimeEntryFlag.length)
 
         const viewCode = fs.readFileSync(originalId).toString()
         const exportDefaultName = viewCode.match(/export default ([\w\W]+);?/)

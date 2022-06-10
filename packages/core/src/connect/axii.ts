@@ -11,9 +11,7 @@ class AxiiData {
     this.callback(hook, patches)
   }
 }
-/**
- * @TODO should provide by @tarot-run by default
- */
+
 export function useAxiiHook (axii: any, hook: () => void, ...args: any[]) {
   // @ts-ignore
   const {

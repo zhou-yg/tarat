@@ -62,7 +62,7 @@ describe('runner basic', () => {
     try {
       const runner = mockBM.oneState(arg)
     } catch (e: any) {
-      expect(e.message).toBe('[state] must under a tarot runner')
+      expect(e.message).toBe('[state] must under a tarat runner')
     }
   })
   it('run oneModel', () => {
@@ -82,7 +82,7 @@ describe('runner basic', () => {
     try {
       const runner = mockBM.oneModel(arg)
     } catch (e: any) {
-      expect(e.message).toBe('[model] must under a tarot runner')
+      expect(e.message).toBe('[model] must under a tarat runner')
     }
   })
   it('run oneCompute', () => {
@@ -97,7 +97,7 @@ describe('runner basic', () => {
     try {
       const runner = mockBM.oneCompute()
     } catch (e: any) {
-      expect(e.message).toBe('[inputCompute] must under a tarot runner')
+      expect(e.message).toBe('[inputCompute] must under a tarat runner')
     }
   })
   it('run oneEffect with nested BM', async () => {

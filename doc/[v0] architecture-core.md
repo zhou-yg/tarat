@@ -302,7 +302,7 @@ InputCompute Class
 ## project structure
 
 - normal
-  - .tarot/ like dist but only serve for "dev"
+  - .tarat/ like dist but only serve for "dev"
     - hooks/
       - bm1.server.js
       - bm1.client.js
