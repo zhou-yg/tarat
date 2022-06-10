@@ -1,12 +1,12 @@
 {
   "name": "tarat-server",
   "version": "0.0.8",
-  "description": "tarot ssr framework server side",
+  "description": "tarat ssr framework server side",
   "type": "module",
   "main": "./dist/server.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "tarot": "./dist/cli/index.js"
+    "tarat": "./dist/cli/index.js"
   },
   "files": [
     "src",
@@ -24,13 +24,13 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zhou-yg/tarot.git"
+    "url": "git+https://github.com/zhou-yg/tarat.git"
   },
   "author": "zhouyg",
   "bugs": {
-    "url": "https://github.com/zhou-yg/tarot/issues"
+    "url": "https://github.com/zhou-yg/tarat/issues"
   },
-  "homepage": "https://github.com/zhou-yg/tarot#readme",
+  "homepage": "https://github.com/zhou-yg/tarat#readme",
   "devDependencies": {
     "@jsdevtools/version-bump-prompt": "6.1.0",
     "@rollup/plugin-replace": "^4.0.0",

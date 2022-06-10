@@ -4,13 +4,13 @@ import cors from '@koa/cors'
 import Koa from 'koa'
 import e2k from 'express-to-koa'
 
-import tarotRunner from "./middlewares/tarotRunner";
+import taratRunner from "./middlewares/taratRunner";
 import view from "./middlewares/view";
 
 import { createServer } from "vite";
 import { IConfig } from "./config";
 
-import rollupPluginTarotRuntime from './adaptors/runtime-helper/rollup-plugin-tarot-runtime'
+import rollupPlugintaratRuntime from './adaptors/runtime-helper/rollup-plugin-tarat-runtime'
 
 export function setupBasicServer (app: Application) {
 
@@ -27,7 +27,7 @@ export async function createDevServer (c: IConfig) {
   const app = new Koa()
   setupBasicServer(app)
 
-  app.use(tarotRunner({
+  app.use(taratRunner({
     config: c
   }))
 
@@ -36,7 +36,7 @@ export async function createDevServer (c: IConfig) {
     server:{ middlewareMode: 'ssr' },
     plugins: [
       {
-        ...rollupPluginTarotRuntime(),
+        ...rollupPlugintaratRuntime(),
         enforce: 'pre',
       } 
     ],

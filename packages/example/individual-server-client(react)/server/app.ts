@@ -1,5 +1,5 @@
 import Koa from 'koa'
-import tarotMiddleware from '../connect/middleware.js'
+import taratMiddleware from '../connect/middleware.js'
 import koaBody from 'koa-body'
 import cors from '@koa/cors'
 
@@ -7,7 +7,7 @@ const app = new Koa()
 
 app.use(koaBody())
 app.use(cors())
-app.use(tarotMiddleware())
+app.use(taratMiddleware())
 
 app.use(async (ctx) => {
   ctx.body = 'hello'

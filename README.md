@@ -1,4 +1,4 @@
-# tarot
+# tarat
 
 maybe a useless simple busness description DSL for frontend and serverless
 

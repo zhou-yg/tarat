@@ -568,7 +568,7 @@ interface FInputComputeFunc extends Function {
 
 export function state<S>(initialValue: S) {
   if (!currentRunnerScope) {
-    throw new Error('[state] must under a tarot runner')
+    throw new Error('[state] must under a tarat runner')
   }
 
   const internalState = new State(initialValue)
@@ -585,7 +585,7 @@ export function state<S>(initialValue: S) {
 }
 export function model<T>(q: () => IModelQuery, op?: IModelOption) {
   if (!currentRunnerScope) {
-    throw new Error('[model] must under a tarot runner')
+    throw new Error('[model] must under a tarat runner')
   }
 
   const internalModel =
@@ -603,7 +603,7 @@ export function model<T>(q: () => IModelQuery, op?: IModelOption) {
 }
 export function clientModel<T>(q: () => IModelQuery, op?: IModelOption) {
   if (!currentRunnerScope) {
-    throw new Error('[model] must under a tarot runner')
+    throw new Error('[model] must under a tarat runner')
   }
 
   const internalModel = new ClientModel<T>(q, op, currentRunnerScope)
@@ -632,7 +632,7 @@ export function computed<T>(fn: FComputedFunc<T>) {
 
 export function inputCompute<T>(func: InputComputeFn) {
   if (!currentRunnerScope) {
-    throw new Error('[inputCompute] must under a tarot runner')
+    throw new Error('[inputCompute] must under a tarat runner')
   }
 
   const hook = new InputCompute(func, currentRunnerScope)
@@ -646,7 +646,7 @@ export function inputCompute<T>(func: InputComputeFn) {
 
 export function inputComputeInServer<T>(func: InputComputeFn) {
   if (!currentRunnerScope) {
-    throw new Error('[inputComputeServer] must under a tarot runner')
+    throw new Error('[inputComputeServer] must under a tarat runner')
   }
   /**
    * running in client should post request to server

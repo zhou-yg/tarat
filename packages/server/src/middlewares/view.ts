@@ -14,7 +14,7 @@ const templateFilePath = path.join(__dirname, templateFile)
 
 const template = compile(fs.readFileSync(templateFilePath).toString())
 /**
- * @TODO should provide by @tarot-run by default
+ * @TODO should provide by default
  */
  export default function view (args: {
    config: IConfig

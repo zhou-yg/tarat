@@ -1,12 +1,12 @@
 {
   "name": "todos-app",
   "version": "0.0.1",
-  "description": "tarot service application for todos example",
+  "description": "tarat service application for todos example",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "init": "pnpm install && npm run prisma:dev",
-    "dev": "tarot dev",
+    "dev": "tarat dev",
     "prisma:dev": "prisma migrate dev && prisma generate",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio"

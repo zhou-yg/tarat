@@ -3,9 +3,6 @@ import { useEffect, useState } from 'react'
 
 const hostConfig = `http://localhost:9001/_hook`
 
-/**
- * @TODO should provide by @tarot-run by default
- */
 setModelConfig({
   async find(e, w) {
     return []
@@ -33,7 +30,7 @@ setModelConfig({
 })
 
 /**
- * @TODO should provide by @tarot-run by default
+ * @TODO should provide by @tarat-run by default
  */
 export default (hook: () => void, ...args: any[]) => {
 

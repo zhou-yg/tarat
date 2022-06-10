@@ -19,8 +19,8 @@ target: can run with react or axii with a server,
     - vite plugin to compile referrence
     - any "compute" will sent to server
     - connect axii.reactive with immer.pathes
-      - tarot.ts -> axii
-      - axii -> tarot.ts
+      - tarat.ts -> axii
+      - axii -> tarat.ts
     - receive server info
 
 # server side config

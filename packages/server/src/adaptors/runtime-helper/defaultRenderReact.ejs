@@ -7,12 +7,9 @@ setHookAdaptor(_runtimeReact, 'react')
 
 render(<%- exportDefaultName %>)
 
-const hostConfig = `/${window.tarotConfig?.apiPre || '_hook'}`
-const diffPath = `/${window.tarotConfig?.diffPath || '_diff'}`
+const hostConfig = `/${window.taratConfig?.apiPre || '_hook'}`
+const diffPath = `/${window.taratConfig?.diffPath || '_diff'}`
 
-/**
- * @TODO should provide by @tarot-run by default
- */
 setModelConfig({
   async find(e, w) {
     return []
