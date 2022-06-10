@@ -111,6 +111,7 @@ sort by priority
     - "context" synchronism with 0 compute
   - connect part
     - access hook in "views" component
+      - react
   - server part
     - static compose dependent hook into current project
       - extra relation description
