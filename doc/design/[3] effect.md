@@ -67,10 +67,33 @@ after的主要的场景是
   - -> 并拦截
   - -> 并校验
 
-## after不修改状态
+## after能否修改状态？
 
-不同于可以在useEffect进行setState，after不应修改
+不同于可以在useEffect进行setState，after不应在内部修改
 
-引用input-compute，view框架因为异步渲染的feature，状态直到被使用的时候才会确定，因为渲染进行会按帧率进行拉取
+原因如下：
+
+1.view框架因为异步渲染的feature，状态直到被使用的时候才会确定，因为渲染进行会按帧率进行拉取
 
 但在BM，如果after能够修改State，那当下业务的“终态”就无法“主动”的确定了，因为不知道哪个after执行完后还会修改状态，那就使用“定时”的方案，这样就无法适用 as service的场景，BM就降级变成View层的模型
+
+2.在after里能修改状态还有可能引起“死循环”的问题：
+
+```javascript
+const a = state(false)
+const b = computed(() => {
+  if (a()) {
+    return b()
+  }
+  return c()
+})
+after((() => {
+  // 在这里修改了b的依赖或间接依赖就导致循环
+}, [b])
+```
+
+3.对于外部使用而言，唯一能修改BM状态应该只有inputCompute，这样对应查阅BM时心智是统一的，类似单向数据流
+
+这样在可阅读的层面就只需要关注2个点：1.数据有哪些 2.inputCompute是怎么改的
+
+对于after而言，内部的响应函数涉及到的state都是只读的，不会有新增写入，那就根据runtime做编译期的优化来提高性能

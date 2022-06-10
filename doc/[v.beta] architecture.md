@@ -49,14 +49,6 @@ function userData () {
   })
   const userDataCache = cache(cookieId, { source: userData from: 'redis' }) // same above
 
-  // optional
-  after(() => {
-    if (userDataCache()) {
-      name(() => undefined)
-      password(() => undefined)
-    }
-  }, [userDataCache])
-
   const errorTip = computed(() => {
     if (name() && password() && userData() === null) {
       return 'invalid password'
@@ -76,10 +68,15 @@ function userData () {
     })
   })
 
-  const login = inputCompute((inputName, inputPassword) => {
-    name(() => inputName)
-    password(() => inputPassword)
-    cookieId(() => nanoid())
+  const login = inputCompute(async (inputName, inputPassword) => {
+    const valid = await userData.exist({ name: inputName, password: inputPassword }) // query DB
+    if (valid) {
+      name(() => inputName)
+      password(() => inputPassword)
+      cookieId(() => nanoid())
+    } else {
+      errorTip(() => 'invalid password')
+    }
   })
 
   const logout = inputCompute(() => {
