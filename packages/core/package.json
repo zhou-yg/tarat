@@ -1,5 +1,5 @@
 {
-  "name": "tarat",
+  "name": "tarat-core",
   "version": "0.0.9",
   "description": "useHook serverless framework",
   "main": "./dist/index.server.js",
@@ -12,7 +12,7 @@
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
     "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs",
     "build:watch": "npm run format && rollup --config rollup.config.mjs --watch",
-    "release": "npm run build && bump --commit \"release: @tarot-run/core v%s\" --push && npm publish --access public"
+    "release": "npm run build && bump --commit \"release: tarat-core v%s\" --push && npm publish --access public"
   },
   "files": [
     "src",

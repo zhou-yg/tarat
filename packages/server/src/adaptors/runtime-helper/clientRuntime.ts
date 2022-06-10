@@ -1,4 +1,4 @@
-import { setHookAdaptor, setModelConfig } from '@tarot-run/core'
+import { setHookAdaptor, setModelConfig } from 'tarat-core'
 
 export default function clientRuntime (c: {
   framework: any

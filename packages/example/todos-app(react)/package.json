@@ -18,8 +18,8 @@
   },
   "dependencies": {
     "@prisma/client": "^3.14.0",
-    "@tarot-run/core": "workspace:^0.0.8",
-    "@tarot-run/server": "workspace:^0.0.8",
+    "tarat-core": "workspace:^0.0.8",
+    "tarat-server": "workspace:^0.0.8",
     "@types/react-dom": "^18.0.5",
     "lodash": "^4.17.21",
     "prisma": "^3.14.0",

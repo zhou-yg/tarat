@@ -4,7 +4,7 @@ import pkg from '../package.json'
 import { readConfig } from "../src/config";
 import { createDevServer } from "../src/server";
 
-const cac = cacFactory('@tarot-run/server')
+const cac = cacFactory('tarat-server')
 
 const cwd = process.cwd()
 

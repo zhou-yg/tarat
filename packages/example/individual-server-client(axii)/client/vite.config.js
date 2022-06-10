@@ -12,7 +12,7 @@ const config = defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        '@tarot-run/core': '@tarot-run/core/dist/index.client.js'
+        'tarat-core': 'tarat-core/dist/index.client.js'
       }
     }
   }

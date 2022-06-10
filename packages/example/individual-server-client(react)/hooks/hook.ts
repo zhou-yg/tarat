@@ -1,7 +1,7 @@
 import {
   inputCompute,
   state
-} from '@tarot-run/core'
+} from 'tarat-core'
 
 export default function hook () {
   const s1 = state({ num: 0 })

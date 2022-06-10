@@ -6,8 +6,8 @@ import {
 } from 'axii'
 
 import hook from '../hooks/hook.js'
-import { useHook } from '@tarot-run/core'
-import clientRuntime from '@tarot-run/server/dist/adaptors/runtime-helper/clientRuntime'
+import { useHook } from 'tarat-core'
+import clientRuntime from 'tarat-server/dist/adaptors/runtime-helper/clientRuntime'
 import * as axii from 'axii'
 
 clientRuntime({

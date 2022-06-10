@@ -4,7 +4,7 @@ import {
   model,
   inputComputeInServer,
   computed
-} from '@tarot-run/core'
+} from 'tarat-core'
 
 function newTodoItem(description) {
   return {

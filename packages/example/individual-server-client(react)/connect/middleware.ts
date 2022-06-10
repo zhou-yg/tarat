@@ -1,4 +1,4 @@
-import { IHookContext, Runner } from '@tarot-run/core'
+import { IHookContext, Runner } from 'tarat-core'
 import Application from 'koa'
 import hook from '../hooks/hook.js'
 

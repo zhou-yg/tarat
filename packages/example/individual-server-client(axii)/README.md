@@ -11,7 +11,7 @@ for the normal mono repo that have 2 or more individual project like
 
 this example dependent on @tarot/core in workspace, so you should build core library first
 
-build @tarot-run/core local dist
+build tarat-core local dist
 
 ```
 cd ../../core
@@ -19,7 +19,7 @@ pnpm install
 npm run build
 ```
  
-build @tarot-run/server local dist
+build tarat-server local dist
 
 ```
 cd ../../server

@@ -1,4 +1,4 @@
-import { IHookContext, Runner, setModelConfig } from '@tarot-run/core'
+import { IHookContext, Runner, setModelConfig } from 'tarat-core'
 import { join } from 'path'
 export async function setPrisma (cwd: string)  {
   // @ts-ignore

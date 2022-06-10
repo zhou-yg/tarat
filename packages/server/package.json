@@ -1,5 +1,5 @@
 {
-  "name": "@tarot-run/server",
+  "name": "tarat-server",
   "version": "0.0.8",
   "description": "tarot ssr framework server side",
   "type": "module",
@@ -19,7 +19,7 @@
     "build": "node scripts/build.mjs",
     "build:dev": "rollup --config rollup.config.mjs",
     "build:watch": "npm run build && rollup --config rollup.config.mjs --watch",
-    "release": "npm run build && bump --commit \"release: @tarot-run/core v%s\" --push && npm publish --access public"
+    "release": "npm run build && bump --commit \"release: tarat-core v%s\" --push && npm publish --access public"
   },
   "license": "ISC",
   "repository": {
@@ -46,14 +46,15 @@
   "dependencies": {
     "@koa/cors": "^3.3.0",
     "@rollup/plugin-json": "^4.1.0",
-    "@tarot-run/core": "workspace:^0.0.8",
     "cac": "^6.7.12",
     "ejs": "^3.1.8",
+    "esbuild": "^0.14.43",
     "execa": "6.x.x",
     "express-to-koa": "^2.0.0",
     "koa-body": "^5.0.0",
     "lodash": "^4.17.21",
     "shelljs": "^0.8.5",
+    "tarat-core": "workspace:*",
     "vite": "^2.9.9"
   }
 }
