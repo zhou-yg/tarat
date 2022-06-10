@@ -122,8 +122,8 @@ importers:
       prisma: ^3.14.0
       react: ^18.1.0
       react-dom: ^18.1.0
-      tarat-core: workspace:^0.0.8
-      tarat-server: workspace:^0.0.8
+      tarat-core: workspace:*
+      tarat-server: workspace:*
     dependencies:
       '@prisma/client': 3.14.0_prisma@3.14.0
       '@types/react-dom': 18.0.5
