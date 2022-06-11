@@ -291,7 +291,7 @@ export function setHookAdaptor(runtime: any, type: 'react' | 'axii') {
 
 export type BM = (...prop: any) => any
 
-export function useHook(bm: BM) {
+export function useHook<T extends BM>(bm: T): ReturnType<T> | undefined{
   switch (hookAdaptorType) {
     case 'react':
       return useReactHook(hookAdaptorRuntime, bm)

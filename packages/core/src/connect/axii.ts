@@ -12,7 +12,7 @@ class AxiiData {
   }
 }
 
-export function useAxiiHook (axii: any, hook: () => void, ...args: any[]) {
+export function useAxiiHook (axii: any, hook: () => any, ...args: any[]) {
   // @ts-ignore
   const {
     atom, reactive
