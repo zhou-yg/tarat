@@ -9,12 +9,12 @@ import {
   computed,
   clientModel
 } from '../src/core'
-import { setModelConfig } from '../src/util'
+import { loadPlugin } from '../src/plugin'
 
 initModelConfig()
 
 export function initModelConfig(obj: any = {}) {
-  setModelConfig({
+  loadPlugin('Model', {
     async find(e, w) {
       return []
     },
@@ -28,6 +28,9 @@ export function initModelConfig(obj: any = {}) {
       return {}
     },
     async executeDiff(d) {},
+    ...obj
+  })
+  loadPlugin('Context', {
     async postDiffToServer(d) {},
     async postComputeToServer(c) {
       return []
