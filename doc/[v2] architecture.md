@@ -107,7 +107,7 @@ sort by priority
       - redis
     - "model" directive
       - exist
-    - "model" lazy query
+    - "model" lazy query aysnc
     - "context" synchronism with 0 compute
   - connect part
     - access hook in "views" component
