@@ -15,7 +15,7 @@ export async function clearAll() {
     if (all.length > 0) {
       await prisma.item.deleteMany({})
     }
-  } catch(e) {
+  } catch (e) {
     console.error('clearAll', e)
   }
 }

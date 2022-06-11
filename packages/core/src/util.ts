@@ -300,43 +300,43 @@ export function useHook<T extends BM>(bm: T): ReturnType<T> | undefined {
   }
 }
 
-interface IModelConfig {
-  find: (entity: string, query: IModelQuery['query']) => Promise<any>
-  update: (entity: string, query: IModelData) => Promise<number[]>
-  create: (entity: string, data: IModelCreateData) => Promise<any>
-  remove: (entity: string, data: Omit<IModelData, 'data'>) => Promise<number[]>
-  // @depcated
-  executeDiff: (entity: string, d: IDiff) => Promise<void>
-  postDiffToServer: (entity: string, d: IDiff) => Promise<void>
-  //
-  postComputeToServer: (c: IHookContext) => Promise<IHookContext>
-  postQueryToServer: (c: IHookContext) => Promise<IHookContext>
-}
+// interface IModelConfig {
+//   find: (entity: string, query: IModelQuery['query']) => Promise<any>
+//   update: (entity: string, query: IModelData) => Promise<number[]>
+//   create: (entity: string, data: IModelCreateData) => Promise<any>
+//   remove: (entity: string, data: Omit<IModelData, 'data'>) => Promise<number[]>
+//   // @depcated
+//   executeDiff: (entity: string, d: IDiff) => Promise<void>
+//   postDiffToServer: (entity: string, d: IDiff) => Promise<void>
+//   //
+//   postComputeToServer: (c: IHookContext) => Promise<IHookContext>
+//   postQueryToServer: (c: IHookContext) => Promise<IHookContext>
+// }
 
-let modelConfig: null | IModelConfig | (() => IModelConfig) = null
-export function setModelConfig(c: IModelConfig | (() => IModelConfig)) {
-  modelConfig = c
-}
+// let modelConfig: null | IModelConfig | (() => IModelConfig) = null
+// export function setModelConfig(c: IModelConfig | (() => IModelConfig)) {
+//   modelConfig = c
+// }
 
-export function getModelConfig(): IModelConfig {
-  if (isFunc(modelConfig)) {
-    return (modelConfig as () => IModelConfig)()
-  }
-  return modelConfig as IModelConfig
-}
+// export function getModelConfig(): IModelConfig {
+//   if (isFunc(modelConfig)) {
+//     return (modelConfig as () => IModelConfig)()
+//   }
+//   return modelConfig as IModelConfig
+// }
 
-export function getModelFind() {
-  return getModelConfig().find
-}
-export function getModelUpdate() {
-  return getModelConfig().update
-}
-export function getModelCreate() {
-  return getModelConfig().create
-}
-export function getModelRemove() {
-  return getModelConfig().remove
-}
+// export function getModelFind() {
+//   return getModelConfig().find
+// }
+// export function getModelUpdate() {
+//   return getModelConfig().update
+// }
+// export function getModelCreate() {
+//   return getModelConfig().create
+// }
+// export function getModelRemove() {
+//   return getModelConfig().remove
+// }
 
 export function findWithDefault<T>(
   arr: T[],
@@ -357,7 +357,7 @@ export interface IPatch {
   value?: any
 }
 
-interface IStackUnit {
+export interface IStackUnit {
   value: {
     [k: string]: any
   }
@@ -691,13 +691,13 @@ export function calculateChangedPath(source: any, ps: IPatch[]): TPath[] {
 }
 
 // execute in server side
-export function getDiffExecution() {
-  return getModelConfig().executeDiff
-}
-// execute in client side
-export function getPostDiffToServer() {
-  return getModelConfig().postDiffToServer
-}
+// export function getDiffExecution() {
+//   return getModelConfig().executeDiff
+// }
+// // execute in client side
+// export function getPostDiffToServer() {
+//   return getModelConfig().postDiffToServer
+// }
 
 let currentEnv: null | string = null
 export function setEnv(env: 'server' | 'client') {

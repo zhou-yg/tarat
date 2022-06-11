@@ -1,15 +1,11 @@
 import {
   calculateDiff,
-  getDiffExecution,
-  getModelFind,
   IModelQuery,
   IPatch,
   isFunc,
   map,
-  getPostDiffToServer,
   getEnv,
   isAsyncFunc,
-  getModelConfig,
   IHookContext,
   isDef,
   likeObject,
@@ -32,6 +28,7 @@ import {
   enablePatches,
   applyPatches
 } from 'immer'
+import { getPlugin } from './plugin'
 
 enablePatches()
 
@@ -149,7 +146,7 @@ export class State<T = any> extends Hook {
   }
 }
 
-export class Model<T> extends State<T | undefined> {
+export class Model<T extends any[]> extends State<T | undefined> {
   modelFindPromise: Promise<T> | null = null
   queryWhereComputed: Computed<IModelQuery> | null = null
   watcher: Watcher = new Watcher(this)
@@ -183,7 +180,7 @@ export class Model<T> extends State<T | undefined> {
   async query() {
     const q = this.getQueryWhere()
     log('[model.query] 1 q.entity, q.query: ', q.entity, q.query)
-    this.modelFindPromise = getModelFind()(q.entity, q.query)
+    this.modelFindPromise = getPlugin('Model').find(q.entity, q.query)
     const result: T = await this.modelFindPromise!
     this.modelFindPromise = null
     log('[model.query] 2 result: ', result)
@@ -191,7 +188,7 @@ export class Model<T> extends State<T | undefined> {
   }
   async exist(obj: { [k: string]: any }) {
     const q = this.getQueryWhere()
-    const result = await getModelFind()(q.entity, { where: obj })
+    const result: T = await getPlugin('Model').find(q.entity, { where: obj })
     return result.length > 0
   }
   override async applyPatches(patches: IPatch[]) {
@@ -211,7 +208,7 @@ export class Model<T> extends State<T | undefined> {
     try {
       const diff = calculateDiff(oldValue, patches)
       log('[Model.updateWithPatches] diff: ', diff)
-      await getDiffExecution()(entity, diff)
+      await getPlugin('Model').executeDiff(entity, diff)
     } catch (e) {
       console.error('[updateWithPatches] postPatches fail', e)
       if (this.options.autoRollback) {
@@ -222,10 +219,10 @@ export class Model<T> extends State<T | undefined> {
   }
 }
 
-class ClientModel<T = any> extends Model<T> {
+class ClientModel<T extends any[]> extends Model<T> {
   override async query() {
     const context = this.scope.createInputComputeContext(this)
-    const result = await getModelConfig().postQueryToServer(context)
+    const result = await getPlugin('Context').postQueryToServer(context)
     this.scope.applyContext(result)
   }
   override async updateWithPatches(v: T, patches: IPatch[]) {
@@ -236,8 +233,20 @@ class ClientModel<T = any> extends Model<T> {
     // cal diff
     const { entity } = this.getQueryWhere()
     const diff = calculateDiff(oldValue, patches)
-    await getPostDiffToServer()(entity, diff)
+    await getPlugin('Context').postDiffToServer(entity, diff)
     await this.query()
+  }
+}
+
+interface ICacheOptions {
+  from: 'cookie' | 'redis' | 'localStorage' | 'sessionStorage'
+}
+export class Cache<T> extends State<T | undefined> {
+  constructor(
+    public getterKey: string,
+    public options: ICacheOptions
+  ) {
+    super(undefined)
   }
 }
 
@@ -303,7 +312,7 @@ class InputComputeInServer extends InputCompute {
     this.triggerEvent('before')
     if (!checkFreeze({ _hook: this })) {
       const context = this.scope.createInputComputeContext(this, args)
-      const result = await getModelConfig().postComputeToServer(context)
+      const result = await getPlugin('Context').postComputeToServer(context)
       this.scope.applyContext(result)
     }
     this.inputFuncEnd()
@@ -544,7 +553,7 @@ interface IModelSetterGetterExtra extends ISetterGetterExtra {
   exist: (data: { [k: string]: any }) => Promise<boolean>
 }
 
-function createModelSetterGetterFunc<T>(
+function createModelSetterGetterFunc<T extends any[]>(
   m: Model<T>,
   scope: CurrentRunnerScope
 ): {
@@ -611,7 +620,10 @@ export function state<T>(initialValue: T) {
 
   return newSetterGetter
 }
-export function model<T>(q: () => IModelQuery, op?: IModelOption) {
+export function model<T extends any[]>(
+  q: () => IModelQuery,
+  op?: IModelOption
+) {
   if (!currentRunnerScope) {
     throw new Error('[model] must under a tarat runner')
   }
@@ -632,7 +644,10 @@ export function model<T>(q: () => IModelQuery, op?: IModelOption) {
 
   return newSetterGetter
 }
-export function clientModel<T>(q: () => IModelQuery, op?: IModelOption) {
+export function clientModel<T extends any[]>(
+  q: () => IModelQuery,
+  op?: IModelOption
+) {
   if (!currentRunnerScope) {
     throw new Error('[model] must under a tarat runner')
   }
@@ -735,9 +750,4 @@ export function before(callback: () => void, targets: { _hook?: Hook }[]) {
     }
   })
 }
-interface ICacheOptions {
-  from: 'cookie' | 'redis' | 'localStorage' | 'sessionStorage'
-}
-export function cache (key: string, options: ICacheOptions) {
-
-}
+export function cache(key: string, options: ICacheOptions) {}
