@@ -4,43 +4,45 @@ import {
 } from '../../src/core'
 
 import * as mockBM from '../mockBM'
+import prisma, { clearAll } from '../prisma'
 
 describe('model', () => {
-
-  beforeEach(() => {
+  beforeAll(() => {
     process.env.TARGET = 'server'
-    let mockUsersData = [
+    clearAll()
+  })
+  beforeEach(async () => {
+    await prisma.item.deleteMany({})
+    const mockUsersData = [
       { id: 1, name: 'a' },
       { id: 2, name: 'b' },
     ]
+    for (const data of mockUsersData) {
+      await prisma.item.create({
+        data
+      })  
+    }
     mockBM.initModelConfig({
-      async find (e: string, w: IQueryWhere) {
-        return cloneDeep(mockUsersData.slice())
+      async find (e: 'item', w: IQueryWhere) {
+        return prisma[e].findMany(w as any)
       },
-      async executeDiff (entity: string, diff: IDiff) {
-        await mockBM.wait()
-
-        diff.create.forEach((obj) => {
-          if (obj.currentFieldPath) {
-            const target = mockUsersData.find(u => u.id === obj.source.id)
-            set(target, obj.currentFieldPath, obj.value)
-          } else {
-            mockUsersData.push(obj.value as any)
-          }
-        })
-        diff.update.forEach((obj) => {
-          mockUsersData.forEach(o2 => {
-            if (o2.id === obj.source?.id) {
-              Object.assign(o2, obj.value)
-            }
+      async executeDiff (entity: 'item', diff: IDiff) {
+        await Promise.all(diff.create.map(async (obj) => {
+          await prisma[entity].create({
+            data: obj.value as any
           })
-        })
-        diff.remove.forEach((obj: any) => {
-          mockUsersData = mockUsersData.filter(o2 => {
-            return o2.id !== obj.value.id
+        }))
+        await Promise.all(diff.update.map(async (obj) => {
+          await prisma[entity].update({
+            where: { id: obj.source.id },
+            data: obj.value
           })
-        })
-
+        }))
+        await Promise.all(diff.remove.map(async (obj) => {
+          await prisma[entity].delete({
+            where: { id: obj.value.id },
+          })
+        }))
       }
     })
   })
@@ -52,9 +54,7 @@ describe('model', () => {
     const runner = new Runner(mockBM.userPessimisticModel)
     const result = runner.init()
     
-    await mockBM.wait()
-
-    expect(result.users()).toEqual([
+    expect(await result.users()).toEqual([
       { id: 1, name: 'a' },
       { id: 2, name: 'b' },
     ])
@@ -66,53 +66,43 @@ describe('model', () => {
       const runner = new Runner(mockBM.userPessimisticModel)
       const result = runner.init()
       
-      await mockBM.wait()
-
       const newName = 'updated a'
 
-      result.users((draft: any) => {
+      await result.users((draft: any) => {
         draft[0].name = newName
       })
 
-      await mockBM.wait()
-
-      expect(result.users()).toEqual([
+      const users = await result.users()
+      expect(users).toEqual([
         { id: 1, name: newName },
         { id: 2, name: 'b' },  
       ])
     })
-    it('object:create', async () => {
+    it('object:create child', async () => {
       const runner = new Runner(mockBM.userPessimisticModel)
       const result = runner.init()
       
-      await mockBM.wait()
 
-      const newObj = { name: 'c', id: 3, child: true }
-
-      result.users((draft: any) => {
-        draft[0].child = newObj
-      })
-
-      await mockBM.wait()
-
-      expect(result.users()).toEqual([
-        { id: 1, name: 'a', child: newObj },
-        { id: 2, name: 'b' },
-      ])
+      // @TODO: 增加relation的关联CRUD
+      // const childObj = { name: 'child' }
+      // await result.users((draft: any) => {
+      //   draft[1].child = childObj
+      // })
+      // const users = await result.users()
+      // expect(users).toEqual([
+      //   { id: 1, name: 'a' },
+      //   { id: 2, name: 'b', childObj: { ...childObj, id: 1 } },
+      // ])
     })
-    it('object:remove property', async () => {
+    it( 'object:remove property', async () => {
       const runner = new Runner(mockBM.userPessimisticModel)
       const result = runner.init()
-      
-      await mockBM.wait()
 
-      result.users((draft: any) => {
+      await result.users((draft: any) => {
         delete draft[1].name
       })
 
-      await mockBM.wait()
-
-      expect(result.users()).toEqual([
+      expect(await result.users()).toEqual([
         { id: 1, name: 'a' },  
         { id: 2, name: null },  
       ])
@@ -125,31 +115,27 @@ describe('model', () => {
 
       const newObj = { name: 'c', id: 3 }
 
-      result.users((draft: any) => {
+      await result.users((draft: any) => {
         draft.push(newObj)
       })
 
-      await mockBM.wait()
+      const users = await result.users()
 
-      expect(result.users()).toEqual([
+      expect(users).toEqual([
         { id: 1, name: 'a' },
         { id: 2, name: 'b' },
         newObj
       ])
     })
-    it ('array:remove element', async () => {
+    it('array:remove element', async () => {
       const runner = new Runner(mockBM.userPessimisticModel)
       const result = runner.init()
-      
-      await mockBM.wait()
 
-      result.users((draft: any) => {
+      await result.users((draft: any) => {
         draft.splice(0, 1)
       })
 
-      await mockBM.wait()
-
-      expect(result.users()).toEqual([
+      expect(await result.users()).toEqual([
         { id: 2, name: 'b' },  
       ])
     })

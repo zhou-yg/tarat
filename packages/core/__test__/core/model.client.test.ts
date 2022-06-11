@@ -5,7 +5,7 @@ import {
 
 import * as mockBM from '../mockBM'
 
-describe('model', () => {
+describe('client model', () => {
 
   beforeEach(() => {
     let mockUsersData = () => ([
