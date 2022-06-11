@@ -50,6 +50,8 @@ export interface IModelQuery {
   query: IQueryWhere
 }
 
+type TCacheFrom = 'cookie' | 'redis' | 'localStorage' | 'sessionStorage'
+
 const plugins: {
   Model?: {
     find(entity: string, query: IModelQuery['query']): Promise<any>
@@ -59,6 +61,8 @@ const plugins: {
     executeDiff(entity: string, d: IDiff): Promise<void>
   }
   Cache?: {
+    getValue<T>(k: string, from: TCacheFrom): Promise<T | undefined>
+    clearValue<T>(k: string, from: TCacheFrom): void
     cookie(): void
     redis(): void
     localStorage(): void

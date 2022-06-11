@@ -238,15 +238,56 @@ class ClientModel<T extends any[]> extends Model<T> {
   }
 }
 
-interface ICacheOptions {
+export interface ICacheOptions<T> {
+  source?: State<T>
+  defaultValue?: T
   from: 'cookie' | 'redis' | 'localStorage' | 'sessionStorage'
 }
 export class Cache<T> extends State<T | undefined> {
+  getterKey: string
+  watcher:Watcher = new Watcher(this)
   constructor(
-    public getterKey: string,
-    public options: ICacheOptions
+    key: string,
+    public options: ICacheOptions<T>,
+    public scope: CurrentRunnerScope
   ) {
     super(undefined)
+    this.getterKey = `tarat_cache_${scope.hookRunnerName}__${key}`
+    
+    if (this.options.source) {
+      this.watcher.addDep(this.options.source)
+    }
+  }
+  notify (hook?: Hook) {
+    // not calling update prevent notify the watcher for current cache
+    this._internalValue = undefined
+
+    const { from, source } = this.options 
+    if (hook && hook === source) {
+      /**
+       * just clear value in cache not update directly
+       * reason 1: for lazy
+       * reason 2: prevent writing conflict while coccurent writing at same time
+       */
+      getPlugin('Cache').clearValue(this.getterKey, from)
+    }
+  }
+  async getValue(): Promise<T | undefined> {
+    if (this.value !== undefined) {
+      return this.value
+    }
+    const { from, source } = this.options 
+    const valueInCache = await getPlugin('Cache').getValue<T>(this.getterKey, from)
+    if (valueInCache !== undefined) {
+      this.update(valueInCache)
+      return valueInCache
+    }
+    if (source) {
+      const valueInSource = source.value
+      this.update(valueInSource)
+      return valueInSource
+    }
+    return
   }
 }
 
@@ -345,7 +386,6 @@ export class CurrentRunnerScope {
   watcher: Watcher<Hook> = new Watcher(this)
   initialArgList: any[] = []
   hookRunnerName = ''
-  constructor() {}
   onUpdate(f: Function) {
     this.outerListeners.push(f)
     return () => {
@@ -750,4 +790,4 @@ export function before(callback: () => void, targets: { _hook?: Hook }[]) {
     }
   })
 }
-export function cache(key: string, options: ICacheOptions) {}
+export function cache<T>(v: T, options: ICacheOptions<T>) {}
