@@ -105,10 +105,13 @@ sort by priority
     - "cache" hook
       - cookie
       - redis
-    - "model" directive √
-      - exist
-    - "model" lazy query aysnc √
-    - "context" synchronism with 0 compute
+    - "mode"
+      - "model" directive √
+        - exist √
+      - "model" lazy query aysnc √
+      - computed with state
+    - "context" synchronism with 0 compute √
+      -  migrate query if immediate or not in two side √
   - connect part
     - access hook in "views" component
       - react
@@ -122,6 +125,6 @@ sort by priority
   - cleint data mode
   - run production
   - page router / view router
-  - runner with typescript types snippets
+  - runner with typescript types snippets √
   - server part
     - support hook writen by ts, need a compiler to migrate client/server

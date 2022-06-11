@@ -224,8 +224,9 @@ export function userPessimisticModel() {
     users
   }
 }
+
 export function userModelInputeCompute() {
-  const items = model<{ id:number, name?: string }[]>(
+  const items = model<{ id: number; name?: string }[]>(
     () => ({
       entity: 'item',
       query: {}
@@ -236,8 +237,8 @@ export function userModelInputeCompute() {
   const fn = async (id: number, name: string) => {
     const exist = await items.exist({ name })
     if (!exist) {
-      items((arr) => {
-        if(arr) {
+      items(arr => {
+        if (arr) {
           arr.push({ id, name })
         }
       })
@@ -267,6 +268,25 @@ export function userModelClient() {
 
   return {
     users
+  }
+}
+export function userModelComputedQuery() {
+  const targetName = state('')
+  const users = model(
+    () => ({
+      entity: 'item',
+      query: {
+        where: {
+          name: targetName()
+        }
+      }
+    }),
+    { immediate: true, pessimisticUpdate: true }
+  )
+
+  return {
+    users,
+    targetName
   }
 }
 

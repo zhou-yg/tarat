@@ -14,6 +14,7 @@ describe('model', () => {
   })
   beforeEach(async () => {
     await prisma.item.deleteMany({})
+
     const mockUsersData = [
       { id: 1, name: 'a' },
       { id: 2, name: 'b' },
@@ -78,6 +79,22 @@ describe('model', () => {
       { id: 2, name: 'b' },
       { id: 3, name: 'c' },
     ])
+  })
+
+  it('query where computed', async () => {
+    const runner = new Runner(mockBM.userModelComputedQuery)
+    const result = runner.init()
+    expect(await result.users()).toEqual([])
+
+    result.targetName(() => 'a')
+
+    await mockBM.wait()
+    expect(await result.users()).toEqual([{ id: 1, name: 'a' }])
+
+    result.targetName(() => 'b')
+
+    await mockBM.wait()
+    expect(await result.users()).toEqual([{ id: 2, name: 'b' }])
   })
 
   describe('modify (default=server) ', () => {
