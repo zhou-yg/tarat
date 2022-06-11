@@ -8,6 +8,7 @@ import prisma, { clearAll } from '../prisma'
 
 describe('model', () => {
   beforeAll(() => {
+    // make sure the model run in server envirnment
     process.env.TARGET = 'server'
     clearAll()
   })
@@ -28,7 +29,7 @@ describe('model', () => {
       },
       async executeDiff (entity: 'item', diff: IDiff) {
         await Promise.all(diff.create.map(async (obj) => {
-          await prisma[entity].create({
+          const r = await prisma[entity].create({
             data: obj.value as any
           })
         }))
@@ -57,6 +58,25 @@ describe('model', () => {
     expect(await result.users()).toEqual([
       { id: 1, name: 'a' },
       { id: 2, name: 'b' },
+    ])
+  })
+
+  it('check exist before create', async () => {
+    const runner = new Runner(mockBM.userModelInputeCompute)
+    const result = runner.init()
+    
+    await result.createItem(3, 'a')
+    expect(await result.items()).toEqual([
+      { id: 1, name: 'a' },
+      { id: 2, name: 'b' },
+    ])
+
+    await result.createItem(3, 'c')
+
+    expect(await result.items()).toEqual([
+      { id: 1, name: 'a' },
+      { id: 2, name: 'b' },
+      { id: 3, name: 'c' },
     ])
   })
 

@@ -224,6 +224,32 @@ export function userPessimisticModel() {
     users
   }
 }
+export function userModelInputeCompute() {
+  const items = model<{ id:number, name?: string }[]>(
+    () => ({
+      entity: 'item',
+      query: {}
+    }),
+    { immediate: true, pessimisticUpdate: true }
+  )
+
+  const createItem = inputCompute(async (id: number, name: string) => {
+    const exist = await items.exist({ name })
+    if (!exist) {
+      items((arr) => {
+        if(arr) {
+          arr.push({ id, name })
+        }
+      })
+    }
+  })
+
+  return {
+    items,
+    createItem
+  }
+}
+
 export function userModelClient() {
   const num = state(0)
   const users = clientModel(
