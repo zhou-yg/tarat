@@ -122,6 +122,19 @@ class Cache {
 }
 ```
 
+### 支持的数据源
+
+分client和server，应该支持的是不同的cache数据源
+- client:browser
+  - localStorage
+  - sessionStorage
+- server
+  - cookie
+  - redis
+
+应该类似于数据库配置，cache能支持的数据源也以插件的形式来拓展，可参考[immer插件](https://github.com/immerjs/immer/blob/master/src/core/immerClass.ts#L123)
+
+
 ##  Model
 
 核心，数据来源为数据库，这里以 Prisma 为例。

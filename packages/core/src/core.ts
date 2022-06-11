@@ -735,3 +735,9 @@ export function before(callback: () => void, targets: { _hook?: Hook }[]) {
     }
   })
 }
+interface ICacheOptions {
+  from: 'cookie' | 'redis' | 'localStorage' | 'sessionStorage'
+}
+export function cache (key: string, options: ICacheOptions) {
+
+}
