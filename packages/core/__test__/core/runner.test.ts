@@ -65,14 +65,14 @@ describe('runner basic', () => {
       expect(e.message).toBe('[state] must under a tarat runner')
     }
   })
-  it('run oneModel', () => {
+  it('run oneModel', async () => {
     const runner = new Runner(mockBM.oneModel)
 
     const arg = { a: 1 }
 
     const initResult = runner.init(arg)
 
-    expect(initResult.m1()).toBe(undefined)
+    expect(await initResult.m1()).toBe(undefined)
     expect(runner.scope.hooks.length).toBe(1)
     expect((runner.scope.hooks[0] as any).value).toBe(undefined)
   })

@@ -28,10 +28,8 @@ describe('client model', () => {
   it('post query to server', async () => {
     const runner = new Runner(mockBM.userModelClient)
     const result = runner.init()
-    
-    await mockBM.wait()
 
-    expect(result.users()).toEqual([
+    expect(await result.users()).toEqual([
       { id: 1, name: 'a' },
       { id: 2, name: 'b' },
     ])
