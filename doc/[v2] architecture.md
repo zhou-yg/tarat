@@ -105,9 +105,9 @@ sort by priority
     - "cache" hook
       - cookie
       - redis
-    - "model" directive
+    - "model" directive √
       - exist
-    - "model" lazy query aysnc
+    - "model" lazy query aysnc √
     - "context" synchronism with 0 compute
   - connect part
     - access hook in "views" component

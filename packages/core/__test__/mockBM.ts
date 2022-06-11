@@ -233,7 +233,7 @@ export function userModelInputeCompute() {
     { immediate: true, pessimisticUpdate: true }
   )
 
-  const createItem = inputCompute(async (id: number, name: string) => {
+  const fn = async (id: number, name: string) => {
     const exist = await items.exist({ name })
     if (!exist) {
       items((arr) => {
@@ -242,7 +242,8 @@ export function userModelInputeCompute() {
         }
       })
     }
-  })
+  }
+  const createItem = inputCompute(fn)
 
   return {
     items,

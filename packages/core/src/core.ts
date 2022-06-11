@@ -22,7 +22,8 @@ import {
   isEqual,
   TPath,
   shallowCopy,
-  log
+  log,
+  BM
 } from './util'
 import {
   produceWithPatches,
@@ -409,27 +410,25 @@ export class CurrentRunnerScope {
   }
 }
 
-type BM = (...prop: any) => any
-
 let currentRunnerScope: CurrentRunnerScope | null = null
 
-export class Runner {
+export class Runner<T extends BM> {
   scope = new CurrentRunnerScope()
   alreadInit = false
-  constructor(public bm: BM, public initialContext?: IHookContext) {}
+  constructor(public bm: T, public initialContext?: IHookContext) {}
   onUpdate(f: Function) {
     return this.scope?.onUpdate(() => {
       f()
     })
   }
-  init(...args: any) {
+  init(...args: any): ReturnType<T> {
     if (this.alreadInit) {
       throw new Error('can not init repeat')
     }
     currentRunnerScope = this.scope
     currentRunnerScope.setIntialArgs(args, this.bm.name)
 
-    const result: ReturnType<BM> = executeBM(this.bm, args)
+    const result: ReturnType<T> = executeBM(this.bm, args)
     if (this.initialContext) {
       currentRunnerScope.applyContext(this.initialContext)
     }
@@ -446,7 +445,7 @@ export class Runner {
   async callHook(hookIndex: number, args: any[]) {
     const hook = this.scope.hooks[hookIndex]
     if (hook) {
-      if (hook instanceof Model) {
+      if (hook instanceof Model && !hook.options.immediate) {
         await (hook as Model<any>).query()
       } else {
         await (hook as InputCompute).run(...args)
@@ -564,13 +563,11 @@ function isInputCompute(v: any) {
   return v.__inputComputeTag
 }
 
-type InputComputeFn = (...arg: any) => void | Promise<void>
 
 type FComputedFunc<T> = () => T | Promise<T>
 
 interface FComputedGetterFunc<T> extends Function {
   (): T
-  _hook?: State<T>
 }
 let currentComputed: null | Computed<any> = null
 
@@ -579,7 +576,7 @@ export function setCurrentComputed(c: Computed<any> | null) {
 }
 
 interface FInputComputeFunc extends Function {
-  (...args: any): void
+  (...args: any): Promise<void>
   _hook?: Hook
 }
 
@@ -618,9 +615,7 @@ export function model<T>(q: () => IModelQuery, op?: IModelOption) {
   )
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalModel,
-    async exist (obj: { [k: string]: any }) {
-      return internalModel.exist(obj)
-    }
+    exist: internalModel.exist.bind(internalModel),
   })
 
   return newSetterGetter
@@ -638,9 +633,7 @@ export function clientModel<T>(q: () => IModelQuery, op?: IModelOption) {
   )
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalModel,
-    async exist (obj: { [k: string]: any }) {
-      return internalModel.exist(obj)
-    }
+    exist: internalModel.exist.bind(internalModel),
   })
 
   return newSetterGetter
@@ -655,25 +648,32 @@ export function computed<T>(fn: FComputedFunc<T>) {
   currentComputed = null
 
   const getter: FComputedGetterFunc<T | undefined> = () => hook.value
-  getter._hook = hook
-  return getter
+  const newGetter = Object.assign(getter, {
+    _hook: hook
+  })
+  return newGetter
 }
 
-export function inputCompute<T>(func: InputComputeFn) {
+type InputComputeFn = (...arg: any) => void
+type AsyncInputComputeFn = (...arg: any) => Promise<void>
+
+export function inputCompute(func: AsyncInputComputeFn): AsyncInputComputeFn & { _hook: Hook }
+export function inputCompute(func: InputComputeFn): InputComputeFn & { _hook: Hook }
+export function inputCompute(func: any) {
   if (!currentRunnerScope) {
     throw new Error('[inputCompute] must under a tarat runner')
   }
 
   const hook = new InputCompute(func, currentRunnerScope)
 
-  const wrapFunc: FInputComputeFunc = (...args: any) => {
+  const wrapFunc: any = (...args: any) => {
     return hook.run(...args)
   }
   wrapFunc._hook = hook
   return wrapFunc
 }
 
-export function inputComputeInServer<T>(func: InputComputeFn) {
+export function inputComputeInServer(func: InputComputeFn) {
   if (!currentRunnerScope) {
     throw new Error('[inputComputeServer] must under a tarat runner')
   }
@@ -682,7 +682,7 @@ export function inputComputeInServer<T>(func: InputComputeFn) {
    * if already in server, should execute directly
    */
   if (process.env.TARGET === 'server') {
-    return inputCompute<T>(func)
+    return inputCompute(func)
   }
 
   const hook = new InputComputeInServer(func, currentRunnerScope)
