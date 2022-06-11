@@ -252,6 +252,7 @@ export class Cache<T> extends State<T | undefined> {
     public scope: CurrentRunnerScope
   ) {
     super(undefined)
+    scope.addHook(this)
     this.getterKey = `tarat_cache_${scope.hookRunnerName}__${key}`
     
     if (this.options.source) {
@@ -276,10 +277,10 @@ export class Cache<T> extends State<T | undefined> {
     if (this.value !== undefined) {
       return this.value
     }
-    const { from, source } = this.options 
+    const { from, source } = this.options
     const valueInCache = await getPlugin('Cache').getValue<T>(this.getterKey, from)
     if (valueInCache !== undefined) {
-      this.update(valueInCache)
+      super.update(valueInCache)
       return valueInCache
     }
     if (source) {
@@ -288,6 +289,15 @@ export class Cache<T> extends State<T | undefined> {
       return valueInSource
     }
     return
+  }
+  async update(v?: T, patches?: IPatch[]) {
+    const { from, source } = this.options
+    if (source) {
+      throw new Error('[Cache] can not update value directly while the cache has "source" in options ')
+    } else {
+      super.update(v, patches)
+      await getPlugin('Cache').setValue(this.getterKey, v, from)
+    }
   }
 }
 
@@ -790,4 +800,42 @@ export function before(callback: () => void, targets: { _hook?: Hook }[]) {
     }
   })
 }
-export function cache<T>(v: T, options: ICacheOptions<T>) {}
+
+function createCacheSetterGetterFunc<SV>(
+  s: Cache<SV>,
+  scope: CurrentRunnerScope
+): {
+  (): Promise<SV>
+  (paramter: IModifyFunction<SV>): Promise<[SV, IPatch[]]>
+} {
+  return async (paramter?: any): Promise<any> => {
+    if (paramter) {
+      if (isFunc(paramter)) {
+        const [result, patches] = produceWithPatches(s.value, paramter)
+        if (currentInputeCompute) {
+          scope.addComputePatches(s, patches)
+        } else {
+          await s.update(result, patches)
+        }
+        return [result, patches]
+      } else {
+        throw new Error('[change cache] pass a function')
+      }
+    }
+    return s.value
+  }
+}
+
+export function cache<T>(key: string, options: ICacheOptions<T>) {
+  const hook = new Cache(key, options, currentRunnerScope!)
+
+  const setterGetter = createCacheSetterGetterFunc(
+    hook,
+    currentRunnerScope!
+  )
+  const newSetterGetter = Object.assign(setterGetter, {
+    _hook: hook
+  })
+  return newSetterGetter
+}
+
