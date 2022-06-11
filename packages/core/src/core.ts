@@ -149,6 +149,7 @@ export class State<T = any> extends Hook {
 }
 
 export class Model<T> extends State<T | undefined> {
+  modelFindPromise: Promise<T> | null = null
   constructor(
     public getQueryWhere: () => IModelQuery,
     public options: IModelOption = {},
@@ -160,16 +161,24 @@ export class Model<T> extends State<T | undefined> {
       this.query()
     }
   }
+  async ready () {
+    if (!this._internalValue && this.modelFindPromise) {
+      await this.modelFindPromise
+    }
+  }
   async query() {
     const q = this.getQueryWhere()
     log('[model.query] 1 q.entity, q.query: ', q.entity, q.query)
-    const result = await getModelFind()(q.entity, q.query)
+    this.modelFindPromise = getModelFind()(q.entity, q.query)
+    const result: T = await this.modelFindPromise!
+    this.modelFindPromise = null
     log('[model.query] 2 result: ', result)
-    if (this.options.unique) {
-      this.update(result[0])
-    } else {
-      this.update(result)
-    }
+    this.update(result)
+  }
+  async exist(obj: { [k: string]: any }) {
+    const q = this.getQueryWhere()
+    const result = await getModelFind()(q.entity, { where: obj })
+    return result.length > 0
   }
   override async applyPatches(patches: IPatch[]) {
     if (this._internalValue) {
@@ -490,7 +499,7 @@ function createStateSetterGetterFunc<SV>(
 ): {
   (): SV
   (paramter: IModifyFunction<SV>): [SV, IPatch[]]
-} & { _hook?: Hook } {
+} {
   return (paramter?: any): any => {
     if (paramter) {
       if (isFunc(paramter)) {
@@ -516,14 +525,22 @@ interface IModelOption {
   pessimisticUpdate?: boolean
 }
 
+interface ISetterGetterExtra {
+  _hook: Hook
+}
+interface IModelSetterGetterExtra extends ISetterGetterExtra {
+  exist: (data: { [k: string]: any }) => Promise<boolean>
+}
+
 function createModelSetterGetterFunc<T>(
   m: Model<T>,
   scope: CurrentRunnerScope
 ): {
-  (): T | undefined
-  (paramter: IModifyFunction<T | undefined>): [T | undefined, IPatch[]]
-} & { _hook?: Hook } {
-  return (paramter?: any): any => {
+  (): Promise<T | undefined>
+  (paramter: IModifyFunction<T | undefined>): Promise<[T | undefined, IPatch[]]>
+} {
+  return async (paramter?: any): Promise<any> => {
+    await m.ready()
     if (paramter && isFunc(paramter)) {
       const [result, patches] = produceWithPatches(m.value, paramter)
       log(
@@ -535,7 +552,7 @@ function createModelSetterGetterFunc<T>(
       if (currentInputeCompute) {
         scope.addComputePatches(m, patches)
       } else {
-        m.updateWithPatches(result, patches)
+        await m.updateWithPatches(result, patches)
       }
       return [result, patches]
     }
@@ -566,7 +583,7 @@ interface FInputComputeFunc extends Function {
   _hook?: Hook
 }
 
-export function state<S>(initialValue: S) {
+export function state<T>(initialValue: T) {
   if (!currentRunnerScope) {
     throw new Error('[state] must under a tarat runner')
   }
@@ -579,9 +596,11 @@ export function state<S>(initialValue: S) {
   )
   currentRunnerScope.addHook(internalState)
 
-  setterGetter._hook = internalState
+  const newSetterGetter = Object.assign(setterGetter, {
+    _hook: internalState
+  })
 
-  return setterGetter
+  return newSetterGetter
 }
 export function model<T>(q: () => IModelQuery, op?: IModelOption) {
   if (!currentRunnerScope) {
@@ -597,9 +616,14 @@ export function model<T>(q: () => IModelQuery, op?: IModelOption) {
     internalModel,
     currentRunnerScope
   )
-  setterGetter._hook = internalModel
+  const newSetterGetter = Object.assign(setterGetter, {
+    _hook: internalModel,
+    async exist (obj: { [k: string]: any }) {
+      return internalModel.exist(obj)
+    }
+  })
 
-  return setterGetter
+  return newSetterGetter
 }
 export function clientModel<T>(q: () => IModelQuery, op?: IModelOption) {
   if (!currentRunnerScope) {
@@ -612,9 +636,14 @@ export function clientModel<T>(q: () => IModelQuery, op?: IModelOption) {
     internalModel,
     currentRunnerScope
   )
-  setterGetter._hook = internalModel
+  const newSetterGetter = Object.assign(setterGetter, {
+    _hook: internalModel,
+    async exist (obj: { [k: string]: any }) {
+      return internalModel.exist(obj)
+    }
+  })
 
-  return setterGetter
+  return newSetterGetter
 }
 export function computed<T>(fn: FComputedFunc<T>) {
   const hook = new Computed(fn)

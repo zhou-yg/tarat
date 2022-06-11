@@ -214,7 +214,7 @@ export function changeStateAsyncInputCompute(
 export function userPessimisticModel() {
   const users = model(
     () => ({
-      entity: 'User',
+      entity: 'item',
       query: {}
     }),
     { immediate: true, pessimisticUpdate: true }
@@ -228,7 +228,7 @@ export function userModelClient() {
   const num = state(0)
   const users = clientModel(
     () => ({
-      entity: 'User',
+      entity: 'item',
       query: {
         where: {
           num: num()

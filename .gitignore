@@ -105,7 +105,13 @@ dist
 
 *.db
 */migrations
-packages/example/*/*/*.db
 *.toml
+
+packages/example/**/*.db
 packages/example/**/*.sql
 packages/example/**/*.db-journal
+packages/core/**/*.db
+packages/core/**/*.sql
+packages/core/**/*.db-journal
+
+dist/

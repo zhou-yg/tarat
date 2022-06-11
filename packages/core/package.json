@@ -6,13 +6,14 @@
   "types": "./dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "watch-unit": "jest --watch -- __test__/core/others.test.ts",
+    "watch-unit": "jest --watch -- __test__/core/model.test.ts",
     "test-unit": "jest",
     "test-ci": "TEST=CI jest",
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
     "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs",
     "build:watch": "npm run format && rollup --config rollup.config.mjs --watch",
-    "release": "npm run build && bump --commit \"release: tarat-core v%s\" --push && npm publish --access public"
+    "release": "npm run build && bump --commit \"release: tarat-core v%s\" --push && npm publish --access public",
+    "prisma:dev": "prisma migrate dev --schema ./__test__/database/testSchema.prisma && prisma generate"
   },
   "files": [
     "src",
@@ -40,6 +41,8 @@
     "@rollup/plugin-replace": "^4.0.0",
     "@rollup/plugin-typescript": "^6.1.0",
     "execa": "6.x.x",
+    "prisma": "^3.15.1",
+    "@prisma/client": "^3.15.1",
     "rollup": "^2.74.1",
     "rollup-plugin-typescript2": "^0.31.2"
   }
