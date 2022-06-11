@@ -105,11 +105,11 @@ sort by priority
     - "cache" hook
       - cookie
       - redis
-    - "mode"
+    - "mode" √
       - "model" directive √
         - exist √
       - "model" lazy query aysnc √
-      - computed with state
+      - computed with state √
     - "context" synchronism with 0 compute √
       -  migrate query if immediate or not in two side √
   - connect part
