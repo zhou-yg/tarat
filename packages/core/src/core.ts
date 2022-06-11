@@ -59,7 +59,7 @@ interface ISource<U> {
   addWatcher: (w: Watcher<U>) => void
 }
 
-export class Watcher<T> {
+export class Watcher<T = Hook> {
   deps: Map<ISource<T>, (string | number)[][]> = new Map()
   constructor(public target: ITarget<ISource<T>>) {}
   notify(dep: ISource<T>, path: TPath, patches?: IPatch[]) {
@@ -151,18 +151,31 @@ export class State<T = any> extends Hook {
 
 export class Model<T> extends State<T | undefined> {
   modelFindPromise: Promise<T> | null = null
+  queryWhereComputed: Computed<IModelQuery> | null = null
+  watcher: Watcher = new Watcher(this)
   constructor(
-    public getQueryWhere: () => IModelQuery,
+    getQueryWhere: () => IModelQuery,
     public options: IModelOption = {},
     public scope: CurrentRunnerScope
   ) {
     super(undefined)
     scope.addHook(this)
+
+    this.queryWhereComputed = new Computed(getQueryWhere)
+    this.queryWhereComputed.run()
+    this.watcher.addDep(this.queryWhereComputed)
+
     if (options.immediate) {
       this.query()
     }
   }
-  async ready () {
+  notify() {
+    this.query()
+  }
+  getQueryWhere(): IModelQuery {
+    return this.queryWhereComputed!.value!
+  }
+  async ready() {
     if (!this._internalValue && this.modelFindPromise) {
       await this.modelFindPromise
     }
@@ -563,7 +576,6 @@ function isInputCompute(v: any) {
   return v.__inputComputeTag
 }
 
-
 type FComputedFunc<T> = () => T | Promise<T>
 
 interface FComputedGetterFunc<T> extends Function {
@@ -615,7 +627,7 @@ export function model<T>(q: () => IModelQuery, op?: IModelOption) {
   )
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalModel,
-    exist: internalModel.exist.bind(internalModel),
+    exist: internalModel.exist.bind(internalModel)
   })
 
   return newSetterGetter
@@ -633,7 +645,7 @@ export function clientModel<T>(q: () => IModelQuery, op?: IModelOption) {
   )
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalModel,
-    exist: internalModel.exist.bind(internalModel),
+    exist: internalModel.exist.bind(internalModel)
   })
 
   return newSetterGetter
@@ -657,8 +669,12 @@ export function computed<T>(fn: FComputedFunc<T>) {
 type InputComputeFn = (...arg: any) => void
 type AsyncInputComputeFn = (...arg: any) => Promise<void>
 
-export function inputCompute(func: AsyncInputComputeFn): AsyncInputComputeFn & { _hook: Hook }
-export function inputCompute(func: InputComputeFn): InputComputeFn & { _hook: Hook }
+export function inputCompute(
+  func: AsyncInputComputeFn
+): AsyncInputComputeFn & { _hook: Hook }
+export function inputCompute(
+  func: InputComputeFn
+): InputComputeFn & { _hook: Hook }
 export function inputCompute(func: any) {
   if (!currentRunnerScope) {
     throw new Error('[inputCompute] must under a tarat runner')
