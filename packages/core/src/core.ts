@@ -169,7 +169,6 @@ export class Model<T extends any[]> extends State<T | undefined> {
     }
   }
   notify() {
-    console.log('notify')
     this.query()
   }
   getQueryWhere(): IModelQuery {
@@ -323,7 +322,7 @@ export class Computed<T> extends State<T | undefined> {
   batchRunCancel: () => void = () => {}
   watcher: Watcher<State<any>> = new Watcher<State<any>>(this)
   // @TODO: maybe here need trigger async optional setting
-  constructor(public getter: FComputedFunc<T>) {
+  constructor(public getter: FComputedFunc<T> | FComputedFuncAsync<T>) {
     super(undefined)
   }
   run() {
@@ -331,12 +330,20 @@ export class Computed<T> extends State<T | undefined> {
     const r: any = this.getter()
     currentComputed = null
     if (r && (r.then || r instanceof Promise)) {
+      this.getterPromise = r
       r.then((asyncResult: T) => {
         this.update(asyncResult)
+        this.getterPromise = null
       })
     } else {
       this.update(r)
     }
+  }
+  getValue () {
+    if (this.getterPromise) {
+      return this.getterPromise.then(() => this.value)
+    }
+    return this.value
   }
   notify() {
     // trigger synchronism
@@ -656,7 +663,6 @@ function isInputCompute(v: any) {
   return v.__inputComputeTag
 }
 
-type FComputedFunc<T> = () => T | Promise<T>
 
 interface FComputedGetterFunc<T> extends Function {
   (): T
@@ -736,8 +742,13 @@ export function clientModel<T extends any[]>(
 
   return newSetterGetter
 }
-export function computed<T>(fn: FComputedFunc<T>) {
-  const hook = new Computed(fn)
+type FComputedFuncAsync<T> = () => Promise<T>;
+type FComputedFunc<T> = () => T;
+
+export function computed<T>(fn: FComputedFuncAsync<T>): (() => Promise<T>) & { _hook: Computed<T> }
+export function computed<T>(fn: FComputedFunc<T>): (() => T) & { _hook: Computed<T> }
+export function computed<T>(fn: any): any {
+  const hook = new Computed<T>(fn)
   currentComputed = hook
   currentRunnerScope!.addHook(hook)
 
@@ -745,7 +756,7 @@ export function computed<T>(fn: FComputedFunc<T>) {
 
   currentComputed = null
 
-  const getter: FComputedGetterFunc<T | undefined> = () => hook.value
+  const getter = () => hook.getValue()
   const newGetter = Object.assign(getter, {
     _hook: hook
   })

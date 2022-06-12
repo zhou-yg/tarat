@@ -319,6 +319,13 @@ export function onePrimitiveStateComputed(v1: number, v2: number) {
   })
   return { s, c }
 }
+export function asyncComputed(v1: number, v2: number) {
+  const s = state(v1)
+  const c = computed(async () => {
+    return s() + v2
+  })
+  return { s, c }
+}
 
 export function computedWithArray() {
   const arr = state(new Array(5).fill('_').map((_, i) => ({ num: i })))
