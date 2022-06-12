@@ -1,6 +1,7 @@
 import { applyPatches } from 'immer'
 import { useAxiiHook } from './connect/axii'
 import { useReactHook } from './connect/react'
+import { IQueryWhere } from './plugin'
 
 export const isArray = Array.isArray
 /* copy from immer's common.ts  */
@@ -641,4 +642,15 @@ export function log(pre: string, ...rest: any[]) {
 }
 export function debuggerLog(open: boolean) {
   enableLog = open
+}
+
+export function checkQueryWhere(where: IQueryWhere['where']): boolean {
+  return where
+    ? !Object.values(where).some(v => {
+        if (typeof v === 'object') {
+          return !checkQueryWhere(v as any)
+        }
+        return v === undefined
+      })
+    : true
 }

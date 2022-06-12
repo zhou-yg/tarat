@@ -18,7 +18,8 @@ import {
   TPath,
   shallowCopy,
   log,
-  BM
+  BM,
+  checkQueryWhere
 } from './util'
 import {
   produceWithPatches,
@@ -181,12 +182,15 @@ export class Model<T extends any[]> extends State<T | undefined> {
   }
   async query() {
     const q = this.getQueryWhere()
-    log('[model.query] 1 q.entity, q.query: ', q.entity, q.query)
-    this.modelFindPromise = getPlugin('Model').find(q.entity, q.query)
-    const result: T = await this.modelFindPromise!
-    this.modelFindPromise = null
-    log('[model.query] 2 result: ', result)
-    this.update(result)
+    const valid = checkQueryWhere(q.query.where)
+    log('[model.query] 1 q.entity, q.query: ', q.entity, q.query, valid)
+    if (valid) {
+      this.modelFindPromise = getPlugin('Model').find(q.entity, q.query)
+      const result: T = await this.modelFindPromise!
+      this.modelFindPromise = null
+      log('[model.query] 2 result: ', result)
+      this.update(result)
+    }
   }
   async exist(obj: { [k: string]: any }) {
     const q = this.getQueryWhere()
@@ -339,7 +343,7 @@ export class Computed<T> extends State<T | undefined> {
       this.update(r)
     }
   }
-  getValue () {
+  getValue() {
     if (this.getterPromise) {
       return this.getterPromise.then(() => this.value)
     }
@@ -663,7 +667,6 @@ function isInputCompute(v: any) {
   return v.__inputComputeTag
 }
 
-
 interface FComputedGetterFunc<T> extends Function {
   (): T
 }
@@ -742,11 +745,15 @@ export function clientModel<T extends any[]>(
 
   return newSetterGetter
 }
-type FComputedFuncAsync<T> = () => Promise<T>;
-type FComputedFunc<T> = () => T;
+type FComputedFuncAsync<T> = () => Promise<T>
+type FComputedFunc<T> = () => T
 
-export function computed<T>(fn: FComputedFuncAsync<T>): (() => Promise<T>) & { _hook: Computed<T> }
-export function computed<T>(fn: FComputedFunc<T>): (() => T) & { _hook: Computed<T> }
+export function computed<T>(
+  fn: FComputedFuncAsync<T>
+): (() => Promise<T>) & { _hook: Computed<T> }
+export function computed<T>(
+  fn: FComputedFunc<T>
+): (() => T) & { _hook: Computed<T> }
 export function computed<T>(fn: any): any {
   const hook = new Computed<T>(fn)
   currentComputed = hook
