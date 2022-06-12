@@ -31,7 +31,7 @@ describe('cache', () => {
     result.s(d => {
       d.num = 1
     })
-    await mockBM.wait()
+
     expect(result.c._hook._internalValue).toBe(undefined)
 
     const cVal2 = await result.c()
