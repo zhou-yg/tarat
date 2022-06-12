@@ -36,7 +36,7 @@ describe('computed', () => {
     expect((runner.scope.hooks[1]).watchers.size).toBe(1)
 
     result.s((v: number) => v + 1)
-    await mockBM.wait()
+    // await mockBM.wait()
 
     expect(result.c()).toBe(num1 + num2 + 1)
     expect(result.s._hook.watchers.size).toBe(2)
@@ -52,7 +52,7 @@ describe('computed', () => {
     expect(result.arr2()).toEqual([{ num: 0 }, { num: 1 }])
     
     result.guard((d: number) => d + 1)
-    await mockBM.wait()
+    // await mockBM.wait()
     
     expect(result.arr()).toEqual([{ num: 0 }, { num: 1 }, { num: 2 }, { num: 3 }, { num: 4 }])
     expect(result.guard()).toBe(3)

@@ -122,11 +122,14 @@ export class State<T = any> extends Hook {
     const oldValue = this._internalValue
     this._internalValue = v
 
-    this.trigger()
-
-    if (patches && patches.length > 0) {
-      const changedPathArr = calculateChangedPath(oldValue, patches)
-      changedPathArr.forEach(path => this.trigger(path, patches))
+    // trigger only changed
+    if (oldValue !== v && !isEqual(oldValue, v)) {
+      this.trigger()
+  
+      if (patches && patches.length > 0) {
+        const changedPathArr = calculateChangedPath(oldValue, patches)
+        changedPathArr.forEach(path => this.trigger(path, patches))
+      }
     }
   }
   // @TODO should be upgrade for some badcase maybe
@@ -166,6 +169,7 @@ export class Model<T extends any[]> extends State<T | undefined> {
     }
   }
   notify() {
+    console.log('notify')
     this.query()
   }
   getQueryWhere(): IModelQuery {
@@ -313,6 +317,7 @@ export class Computed<T> extends State<T | undefined> {
   getterPromise: Promise<T> | null = null
   batchRunCancel: () => void = () => {}
   watcher: Watcher<State<any>> = new Watcher<State<any>>(this)
+  // @TODO: maybe here need trigger async optional setting
   constructor(public getter: FComputedFunc<T>) {
     super(undefined)
   }
@@ -329,10 +334,13 @@ export class Computed<T> extends State<T | undefined> {
     }
   }
   notify() {
-    this.batchRunCancel()
-    this.batchRunCancel = nextTick(() => {
-      this.run()
-    })
+    // trigger synchronism
+    this.run()
+
+    // this.batchRunCancel()
+    // this.batchRunCancel = nextTick(() => {
+    //   this.run()
+    // })
   }
 }
 class InputCompute extends Hook {
