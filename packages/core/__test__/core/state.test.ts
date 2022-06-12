@@ -7,7 +7,7 @@ import * as mockBM from '../mockBM'
 describe('state', () => {
   it('use plain object', () => {
     const runner = new Runner(mockBM.plainObjectState)
-    const args = [
+    const args: [{num1: number}, number] = [
       { num1: 0 },
       10
     ]
@@ -18,7 +18,7 @@ describe('state', () => {
   })
   it('watch state changing', () => {
     const runner = new Runner(mockBM.plainObjectState)
-    const args = [
+    const args: [{num1: number}, number] = [
       { num1: 0 },
       10
     ]

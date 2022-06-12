@@ -1,4 +1,4 @@
-import { cloneDeep, IDiff, IQueryWhere, set, setEnv } from '../../src/util'
+import { cloneDeep, IDiff, IQueryWhere, set, setEnv } from '../../src/index'
 import {
   Runner,
 } from '../../src/core'

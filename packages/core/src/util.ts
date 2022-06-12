@@ -223,55 +223,6 @@ export function nextTick(fn: () => void) {
   return () => clearTimeout(st)
 }
 
-interface IQueryInclude {
-  [k: string]:
-    | boolean
-    | {
-        include: IQueryInclude
-      }
-}
-interface IQuerySelect {
-  [k: string]:
-    | boolean
-    | {
-        select: IQuerySelect
-      }
-}
-
-export interface IQueryWhere {
-  where?: {
-    [k: string]: any
-  }
-  skip?: number
-  take?: number
-  include?: IQueryInclude
-  select?: IQuerySelect
-  orderBy?: {
-    [k: string]: 'desc' | 'asc'
-  }
-  cursor?: {
-    id?: number
-  }
-}
-
-export interface IModelQuery {
-  entity: string
-  query: IQueryWhere
-}
-interface IModelData {
-  where: { id: number }
-  data: {
-    [k: string]:
-      | any
-      | {
-          connect?: { id: number }
-          create?: IModelData
-        }
-  }
-}
-
-type IModelCreateData = Omit<IModelData, 'where'> | Omit<IModelData, 'where'>[]
-
 export interface IHookContext {
   initialArgList: any[]
   data: Array<
@@ -299,44 +250,6 @@ export function useHook<T extends BM>(bm: T): ReturnType<T> | undefined {
       return useAxiiHook(hookAdaptorRuntime, bm)
   }
 }
-
-// interface IModelConfig {
-//   find: (entity: string, query: IModelQuery['query']) => Promise<any>
-//   update: (entity: string, query: IModelData) => Promise<number[]>
-//   create: (entity: string, data: IModelCreateData) => Promise<any>
-//   remove: (entity: string, data: Omit<IModelData, 'data'>) => Promise<number[]>
-//   // @depcated
-//   executeDiff: (entity: string, d: IDiff) => Promise<void>
-//   postDiffToServer: (entity: string, d: IDiff) => Promise<void>
-//   //
-//   postComputeToServer: (c: IHookContext) => Promise<IHookContext>
-//   postQueryToServer: (c: IHookContext) => Promise<IHookContext>
-// }
-
-// let modelConfig: null | IModelConfig | (() => IModelConfig) = null
-// export function setModelConfig(c: IModelConfig | (() => IModelConfig)) {
-//   modelConfig = c
-// }
-
-// export function getModelConfig(): IModelConfig {
-//   if (isFunc(modelConfig)) {
-//     return (modelConfig as () => IModelConfig)()
-//   }
-//   return modelConfig as IModelConfig
-// }
-
-// export function getModelFind() {
-//   return getModelConfig().find
-// }
-// export function getModelUpdate() {
-//   return getModelConfig().update
-// }
-// export function getModelCreate() {
-//   return getModelConfig().create
-// }
-// export function getModelRemove() {
-//   return getModelConfig().remove
-// }
 
 export function findWithDefault<T>(
   arr: T[],

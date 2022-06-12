@@ -1,4 +1,4 @@
-import { IPatch, applyPatchesToObject } from '../util';
+import { IPatch, applyPatchesToObject, BM } from '../util';
 import { Hook, isState, Runner, State, Watcher } from '../core'
 import { cloneDeep, deleteKey, isFunc, isPrimtive, set } from '../util';
 
@@ -12,7 +12,7 @@ class AxiiData {
   }
 }
 
-export function useAxiiHook (axii: any, hook: () => any, ...args: any[]) {
+export function useAxiiHook<T extends BM>(axii: any, hook: T, ...args: any) {
   // @ts-ignore
   const {
     atom, reactive

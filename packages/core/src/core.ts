@@ -1,6 +1,5 @@
 import {
   calculateDiff,
-  IModelQuery,
   IPatch,
   isFunc,
   map,
@@ -28,7 +27,7 @@ import {
   enablePatches,
   applyPatches
 } from 'immer'
-import { getPlugin } from './plugin'
+import { getPlugin, IModelQuery } from './plugin'
 
 enablePatches()
 
@@ -239,13 +238,14 @@ class ClientModel<T extends any[]> extends Model<T> {
 }
 
 export interface ICacheOptions<T> {
-  source?: State<T>
+  source?: { _hook: State<T> }
   defaultValue?: T
   from: 'cookie' | 'redis' | 'localStorage' | 'sessionStorage'
 }
 export class Cache<T> extends State<T | undefined> {
   getterKey: string
   watcher:Watcher = new Watcher(this)
+  source: State<T> | undefined
   constructor(
     key: string,
     public options: ICacheOptions<T>,
@@ -256,15 +256,17 @@ export class Cache<T> extends State<T | undefined> {
     this.getterKey = `tarat_cache_${scope.hookRunnerName}__${key}`
     
     if (this.options.source) {
-      this.watcher.addDep(this.options.source)
+      this.source = this.options.source._hook
+      this.watcher.addDep(this.source)
     }
   }
   notify (hook?: Hook) {
     // not calling update prevent notify the watcher for current cache
     this._internalValue = undefined
 
-    const { from, source } = this.options 
-    if (hook && hook === source) {
+    const { from } = this.options
+    const { source } = this
+    if (hook && source && hook === source) {
       /**
        * just clear value in cache not update directly
        * reason 1: for lazy
@@ -277,7 +279,8 @@ export class Cache<T> extends State<T | undefined> {
     if (this.value !== undefined) {
       return this.value
     }
-    const { from, source } = this.options
+    const { from } = this.options
+    const { source } = this
     const valueInCache = await getPlugin('Cache').getValue<T>(this.getterKey, from)
     if (valueInCache !== undefined) {
       super.update(valueInCache)
@@ -285,13 +288,18 @@ export class Cache<T> extends State<T | undefined> {
     }
     if (source) {
       const valueInSource = source.value
-      this.update(valueInSource)
+
+      super.update(valueInSource)
+      getPlugin('Cache').setValue(this.getterKey, valueInSource, from)
+
       return valueInSource
     }
     return
   }
+  // call by outer
   async update(v?: T, patches?: IPatch[]) {
-    const { from, source } = this.options
+    const { from } = this.options
+    const { source } = this
     if (source) {
       throw new Error('[Cache] can not update value directly while the cache has "source" in options ')
     } else {
@@ -493,7 +501,7 @@ export class Runner<T extends BM> {
       f()
     })
   }
-  init(...args: any): ReturnType<T> {
+  init(...args: Parameters<T>): ReturnType<T> {
     if (this.alreadInit) {
       throw new Error('can not init repeat')
     }
@@ -811,7 +819,8 @@ function createCacheSetterGetterFunc<SV>(
   return async (paramter?: any): Promise<any> => {
     if (paramter) {
       if (isFunc(paramter)) {
-        const [result, patches] = produceWithPatches(s.value, paramter)
+        const v = await s.getValue()
+        const [result, patches] = produceWithPatches(v, paramter)
         if (currentInputeCompute) {
           scope.addComputePatches(s, patches)
         } else {
@@ -822,7 +831,7 @@ function createCacheSetterGetterFunc<SV>(
         throw new Error('[change cache] pass a function')
       }
     }
-    return s.value
+    return s.getValue()
   }
 }
 

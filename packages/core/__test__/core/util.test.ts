@@ -1,4 +1,4 @@
-import { calculateDiff } from '../../src/util'
+import { calculateDiff } from '../../src/index'
 import { produceWithPatches, enablePatches } from 'immer'
 
 enablePatches()

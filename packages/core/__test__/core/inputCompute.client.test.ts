@@ -1,4 +1,4 @@
-import { cloneDeep, IHookContext } from '../../src/util'
+import { cloneDeep, IHookContext } from '../../src/index'
 import {
   Runner,
 } from '../../src/core'
@@ -37,7 +37,7 @@ describe('inputCompute', () => {
       }  
     })
 
-    const initArgs: [object, number] = [
+    const initArgs: [any, number] = [
       { num1: 0 },
       10
     ]
