@@ -1,4 +1,4 @@
-import { setHookAdaptor, setModelConfig } from 'tarat-core'
+import { setHookAdaptor, loadPlugin } from 'tarat-core'
 
 export default function clientRuntime (c: {
   framework: any
@@ -23,7 +23,7 @@ export default function clientRuntime (c: {
   /**
    * @TODO should provide by @tarat-run by default
    */
-  setModelConfig({
+  loadPlugin('Model', {
     async find(e, w) {
       return []
     },
@@ -37,6 +37,9 @@ export default function clientRuntime (c: {
       return {}
     },
     async executeDiff(d) {},
+    ...modelConfig
+  })
+  loadPlugin('Context', {
     async postDiffToServer(entity, diff) {
       await fetch(`${diffPath}`, {
         method: 'POST',
@@ -64,6 +67,6 @@ export default function clientRuntime (c: {
 
       return newContext
     },
-    ...modelConfig
+    ...modelConfig,
   })
 }
