@@ -7,7 +7,8 @@ import {
   freeze,
   inputComputeInServer,
   computed,
-  clientModel
+  clientModel,
+  cache
 } from '../src/core'
 import { loadPlugin } from '../src/plugin'
 
@@ -39,6 +40,18 @@ export function initModelConfig(obj: any = {}) {
       return []
     },
     ...obj
+  })
+  const cacheMap = new Map<string, any>()
+  loadPlugin('Cache', {
+    async getValue (key, from) {
+      return cacheMap.get(key)
+    },
+    async setValue(k, v) {
+      cacheMap.set(k, v)
+    },
+    clearValue(k, from) {
+      cacheMap.delete(k)
+    }
   })
 }
 
@@ -321,19 +334,24 @@ export function computedWithArray() {
   }
 }
 
-// function a (x: number): {
-//   (): number,
-//   (a: string): string
-// } {
-//   return (v?: any): any => {
-//     if (v) {
-//       return v
-//     }
-//     return 0
-//   }
-// }
-// const fn = a(1)
-// const r = fn()
-// const r2 = fn('a')
+export function onlyCache () {
+  const c = cache('num', {
+    from: 'redis',
+  })
 
-// const c: number = r + 1
+  return {
+    c
+  }
+}
+export function cacheWithSource (v: { num: number }) {
+  const s = state(v)
+  const c = cache('num', {
+    from: 'redis',
+    source: s
+  })
+
+  return {
+    s,
+    c
+  }
+}

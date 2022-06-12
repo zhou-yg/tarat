@@ -1,4 +1,4 @@
-import { IHookContext } from '../../src/util'
+import { IHookContext } from '../../src/index'
 import {
   Runner,
 } from '../../src/core'
@@ -7,7 +7,7 @@ import * as mockBM from '../mockBM'
 
 describe('initContext', () => {
   it('init context to state', () => {
-    const args = [
+    const args: [ {num1: number}, number ] = [
       { num1: 0 },
       10
     ]
@@ -32,7 +32,7 @@ describe('initContext', () => {
       async postComputeToServer (c: IHookContext) {
         process.env.TARGET = 'server'
         const serverRunner = new Runner(mockBM.changeStateInputComputeServer, c)
-        serverRunner.init(...c.initialArgList)
+        serverRunner.init(...c.initialArgList as [any, any])
 
         if (c.index) {
           await serverRunner.callHook(c.index, c.args)
@@ -44,7 +44,7 @@ describe('initContext', () => {
         return context
       }
     })
-    const args = [
+    const args: [ {num1: number}, number ] = [
       { num1: 0 },
       1
     ]

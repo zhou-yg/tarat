@@ -64,10 +64,6 @@ const plugins: {
     getValue<T>(k: string, from: TCacheFrom): Promise<T | undefined>
     setValue<T>(k: string, value: T, from: TCacheFrom): Promise<void>
     clearValue<T>(k: string, from: TCacheFrom): void
-    cookie(): void
-    redis(): void
-    localStorage(): void
-    sessionStorage(): void
   }
   Context?: {
     postDiffToServer(entity: string, d: IDiff): Promise<void>

@@ -1,7 +1,7 @@
 import { Runner } from '../core'
 import { BM } from '../util'
 
-export function useReactHook<T extends BM> (react: any, hook: T, ...args: any[]) {
+export function useReactHook<T extends BM> (react: any, hook: T, ...args: any) {
   const [hookResult, setHookResult] = react.useState()
 
   react.useEffect(() => {
