@@ -7,6 +7,7 @@ import {
 export default function login () {
   const name = state()
   const password = state()
+  const repeatPassword = state()
 
   const signAndAutoLogin = state(false)
 
@@ -57,38 +58,63 @@ export default function login () {
   /**
    * login:
    * 1.invalid password
-   * 2.user not exist
+   * 2.check repeat password (should handled by UI)
+   * 3.user not exist
    * 
    * sign:
    * 1.user already exist
+   * 
+   * common:
+   * 1.http error
    */
-  const errorTip = computed(async () => {
+  const errorTip1 = computed(async () => {
     if (name() && password() && await userData() === null) {
       return 'invalid password'
     }
-  })
-
-  const sign = inputCompute(async (inputName, inputPassword) => {
-    if (signAndAutoLogin()) {
-      login(inputName, inputPassword)
+    if (repeatPassword() && repeatPassword() !== password()) {
+      return 'input same password twice'
     }
-    await userData.exist({ name: inputName, password: inputPassword })
-    userData((draft) => {
-      draft.push({
-        name: inputName, 
-        password: inputPassword
+    if (name() === '') {
+      return 'must input name'
+    }
+    if (password() === '') {
+      return 'must input password'
+    }
+    return ''
+  })
+  const errorTip2 = state('')
+
+  const errorTip = combineLatest([errorTip1, errorTip2])
+
+  const sign = inputCompute(async () => {
+    const inputName = name()
+    const inputPassword = password()
+    const r = await userData.exist({ name: inputName, password: inputPassword })
+    if (!r) {
+      userData((draft) => {
+        draft.push({
+          name: inputName, 
+          password: inputPassword
+        })
       })
-    })
+      if (signAndAutoLogin()) {
+        login(inputName, inputPassword)
+      }  
+    } else {
+      errorTip2(() => 'user already exist')
+    }
   })
 
-  const login = inputCompute(async (inputName, inputPassword) => {
+  const login = inputCompute(async () => {
+    const inputName = name()
+    const inputPassword = password()
     const valid = await userData.exist({ name: inputName, password: inputPassword }) // query DB
     if (valid) {
       name(() => inputName)
       password(() => inputPassword)
       cookieId(() => nanoid())
     } else {
-      errorTip(() => 'invalid password')
+      errorTip2(() => `invalid password with "${inputName}"`)
     }
   })
 
@@ -99,6 +125,9 @@ export default function login () {
   })
 
   return {
+    name,
+    password,
+    repeatPassword,
     signAndAutoLogin,
     userData,
     errorTip,
