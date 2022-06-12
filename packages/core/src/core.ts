@@ -104,6 +104,7 @@ export function isState(h: { _hook?: State }) {
 export class State<T = any> extends Hook {
   _internalValue: T
   freezed?: boolean
+  modifiedTimstamp = Date.now()
   constructor(data: T) {
     super()
     this._internalValue = data
@@ -122,6 +123,7 @@ export class State<T = any> extends Hook {
   update(v: T, patches?: IPatch[]) {
     const oldValue = this._internalValue
     this._internalValue = v
+    this.modifiedTimstamp = Date.now()
 
     // trigger only changed
     if (oldValue !== v && !isEqual(oldValue, v)) {
@@ -359,6 +361,7 @@ export class Computed<T> extends State<T | undefined> {
     // })
   }
 }
+
 class InputCompute extends Hook {
   constructor(public getter: InputComputeFn, public scope: CurrentRunnerScope) {
     super()
@@ -628,13 +631,6 @@ interface IModelOption {
   pessimisticUpdate?: boolean
 }
 
-interface ISetterGetterExtra {
-  _hook: Hook
-}
-interface IModelSetterGetterExtra extends ISetterGetterExtra {
-  exist: (data: { [k: string]: any }) => Promise<boolean>
-}
-
 function createModelSetterGetterFunc<T extends any[]>(
   m: Model<T>,
   scope: CurrentRunnerScope
@@ -874,4 +870,17 @@ export function cache<T>(key: string, options: ICacheOptions<T>) {
     _hook: hook
   })
   return newSetterGetter
+}
+
+export function combineLatest<T>(arr: Array<{ _hook: State<T> }>): () => T {
+  return () => {
+    const latestState = arr.slice(1).reduce((latest, { _hook }) => {
+      if (_hook.modifiedTimstamp > latest.modifiedTimstamp) {
+        return _hook
+      }
+      return latest
+    }, arr[0]._hook)
+
+    return latestState.value
+  }
 }
