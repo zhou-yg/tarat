@@ -50,7 +50,6 @@ export default function clientRuntime (c: {
       })
     },
     async postComputeToServer(c) {
-
       const newContext = await fetch(`${hostConfig}/${c.name}`, {
         method: 'POST',
         body: JSON.stringify(c)
@@ -59,7 +58,6 @@ export default function clientRuntime (c: {
       return newContext
     },
     async postQueryToServer(c) {
-      console.log('postQueryToServer: ');
       const newContext = await fetch(`${hostConfig}/${c.name}`, {
         method: 'POST',
         body: JSON.stringify(c)
@@ -68,5 +66,12 @@ export default function clientRuntime (c: {
       return newContext
     },
     ...modelConfig,
+  })
+  loadPlugin('Cache', {
+    async getValue (k, f) {
+      return undefined
+    },
+    async setValue (k, v, f) {},
+    clearValue (k, f) {}
   })
 }
