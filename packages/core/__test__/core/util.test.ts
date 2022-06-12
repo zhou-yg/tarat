@@ -1,4 +1,4 @@
-import { calculateDiff } from '../../src/index'
+import { calculateDiff, checkQueryWhere } from '../../src/index'
 import { produceWithPatches, enablePatches } from 'immer'
 
 enablePatches()
@@ -443,5 +443,48 @@ describe('util', () => {
         },
       ])
     })
+  })
+  it('check invalid query`s where', () => {
+    const r2 = checkQueryWhere({
+      a: 2,
+      b: 1
+    })
+    const r4 = checkQueryWhere({
+      a: 2,
+      b: 1,
+      c: {
+        a: 3
+      }
+    })
+    const r6 = checkQueryWhere({
+      a: 2,
+      b: 1,
+      c: {
+        a: 3
+      },
+      d: [1, 2]
+    })
+    expect([r2, r4, r6]).toEqual([true, true, true])
+
+    const r1 = checkQueryWhere({
+      a: undefined,
+      b: 1
+    })
+    const r3 = checkQueryWhere({
+      a: 2,
+      b: 1,
+      c: {
+        a: undefined
+      }
+    })
+    const r5 = checkQueryWhere({
+      a: 2,
+      b: 1,
+      c: {
+        a: 3
+      },
+      d: [undefined, 2]
+    })
+    expect([r1, r3, r5]).toEqual([false, false, false])
   })
 })

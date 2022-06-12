@@ -11,12 +11,12 @@ export default function login () {
   const signAndAutoLogin = state(false)
 
   const cookieId = cache('userDataKey', { from: 'cookie' }) // just run in server because by it depends 'cookie'
-  const userData = model(() => ({
+  const userDataByInput = model(() => ({
     entity: 'user',
     query: {
       where: {
         name: name(), // maybe be unique?
-        password: password()
+        password: password(),
       }
     }
   }))
@@ -29,8 +29,41 @@ export default function login () {
     }
   }))
 
-  const errorTip = computed(() => {
-    if (name() && password() && userData() === null) {
+  const userIdInSession = computed(async () => {
+    const ss = await sessionStore()
+    if (ss.length > 0) {
+      return ss[0].userId
+    }
+  })
+  const userDataByCookie = model(() => ({
+    entity: 'user',
+    query: {
+      where: {
+        id: userIdInSession()
+      }
+    }
+  }))
+  const userData = computed(async () => {
+    const u1 = await userDataByCookie()
+    if (u1?.length > 0) {
+      return u1[0]
+    }
+    const u2 = await userDataByInput()
+    if (u2?.length > 0) {
+      return u2[0]
+    }
+  })
+
+  /**
+   * login:
+   * 1.invalid password
+   * 2.user not exist
+   * 
+   * sign:
+   * 1.user already exist
+   */
+  const errorTip = computed(async () => {
+    if (name() && password() && await userData() === null) {
       return 'invalid password'
     }
   })
@@ -67,7 +100,7 @@ export default function login () {
 
   return {
     signAndAutoLogin,
-    userData: userDataCache(),
+    userData,
     errorTip,
     sign,
     login,
