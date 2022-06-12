@@ -13,7 +13,8 @@
     "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs",
     "build:watch": "npm run format && rollup --config rollup.config.mjs --watch",
     "release": "npm run build && bump --commit \"release: tarat-core v%s\" --push && npm publish --access public",
-    "prisma:dev": "prisma migrate dev --schema ./__test__/database/testSchema.prisma && prisma generate"
+    "prisma:dev": "prisma migrate dev --schema ./__test__/database/testSchema.prisma && prisma generate",
+    "prisma:gen": "prisma generate --schema ./__test__/database/testSchema.prisma"
   },
   "files": [
     "src",
