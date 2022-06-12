@@ -43,7 +43,7 @@ export function initModelConfig(obj: any = {}) {
   })
   const cacheMap = new Map<string, any>()
   loadPlugin('Cache', {
-    async getValue (key, from) {
+    async getValue(key, from) {
       return cacheMap.get(key)
     },
     async setValue(k, v) {
@@ -334,16 +334,16 @@ export function computedWithArray() {
   }
 }
 
-export function onlyCache () {
+export function onlyCache() {
   const c = cache('num', {
-    from: 'redis',
+    from: 'redis'
   })
 
   return {
     c
   }
 }
-export function cacheWithSource (v: { num: number }) {
+export function cacheWithSource(v: { num: number }) {
   const s = state(v)
   const c = cache('num', {
     from: 'redis',

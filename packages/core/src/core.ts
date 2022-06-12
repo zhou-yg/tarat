@@ -125,7 +125,7 @@ export class State<T = any> extends Hook {
     // trigger only changed
     if (oldValue !== v && !isEqual(oldValue, v)) {
       this.trigger()
-  
+
       if (patches && patches.length > 0) {
         const changedPathArr = calculateChangedPath(oldValue, patches)
         changedPathArr.forEach(path => this.trigger(path, patches))
@@ -248,7 +248,7 @@ export interface ICacheOptions<T> {
 }
 export class Cache<T> extends State<T | undefined> {
   getterKey: string
-  watcher:Watcher = new Watcher(this)
+  watcher: Watcher = new Watcher(this)
   source: State<T> | undefined
   constructor(
     key: string,
@@ -258,13 +258,13 @@ export class Cache<T> extends State<T | undefined> {
     super(undefined)
     scope.addHook(this)
     this.getterKey = `tarat_cache_${scope.hookRunnerName}__${key}`
-    
+
     if (this.options.source) {
       this.source = this.options.source._hook
       this.watcher.addDep(this.source)
     }
   }
-  notify (hook?: Hook) {
+  notify(hook?: Hook) {
     // not calling update prevent notify the watcher for current cache
     this._internalValue = undefined
 
@@ -285,7 +285,10 @@ export class Cache<T> extends State<T | undefined> {
     }
     const { from } = this.options
     const { source } = this
-    const valueInCache = await getPlugin('Cache').getValue<T>(this.getterKey, from)
+    const valueInCache = await getPlugin('Cache').getValue<T>(
+      this.getterKey,
+      from
+    )
     if (valueInCache !== undefined) {
       super.update(valueInCache)
       return valueInCache
@@ -305,7 +308,9 @@ export class Cache<T> extends State<T | undefined> {
     const { from } = this.options
     const { source } = this
     if (source) {
-      throw new Error('[Cache] can not update value directly while the cache has "source" in options ')
+      throw new Error(
+        '[Cache] can not update value directly while the cache has "source" in options '
+      )
     } else {
       super.update(v, patches)
       await getPlugin('Cache').setValue(this.getterKey, v, from)
@@ -846,13 +851,9 @@ function createCacheSetterGetterFunc<SV>(
 export function cache<T>(key: string, options: ICacheOptions<T>) {
   const hook = new Cache(key, options, currentRunnerScope!)
 
-  const setterGetter = createCacheSetterGetterFunc(
-    hook,
-    currentRunnerScope!
-  )
+  const setterGetter = createCacheSetterGetterFunc(hook, currentRunnerScope!)
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: hook
   })
   return newSetterGetter
 }
-
