@@ -1,13 +1,24 @@
-import { IHookContext, Runner, getModelConfig, IDiff } from 'tarat-core'
+import { IHookContext, Runner, getPlugin, IDiff } from 'tarat-core'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'
-import { setPrisma } from '../adaptors/prisma'
+import { setPrisma } from '../adaptors/plugins/prisma'
+import { setCookies } from '../adaptors/plugins/cookies'
+import { setER } from '../adaptors/plugins/er'
 
 function matchHookName (path: string) {
   const arr = path.split('/').filter(Boolean)
   return {
     pre: arr[0],
     hookName: arr[1]
+  }
+}
+
+function wrapCtx (ctx: Application.ParameterizedContext) {
+  return {
+    cookies: {
+      set: ctx.cookies.set.bind(ctx.cookies),
+      get: ctx.cookies.get.bind(ctx.cookies)
+    }
   }
 }
 
@@ -21,7 +32,10 @@ export default function taratMiddleware (args: {
 
   if (model?.engine === 'prisma') {
     setPrisma(cwd)
+  } else if (model?.engine === 'er') {
+    setER()
   }
+  setCookies()
 
   return async (ctx, next) => {
     const { pre, hookName } = matchHookName(ctx.request.path)
@@ -30,9 +44,14 @@ export default function taratMiddleware (args: {
       if (hookConfig) {        
         const hookFunc = await hookConfig.hookFunc
         const c: IHookContext = JSON.parse(ctx.request.body)
+
+        getPlugin('GlobalRunning').setCurrent(wrapCtx(ctx))
+
         let runner = new Runner(hookFunc.default, c)
         runner.init(...c.initialArgList)
-  
+
+        getPlugin('GlobalRunning').setCurrent(null)
+        
         if (c.index !== undefined) {
           await runner.callHook(c.index, c.args)
         }
@@ -46,7 +65,7 @@ export default function taratMiddleware (args: {
       }
     } else if (pre === diffPath && ctx.request.method === 'POST') {
       const c: { entity: string, diff: IDiff } = JSON.parse(ctx.request.body)
-      await getModelConfig().executeDiff(c.entity, c.diff)
+      await getPlugin('Model').executeDiff(c.entity, c.diff)
       ctx.body = JSON.stringify({})
     } else {
       await next()

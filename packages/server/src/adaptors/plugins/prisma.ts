@@ -1,4 +1,4 @@
-import { IHookContext, Runner, setModelConfig } from 'tarat-core'
+import { loadPlugin } from 'tarat-core'
 import { join } from 'path'
 export async function setPrisma (cwd: string)  {
   // @ts-ignore
@@ -9,7 +9,7 @@ export async function setPrisma (cwd: string)  {
   const prisma = new client.PrismaClient()
   prisma.$connect()
 
-  setModelConfig({
+  loadPlugin('Model', {
     async find(e, w) {
       return prisma[e].findMany(w)
     },
@@ -52,22 +52,5 @@ export async function setPrisma (cwd: string)  {
         })
       }))
     },
-    async postDiffToServer(e, d) {},
-    async postComputeToServer(c) {
-      return {
-        name: '',
-        initialArgList: [],
-        args: [],
-        data: []
-      }
-    },
-    async postQueryToServer (c) {
-      return {
-        name: '',
-        initialArgList: [],
-        args: [],
-        data: []
-      }
-    }
   })
 }

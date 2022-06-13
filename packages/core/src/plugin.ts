@@ -1,4 +1,5 @@
 import { IDiff, IHookContext } from './util'
+import type Cookies from 'cookies'
 
 type IModelCreateData = Omit<IModelData, 'where'> | Omit<IModelData, 'where'>[]
 
@@ -52,6 +53,13 @@ export interface IModelQuery {
 
 type TCacheFrom = 'cookie' | 'redis' | 'localStorage' | 'sessionStorage'
 
+export interface IRunningContext {
+  cookies: {
+    set: (name: string, value?: string | null, opts?: Cookies.SetOption) => void
+    get: (name: string, opts?: Cookies.GetOption) => string | undefined
+  }
+}
+
 const plugins: {
   Model?: {
     find(entity: string, query: IModelQuery['query']): Promise<any>
@@ -63,12 +71,16 @@ const plugins: {
   Cache?: {
     getValue<T>(k: string, from: TCacheFrom): Promise<T | undefined>
     setValue<T>(k: string, value: T, from: TCacheFrom): Promise<void>
-    clearValue<T>(k: string, from: TCacheFrom): void
+    clearValue(k: string, from: TCacheFrom): void
   }
   Context?: {
     postDiffToServer(entity: string, d: IDiff): Promise<void>
     postComputeToServer(c: IHookContext): Promise<IHookContext>
     postQueryToServer(c: IHookContext): Promise<IHookContext>
+  }
+  GlobalRunning?: {
+    setCurrent(runningApi: IRunningContext | null): void
+    getCurrent(): IRunningContext | null
   }
 } = {}
 
