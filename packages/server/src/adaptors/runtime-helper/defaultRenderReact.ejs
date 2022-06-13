@@ -1,58 +1,14 @@
 <%- viewCode %>
-import { setHookAdaptor, setModelConfig } from 'tarat-core'
+import clientRuntime from 'tarat-server/dist/adaptors/runtime-helper/clientRuntime'
 import * as _runtimeReact from 'react'
 import * as _runtimeReactDOM from 'react-dom/client'
 
-setHookAdaptor(_runtimeReact, 'react')
-
-render(<%- exportDefaultName %>)
-
-const hostConfig = `/${window.taratConfig?.apiPre || '_hook'}`
-const diffPath = `/${window.taratConfig?.diffPath || '_diff'}`
-
-setModelConfig({
-  async find(e, w) {
-    return []
-  },
-  async update(e, w) {
-    return []
-  },
-  async remove(e, d) {
-    return []
-  },
-  async create(e, d) {
-    return {}
-  },
-  async executeDiff(d) {},
-  async postDiffToServer(entity, diff) {
-    await fetch(`${diffPath}`, {
-      method: 'POST',
-      body: JSON.stringify({
-        entity,
-        diff
-      })
-    })
-  },
-  async postComputeToServer(c) {
-
-    const newContext = await fetch(`${hostConfig}/${c.name}`, {
-      method: 'POST',
-      body: JSON.stringify(c)
-    }).then(r => r.json())
-
-    return newContext
-  },
-  async postQueryToServer(c) {
-    console.log('postQueryToServer: ');
-    const newContext = await fetch(`${hostConfig}/${c.name}`, {
-      method: 'POST',
-      body: JSON.stringify(c)
-    }).then(r => r.json())
-
-    return newContext
-  }
+clientRuntime({
+  framework: _runtimeReact,
+  name: 'react'
 })
 
+render(<%- exportDefaultName %>)
 
 function render (f) {
 
@@ -61,4 +17,3 @@ function render (f) {
   const app = _runtimeReactDOM.createRoot(document.getElementById('<%= mountedAppId %>'))
   app.render(ele)
 }
-

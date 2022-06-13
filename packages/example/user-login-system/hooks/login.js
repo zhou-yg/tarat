@@ -2,6 +2,9 @@ import {
   state,
   cache,
   model,
+  computed,
+  combineLatest,
+  inputCompute,
 } from 'tarat-core'
 
 export default function login () {
@@ -32,7 +35,8 @@ export default function login () {
 
   const userIdInSession = computed(async () => {
     const ss = await sessionStore()
-    if (ss.length > 0) {
+    console.log('ss: ', ss);
+    if (ss && ss.length > 0) {
       return ss[0].userId
     }
   })
@@ -53,6 +57,11 @@ export default function login () {
     if (u2?.length > 0) {
       return u2[0]
     }
+  })
+
+  const alreadyLogin = computed(() => {
+    const ud = userData()
+    return !!ud
   })
 
   /**
@@ -125,6 +134,7 @@ export default function login () {
   })
 
   return {
+    alreadyLogin,
     name,
     password,
     repeatPassword,

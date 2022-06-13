@@ -5,8 +5,7 @@ export default function clientRuntime (c: {
   name: 'react' | 'axii'
   modelConfig: any
   host: string
-}
-) {
+}) {
 
   const {
     framework = {},
@@ -39,6 +38,7 @@ export default function clientRuntime (c: {
     async executeDiff(d) {},
     ...modelConfig
   })
+
   loadPlugin('Context', {
     async postDiffToServer(entity, diff) {
       await fetch(`${diffPath}`, {
@@ -67,6 +67,7 @@ export default function clientRuntime (c: {
     },
     ...modelConfig,
   })
+
   loadPlugin('Cache', {
     async getValue (k, f) {
       return undefined
