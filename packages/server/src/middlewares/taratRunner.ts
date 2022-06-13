@@ -1,9 +1,9 @@
 import { IHookContext, Runner, getPlugin, IDiff } from 'tarat-core'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'
-import { setPrisma } from '../adaptors/plugins/prisma'
-import { setCookies } from '../adaptors/plugins/cookies'
-import { setER } from '../adaptors/plugins/er'
+import { setPrisma } from '../plugins/prisma'
+import { setCookies } from '../plugins/cookies'
+import { setER } from '../plugins/er'
 
 function matchHookName (path: string) {
   const arr = path.split('/').filter(Boolean)
