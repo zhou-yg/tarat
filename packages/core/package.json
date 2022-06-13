@@ -31,6 +31,7 @@
   },
   "homepage": "https://github.com/zhou-yg/tarat#readme",
   "dependencies": {
+    "@types/cookies": "^0.7.7",
     "@vue/reactivity": "^3.2.36",
     "immer": "^9.0.14",
     "rollup-plugin-dts": "^4.2.2",
@@ -38,12 +39,12 @@
   },
   "devDependencies": {
     "@jsdevtools/version-bump-prompt": "6.1.0",
+    "@prisma/client": "^3.15.1",
     "@rollup/plugin-node-resolve": "^13.3.0",
     "@rollup/plugin-replace": "^4.0.0",
     "@rollup/plugin-typescript": "^6.1.0",
     "execa": "6.x.x",
     "prisma": "^3.15.1",
-    "@prisma/client": "^3.15.1",
     "rollup": "^2.74.1",
     "rollup-plugin-typescript2": "^0.31.2"
   }
