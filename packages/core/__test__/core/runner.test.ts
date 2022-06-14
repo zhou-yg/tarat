@@ -72,7 +72,7 @@ describe('runner basic', () => {
     process.env.TARGET = ''
 
     expect(initResult.m1()).toBeInstanceOf(Promise)
-    expect(await initResult.m1()).toBeInstanceOf([])
+    expect(await initResult.m1()).toEqual([])
 
     expect(runner.scope.hooks.length).toBe(1)
     expect((runner.scope.hooks[0] as any).value).toEqual([])
