@@ -346,7 +346,7 @@ export class Computed<T> extends State<T | undefined> {
     }
   }
   notify() {
-    /** 
+    /**
      * trigger synchronism
      */
     this.run()
@@ -511,13 +511,15 @@ export class CurrentRunnerScope {
       }
     })
   }
-  async ready () {
-    const asyncHooks = this.hooks.filter(h => Reflect.has(h, 'getterPromise')) as unknown as { getterPromise: Promise<any> | null }[]
+  async ready() {
+    const asyncHooks = this.hooks.filter(h =>
+      Reflect.has(h, 'getterPromise')
+    ) as unknown as { getterPromise: Promise<any> | null }[]
 
     let readyResolve: () => void
-    let readyPromise = new Promise<void>(resolve => readyResolve = resolve)
+    let readyPromise = new Promise<void>(resolve => (readyResolve = resolve))
 
-    async function wait () {
+    async function wait() {
       let notReadyHooks = asyncHooks.map(h => h.getterPromise).filter(Boolean)
       if (notReadyHooks.length === 0) {
         readyResolve()
@@ -574,7 +576,7 @@ export class Runner<T extends BM> {
       }
     }
   }
-  ready () {
+  ready() {
     return this.scope.ready()
   }
 }
