@@ -6,7 +6,7 @@
   "types": "./dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "watch-unit": "jest --watch -- __test__/core/util.test.ts",
+    "watch-unit": "jest --watch -- __test__/core/model.test.ts",
     "test-unit": "jest",
     "test-ci": "TEST=CI jest",
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",

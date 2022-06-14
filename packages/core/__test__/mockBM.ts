@@ -70,7 +70,7 @@ export function oneState(arg: { a: number }) {
     s1
   }
 }
-export function oneModel(arg: { a: number }) {
+export function oneModel() {
   const m1 = model(() => ({
     entity: 'test-model',
     query: {}

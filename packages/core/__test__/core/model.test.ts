@@ -87,17 +87,9 @@ describe('model', () => {
     expect(await result.users()).toEqual([])
 
     result.targetName(() => 'a')
-    // latest query doesnt complete
-    expect(await result.users()).toEqual([])
-
-    await mockBM.wait()
-    // after wait latest query do complete
     expect(await result.users()).toEqual([{ id: 1, name: 'a' }])
 
     result.targetName(() => 'b')
-    expect(await result.users()).toEqual([{ id: 1, name: 'a' }])
-
-    await mockBM.wait()
     expect(await result.users()).toEqual([{ id: 2, name: 'b' }])
   })
 

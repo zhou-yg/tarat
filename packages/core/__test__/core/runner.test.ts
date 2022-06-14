@@ -65,22 +65,22 @@ describe('runner basic', () => {
       expect(e.message).toBe('[state] must under a tarat runner')
     }
   })
-  it('run oneModel', async () => {
+  it('run server oneModel', async () => {
+    process.env.TARGET = 'server'
     const runner = new Runner(mockBM.oneModel)
+    const initResult = runner.init()
+    process.env.TARGET = ''
 
-    const arg = { a: 1 }
+    expect(initResult.m1()).toEqual([])
 
-    const initResult = runner.init(arg)
+    await runner.ready()
 
-    expect(await initResult.m1()).toBe(undefined)
     expect(runner.scope.hooks.length).toBe(1)
     expect((runner.scope.hooks[0] as any).value).toBe(undefined)
   })
   it('run oneModel without Runner', () => {
-    const arg = { a: 1 }
-
     try {
-      const runner = mockBM.oneModel(arg)
+      const runner = mockBM.oneModel()
     } catch (e: any) {
       expect(e.message).toBe('[model] must under a tarat runner')
     }
