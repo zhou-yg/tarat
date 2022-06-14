@@ -10,6 +10,9 @@ import {
 export default function login () {
   const name = state()
   const password = state()
+
+  const inputName = state()
+  const inputPassword = state()
   const repeatPassword = state()
 
   const signAndAutoLogin = state(false)
@@ -137,6 +140,8 @@ export default function login () {
     alreadyLogin,
     name,
     password,
+    inputName,
+    inputPassword,
     repeatPassword,
     signAndAutoLogin,
     userData,
