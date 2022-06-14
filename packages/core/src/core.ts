@@ -151,8 +151,8 @@ export class State<T = any> extends Hook {
   }
 }
 
-export class Model<T extends any[]> extends State<T | undefined> {
-  modelFindPromise: Promise<T> | null = null
+export class Model<T extends any[]> extends State<T[]> {
+  getterPromise: Promise<T> | null = null
   queryWhereComputed: Computed<IModelQuery> | null = null
   watcher: Watcher = new Watcher(this)
   constructor(
@@ -160,7 +160,7 @@ export class Model<T extends any[]> extends State<T | undefined> {
     public options: IModelOption = {},
     public scope: CurrentRunnerScope
   ) {
-    super(undefined)
+    super([])
     scope.addHook(this)
 
     this.queryWhereComputed = new Computed(getQueryWhere)
@@ -178,8 +178,8 @@ export class Model<T extends any[]> extends State<T | undefined> {
     return this.queryWhereComputed!.value!
   }
   async ready() {
-    if (!this._internalValue && this.modelFindPromise) {
-      await this.modelFindPromise
+    if (this.getterPromise) {
+      await this.getterPromise
     }
   }
   async query() {
@@ -187,9 +187,9 @@ export class Model<T extends any[]> extends State<T | undefined> {
     const valid = checkQueryWhere(q.query.where)
     log('[model.query] 1 q.entity, q.query: ', q.entity, q.query, valid)
     if (valid) {
-      this.modelFindPromise = getPlugin('Model').find(q.entity, q.query)
-      const result: T = await this.modelFindPromise!
-      this.modelFindPromise = null
+      this.getterPromise = getPlugin('Model').find(q.entity, q.query)
+      const result: T = await this.getterPromise!
+      this.getterPromise = null
       log('[model.query] 2 result: ', result)
       this.update(result)
     }
@@ -205,7 +205,7 @@ export class Model<T extends any[]> extends State<T | undefined> {
       await this.updateWithPatches(newValue, patches)
     }
   }
-  async updateWithPatches(v: T | undefined, patches: IPatch[]) {
+  async updateWithPatches(v: T[], patches: IPatch[]) {
     const oldValue = this._internalValue
     if (!this.options.pessimisticUpdate) {
       log('[Model.updateWithPatches] update internal v=', v)
@@ -345,14 +345,10 @@ export class Computed<T> extends State<T | undefined> {
       this.update(r)
     }
   }
-  getValue() {
-    if (this.getterPromise) {
-      return this.getterPromise.then(() => this.value)
-    }
-    return this.value
-  }
   notify() {
-    // trigger synchronism
+    /** 
+     * trigger synchronism
+     */
     this.run()
 
     // this.batchRunCancel()
@@ -515,6 +511,25 @@ export class CurrentRunnerScope {
       }
     })
   }
+  async ready () {
+    const asyncHooks = this.hooks.filter(h => Reflect.has(h, 'getterPromise')) as unknown as { getterPromise: Promise<any> | null }[]
+
+    let readyResolve: () => void
+    let readyPromise = new Promise<void>(resolve => readyResolve = resolve)
+
+    async function wait () {
+      let notReadyHooks = asyncHooks.map(h => h.getterPromise).filter(Boolean)
+      if (notReadyHooks.length === 0) {
+        readyResolve()
+      } else {
+        await Promise.all(notReadyHooks)
+        wait()
+      }
+    }
+    await wait()
+
+    return readyPromise
+  }
 }
 
 let currentRunnerScope: CurrentRunnerScope | null = null
@@ -558,6 +573,9 @@ export class Runner<T extends BM> {
         await (hook as InputCompute).run(...args)
       }
     }
+  }
+  ready () {
+    return this.scope.ready()
   }
 }
 
@@ -759,7 +777,7 @@ export function computed<T>(fn: any): any {
 
   currentComputed = null
 
-  const getter = () => hook.getValue()
+  const getter = () => hook.value
   const newGetter = Object.assign(getter, {
     _hook: hook
   })

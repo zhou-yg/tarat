@@ -31,9 +31,11 @@ describe('computed', () => {
     const result = runner.init(num1, num2)
 
     const c1 = result.c()
-    expect(c1).toBeInstanceOf(Promise)
+    expect(c1).toBe(undefined)
 
-    expect(await result.c()).toBe(num1 + num2)
+    await runner.ready()
+
+    expect(result.c()).toBe(num1 + num2)
 
     expect(result.s._hook.watchers.size).toBe(2)
     expect(result.s._hook.watchers.has(runner.scope.watcher)).toBe(true)
