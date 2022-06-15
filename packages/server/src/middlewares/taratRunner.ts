@@ -1,9 +1,7 @@
 import { IHookContext, Runner, getPlugin, IDiff } from 'tarat-core'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'
-import { setPrisma } from '../plugins/prisma'
-import { setCookies } from '../plugins/cookies'
-import { setER } from '../plugins/er'
+import { setCookies, setPrisma, setRunning, setER  } from '../plugins/'
 
 function matchHookName (path: string) {
   const arr = path.split('/').filter(Boolean)
@@ -30,12 +28,13 @@ export default function taratMiddleware (args: {
 }) : Application.Middleware{
   const { hooks, apiPre, diffPath, cwd, model } = args.config
 
+  setRunning()
+  setCookies()
   if (model?.engine === 'prisma') {
     setPrisma(cwd)
   } else if (model?.engine === 'er') {
     setER()
   }
-  setCookies()
 
   return async (ctx, next) => {
     const { pre, hookName } = matchHookName(ctx.request.path)
