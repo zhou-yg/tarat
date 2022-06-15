@@ -42,14 +42,14 @@ export function initModelConfig(obj: any = {}) {
     ...obj
   })
   const cacheMap = new Map<string, any>()
-  loadPlugin('Cache', {
-    async getValue(key, from) {
+  loadPlugin('cookie', {
+    async get(key) {
       return cacheMap.get(key)
     },
-    async setValue(k, v) {
+    async set(k, v) {
       cacheMap.set(k, v)
     },
-    clearValue(k, from) {
+    clear(k) {
       cacheMap.delete(k)
     }
   })
@@ -343,7 +343,7 @@ export function computedWithArray() {
 
 export function onlyCache() {
   const c = cache('num', {
-    from: 'redis'
+    from: 'cookie'
   })
 
   return {
@@ -353,7 +353,7 @@ export function onlyCache() {
 export function cacheWithSource(v: { num: number }) {
   const s = state(v)
   const c = cache('num', {
-    from: 'redis',
+    from: 'cookie',
     source: s
   })
 

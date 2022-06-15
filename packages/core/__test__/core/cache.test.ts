@@ -8,7 +8,7 @@ import * as mockBM from '../mockBM'
 describe('cache', () => {
 
   beforeEach(() => {
-    getPlugin('Cache').clearValue('num', 'redis')
+    getPlugin('Cache').clearValue('num', 'cookie')
   })
 
   it ('simple cache', async () => {
