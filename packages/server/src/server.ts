@@ -57,5 +57,7 @@ export async function createDevServer (c: IConfig) {
 
   app.listen(c.port)
 
-  console.log(`start listen on http://localhost:${c.port}`)
+  const defaultView = c.views[0]?.name || ''
+
+  console.log(`start listen on http://localhost:${c.port}/${defaultView}`)
 }

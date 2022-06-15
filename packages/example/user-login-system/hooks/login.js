@@ -5,6 +5,7 @@ import {
   computed,
   combineLatest,
   inputCompute,
+  inputComputeInServer,
 } from 'tarat-core'
 
 export default function login () {
@@ -98,7 +99,7 @@ export default function login () {
 
   const errorTip = combineLatest([errorTip1, errorTip2])
 
-  const sign = inputCompute(async () => {
+  const sign = inputComputeInServer(async () => {
     const inputName = name()
     const inputPassword = password()
     const r = await userData.exist({ name: inputName, password: inputPassword })
@@ -117,7 +118,7 @@ export default function login () {
     }
   })
 
-  const login = inputCompute(async () => {
+  const login = inputComputeInServer(async () => {
     const inputName = name()
     const inputPassword = password()
     const valid = await userData.exist({ name: inputName, password: inputPassword }) // query DB
@@ -130,7 +131,7 @@ export default function login () {
     }
   })
 
-  const logout = inputCompute(() => {
+  const logout = inputComputeInServer(() => {
     name(() => undefined)
     password(() => undefined)
     cookieId(() => undefined)

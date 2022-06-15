@@ -43,7 +43,7 @@ export interface IViewConfig {
    */
   path: string
   /**
-   * single file name with file extension
+   * single file name without file extension
    */
   name: string
 
@@ -62,7 +62,7 @@ function defineView (viewDir: string, file: string, name: string, parent?: IView
     parentId: parent?.id,
     path: file.replace(/\.\w+/, ''),
     file,
-    name,
+    name: name.replace(/\.\w+/, ''),
     index: isIndexFlagn(file)
   }
   if (fs.lstatSync(currentFileOrDirPath).isDirectory()) {
