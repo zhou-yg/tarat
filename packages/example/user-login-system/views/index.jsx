@@ -7,6 +7,8 @@ import classnames from 'classnames'
 const LoginFrame = () => {
   const loginHook = useHook(login)
 
+  window.loginHook = loginHook
+
   const cls = classnames(s.row, {
     show: !!loginHook?.errorTip()
   })
@@ -38,13 +40,14 @@ const LoginFrame = () => {
         }} />
         </div>
         <div>
-        <button>Login</button>
+        <button onClick={() => loginHook.login()}>Login</button>
         </div>
       </div>
       <pre>
         <code>
-          loginHook.alreadyLogin(): {String(loginHook?.alreadyLogin())} <br/>
-          loginHook.signAndAutoLogin(): {String(loginHook?.signAndAutoLogin())}
+          alreadyLogin(): {String(loginHook.alreadyLogin())} <br/>
+          signAndAutoLogin(): {String(loginHook.signAndAutoLogin())} <br/>
+          errorTip: {String(loginHook.errorTip())} <br/>
         </code>
       </pre>
     </div>
