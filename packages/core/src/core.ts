@@ -123,14 +123,16 @@ export class State<T = any> extends Hook {
   update(v: T, patches?: IPatch[], silent?: boolean) {
     const oldValue = this._internalValue
     this._internalValue = v
-    this.modifiedTimstamp = Date.now()
-
+    const shouldTrigger = oldValue !== v && !isEqual(oldValue, v)
+    if (shouldTrigger) {
+      this.modifiedTimstamp = Date.now()
+    }
     if (silent) {
       return
     }
 
     // trigger only changed
-    if (oldValue !== v && !isEqual(oldValue, v)) {
+    if (shouldTrigger) {
       this.trigger()
 
       if (patches && patches.length > 0) {
@@ -313,7 +315,7 @@ export class Cache<T> extends State<T | undefined> {
     return
   }
   // call by outer
-  async update(v?: T, patches?: IPatch[]) {
+  override async update(v?: T, patches?: IPatch[], silent?: boolean) {
     const { from } = this.options
     const { source } = this
     if (source) {
@@ -321,7 +323,7 @@ export class Cache<T> extends State<T | undefined> {
         '[Cache] can not update value directly while the cache has "source" in options '
       )
     } else {
-      super.update(v, patches)
+      super.update(v, patches, silent)
       await getPlugin('Cache').setValue(this.getterKey, v, from)
     }
   }
@@ -517,6 +519,7 @@ export class CurrentRunnerScope {
         }
       }
     })
+    this.notify()
   }
   async ready() {
     const asyncHooks = this.hooks.filter(h =>
@@ -545,7 +548,7 @@ let currentRunnerScope: CurrentRunnerScope | null = null
 
 export class Runner<T extends BM> {
   scope = new CurrentRunnerScope()
-  alreadInit = false
+  alreadyInit = false
   constructor(public bm: T, public initialContext?: IHookContext) {}
   onUpdate(f: Function) {
     return this.scope?.onUpdate(() => {
@@ -553,7 +556,7 @@ export class Runner<T extends BM> {
     })
   }
   init(...args: Parameters<T>): ReturnType<T> {
-    if (this.alreadInit) {
+    if (this.alreadyInit) {
       throw new Error('can not init repeat')
     }
     currentRunnerScope = this.scope
@@ -565,7 +568,7 @@ export class Runner<T extends BM> {
     }
     currentRunnerScope = null
 
-    this.alreadInit = true
+    this.alreadyInit = true
 
     return result
   }
@@ -690,9 +693,6 @@ function isInputCompute(v: any) {
   return v.__inputComputeTag
 }
 
-interface FComputedGetterFunc<T> extends Function {
-  (): T
-}
 let currentComputed: null | Computed<any> = null
 
 export function setCurrentComputed(c: Computed<any> | null) {
