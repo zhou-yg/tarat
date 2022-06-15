@@ -51,7 +51,7 @@ export interface IModelQuery {
   query: IQueryWhere
 }
 
-type TCacheFrom = 'cookie' | 'redis' | 'localStorage' | 'sessionStorage'
+export type TCacheFrom = 'cookie' // | 'redis' | 'localStorage' | 'sessionStorage'
 
 export interface IRunningContext {
   cookies: {
@@ -82,11 +82,33 @@ const plugins: {
     setCurrent(runningApi: IRunningContext | null): void
     getCurrent(): IRunningContext | null
   }
+  cookie?: {
+    get<T>(k: string): Promise<T | undefined>
+    set<T>(k: string, value: T): Promise<void>
+    clear(k: string): void
+  }
 } = {}
 
 type IPlugins = typeof plugins
 
 type TPluginKey = keyof IPlugins
+
+/**
+ * provide a default CachePlugin for distribution different cahce type
+ */
+const defaultCachePlugin: IPlugins['Cache'] = {
+  async getValue(k, from) {
+    return getPlugin(from).get(k)
+  },
+  setValue(k, v, from) {
+    return getPlugin(from).set(k, v)
+  },
+  clearValue(k, from) {
+    getPlugin(from).clear(k)
+  }
+}
+
+loadPlugin('Cache', defaultCachePlugin)
 
 export function getPlugin<T extends TPluginKey>(k: T) {
   const plugin = plugins[k]

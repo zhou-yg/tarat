@@ -28,7 +28,7 @@ import {
   enablePatches,
   applyPatches
 } from 'immer'
-import { getPlugin, IModelQuery } from './plugin'
+import { getPlugin, IModelQuery, TCacheFrom } from './plugin'
 
 enablePatches()
 
@@ -249,7 +249,7 @@ class ClientModel<T extends any[]> extends Model<T> {
 export interface ICacheOptions<T> {
   source?: { _hook: State<T> }
   defaultValue?: T
-  from: 'cookie' | 'redis' | 'localStorage' | 'sessionStorage'
+  from: TCacheFrom
 }
 export class Cache<T> extends State<T | undefined> {
   getterKey: string
