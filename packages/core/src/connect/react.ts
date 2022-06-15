@@ -11,10 +11,9 @@ export function useReactHook<T extends BM> (react: any, hook: T, ...args: any) {
 
     runner.onUpdate(() => {
       setHookResult({...r})
-    })    
+    });
+    (window as unknown as any).runner = runner
   }
-
   const [hookResult, setHookResult] = react.useState(init.current)
-
   return hookResult as ReturnType<T> | undefined
 }
