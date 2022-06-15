@@ -521,6 +521,24 @@ export class CurrentRunnerScope {
     })
     this.notify()
   }
+  // update _internal value directly
+  applyContextSilent(c: IHookContext) {
+    const contextData = c.data
+    const { hooks } = this
+    contextData.forEach(([type, value], index) => {
+      if (isDef(value)) {
+        const state = hooks[index] as State
+        switch (type) {
+          case 'data':
+            /**
+             * default to keep silent because of deliver total context now
+             */
+            state._internalValue = value
+            break
+        }
+      }
+    })
+  }
   async ready() {
     const asyncHooks = this.hooks.filter(h =>
       Reflect.has(h, 'getterPromise')
@@ -564,7 +582,7 @@ export class Runner<T extends BM> {
 
     const result: ReturnType<T> = executeBM(this.bm, args)
     if (this.initialContext) {
-      currentRunnerScope.applyContext(this.initialContext)
+      currentRunnerScope.applyContextSilent(this.initialContext)
     }
     currentRunnerScope = null
 
@@ -703,6 +721,8 @@ interface FInputComputeFunc extends Function {
   (...args: any): Promise<void>
   _hook?: Hook
 }
+
+/** hooks  */
 
 export function state<T>(initialValue: T) {
   if (!currentRunnerScope) {
