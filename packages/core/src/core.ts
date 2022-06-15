@@ -120,10 +120,14 @@ export class State<T = any> extends Hook {
   get value(): T {
     return internalProxy(this, this._internalValue)
   }
-  update(v: T, patches?: IPatch[]) {
+  update(v: T, patches?: IPatch[], silent?: boolean) {
     const oldValue = this._internalValue
     this._internalValue = v
     this.modifiedTimstamp = Date.now()
+
+    if (silent) {
+      return
+    }
 
     // trigger only changed
     if (oldValue !== v && !isEqual(oldValue, v)) {
@@ -499,7 +503,10 @@ export class CurrentRunnerScope {
         const state = hooks[index] as State
         switch (type) {
           case 'data':
-            state.update(value)
+            /**
+             * default to keep silent because of deliver total context now
+             */
+            state.update(value, [], true)
             break
           case 'patch':
             {
