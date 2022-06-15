@@ -20,6 +20,8 @@ function h () {
 
 > 拓展：是否需要类似react hook的过程中，拆分成2类hook：mounte，update ？是，可以节省性能
 
+参考[react的hooks实现](https://github.com/facebook/react/blob/79f54c16dc3d5298e6037df75db2beb3552896e9/packages/react-reconciler/src/ReactFiberHooks.new.js#L2827)
+
 ## M的2次执行
 
 还是 immediate的Model，当client初始化时，model也需要查询数据，当在客户端里无法查询到，所以会callhook到server的Model中，所以在此时也触发了Server中的Model的初始化
@@ -65,3 +67,13 @@ inputCompute内修改state后可能会引起连带的响应式反应，这个没
 可以在server端完成后返回到client，让client继续去触发后续的computed和effect
 
 这个解法唯一可能存在的问题： inputComputeInServer -> state -> computed（只有client端的会响应） -> afterInServer（此时server会响应不到）
+
+## 依赖关系
+
+在CSR或SSR中，其中一个端一旦初始化之后，依赖关系引用就定下了
+
+其中唯一不确定的是computed可能会由于if条件没收集到，但computed一旦执行就又可以收集到最新依赖，再同步回context即可
+
+通过将 depMaps 和 contextData 一起传输，可以减少另一个端的执行Hook执行。
+
+> 这里需要评估对比“多出来的depMaps” 和 “重新执行hook” 到底哪个损耗大？
