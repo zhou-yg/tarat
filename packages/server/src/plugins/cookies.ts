@@ -1,15 +1,18 @@
-import { IRunningContext, loadPlugin } from 'tarat-core'
-import { join } from 'path'
+import { getPlugin, IRunningContext, loadPlugin } from 'tarat-core'
 
-let currentRunning: IRunningContext | null = null
+export function setCookies () {
 
-export async function setCookies ()  {
-  loadPlugin('GlobalRunning', {
-    setCurrent (api) {
-      currentRunning = api
+  loadPlugin('cookie', {
+    async set(k, value) {
+      if (value && typeof value === 'string'){
+        getPlugin('GlobalRunning').getCurrent()?.cookies.set(k, value)
+      }
     },
-    getCurrent () {
-      return currentRunning
-    }
+    async get(k): Promise<any> {
+      return getPlugin('GlobalRunning').getCurrent()?.cookies.get(k)
+    },
+    clear(k) {
+      getPlugin('GlobalRunning').getCurrent()?.cookies.set(k, '')
+    },
   })
 }
