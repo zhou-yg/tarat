@@ -39,7 +39,6 @@ export default function login () {
 
   const userIdInSession = computed(async () => {
     const ss = await sessionStore()
-    console.log('ss: ', ss);
     if (ss && ss.length > 0) {
       return ss[0].userId
     }
@@ -100,18 +99,18 @@ export default function login () {
   const errorTip = combineLatest([errorTip1, errorTip2])
 
   const sign = inputComputeInServer(async () => {
-    const inputName = name()
-    const inputPassword = password()
-    const r = await userData.exist({ name: inputName, password: inputPassword })
+    const inputNameVal = inputName()
+    const inputPasswordVal = inputPassword()
+    const r = await userDataByInput.exist({ name: inputNameVal, password: inputPasswordVal })
     if (!r) {
-      userData((draft) => {
+      userDataByInput((draft) => {
         draft.push({
-          name: inputName, 
-          password: inputPassword
+          name: inputNameVal, 
+          password: inputPasswordVal
         })
       })
       if (signAndAutoLogin()) {
-        login(inputName, inputPassword)
+        login(inputNameVal, inputPasswordVal)
       }  
     } else {
       errorTip2(() => 'user already exist')
@@ -119,15 +118,15 @@ export default function login () {
   })
 
   const login = inputComputeInServer(async () => {
-    const inputName = name()
-    const inputPassword = password()
-    const valid = await userData.exist({ name: inputName, password: inputPassword }) // query DB
+    const inputNameVal = inputName()
+    const inputPasswordVal = inputPassword()
+    const valid = await userDataByInput.exist({ name: inputNameVal, password: inputPasswordVal }) // query DB
     if (valid) {
-      name(() => inputName)
-      password(() => inputPassword)
+      name(() => inputNameVal)
+      password(() => inputPasswordVal)
       cookieId(() => nanoid())
     } else {
-      errorTip2(() => `invalid password with "${inputName}"`)
+      errorTip2(() => `invalid password with "${inputNameVal}"`)
     }
   })
 
