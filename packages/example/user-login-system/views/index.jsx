@@ -25,13 +25,26 @@ const LoginFrame = () => {
           loginHook.inputPassword(() => e.target.value)
         }}  />
       </div>
-      <div className={cls}>
-        {loginHook?.errorTip()}
+      {loginHook?.errorTip() ? (
+        <div className={cls}>
+          {loginHook?.errorTip()}
+        </div>
+      ) : ''}
+      <div className={s.footer}>
+        <div>
+        <button>Sign</button>
+        sign and auto login <input type="checkbox" checked={loginHook.signAndAutoLogin()} onChange={e => {
+          loginHook.signAndAutoLogin(() => e.target.checked)
+        }} />
+        </div>
+        <div>
+        <button>Login</button>
+        </div>
       </div>
-
       <pre>
         <code>
-          loginHook?.alreadyLogin(): {String(loginHook?.alreadyLogin())}
+          loginHook.alreadyLogin(): {String(loginHook?.alreadyLogin())} <br/>
+          loginHook.signAndAutoLogin(): {String(loginHook?.signAndAutoLogin())}
         </code>
       </pre>
     </div>
