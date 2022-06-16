@@ -2,6 +2,8 @@
 
 同步context遇到的一些问题
 
+# 遇到问题
+
 ## M,S顺序
 
 由于Model中有可能依赖了State的值，并且如果Modeol是immediate的。Model会由于使用了初始的State的，导致查询出了不预期的结果
