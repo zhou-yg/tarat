@@ -161,6 +161,7 @@ export class Model<T extends any[]> extends State<T[]> {
   getterPromise: Promise<T> | null = null
   queryWhereComputed: Computed<IModelQuery> | null = null
   watcher: Watcher = new Watcher(this)
+  init = true
   constructor(
     getQueryWhere: () => IModelQuery,
     public options: IModelOption = {},
@@ -169,47 +170,59 @@ export class Model<T extends any[]> extends State<T[]> {
     super([])
     scope.addHook(this)
 
+
     this.queryWhereComputed = new Computed(getQueryWhere)
-    this.queryWhereComputed.run()
     this.watcher.addDep(this.queryWhereComputed)
 
-    if (options.immediate) {
+    // default to immediate
+    if (options.immediate || options.immediate === undefined) {
       this.query()
     }
   }
   notify() {
-    this.query()
+    this.executeQuery()
   }
-  getQueryWhere(): IModelQuery {
+  async getQueryWhere(): Promise<IModelQuery> {
+    await this.queryWhereComputed!.getterPromise
     return this.queryWhereComputed!.value!
+  }
+  override get value(): T[] {
+    if (this.init) {
+      this.query()
+    }
+    return super.value
   }
   async ready() {
     if (this.getterPromise) {
       await this.getterPromise
     }
   }
-  async query() {
-    const q = this.getQueryWhere()
+  query () {
+    this.queryWhereComputed?.run()
+  }
+  async executeQuery() {
+    this.init = false
+    let resolve: Function;
+    this.getterPromise = new Promise(r => resolve = r)
+    // @TODO：要确保时序，得阻止旧的query数据更新
+    const q = await this.getQueryWhere()
     const valid = checkQueryWhere(q.query.where)
     log('[model.query] 1 q.entity, q.query: ', q.entity, q.query, valid)
     if (valid) {
-      this.getterPromise = getPlugin('Model').find(q.entity, q.query)
-      const result: T = await this.getterPromise!
-      this.getterPromise = null
+      const result: T = await getPlugin('Model').find(q.entity, q.query)
       log('[model.query] 2 result: ', result)
       this.update(result)
     }
+    resolve!()
   }
   async exist(obj: { [k: string]: any }) {
-    const q = this.getQueryWhere()
+    const q = await this.getQueryWhere()
     const result: T = await getPlugin('Model').find(q.entity, { where: obj })
     return result.length > 0
   }
   override async applyPatches(patches: IPatch[]) {
-    if (this._internalValue) {
-      const newValue = applyPatches(this._internalValue, patches)
-      await this.updateWithPatches(newValue, patches)
-    }
+    const newValue = applyPatches(this._internalValue, patches)
+    await this.updateWithPatches(newValue, patches)
   }
   async updateWithPatches(v: T[], patches: IPatch[]) {
     const oldValue = this._internalValue
@@ -218,7 +231,7 @@ export class Model<T extends any[]> extends State<T[]> {
       this.update(v, patches)
     }
 
-    const { entity } = this.getQueryWhere()
+    const { entity } = await this.getQueryWhere()
     try {
       const diff = calculateDiff(oldValue, patches)
       log('[Model.updateWithPatches] diff: ', diff)
@@ -245,7 +258,7 @@ class ClientModel<T extends any[]> extends Model<T> {
       this.update(v, patches)
     }
     // cal diff
-    const { entity } = this.getQueryWhere()
+    const { entity } = await this.getQueryWhere()
     const diff = calculateDiff(oldValue, patches)
     await getPlugin('Context').postDiffToServer(entity, diff)
     await this.query()
@@ -337,7 +350,7 @@ export class Computed<T> extends State<T | undefined> {
   constructor(public getter: FComputedFunc<T> | FComputedFuncAsync<T>) {
     super(undefined)
   }
-  run() {
+  run(force?: boolean) {
     currentComputed = this
     const r: any = this.getter()
     currentComputed = null
@@ -350,6 +363,7 @@ export class Computed<T> extends State<T | undefined> {
     } else {
       this.update(r)
     }
+    this.trigger()
   }
   notify() {
     /**
