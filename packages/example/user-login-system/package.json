@@ -6,10 +6,11 @@
   "type": "module",
   "scripts": {
     "init": "pnpm install && npm run prisma:dev",
-    "dev": "tarat dev",
-    "prisma:dev": "prisma migrate dev && prisma generate",
-    "prisma:deploy": "prisma migrate deploy",
-    "prisma:studio": "prisma studio"
+    "dev": "npm run p:gen && tarat dev",
+    "p:dev": "prisma migrate dev && prisma generate",
+    "p:gen": "prisma generate",
+    "p:deploy": "prisma migrate deploy",
+    "p:studio": "prisma studio"
   },
   "author": "zhouyg",
   "license": "ISC",
