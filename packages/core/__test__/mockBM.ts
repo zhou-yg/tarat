@@ -253,7 +253,7 @@ export function userModelInputeCompute() {
   const fn = async (id: number, name: string) => {
     const exist = await items.exist({ name })
     if (!exist) {
-      items(arr => {
+      await items(arr => {
         if (arr) {
           arr.push({ id, name })
         }

@@ -74,7 +74,9 @@ describe('model', () => {
 
     await result.createItem(3, 'c')
 
-    expect(await result.items()).toEqual([
+    const r2 = await result.items()
+
+    expect(r2).toEqual([
       { id: 1, name: 'a' },
       { id: 2, name: 'b' },
       { id: 3, name: 'c' },
