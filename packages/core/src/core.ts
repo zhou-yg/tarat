@@ -1,3 +1,4 @@
+
 import {
   calculateDiff,
   IPatch,
@@ -242,7 +243,7 @@ export class Model<T extends any[]> extends State<T[]> {
         this.update(oldValue)
       }
     }
-    await this.query()
+    await this.executeQuery()
   }
 }
 
