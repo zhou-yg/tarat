@@ -46,6 +46,10 @@ const hookDepMaps = [
 ]
 ```
 
+### 妥协场
+
+在没有AST静态分析之前，所有的Context依然会全量同步
+
 ## context questions
 
 there are some top questions：
