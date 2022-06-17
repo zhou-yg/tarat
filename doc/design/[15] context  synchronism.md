@@ -30,6 +30,8 @@ function hook () {
 
 但是没有flag的话会无法识别到myState里的具体字段的依赖，因为在getter里是会有动态逻辑，但这不影响大粒度的state依赖关系
 
+
+
 ```javascript
 // must be PlainObject
 const hookDepMaps = [
@@ -84,7 +86,7 @@ core principles sort by priority:
 
 参考[react的hooks实现](https://github.com/facebook/react/blob/79f54c16dc3d5298e6037df75db2beb3552896e9/packages/react-reconciler/src/ReactFiberHooks.new.js#L2827)
 
-### differentiate mount/update
+## differentiate mount/update
 
 2个过程最大的差别在于是否 with context，hook初始化过程是
 
@@ -106,6 +108,8 @@ Server side 路径
 - 同步context的方式（默认）
 - 传递{ entity, query } 直接query查询，这样就server不用重新初始化BM，提升性能，但是会牺牲了整体的响应性，只使用单一大数据的优化场景里
 
+注意点，由于rpc传输的context是局部的，意味着有些hook如果没有get到值就只保留一个null占位符，该hook在执行过程中不会被使用到，如果使用了没有被初始化的hook，说明epMaps分析错了 或者 使用了不正当的hook使用方式
+
 
 “写”过程
 
@@ -120,3 +124,51 @@ server side handle request
 server side response
 
 > Database更新完成后 -> Context(server) -> Bm.inputCompute end -> 返回 Context(server).data -> Context(client).update -> Scope.trigger listener -> UI更新
+
+## proxy context
+
+在上述流程对于数据的读写都集中到了Context层，不同runtime对应不同的Context实现
+- client 
+- server
+
+Context in Clinet
+- state
+  - get 内存读写
+  - set 内存读写
+- model
+  - get 发起query请求，并携带依赖的其它hook
+  - set 常规场景下在client端不会有这个操作
+- cache
+  - get 区分from
+    - from server: redis之类，则发起query请求，cache应该只依赖key，不需要携带其他hook
+    - from client：client端直接调用，读取
+  - set 区分from
+    - from server: 发起写操作
+    - from client：直接调用
+
+Context in Server
+- state
+  - get 内存读写
+  - set 内存读写
+- model
+  - get 先获取条件，再执行数据查询
+  - set 更新数据库
+- cache
+  - get 区分from
+    - from server: redis之类，读写redis，需要等待它完成
+    - from client：从传输的context里取，没有则返回null
+  - set 区分from
+    - from server: 发起写操作
+    - from client：不能有在server操作client，可以把值写入内存，返回到client端的时候，由client端自己写入
+
+剩下的其它二次hook：如computed，combineLatest，它们本质是一个可计算的state，所以数据读写的方式可以同state
+
+## inputCompute的context副本
+
+inputCompute中，对state或model的修改，本质是对context的修改
+
+那么在inputComputed的执行生命周期内，读取到的Context应该是最新的，是base + patches的叠加
+
+在执行周期结束之前，外面读取到的context还是旧，
+
+在执行完成之后，总体commit patches，外面读到了最新的context
