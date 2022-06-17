@@ -1,81 +1,122 @@
 # Context状态同步
 
-同步context遇到的一些问题
+考虑client/server之间同步 context data and depMaps
 
-# 遇到问题
+## dependent maps by compiler
 
-## M,S顺序
+在hook内是一个closure, 内部的state/model都是名称确定的
 
-由于Model中有可能依赖了State的值，并且如果Modeol是immediate的。Model会由于使用了初始的State的，导致查询出了不预期的结果
+所以通过分析AST就直接建立depMaps，无需在hook运行之后才能确定
 
-示例:
 ```javascript
-// hook
-function h () {
-  const s1 = state(1)
-  const s2 = state(2)
-  const m1 = model(() => ({ entity: 'e', query: { s1: s1(), s2: s2() } }), { immediate: true })
+function hook () {
+  const myState = state()
+  const ic = inputCompute(() => {
+    myState(v => v + 1)
+  })
+  return { myState, ic }
 }
 ```
 
-所以在初始化Hook的过程中就必须注入context，同时在state实例化的过程中如果当前scope存在值，则使用当前scope的值.
+通过扫AST，可以得知ic内是依赖了myState，而且这里不用担心引用问题
 
-> 拓展：是否需要类似react hook的过程中，拆分成2类hook：mounte，update ？是，可以节省性能
+因为myState这个变量的作用域只在hook内，它的引用也是确定的，所以一定是hook内被使用，所以可以被AST扫描
+
+结合hook的compose情况，由于hook的return的变量也一定是myState，在hook范围内
+
+所以compose情况也可以扫AST得到
+
+加入编译时之后，那在运行时就不用设置各种全局变量的flag了
+
+但是没有flag的话会无法识别到myState里的具体字段的依赖，因为在getter里是会有动态逻辑，但这不影响大粒度的state依赖关系
+
+```javascript
+// must be PlainObject
+const hookDepMaps = [
+  {
+    target: 0, // can find target hook by the unique index
+    deps: [ 1 ]
+  },
+  {
+    target: 2,
+    deps: [ 3, 4 ]
+  }
+]
+```
+
+## context questions
+
+there are some top questions：
+- computed触发getter的时机，在client触发还是server触发
+- send context时， 要携带的hook的值的范围怎么确定，依据是什么
+- BM的初始化过程的流程该怎么抽象，初始化的数据源可以有哪些
+- 确定hook的执行环境的默认原则，比如model在server端，如何通过尽可能少的配置化方式来修改它
+- lazy model如何从server端同步数据
+- 同步过程中如何避免触发hook中无关的model的重新get？
+
+## principles
+
+core principles sort by priority:
+- send context的时候只传递有被依赖的hook上下文数据
+  - 推论1：这些依赖hook在经历过server返回后，有些在server是被读或写，在回来后需要各自在update做完diff后才能确定是否trigger event
+  - 推论2：没有被传递的hook不会被执行update，所以也就不更新
+  - 推论3：after effect callback的运行时机只在于callback自身要求，且是异步的，默认是client，也可以手动afterInServer
+  - 推论4：依赖关系必须是在hook声明的时候就静态存在，运行时只是补充具体到字段的细节
+- 
+- model的查询默认只能在server端执行
+  - 推论1：computed内如果使用了异步的model，可以在client，如果此时Model正在加载中，则等待的server数据返回
+  - 推论2：inputCompute内修改了model，必须提交到server端，并callHook，修改后等待model更新并一起返回context
+  - 推论3：model不能接受context里的数据，在server端初始化hook的过程中必须无视immediate，立即查询。如果model不在这次的context范围内则必须immediate is false，避免无效查询
+- 
+- model可以是非immediate，在被get的时候才去触发首次查询
+  - 推论1：同一个hook，此时server的model也是是非immediate，需要像callHook手动触发查询
+- 
+- model的查询结果是依赖于条件的，如果条件没变则不触发重新查询，但数据在client端可能是已经变了，需要提供自动刷新的机制
+  - 推论1：model的自动刷新机制，就说明当前model必须暴露出 self referrence 或 related pointer 到全局
+- 
+- 考虑SSR的情况下，每个side hook都可以分为mount和update 2个阶段，它们的区分在于是否存在context
+  - 推论1：即使是client hook，如果存有context，那么它在初始化的过程中也是使用update hook
+  - 推论2：不同于react hook的memoizedState可以是plainObject，这里的hook还存在很多”行为“，所以即使是update过程也需要重新初始化，因为实例对象无法通过json序列化
+  - 推论3：context是在初始化的最开始才进行读取，在读取hook函数时还不需要关心
+
+
+## solution
 
 参考[react的hooks实现](https://github.com/facebook/react/blob/79f54c16dc3d5298e6037df75db2beb3552896e9/packages/react-reconciler/src/ReactFiberHooks.new.js#L2827)
 
-## M的2次执行
+### differentiate mount/update
 
-还是 immediate的Model，当client初始化时，model也需要查询数据，当在客户端里无法查询到，所以会callhook到server的Model中，所以在此时也触发了Server中的Model的初始化
+2个过程最大的差别在于是否 with context，hook初始化过程是
 
-由于代码是相同的，所以Server的Model也会immediate的执行query，并且在执行时，由于被callHook了，所以这个Model会再执行query，最后现象就是需要被同步的Model会执行2次
+> 1.hook factory -> 2.get data from 入参/远端 或 Context -> 3.实例化Hook Class -> 4.实例化后的拓展行为
 
-### N次计算
+为了实现过程的简单性，应该把对于数据的读写都统一至读写层，这样方便在不同的runtime下，针对不同hook实现对数据的读写操作
 
-有点复杂，不能单纯的在Server端禁止掉immediate（虽然这能解决问题），因为这种不一致的执行逻辑，会引发很多意向不到的效果，这里需要思考的是如何保持hook的初心，即context对cleint/server的无感同步，尽量通过runtime的机制来解决
+“读”过程
 
-这个问题本意是由于client Model不能直连数据库导致的model缺失（以及也会model的关联数据缺失）导致它实际的目的是，基于当前context向server side请求一次“同步”
+client side路径
 
-还在之前通过inputCompute已经解决了 client基于当前context + 一次计算的同步问题
+> Client side <- BM(state, model, ic) <- Scope <- Context(client) <- (rpc) <- Server side 
 
-所以这次的问题就是基于当前context + 0次计算的同步
+Server side 路径
 
-在后续拓展里应该可以通过batch的方式，通过当前context + N次计算的状态同步，如果N次计算的过程可以包成纯函数的情况，
+> Server side <- BM(state, model, ic) <- Scope <- Context(server) <- Databse
 
-上述的N次计算有点之间本来也可以在hook内提前封装好，但有可能没法穷尽所有的外部调用情况
-
-batch提供的是一种基于N次计算之间，可以快速在server端执行的快捷封装，
-
-可以应用于：跨BM的组合，二次封装
-
-### batch方法
-
-```javascript
-batchInputCompute(async () => {
-  await hook1.icMethod()
-  await hook1.icMethod2()
-})
-```
+中间的rpc方式有2种可选：
+- 同步context的方式（默认）
+- 传递{ entity, query } 直接query查询，这样就server不用重新初始化BM，提升性能，但是会牺牲了整体的响应性，只使用单一大数据的优化场景里
 
 
-## 细粒度的context
+“写”过程
 
-现在之所以是全量传输是因为无法提前预知到在inputCompute内会直接的使用到哪些state
+client side路径
 
-能在运行之前就得知一个函数即将会使用哪些state，那么优化的手段就只能是AST静态分析了
+> UI触发 -> BM.inputCompute -> Context(client).modify -> (rpc with dependent context ) -> Server side
 
-inputCompute内修改state后可能会引起连带的响应式反应，这个没有关系。这个场景只发生在client -> server
+server side handle request
 
-可以在server端完成后返回到client，让client继续去触发后续的computed和effect
+> Serve side -> BM(state, model, ic) with context（同上面）-> call Bm.inputCompute -> Scope.applyPatches -> Context(server).applyPatches -> Database
 
-这个解法唯一可能存在的问题： inputComputeInServer -> state -> computed（只有client端的会响应） -> afterInServer（此时server会响应不到）
+server side response
 
-## 依赖关系
-
-在CSR或SSR中，其中一个端一旦初始化之后，依赖关系引用就定下了
-
-其中唯一不确定的是computed可能会由于if条件没收集到，但computed一旦执行就又可以收集到最新依赖，再同步回context即可
-
-通过将 depMaps 和 contextData 一起传输，可以减少另一个端的执行Hook执行。
-
-> 这里需要评估对比“多出来的depMaps” 和 “重新执行hook” 到底哪个损耗大？
+> Database更新完成后 -> Context(server) -> Bm.inputCompute end -> 返回 Context(server).data -> Context(client).update -> Scope.trigger listener -> UI更新
