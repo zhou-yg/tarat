@@ -111,7 +111,7 @@ sort by priority
       - "model" lazy query aysnc
       - computed with state
     - "context" synchronism with 0 compute
-      -  migrate query if immediate or not in two side
+      -  differentiate query if immediate or not in two side
   - connect part
     - access hook in "views" component
       - react
@@ -128,4 +128,4 @@ sort by priority
   - page router / view router
   - runner with typescript types snippets √
   - server part
-    - support hook writen by ts, need a compiler to migrate client/server
+    - support hook writen by ts, need a compiler to differentiate client/server
