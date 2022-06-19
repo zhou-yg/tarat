@@ -41,7 +41,7 @@ describe('inputCompute', () => {
       { num1: 0 },
       10
     ]
-    const initResult = runner.init(...initArgs)
+    const initResult = runner.init(initArgs)
     let newVal1 = 2
 
     await initResult.changeS1(newVal1)

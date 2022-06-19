@@ -12,8 +12,14 @@ describe('client model', () => {
       { id: 1, name: 'a' },
       { id: 2, name: 'b' },
     ])
+    let times = 0
     mockBM.initModelConfig({
       async postQueryToServer (c: IHookContext) {
+        times++
+        if (times > 3) {
+          console.log('times: ', times);
+          throw new Error('times > 3')
+        }
         return {
           initialArgList: [],
           name: 'userModelClient',

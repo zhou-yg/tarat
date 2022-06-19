@@ -12,7 +12,7 @@ describe('effect', () => {
     runner.onUpdate(onRunnerUpdate)
 
     const initNum = 0
-    const result = runner.init(initNum)
+    const result = runner.init([initNum])
 
     expect(result.num()).toBe(initNum)
     expect(result.markBefore).toEqual({ value: 0 })
@@ -42,7 +42,7 @@ describe('effect', () => {
     runner.onUpdate(onRunnerUpdate)
   
     const initNum = 0
-    const result = runner.init(initNum)
+    const result = runner.init([initNum])
 
     expect(result.num()).toBe(initNum)
     expect(result.markBefore).toEqual({ value: 0 })

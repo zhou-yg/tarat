@@ -8,7 +8,7 @@ describe('computed', () => {
   it('blank', () => {
     const cv = 1
     const runner = new Runner(mockBM.blankComputed)
-    const result = runner.init(cv)
+    const result = runner.init([cv])
 
     expect(result.c()).toBe(cv)
   })
@@ -16,7 +16,7 @@ describe('computed', () => {
     const num1 = 1
     const num2 = 2
     const runner = new Runner(mockBM.onePrimitiveStateComputed)
-    const result = runner.init(num1, num2)
+    const result = runner.init([num1, num2])
 
     expect(result.c()).toBe(num1 + num2)
 
@@ -28,7 +28,7 @@ describe('computed', () => {
     const num1 = 1
     const num2 = 2
     const runner = new Runner(mockBM.asyncComputed)
-    const result = runner.init(num1, num2)
+    const result = runner.init([num1, num2])
 
     const c1 = result.c()
     expect(c1).toBe(undefined)
@@ -45,7 +45,7 @@ describe('computed', () => {
     const num1 = 1
     const num2 = 2
     const runner = new Runner(mockBM.onePrimitiveStateComputed)
-    const result = runner.init(num1, num2)
+    const result = runner.init([num1, num2])
 
     expect(result.c()).toBe(num1 + num2)
 

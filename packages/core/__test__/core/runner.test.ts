@@ -18,7 +18,7 @@ describe('runner basic', () => {
 
     const arg = { a: 1 }
 
-    const initResult = runner.init(arg)
+    const initResult = runner.init([arg])
 
     expect(initResult).toEqual(arg)
     expect(runner.scope.hooks).toStrictEqual([])
@@ -28,7 +28,7 @@ describe('runner basic', () => {
 
     const arg = { a: 1 }
 
-    const initResult = runner.init(arg)
+    const initResult = runner.init([arg])
 
     expect(initResult.s1()).toEqual(arg.a)
     expect(runner.scope.hooks.length).toStrictEqual(1)
@@ -42,7 +42,7 @@ describe('runner basic', () => {
 
     const arg = { a: 1 }
 
-    const initResult = runner.init(arg)
+    const initResult = runner.init([arg])
 
     expect(initResult.s1()).toEqual(arg.a)
     expect(runner.scope.hooks.length).toStrictEqual(1)
@@ -112,7 +112,7 @@ describe('runner basic', () => {
       })
     }
 
-    const initResult = runner.init(arg)
+    const initResult = runner.init([arg])
 
     expect(initResult.s1()).toBe(arg.a)
     expect(runner.scope.hooks.length).toBe(2)

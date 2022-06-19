@@ -22,7 +22,7 @@ describe('cache', () => {
   it ('cache with source', async () => {
     const runner = new Runner(mockBM.cacheWithSource)
     const initialVal = { num: 0 }
-    const result = runner.init(initialVal)
+    const result = runner.init([initialVal])
 
     const cVal = await result.c()
 
