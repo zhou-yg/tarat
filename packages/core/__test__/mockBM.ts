@@ -8,11 +8,25 @@ import {
   inputComputeInServer,
   computed,
   clientModel,
-  cache
-} from '../src/core'
+  cache,
+  IHookContext,
+} from '../src/'
 import { loadPlugin } from '../src/plugin'
 
 initModelConfig()
+
+export function initContext (arg: {
+  name?: IHookContext['name'],
+  data?: IHookContext['data']
+}): IHookContext {
+  return {
+    initialArgList: [],
+    name: arg.name || '',
+    data: arg.data || [],
+    index: 1,
+    args: []
+  }
+}
 
 export function initModelConfig(obj: any = {}) {
   loadPlugin('Model', {
