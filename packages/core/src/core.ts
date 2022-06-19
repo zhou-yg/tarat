@@ -20,7 +20,8 @@ import {
   shallowCopy,
   log,
   BM,
-  checkQueryWhere
+  checkQueryWhere,
+  cloneDeep
 } from './util'
 import {
   produceWithPatches,
@@ -438,6 +439,72 @@ class Effect<T> extends Hook {
   }
 }
 
+// type HookChangedPath = string
+// type ContextHook = State | Hook | Model<any> | Cache<any>
+// type ContextDepMaps = Map<
+//   Hook, Map<HookChangedPath, Hook[]>
+// >
+// type InputComputeDraft = [
+//   InputCompute,
+//   HookContext['values'],
+//   Array<[number, any, IPatch[]]>
+// ]
+// export class HookContext {
+//   hooks: ContextHook[] = []
+//   values: any[] = []
+//   depMaps: ContextDepMaps = new Map()
+//   inputComputeAndDraft: Array<InputComputeDraft> = []
+//   constructor () {
+//   }
+//   applyContext (values: HookContext['values']) {
+//     this.values = cloneDeep(values)
+//   }
+//   commitDraft (ic: InputCompute) {
+//     let icDraft: InputComputeDraft | null = null
+//     this.inputComputeAndDraft = this.inputComputeAndDraft.filter(arr => {
+//       if (arr[0] === ic) {
+//         icDraft = arr
+//         return false
+//       }
+//     })
+//     if (icDraft) {
+//       const hookValueDraftArr = icDraft[2] as InputComputeDraft[2]
+//       hookValueDraftArr.forEach(([hookIndex, hookValue, patches]) => {
+//         const hook = this.hooks[hookIndex]
+//         this.setValue(hook, hookValue, patches)
+//       })
+//     }
+//   }
+//   setValue (h: ContextHook, value: any, p: IPatch[]) {
+//     const hookIndex = this.hooks.indexOf(h)
+//     if (hookIndex < 0) {
+//       return
+//     }
+//     if (h instanceof Model) {
+//       this.setModelValue(h, value, p)
+//     } else if (h instanceof Cache) {
+//     } else {
+//     }
+//   }
+//   async setModelValue (h: Model<any>, value:any, patches:IPatch[]) {
+//     const hookIndex = this.hooks.indexOf(h)
+//     const { values } = this
+//     const oldValue = values
+//     if (!h.options.pessimisticUpdate) {
+//       values[hookIndex] = value
+//     }
+//     const { entity } = await h.getQueryWhere()
+//     try {
+//       const diff = calculateDiff(oldValue, patches)
+//       log('[Model.updateWithPatches] diff: ', diff)
+//       await getPlugin('Model').executeDiff(entity, diff)
+//     } catch (e) {
+//       console.error('[updateWithPatches] postPatches fail', e)
+//     }
+//     await h.executeQuery()
+//   }
+// }
+
 export class CurrentRunnerScope {
   hooks: Hook[] = []
   computePatches: Array<[State, IPatch[]]> = []
@@ -447,6 +514,7 @@ export class CurrentRunnerScope {
   stateChangeWaitHooks: Set<Hook> = new Set<Hook>()
   watcher: Watcher<Hook> = new Watcher(this)
   initialArgList: any[] = []
+  intialContextData: IHookContext['data'] | null = null
   hookRunnerName = ''
   onUpdate(f: Function) {
     this.outerListeners.push(f)
@@ -466,6 +534,10 @@ export class CurrentRunnerScope {
   setIntialArgs(argList: any[], name: string) {
     this.initialArgList = argList || []
     this.hookRunnerName = name
+  }
+
+  setInitialContextData (contex: IHookContext) {
+    this.intialContextData = contex['data']
   }
 
   addHook(v: Hook) {
@@ -582,23 +654,27 @@ let currentRunnerScope: CurrentRunnerScope | null = null
 export class Runner<T extends BM> {
   scope = new CurrentRunnerScope()
   alreadyInit = false
-  constructor(public bm: T, public initialContext?: IHookContext) {}
+  constructor(public bm: T) {}
   onUpdate(f: Function) {
     return this.scope?.onUpdate(() => {
       f()
     })
   }
-  init(...args: Parameters<T>): ReturnType<T> {
+  init(args: Parameters<T>, initialContext?: IHookContext): ReturnType<T> {
     if (this.alreadyInit) {
       throw new Error('can not init repeat')
     }
     currentRunnerScope = this.scope
     currentRunnerScope.setIntialArgs(args, this.bm.name)
-
-    const result: ReturnType<T> = executeBM(this.bm, args)
-    if (this.initialContext) {
-      currentRunnerScope.applyContextSilent(this.initialContext)
+    if (initialContext) {
+      currentRunnerScope.setInitialContextData(initialContext)
+      currentHookFactory = updateHookFactory
+    } else {
+      currentHookFactory = mountHookFactory
     }
+    
+    const result: ReturnType<T> = executeBM(this.bm, args)
+
     currentRunnerScope = null
 
     this.alreadyInit = true
@@ -737,20 +813,79 @@ interface FInputComputeFunc extends Function {
   _hook?: Hook
 }
 
-/** hooks  */
+/** hook factory  */
+export const mountHookFactory = {
+  state: mountState,
+  model: mountModel,
+  clientModel: mountClientModel,
+  cache: mountCache,
+  computed: mountComputed,
+  inputCompute,
+  inputComputeInServer,
+  before,
+  after,
+  combineLatest
+}
+export const updateHookFactory = {
+  state: updateState,
+  model: updateModel,
+  clientModel: updateClientModel,
+  cache: updateCache,
+  computed: updateComputed,
+  inputCompute,
+  inputComputeInServer,
+  before,
+  after,
+  combineLatest
+}
 
-export function state<T>(initialValue: T) {
-  if (!currentRunnerScope) {
-    throw new Error('[state] must under a tarat runner')
+export let currentHookFactory: {
+  state: typeof mountState
+  model: typeof mountModel,
+  clientModel: typeof mountClientModel
+  cache: typeof mountCache
+  computed: typeof mountComputed,
+  inputCompute: typeof inputCompute,
+  inputComputeInServer: typeof inputComputeInServer,
+  before: typeof before,
+  after: typeof after,
+  combineLatest: typeof combineLatest,
+} = updateHookFactory
+
+function createUnaccessGetter<T>(index: number) {
+  const f = () => {
+    throw new Error(`[update getter] cant access un initialized hook(${index})`)
   }
+  const newF:(() => any) & { _hook: any } = Object.assign(f, {
+    _hook: null
+  })  
+  return newF
+}
+function createUnaccessGetterAsync<T extends any[]>(index: number) {
+  const f = async ():Promise<any> => {
+    throw new Error(`[update getter] cant access un initialized hook(${index})`)
+  }
+  const newF: (() => Promise<any>) & { _hook: any, exist: any } = Object.assign(f, {
+    _hook: null,
+    exist: () => true
+  })  
+  return newF
+}
 
+function updateState<T>(initialValue: T) {
+  const currentIndex = currentRunnerScope!.hooks.length
+  initialValue = currentRunnerScope!.intialContextData![currentIndex][1]
+  // undefined means this hook wont needed in this progress
+  if (initialValue === undefined) {
+    return createUnaccessGetter<T>(currentIndex)
+  }
   const internalState = new State(initialValue)
 
   const setterGetter = createStateSetterGetterFunc(
     internalState,
-    currentRunnerScope
+    currentRunnerScope!
   )
-  currentRunnerScope.addHook(internalState)
+  currentRunnerScope!.addHook(internalState)
 
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalState
@@ -758,22 +893,44 @@ export function state<T>(initialValue: T) {
 
   return newSetterGetter
 }
-export function model<T extends any[]>(
+function mountState<T>(initialValue: T) {
+  const internalState = new State(initialValue)
+
+  const setterGetter = createStateSetterGetterFunc(
+    internalState,
+    currentRunnerScope!
+  )
+  currentRunnerScope!.addHook(internalState)
+
+  const newSetterGetter = Object.assign(setterGetter, {
+    _hook: internalState
+  })
+
+  return newSetterGetter
+}
+
+function updateModel<T extends any[]>(
   q: () => IModelQuery,
   op?: IModelOption
 ) {
-  if (!currentRunnerScope) {
-    throw new Error('[model] must under a tarat runner')
+  const currentIndex = currentRunnerScope!.hooks.length
+  const initialValue: T = currentRunnerScope!.intialContextData![currentIndex][1]
+  if (initialValue === undefined) {
+    return createUnaccessGetterAsync<T>(currentIndex)
   }
-
+  const immediate = process.env.TARGET === 'server'
+  op = Object.assign({}, op, {
+    immediate
+  })
+  
   const internalModel =
     process.env.TARGET === 'server'
-      ? new Model<T>(q, op, currentRunnerScope)
-      : new ClientModel<T>(q, op, currentRunnerScope)
+      ? new Model<T>(q, op, currentRunnerScope!)
+      : new ClientModel<T>(q, op, currentRunnerScope!)
 
   const setterGetter = createModelSetterGetterFunc<T>(
     internalModel,
-    currentRunnerScope
+    currentRunnerScope!
   )
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalModel,
@@ -782,19 +939,18 @@ export function model<T extends any[]>(
 
   return newSetterGetter
 }
-export function clientModel<T extends any[]>(
+function mountModel<T extends any[]>(
   q: () => IModelQuery,
   op?: IModelOption
 ) {
-  if (!currentRunnerScope) {
-    throw new Error('[model] must under a tarat runner')
-  }
-
-  const internalModel = new ClientModel<T>(q, op, currentRunnerScope)
+  const internalModel =
+    process.env.TARGET === 'server'
+      ? new Model<T>(q, op, currentRunnerScope!)
+      : new ClientModel<T>(q, op, currentRunnerScope!)
 
   const setterGetter = createModelSetterGetterFunc<T>(
     internalModel,
-    currentRunnerScope
+    currentRunnerScope!
   )
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalModel,
@@ -803,16 +959,112 @@ export function clientModel<T extends any[]>(
 
   return newSetterGetter
 }
-type FComputedFuncAsync<T> = () => Promise<T>
-type FComputedFunc<T> = () => T
 
-export function computed<T>(
+function updateClientModel<T extends any[]>(
+  q: () => IModelQuery,
+  op?: IModelOption
+) {
+  const currentIndex = currentRunnerScope!.hooks.length
+  const initialValue: T = currentRunnerScope!.intialContextData![currentIndex][1]
+  if (initialValue === undefined) {
+    return createUnaccessGetterAsync<T>(currentIndex)
+  }
+  const immediate = process.env.TARGET === 'server'
+  op = Object.assign({}, op, {
+    immediate
+  })
+
+  const internalModel = new ClientModel<T>(q, op, currentRunnerScope!)
+
+  const setterGetter = createModelSetterGetterFunc<T>(
+    internalModel,
+    currentRunnerScope!
+  )
+  const newSetterGetter = Object.assign(setterGetter, {
+    _hook: internalModel,
+    exist: internalModel.exist.bind(internalModel)
+  })
+
+  return newSetterGetter
+}
+
+function mountClientModel<T extends any[]>(
+  q: () => IModelQuery,
+  op?: IModelOption
+) {
+  const internalModel = new ClientModel<T>(q, op, currentRunnerScope!)
+
+  const setterGetter = createModelSetterGetterFunc<T>(
+    internalModel,
+    currentRunnerScope!
+  )
+  const newSetterGetter = Object.assign(setterGetter, {
+    _hook: internalModel,
+    exist: internalModel.exist.bind(internalModel)
+  })
+
+  return newSetterGetter
+}
+
+function updateCache<T>(key: string, options: ICacheOptions<T>) {
+  const currentIndex = currentRunnerScope!.hooks.length
+  const initialValue: T = currentRunnerScope!.intialContextData![currentIndex][1]
+  if (initialValue === undefined) {
+    return createUnaccessGetter<T>(currentIndex)
+  }
+
+  const hook = new Cache(key, options, currentRunnerScope!)
+  hook.getValue()
+
+  const setterGetter = createCacheSetterGetterFunc(hook, currentRunnerScope!)
+  const newSetterGetter = Object.assign(setterGetter, {
+    _hook: hook
+  })
+  return newSetterGetter
+}
+function mountCache<T>(key: string, options: ICacheOptions<T>) {
+  const hook = new Cache(key, options, currentRunnerScope!)
+
+  const setterGetter = createCacheSetterGetterFunc(hook, currentRunnerScope!)
+  const newSetterGetter = Object.assign(setterGetter, {
+    _hook: hook
+  })
+  return newSetterGetter
+}
+
+function updateComputed<T>(
   fn: FComputedFuncAsync<T>
 ): (() => Promise<T>) & { _hook: Computed<T> }
-export function computed<T>(
+function updateComputed<T>(
   fn: FComputedFunc<T>
 ): (() => T) & { _hook: Computed<T> }
-export function computed<T>(fn: any): any {
+function updateComputed<T>(fn: any): any {
+  const currentIndex = currentRunnerScope!.hooks.length
+  const initialValue: T = currentRunnerScope!.intialContextData![currentIndex][1]
+  if (initialValue === undefined) {
+    return createUnaccessGetter<T>(currentIndex)
+  }
+  const hook = new Computed<T>(fn)
+  currentComputed = hook
+  currentRunnerScope!.addHook(hook)
+
+  hook._internalValue = initialValue
+
+  currentComputed = null
+
+  const getter = () => hook.value
+  const newGetter = Object.assign(getter, {
+    _hook: hook
+  })
+  return newGetter
+}
+function mountComputed<T>(
+  fn: FComputedFuncAsync<T>
+): (() => Promise<T>) & { _hook: Computed<T> }
+function mountComputed<T>(
+  fn: FComputedFunc<T>
+): (() => T) & { _hook: Computed<T> }
+function mountComputed<T>(fn: any): any {
   const hook = new Computed<T>(fn)
   currentComputed = hook
   currentRunnerScope!.addHook(hook)
@@ -826,6 +1078,59 @@ export function computed<T>(fn: any): any {
     _hook: hook
   })
   return newGetter
+}
+
+export function state<T>(initialValue: T) {
+  if (!currentRunnerScope) {
+    throw new Error('[state] must under a tarat runner')
+  }
+  return currentHookFactory.state<T>(initialValue)
+}
+
+export function model<T extends any[]>(
+  q: () => IModelQuery,
+  op?: IModelOption
+) {
+  if (!currentRunnerScope) {
+    throw new Error('[model] must under a tarat runner')
+  }
+  return currentHookFactory.model<T>(q, op)
+}
+
+export function clientModel<T extends any[]>(
+  q: () => IModelQuery,
+  op?: IModelOption
+) {
+  if (!currentRunnerScope) {
+    throw new Error('[model] must under a tarat runner')
+  }
+  return currentHookFactory.clientModel<T>(q, op)
+}
+
+export function cache<T>(key: string, options: ICacheOptions<T>) {
+  const hook = new Cache(key, options, currentRunnerScope!)
+
+  const setterGetter = createCacheSetterGetterFunc(hook, currentRunnerScope!)
+  const newSetterGetter = Object.assign(setterGetter, {
+    _hook: hook
+  })
+  return newSetterGetter
+}
+
+type FComputedFuncAsync<T> = () => Promise<T>
+type FComputedFunc<T> = () => T
+
+export function computed<T>(
+  fn: FComputedFuncAsync<T>
+): (() => Promise<T>) & { _hook: Computed<T> }
+export function computed<T>(
+  fn: FComputedFunc<T>
+): (() => T) & { _hook: Computed<T> }
+export function computed<T>(fn: any): any {
+  if (!currentRunnerScope) {
+    throw new Error('[computed] must under a tarat runner')
+  }
+  return currentHookFactory.computed<T>(fn)
 }
 
 type InputComputeFn = (...arg: any) => void
@@ -922,16 +1227,6 @@ function createCacheSetterGetterFunc<SV>(
     }
     return s.getValue()
   }
-}
-
-export function cache<T>(key: string, options: ICacheOptions<T>) {
-  const hook = new Cache(key, options, currentRunnerScope!)
-
-  const setterGetter = createCacheSetterGetterFunc(hook, currentRunnerScope!)
-  const newSetterGetter = Object.assign(setterGetter, {
-    _hook: hook
-  })
-  return newSetterGetter
 }
 
 export function combineLatest<T>(arr: Array<{ _hook: State<T> }>): () => T {
