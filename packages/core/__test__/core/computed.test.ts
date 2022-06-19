@@ -1,6 +1,6 @@
 import {
   Runner,
-} from '../../src/core'
+} from '../../src/'
 
 import * as mockBM from '../mockBM'
 
