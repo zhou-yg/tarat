@@ -180,7 +180,7 @@ export class Model<T extends any[]> extends State<T[]> {
     }
   }
   notify() {
-    log(`[${this.constructor.name}.executeQuery]`);
+    log(`[${this.constructor.name}.executeQuery]`)
     this.executeQuery()
   }
   async getQueryWhere(): Promise<IModelQuery> {
@@ -252,7 +252,7 @@ export class Model<T extends any[]> extends State<T[]> {
 class ClientModel<T extends any[]> extends Model<T> {
   override async executeQuery() {
     const context = this.scope.createInputComputeContext(this)
-    log('[ClientModel.executeQuery] before post : ');
+    log('[ClientModel.executeQuery] before post : ')
     const queryPromise = getPlugin('Context').postQueryToServer(context)
     this.getterPromise = queryPromise.then()
     const result: IHookContext = await queryPromise
@@ -922,7 +922,7 @@ function updateModel<T extends any[]>(q: () => IModelQuery, op?: IModelOption) {
     return createUnaccessGetterAsync<T>(currentIndex)
   }
   const immediate = process.env.TARGET === 'server'
-  
+
   op = Object.assign({}, op, {
     immediate
   })
@@ -972,15 +972,14 @@ function updateClientModel<T extends any[]>(
     return createUnaccessGetterAsync<T>(currentIndex)
   }
   const inServer = process.env.TARGET === 'server'
-  
+
   op = Object.assign({}, op, {
     immediate: inServer
   })
 
-  const internalModel =
-    inServer
-      ? new Model<T>(q, op, currentRunnerScope!)
-      : new ClientModel<T>(q, op, currentRunnerScope!)
+  const internalModel = inServer
+    ? new Model<T>(q, op, currentRunnerScope!)
+    : new ClientModel<T>(q, op, currentRunnerScope!)
 
   if (!inServer) {
     internalModel.init = inServer
@@ -1002,7 +1001,7 @@ function updateClientModel<T extends any[]>(
 function mountClientModel<T extends any[]>(
   q: () => IModelQuery,
   op?: IModelOption
-  ) {
+) {
   const internalModel = new ClientModel<T>(q, op, currentRunnerScope!)
 
   const setterGetter = createModelSetterGetterFunc<T>(
