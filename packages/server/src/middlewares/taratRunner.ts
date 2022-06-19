@@ -46,14 +46,15 @@ export default function taratMiddleware (args: {
 
         getPlugin('GlobalRunning').setCurrent(wrapCtx(ctx))
 
-        let runner = new Runner(hookFunc.default, c)
-        runner.init(...c.initialArgList)
+        let runner = new Runner(hookFunc.default)
+        runner.init(c.initialArgList, c)
 
         getPlugin('GlobalRunning').setCurrent(null)
         
         if (c.index !== undefined) {
           await runner.callHook(c.index, c.args)
         }
+        await runner.ready()
         const context = runner.scope.createInputComputeContext()
   
         ctx.body = JSON.stringify(context);
