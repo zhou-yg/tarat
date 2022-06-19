@@ -11,7 +11,7 @@ describe('state', () => {
       { num1: 0 },
       10
     ]
-    const result = runner.init(...args)
+    const result = runner.init(args)
 
     expect(result.s1()).toEqual(args[0])
     expect(result.s2()).toEqual(args[1])
@@ -22,7 +22,7 @@ describe('state', () => {
       { num1: 0 },
       10
     ]
-    const result = runner.init(...args)
+    const result = runner.init(args)
 
     
 

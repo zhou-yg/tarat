@@ -20,8 +20,8 @@ describe('initContext', () => {
         ['data', null]
       ]
     }
-    const runner = new Runner(mockBM.plainObjectState, context)
-    const result = runner.init(...args)
+    const runner = new Runner(mockBM.plainObjectState)
+    const result = runner.init(args, context)
 
     expect(result.s1()).toEqual(context.data[0][1])
     expect(result.s2()).toEqual(context.data[1][1])
@@ -31,8 +31,8 @@ describe('initContext', () => {
     mockBM.initModelConfig({
       async postComputeToServer (c: IHookContext) {
         process.env.TARGET = 'server'
-        const serverRunner = new Runner(mockBM.changeStateInputComputeServer, c)
-        serverRunner.init(...c.initialArgList as [any, any])
+        const serverRunner = new Runner(mockBM.changeStateInputComputeServer)
+        serverRunner.init(c.initialArgList as [any, any], c)
 
         if (c.index) {
           await serverRunner.callHook(c.index, c.args)
@@ -49,7 +49,7 @@ describe('initContext', () => {
       1
     ]
     const clientRunner = new Runner(mockBM.changeStateInputComputeServer)
-    const r = clientRunner.init(...args)
+    const r = clientRunner.init(args)
 
     expect(r.s1()).toEqual(args[0])
     expect(r.s2()).toEqual(args[1])

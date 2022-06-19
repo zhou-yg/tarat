@@ -18,7 +18,7 @@ describe('inputCompute', () => {
       10
     ]
 
-    const initResult = runner.init(...args)
+    const initResult = runner.init(args)
 
     const newVal1 = 2
 
@@ -54,7 +54,7 @@ describe('inputCompute', () => {
       10
     ]
 
-    const initResult = runner.init(...args)
+    const initResult = runner.init(args)
 
     const newVal1 = 2
 

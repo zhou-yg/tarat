@@ -7,4 +7,5 @@ module.exports = {
   testEnvironment: 'node',
   collectCoverage: isCI,
   collectCoverageFrom: ['./src/**/*.ts'],
+  // testRegex: "(model\.client)\.(test|spec)\\.[jt]sx?$"
 };

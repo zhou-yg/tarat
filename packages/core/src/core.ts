@@ -239,7 +239,7 @@ export class Model<T extends any[]> extends State<T[]> {
       log('[Model.updateWithPatches] diff: ', diff)
       await getPlugin('Model').executeDiff(entity, diff)
     } catch (e) {
-      console.error('[updateWithPatches] postPatches fail', e)
+      console.info('[updateWithPatches] postPatches fail', e)
       if (this.options.autoRollback) {
         this.update(oldValue)
       }
@@ -249,21 +249,17 @@ export class Model<T extends any[]> extends State<T[]> {
 }
 
 class ClientModel<T extends any[]> extends Model<T> {
-  override async query() {
+  override async executeQuery() {
     const context = this.scope.createInputComputeContext(this)
     const result = await getPlugin('Context').postQueryToServer(context)
-    this.scope.applyContext(result)
+    const index = this.scope.hooks.indexOf(this)
+    const d = result.data[index]
+    if (d[1]) {
+      this.update(d[1])
+    }
   }
   override async updateWithPatches(v: T, patches: IPatch[]) {
-    const oldValue = this._internalValue
-    if (!this.options.pessimisticUpdate) {
-      this.update(v, patches)
-    }
-    // cal diff
-    const { entity } = await this.getQueryWhere()
-    const diff = calculateDiff(oldValue, patches)
-    await getPlugin('Context').postDiffToServer(entity, diff)
-    await this.query()
+    throw new Error('cant update in client')
   }
 }
 
@@ -352,7 +348,7 @@ export class Computed<T> extends State<T | undefined> {
   constructor(public getter: FComputedFunc<T> | FComputedFuncAsync<T>) {
     super(undefined)
   }
-  run(force?: boolean) {
+  run() {
     currentComputed = this
     const r: any = this.getter()
     currentComputed = null
@@ -365,7 +361,6 @@ export class Computed<T> extends State<T | undefined> {
     } else {
       this.update(r)
     }
-    this.trigger()
   }
   notify() {
     /**
@@ -660,12 +655,14 @@ export class Runner<T extends BM> {
       f()
     })
   }
-  init(args: Parameters<T>, initialContext?: IHookContext): ReturnType<T> {
+  init(args?: Parameters<T>, initialContext?: IHookContext): ReturnType<T> {
     if (this.alreadyInit) {
       throw new Error('can not init repeat')
     }
     currentRunnerScope = this.scope
-    currentRunnerScope.setIntialArgs(args, this.bm.name)
+    if(args) {
+      currentRunnerScope.setIntialArgs(args, this.bm.name)
+    }
     if (initialContext) {
       currentRunnerScope.setInitialContextData(initialContext)
       currentHookFactory = updateHookFactory
@@ -700,7 +697,7 @@ export class Runner<T extends BM> {
   }
 }
 
-function executeBM(f: BM, args: any) {
+function executeBM(f: BM, args: any = []) {
   const bmResult = f(...args)
 
   if (bmResult) {
