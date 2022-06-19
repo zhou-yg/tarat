@@ -637,7 +637,7 @@ export function traverseValues(target: any, callback: (v: any) => void) {
 export let enableLog: boolean = false
 export function log(pre: string, ...rest: any[]) {
   if (enableLog) {
-    console.log(`[${pre}]`, ...rest)
+    console.log(`[${process.env.TARGET || ''}] [${pre}]`, ...rest)
   }
 }
 export function debuggerLog(open: boolean) {

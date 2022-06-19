@@ -9,14 +9,14 @@ import {
   computed,
   clientModel,
   cache,
-  IHookContext,
+  IHookContext
 } from '../src/'
 import { loadPlugin } from '../src/plugin'
 
 initModelConfig()
 
-export function initContext (arg: {
-  name?: IHookContext['name'],
+export function initContext(arg: {
+  name?: IHookContext['name']
   data?: IHookContext['data']
 }): IHookContext {
   return {
@@ -283,13 +283,13 @@ export function userModelInputeCompute() {
 }
 
 export function userModelClient() {
-  const num = state(0)
+  const num = state(1)
   const users = clientModel(
     () => ({
       entity: 'item',
       query: {
         where: {
-          num: num()
+          id: num()
         }
       }
     }),
