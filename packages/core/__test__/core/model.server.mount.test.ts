@@ -14,6 +14,14 @@ describe('mount model', () => {
   })
   beforeEach(async () => {
     await prisma.item.deleteMany({})
+    const r = await prisma.item.findMany({})
+    if (r.length > 0) {
+      await prisma.item.deleteMany({})
+      const r2 = await prisma.item.findMany({})
+      if (r2.length > 0) {
+        throw new Error('prisma.item.deleteMany fail')
+      }
+    }
 
     const mockUsersData = [
       { id: 1, name: 'a' },
