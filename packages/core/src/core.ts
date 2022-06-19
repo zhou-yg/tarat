@@ -1,4 +1,3 @@
-
 import {
   calculateDiff,
   IPatch,
@@ -172,7 +171,6 @@ export class Model<T extends any[]> extends State<T[]> {
     super([])
     scope.addHook(this)
 
-
     this.queryWhereComputed = new Computed(getQueryWhere)
     this.watcher.addDep(this.queryWhereComputed)
 
@@ -182,6 +180,7 @@ export class Model<T extends any[]> extends State<T[]> {
     }
   }
   notify() {
+    log(`[${this.constructor.name}.executeQuery]`);
     this.executeQuery()
   }
   async getQueryWhere(): Promise<IModelQuery> {
@@ -199,23 +198,25 @@ export class Model<T extends any[]> extends State<T[]> {
       await this.getterPromise
     }
   }
-  query () {
+  query() {
+    log(`[${this.constructor.name}.query]`)
     this.queryWhereComputed?.run()
   }
   async executeQuery() {
     this.init = false
-    let resolve: Function;
-    this.getterPromise = new Promise(r => resolve = r)
+    let resolve: Function
+    this.getterPromise = new Promise(r => (resolve = r))
     // @TODO：要确保时序，得阻止旧的query数据更新
     const q = await this.getQueryWhere()
     const valid = checkQueryWhere(q.query.where)
-    log('[model.query] 1 q.entity, q.query: ', q.entity, q.query, valid)
+    log('[Model.executeQuery] 1 q.entity, q.query: ', q.entity, q.query, valid)
     if (valid) {
       const result: T = await getPlugin('Model').find(q.entity, q.query)
-      log('[model.query] 2 result: ', result)
+      log('[Model.executeQuery] 2 result: ', result)
       this.update(result)
     }
     resolve!()
+    this.getterPromise = null
   }
   async exist(obj: { [k: string]: any }) {
     const q = await this.getQueryWhere()
@@ -251,7 +252,12 @@ export class Model<T extends any[]> extends State<T[]> {
 class ClientModel<T extends any[]> extends Model<T> {
   override async executeQuery() {
     const context = this.scope.createInputComputeContext(this)
-    const result = await getPlugin('Context').postQueryToServer(context)
+    log('[ClientModel.executeQuery] before post : ');
+    const queryPromise = getPlugin('Context').postQueryToServer(context)
+    this.getterPromise = queryPromise.then()
+    const result: IHookContext = await queryPromise
+    this.getterPromise = null
+
     const index = this.scope.hooks.indexOf(this)
     const d = result.data[index]
     if (d[1]) {
@@ -531,7 +537,7 @@ export class CurrentRunnerScope {
     this.hookRunnerName = name
   }
 
-  setInitialContextData (contex: IHookContext) {
+  setInitialContextData(contex: IHookContext) {
     this.intialContextData = contex['data']
   }
 
@@ -621,7 +627,7 @@ export class CurrentRunnerScope {
       }
     })
   }
-  async ready() {
+  ready(): Promise<void> {
     const asyncHooks = this.hooks.filter(h =>
       Reflect.has(h, 'getterPromise')
     ) as unknown as { getterPromise: Promise<any> | null }[]
@@ -638,7 +644,7 @@ export class CurrentRunnerScope {
         wait()
       }
     }
-    await wait()
+    wait()
 
     return readyPromise
   }
@@ -660,16 +666,14 @@ export class Runner<T extends BM> {
       throw new Error('can not init repeat')
     }
     currentRunnerScope = this.scope
-    if(args) {
-      currentRunnerScope.setIntialArgs(args, this.bm.name)
-    }
+    currentRunnerScope.setIntialArgs(args || [], this.bm.name)
     if (initialContext) {
       currentRunnerScope.setInitialContextData(initialContext)
       currentHookFactory = updateHookFactory
     } else {
       currentHookFactory = mountHookFactory
     }
-    
+
     const result: ReturnType<T> = executeBM(this.bm, args)
 
     currentRunnerScope = null
@@ -685,8 +689,9 @@ export class Runner<T extends BM> {
   async callHook(hookIndex: number, args: any[]) {
     const hook = this.scope.hooks[hookIndex]
     if (hook) {
-      if (hook instanceof Model && !hook.options.immediate) {
-        await (hook as Model<any>).query()
+      if (hook instanceof Model) {
+        // console.log('callHook hookIndex=', hookIndex)
+        // await (hook as Model<any>).query()
       } else {
         await (hook as InputCompute).run(...args)
       }
@@ -838,34 +843,37 @@ export const updateHookFactory = {
 
 export let currentHookFactory: {
   state: typeof mountState
-  model: typeof mountModel,
+  model: typeof mountModel
   clientModel: typeof mountClientModel
   cache: typeof mountCache
-  computed: typeof mountComputed,
-  inputCompute: typeof inputCompute,
-  inputComputeInServer: typeof inputComputeInServer,
-  before: typeof before,
-  after: typeof after,
-  combineLatest: typeof combineLatest,
+  computed: typeof mountComputed
+  inputCompute: typeof inputCompute
+  inputComputeInServer: typeof inputComputeInServer
+  before: typeof before
+  after: typeof after
+  combineLatest: typeof combineLatest
 } = updateHookFactory
 
 function createUnaccessGetter<T>(index: number) {
   const f = () => {
     throw new Error(`[update getter] cant access un initialized hook(${index})`)
   }
-  const newF:(() => any) & { _hook: any } = Object.assign(f, {
+  const newF: (() => any) & { _hook: any } = Object.assign(f, {
     _hook: null
-  })  
+  })
   return newF
 }
 function createUnaccessGetterAsync<T extends any[]>(index: number) {
-  const f = async ():Promise<any> => {
+  const f = async (): Promise<any> => {
     throw new Error(`[update getter] cant access un initialized hook(${index})`)
   }
-  const newF: (() => Promise<any>) & { _hook: any, exist: any } = Object.assign(f, {
-    _hook: null,
-    exist: () => true
-  })  
+  const newF: (() => Promise<any>) & { _hook: any; exist: any } = Object.assign(
+    f,
+    {
+      _hook: null,
+      exist: () => true
+    }
+  )
   return newF
 }
 
@@ -906,20 +914,19 @@ function mountState<T>(initialValue: T) {
   return newSetterGetter
 }
 
-function updateModel<T extends any[]>(
-  q: () => IModelQuery,
-  op?: IModelOption
-) {
+function updateModel<T extends any[]>(q: () => IModelQuery, op?: IModelOption) {
   const currentIndex = currentRunnerScope!.hooks.length
-  const initialValue: T = currentRunnerScope!.intialContextData![currentIndex][1]
+  const initialValue: T =
+    currentRunnerScope!.intialContextData![currentIndex][1]
   if (initialValue === undefined) {
     return createUnaccessGetterAsync<T>(currentIndex)
   }
   const immediate = process.env.TARGET === 'server'
+  
   op = Object.assign({}, op, {
     immediate
   })
-  
+
   const internalModel =
     process.env.TARGET === 'server'
       ? new Model<T>(q, op, currentRunnerScope!)
@@ -936,10 +943,7 @@ function updateModel<T extends any[]>(
 
   return newSetterGetter
 }
-function mountModel<T extends any[]>(
-  q: () => IModelQuery,
-  op?: IModelOption
-) {
+function mountModel<T extends any[]>(q: () => IModelQuery, op?: IModelOption) {
   const internalModel =
     process.env.TARGET === 'server'
       ? new Model<T>(q, op, currentRunnerScope!)
@@ -962,16 +966,26 @@ function updateClientModel<T extends any[]>(
   op?: IModelOption
 ) {
   const currentIndex = currentRunnerScope!.hooks.length
-  const initialValue: T = currentRunnerScope!.intialContextData![currentIndex][1]
+  const initialValue: T =
+    currentRunnerScope!.intialContextData![currentIndex][1]
   if (initialValue === undefined) {
     return createUnaccessGetterAsync<T>(currentIndex)
   }
-  const immediate = process.env.TARGET === 'server'
+  const inServer = process.env.TARGET === 'server'
+  
   op = Object.assign({}, op, {
-    immediate
+    immediate: inServer
   })
 
-  const internalModel = new ClientModel<T>(q, op, currentRunnerScope!)
+  const internalModel =
+    inServer
+      ? new Model<T>(q, op, currentRunnerScope!)
+      : new ClientModel<T>(q, op, currentRunnerScope!)
+
+  if (!inServer) {
+    internalModel.init = inServer
+    internalModel._internalValue = initialValue
+  }
 
   const setterGetter = createModelSetterGetterFunc<T>(
     internalModel,
@@ -988,7 +1002,7 @@ function updateClientModel<T extends any[]>(
 function mountClientModel<T extends any[]>(
   q: () => IModelQuery,
   op?: IModelOption
-) {
+  ) {
   const internalModel = new ClientModel<T>(q, op, currentRunnerScope!)
 
   const setterGetter = createModelSetterGetterFunc<T>(
@@ -1005,7 +1019,8 @@ function mountClientModel<T extends any[]>(
 
 function updateCache<T>(key: string, options: ICacheOptions<T>) {
   const currentIndex = currentRunnerScope!.hooks.length
-  const initialValue: T = currentRunnerScope!.intialContextData![currentIndex][1]
+  const initialValue: T =
+    currentRunnerScope!.intialContextData![currentIndex][1]
   if (initialValue === undefined) {
     return createUnaccessGetter<T>(currentIndex)
   }
@@ -1037,7 +1052,8 @@ function updateComputed<T>(
 ): (() => T) & { _hook: Computed<T> }
 function updateComputed<T>(fn: any): any {
   const currentIndex = currentRunnerScope!.hooks.length
-  const initialValue: T = currentRunnerScope!.intialContextData![currentIndex][1]
+  const initialValue: T =
+    currentRunnerScope!.intialContextData![currentIndex][1]
   if (initialValue === undefined) {
     return createUnaccessGetter<T>(currentIndex)
   }

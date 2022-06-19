@@ -1,12 +1,12 @@
 import { cloneDeep, debuggerLog, IDiff, IQueryWhere, set, setEnv } from '../../src/index'
 import {
   Runner,
-} from '../../src/'
+} from '../../src'
 
 import * as mockBM from '../mockBM'
 import prisma, { clearAll } from '../prisma'
 
-describe('model', () => {
+describe('mount model', () => {
   beforeAll(() => {
     // make sure the model run in server envirnment
     process.env.TARGET = 'server'
