@@ -1,4 +1,4 @@
-import { cloneDeep, getPlugin, IDiff, IQueryWhere, set, setEnv } from '../../src/index'
+import { cloneDeep, getPlugin, IDiff, IHookContext, IQueryWhere, set, setEnv } from '../../src/index'
 import {
   Runner,
 } from '../../src/'
@@ -8,7 +8,7 @@ import * as mockBM from '../mockBM'
 describe('cache', () => {
   describe('mount cache', () => {
     beforeEach(() => {
-      getPlugin('Cache').clearValue('num', 'cookie')
+      getPlugin('Cache').clearValue('', 'cookie')
     })
   
     it ('simple cache', async () => {
@@ -18,6 +18,17 @@ describe('cache', () => {
       const cVal = await result.c()
   
       expect(cVal).toBe(undefined)
+    })
+    it('update cache data', async () => {
+      const runner = new Runner(mockBM.onlyCache)
+      const result = runner.init()
+
+      await result.c(() => ({
+        num: 1
+      }))
+      const val = await result.c()
+
+      expect(val).toEqual({ num: 1 })
     })
     it ('cache with source', async () => {
       const runner = new Runner(mockBM.cacheWithSource)
@@ -40,8 +51,22 @@ describe('cache', () => {
   })
   
   describe('update cache', () => {
-    it('init with context', () => {
-      
+    beforeEach(() => {
+      getPlugin('Cache').clearValue('', 'cookie')
+    })
+    it('initialize simple cache with context', async () => {
+      const runner = new Runner(mockBM.onlyCache)
+      const cd: IHookContext['data'] = [
+        ['data', 2],
+      ]
+      const context = mockBM.initContext({
+        data: cd,
+      })
+      const result = runner.init([], context)
+  
+      const cVal = await result.c()
+  
+      expect(cVal).toBe(undefined)
     })
   })
 })

@@ -9,7 +9,8 @@ import {
   computed,
   clientModel,
   cache,
-  IHookContext
+  IHookContext,
+  combineLatest
 } from '../src/'
 import { loadPlugin } from '../src/plugin'
 
@@ -64,7 +65,7 @@ export function initModelConfig(obj: any = {}) {
       cacheMap.set(k, v)
     },
     clear(k) {
-      cacheMap.delete(k)
+      cacheMap.clear()
     }
   })
 }
@@ -356,7 +357,7 @@ export function computedWithArray() {
 }
 
 export function onlyCache() {
-  const c = cache('num', {
+  const c = cache<{ num: number }>('num', {
     from: 'cookie'
   })
 
@@ -374,5 +375,18 @@ export function cacheWithSource(v: { num: number }) {
   return {
     s,
     c
+  }
+}
+
+export function combineTwoState () {
+  const s1 = state(0)
+  const s2 = state(1)
+  const c1 = computed(() => s2() + 1)
+  const final = combineLatest([c1, s1])
+
+  return {
+    s1,
+    s2,
+    final
   }
 }

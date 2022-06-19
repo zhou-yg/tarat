@@ -609,24 +609,6 @@ export class CurrentRunnerScope {
     })
     this.notify()
   }
-  // update _internal value directly
-  applyContextSilent(c: IHookContext) {
-    const contextData = c.data
-    const { hooks } = this
-    contextData.forEach(([type, value], index) => {
-      if (isDef(value)) {
-        const state = hooks[index] as State
-        switch (type) {
-          case 'data':
-            /**
-             * default to keep silent because of deliver total context now
-             */
-            state._internalValue = value
-            break
-        }
-      }
-    })
-  }
   ready(): Promise<void> {
     const asyncHooks = this.hooks.filter(h =>
       Reflect.has(h, 'getterPromise')
@@ -1016,6 +998,32 @@ function mountClientModel<T extends any[]>(
   return newSetterGetter
 }
 
+function createCacheSetterGetterFunc<SV>(
+  s: Cache<SV>,
+  scope: CurrentRunnerScope
+): {
+  (): Promise<SV>
+  (paramter: IModifyFunction<SV>): Promise<[SV, IPatch[]]>
+} {
+  return async (paramter?: any): Promise<any> => {
+    if (paramter) {
+      if (isFunc(paramter)) {
+        const v = await s.getValue()
+        const [result, patches] = produceWithPatches(v, paramter)
+        if (currentInputeCompute) {
+          scope.addComputePatches(s, patches)
+        } else {
+          await s.update(result, patches)
+        }
+        return [result, patches]
+      } else {
+        throw new Error('[change cache] pass a function')
+      }
+    }
+    return s.getValue()
+  }
+}
+
 function updateCache<T>(key: string, options: ICacheOptions<T>) {
   const currentIndex = currentRunnerScope!.hooks.length
   const initialValue: T =
@@ -1120,13 +1128,7 @@ export function clientModel<T extends any[]>(
 }
 
 export function cache<T>(key: string, options: ICacheOptions<T>) {
-  const hook = new Cache(key, options, currentRunnerScope!)
-
-  const setterGetter = createCacheSetterGetterFunc(hook, currentRunnerScope!)
-  const newSetterGetter = Object.assign(setterGetter, {
-    _hook: hook
-  })
-  return newSetterGetter
+  return currentHookFactory.cache<T>(key, options)
 }
 
 type FComputedFuncAsync<T> = () => Promise<T>
@@ -1213,32 +1215,6 @@ export function before(callback: () => void, targets: { _hook?: Hook }[]) {
       }
     }
   })
-}
-
-function createCacheSetterGetterFunc<SV>(
-  s: Cache<SV>,
-  scope: CurrentRunnerScope
-): {
-  (): Promise<SV>
-  (paramter: IModifyFunction<SV>): Promise<[SV, IPatch[]]>
-} {
-  return async (paramter?: any): Promise<any> => {
-    if (paramter) {
-      if (isFunc(paramter)) {
-        const v = await s.getValue()
-        const [result, patches] = produceWithPatches(v, paramter)
-        if (currentInputeCompute) {
-          scope.addComputePatches(s, patches)
-        } else {
-          await s.update(result, patches)
-        }
-        return [result, patches]
-      } else {
-        throw new Error('[change cache] pass a function')
-      }
-    }
-    return s.getValue()
-  }
 }
 
 export function combineLatest<T>(arr: Array<{ _hook: State<T> }>): () => T {
