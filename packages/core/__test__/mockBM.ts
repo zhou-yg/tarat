@@ -378,7 +378,7 @@ export function cacheWithSource(v: { num: number }) {
   }
 }
 
-export function combineTwoState () {
+export function combineTwoState() {
   const s1 = state(0)
   const s2 = state(1)
   const c1 = computed(() => s2() + 1)
