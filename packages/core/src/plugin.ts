@@ -101,6 +101,7 @@ const defaultCachePlugin: IPlugins['Cache'] = {
     return getPlugin(from).get(k)
   },
   setValue(k, v, from) {
+    console.log('k, v, from: ', k, v, from)
     return getPlugin(from).set(k, v)
   },
   clearValue(k, from) {

@@ -225,13 +225,18 @@ export class Model<T extends any[]> extends State<T[]> {
     log(`[${this.constructor.name}.query]`)
     this.queryWhereComputed?.run()
   }
+  async enableQuery() {
+    const q = await this.getQueryWhere()
+    const valid = checkQueryWhere(q.query.where)
+    return valid || this.options.ignoreEnable
+  }
   async executeQuery() {
     this.init = false
     let resolve: Function
     this.getterPromise = new Promise(r => (resolve = r))
     // @TODO：要确保时序，得阻止旧的query数据更新
     const q = await this.getQueryWhere()
-    const valid = checkQueryWhere(q.query.where)
+    const valid = await this.enableQuery()
     log('[Model.executeQuery] 1 q.entity, q.query: ', q.entity, q.query, valid)
     if (valid) {
       const result: T = await getPlugin('Model').find(q.entity, q.query)
@@ -279,17 +284,20 @@ export class Model<T extends any[]> extends State<T[]> {
 
 class ClientModel<T extends any[]> extends Model<T> {
   override async executeQuery() {
-    const context = this.scope.createInputComputeContext(this)
-    log('[ClientModel.executeQuery] before post : ')
-    const queryPromise = getPlugin('Context').postQueryToServer(context)
-    this.getterPromise = queryPromise.then()
-    const result: IHookContext = await queryPromise
-    this.getterPromise = null
+    const valid = await this.enableQuery()
+    if (valid) {
+      const context = this.scope.createInputComputeContext(this)
+      log('[ClientModel.executeQuery] before post : ')
+      const queryPromise = getPlugin('Context').postQueryToServer(context)
+      this.getterPromise = queryPromise.then()
+      const result: IHookContext = await queryPromise
+      this.getterPromise = null
 
-    const index = this.scope.hooks.indexOf(this)
-    const d = result.data[index]
-    if (d[1]) {
-      this.update(d[1])
+      const index = this.scope.hooks.indexOf(this)
+      const d = result.data[index]
+      if (d[1]) {
+        this.update(d[1])
+      }
     }
   }
   override async updateWithPatches(v: T, patches: IPatch[]) {
@@ -313,7 +321,7 @@ export class Cache<T> extends State<T | undefined> {
   ) {
     super(undefined)
     scope.addHook(this)
-    this.getterKey = `tarat_cache_${scope.hookRunnerName}__${key}`
+    this.getterKey = key // `tarat_cache_${scope.hookRunnerName}__${key}`
 
     if (this.options.source) {
       this.source = this.options.source._hook
@@ -810,6 +818,7 @@ interface IModelOption {
   unique?: boolean
   autoRollback?: boolean
   pessimisticUpdate?: boolean
+  ignoreEnable?: boolean
 }
 
 function createModelSetterGetterFunc<T extends any[]>(

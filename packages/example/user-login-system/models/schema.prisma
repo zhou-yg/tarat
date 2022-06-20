@@ -21,8 +21,7 @@ model SessionStore {
   id         Int @id @default(autoincrement())
   createdAt  DateTime @default(now())
   modifiedAt DateTime @default(now())
-  userId     String
-  expire     Int? // the expire end time
-  from       String // platform name
+  name     String
+  password String
   fromIndex  String // paltform unique cookie id
 }

@@ -7,6 +7,7 @@ import {
   inputCompute,
   inputComputeInServer,
 } from 'tarat-core'
+import {nanoid} from 'nanoid'
 
 export default function login () {
   const name = state()
@@ -18,6 +19,8 @@ export default function login () {
 
   const signAndAutoLogin = state(false)
 
+  /* 6 */
+
   const cookieId = cache('userDataKey', { from: 'cookie' }) // just run in server because by it depends 'cookie'
   const userDataByInput = model(() => ({
     entity: 'user',
@@ -28,26 +31,35 @@ export default function login () {
       }
     }
   }))
-  const sessionStore = model(() => ({
-    entity: 'sessionStore',
-    query: {
-      where: {
-        fromIndex: cookieId()
+  const sessionStore = model(async () => {
+    console.log('await cookieId(): ', await cookieId())
+    return ({
+      entity: 'sessionStore',
+      query: {
+        where: {
+          fromIndex: await cookieId()
+        }
       }
-    }
-  }))
+    })
+  }, { ignoreEnable: true })
+
+  /* 9 */
 
   const userIdInSession = computed(async () => {
     const ss = await sessionStore()
     if (ss && ss.length > 0) {
-      return ss[0].userId
+      return {
+        name: ss[0].name,
+        password: ss[0].password
+      }
     }
   })
-  const userDataByCookie = model(() => ({
+  const userDataByCookie = model(async () => ({
     entity: 'user',
     query: {
       where: {
-        id: userIdInSession()
+        name: (await userIdInSession())?.name,
+        password: (await userIdInSession())?.password,
       }
     }
   }))
@@ -124,7 +136,18 @@ export default function login () {
     if (valid) {
       name(() => inputNameVal)
       password(() => inputPasswordVal)
-      cookieId(() => nanoid())
+
+      const nid = nanoid()
+
+      sessionStore((draft) => {
+        draft.push({
+          name: inputNameVal, 
+          password: inputPasswordVal,
+          fromIndex: nid,
+        })
+      })
+
+      cookieId(() => nid)
     } else {
       errorTip2(() => `invalid password with "${inputNameVal}"`)
     }

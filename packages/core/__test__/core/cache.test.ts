@@ -29,7 +29,23 @@ describe('cache', () => {
       const val = await result.c()
 
       expect(val).toEqual({ num: 1 })
+      
+      const cookieVal = await getPlugin('Cache').getValue('num', 'cookie')
+      expect(cookieVal).toEqual({ num: 1 })
     })
+
+    it('update cahce in IC', async () => {
+      const runner = new Runner(mockBM.cacheInIC)
+      const result = runner.init()
+
+      await result.changeC1(2)
+      
+      expect(await result.c()).toEqual({ num:2 })
+
+      const cookieVal = await getPlugin('Cache').getValue('num', 'cookie')
+      expect(cookieVal).toEqual({ num: 2 })
+    })
+
     it ('cache with source', async () => {
       const runner = new Runner(mockBM.cacheWithSource)
       const initialVal = { num: 0 }

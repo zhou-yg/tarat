@@ -14,7 +14,10 @@ function matchHookName (path: string) {
 function wrapCtx (ctx: Application.ParameterizedContext) {
   return {
     cookies: {
-      set: ctx.cookies.set.bind(ctx.cookies),
+      set (name: any, value: any) {
+        console.log('args: ', name, value);
+        return ctx.cookies.set(name, value)
+      },
       get: ctx.cookies.get.bind(ctx.cookies)
     }
   }
@@ -45,6 +48,7 @@ export default function taratMiddleware (args: {
         const c: IHookContext = JSON.parse(ctx.request.body)
 
         getPlugin('GlobalRunning').setCurrent(wrapCtx(ctx))
+        console.log('ctx cookie: ', ctx.cookies.get('userDataKey'));
 
         let runner = new Runner(hookFunc.default)
         runner.init(c.initialArgList, c)
@@ -56,10 +60,13 @@ export default function taratMiddleware (args: {
         }
         await runner.ready()
         const context = runner.scope.createInputComputeContext()
-  
+
+        
         ctx.body = JSON.stringify(context);
 
         (runner as any) = null
+
+        console.log(`[${hookName}] is end`)
       } else {
         await next()        
       }

@@ -390,6 +390,24 @@ export function onlyCache() {
     c
   }
 }
+export function cacheInIC() {
+  const c = cache<{ num: number }>('num', {
+    from: 'cookie'
+  })
+
+  const changeC1 = inputCompute(async (v: number) => {
+    await c(d => {
+      return {
+        num: v
+      }
+    })
+  })
+
+  return {
+    c,
+    changeC1
+  }
+}
 export function cacheWithSource(v: { num: number }) {
   const s = state(v)
   const c = cache('num', {
