@@ -42,6 +42,22 @@ describe('inputCompute', () => {
 
     expect(onRunnerUpdate).toHaveBeenCalledTimes(1 + 1)
   })
+  it('access inputCompute draft', () => {
+    const runner = new Runner(mockBM.changeMultiByInputCompute)
+    const onRunnerUpdate = jest.fn(() => {
+    })
+    runner.onUpdate(onRunnerUpdate)
+    const { s1, changeS1 } = runner.init()
+
+    expect(s1().num).toBe(0)
+    changeS1(6)
+    
+
+    expect(s1().num).toBe(10)
+    changeS1(4)
+
+    expect(s1().num).toBe(-10)
+  })
   it('async inputCompute', async () => {
     const runner = new Runner(mockBM.changeStateAsyncInputCompute)
 
