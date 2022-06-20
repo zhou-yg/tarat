@@ -1,6 +1,4 @@
 import { applyPatches } from 'immer'
-import { useAxiiHook } from './connect/axii'
-import { useReactHook } from './connect/react'
 import { IQueryWhere } from './plugin'
 
 export const isArray = Array.isArray
@@ -232,24 +230,6 @@ export interface IHookContext {
   index?: number
   args: any[]
   name: string
-}
-
-let hookAdaptorRuntime: any = null
-let hookAdaptorType: 'react' | 'axii' | null = null
-export function setHookAdaptor(runtime: any, type: 'react' | 'axii') {
-  hookAdaptorRuntime = runtime
-  hookAdaptorType = type
-}
-
-export type BM = (...prop: any) => any
-
-export function useHook<T extends BM>(bm: T): ReturnType<T> | undefined {
-  switch (hookAdaptorType) {
-    case 'react':
-      return useReactHook(hookAdaptorRuntime, bm)
-    case 'axii':
-      return useAxiiHook(hookAdaptorRuntime, bm)
-  }
 }
 
 export function findWithDefault<T>(
