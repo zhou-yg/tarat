@@ -147,14 +147,14 @@ export class State<T = any> extends Hook {
       }
     }
   }
-  applyInputComputePatches (ic: InputCompute) {
+  applyInputComputePatches(ic: InputCompute) {
     let exist = this.inputComputePatchesMap.get(ic)
     if (exist) {
       this.inputComputePatchesMap.delete(ic)
       this.update(exist[0], exist[1])
     }
   }
-  getInputComputeDraftValue (): T {
+  getInputComputeDraftValue(): T {
     let exist = this.inputComputePatchesMap.get(currentInputeCompute!)
     if (exist) {
       return exist[0]
@@ -165,7 +165,7 @@ export class State<T = any> extends Hook {
       return shallowCopy(this._internalValue)
     }
   }
-  addInputComputePatches (value:T, patches: IPatch[]) {
+  addInputComputePatches(value: T, patches: IPatch[]) {
     if (currentInputeCompute) {
       let exist = this.inputComputePatchesMap.get(currentInputeCompute)
       if (!exist) {
@@ -177,7 +177,7 @@ export class State<T = any> extends Hook {
        */
       exist[1] = exist[1].concat(patches)
       this.inputComputePatchesMap.set(currentInputeCompute, exist)
-    }   
+    }
   }
 }
 
@@ -410,7 +410,10 @@ export class Computed<T> extends State<T | undefined> {
 }
 
 class InputCompute<P extends any[] = any> extends Hook {
-  constructor(public getter: InputComputeFn<P>, public scope: CurrentRunnerScope) {
+  constructor(
+    public getter: InputComputeFn<P>,
+    public scope: CurrentRunnerScope
+  ) {
     super()
     scope.addHook(this)
   }
@@ -588,7 +591,7 @@ export class CurrentRunnerScope {
   applyComputePatches(currentInputCompute: InputCompute) {
     // const dataWithPatches = this.computePatches
     // this.computePatches = []
-    
+
     // await Promise.all(
     //   dataWithPatches.map(([d, p]) => {
     //     return d.applyPatches(p)
@@ -596,13 +599,13 @@ export class CurrentRunnerScope {
     // )
     const hookModified = this.hooks.filter(h => {
       if (h && (h as State).inputComputePatchesMap) {
-        return (h as  State).inputComputePatchesMap.get(currentInputCompute)
+        return (h as State).inputComputePatchesMap.get(currentInputCompute)
       }
     })
 
     if (hookModified.length) {
       hookModified.forEach(h => {
-        (h as State).applyInputComputePatches(currentInputCompute)
+        ;(h as State).applyInputComputePatches(currentInputCompute)
       })
     }
   }
@@ -838,20 +841,20 @@ interface FInputComputeFunc extends Function {
   _hook?: Hook
 }
 
-/** 
- * 
- * 
- * 
- * 
- * 
+/**
+ *
+ *
+ *
+ *
+ *
  * hook factory
- * 
- * 
- * 
- * 
- * 
- * 
-*/
+ *
+ *
+ *
+ *
+ *
+ *
+ */
 export const mountHookFactory = {
   state: mountState,
   model: mountModel,
@@ -1245,7 +1248,7 @@ export function inputComputeInServer(func: any) {
 
   const hook = new InputComputeInServer(func, currentRunnerScope)
 
-  const wrapFunc = (...args: any ) => {
+  const wrapFunc = (...args: any) => {
     return hook.run(...args)
   }
   wrapFunc._hook = hook
