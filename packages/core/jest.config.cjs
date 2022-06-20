@@ -7,5 +7,6 @@ module.exports = {
   testEnvironment: 'node',
   collectCoverage: isCI,
   collectCoverageFrom: ['./src/**/*.ts'],
+  testSequencer: './jest-custom-sequencer.cjs'
   // testRegex: "(model\.client)\.(test|spec)\\.[jt]sx?$"
 };
