@@ -102,16 +102,17 @@ sort by priority
 
 - 1.new feature
   - core part
-    - "cache" hook
+    - "cache" hook √
       - cookie
       - redis
-    - "mode"
+    - "mode" √
       - "model" directive
         - exist
       - "model" lazy query aysnc
       - computed with state
-    - "context" synchronism with 0 compute
+    - "context" synchronism with 0 compute √
       -  differentiate query if immediate or not in two side
+    - "InputCompute" access hook values isolation from the current hook
   - connect part
     - access hook in "views" component
       - react
