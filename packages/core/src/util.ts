@@ -634,3 +634,4 @@ export function checkQueryWhere(where: IQueryWhere['where']): boolean {
       })
     : true
 }
+export type BM = (...prop: any) => any
