@@ -222,11 +222,20 @@ export function nextTick(fn: () => void) {
   return () => clearTimeout(st)
 }
 
+export type TContextData =
+  | 'data'
+  | 'undef'
+  | 'state'
+  | 'patch'
+  | 'inputCompute'
+  | 'model'
+  | 'clientModel'
+  | 'cache'
+  | 'computed'
+
 export interface IHookContext {
   initialArgList: any[]
-  data: Array<
-    ['data' | 'patch' | 'inputCompute' | 'model', any | IPatch[] | null]
-  >
+  data: Array<[TContextData, any | IPatch[] | null]>
   index?: number
   args: any[]
   name: string

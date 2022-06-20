@@ -614,10 +614,25 @@ export class CurrentRunnerScope {
     const { hooks } = this
     const hookIndex = h ? hooks.indexOf(h) : -1
     const hooksData: IHookContext['data'] = hooks.map(hook => {
-      if (hook instanceof State) {
-        return ['data', hook.value]
+      // if (hook instanceof ClientModel) {
+      //   return ['clientModel', hook.value]
+      // }
+      if (hook instanceof Model) {
+        return ['model', hook.value]
       }
-      return ['inputCompute', null]
+      if (hook instanceof Computed) {
+        return ['computed', hook.value]
+      }
+      if (hook instanceof Cache) {
+        return ['cache', hook.value]
+      }
+      if (hook instanceof InputCompute) {
+        return ['inputCompute', null]
+      }
+      if (hook instanceof State) {
+        return ['state', hook.value]
+      }
+      return ['undef', undefined]
     })
     return {
       initialArgList: this.initialArgList,
@@ -916,14 +931,18 @@ function createUnaccessGetterAsync<T extends any[]>(index: number) {
   return newF
 }
 
+function updateBlankVal<T>(initialValue: T) {
+  return initialValue === null ? undefined : initialValue
+}
+
 function updateState<T>(initialValue: T) {
   const currentIndex = currentRunnerScope!.hooks.length
-  initialValue = currentRunnerScope!.intialContextData![currentIndex][1]
+  initialValue = currentRunnerScope!.intialContextData![currentIndex]?.[1]
   // undefined means this hook wont needed in this progress
   if (initialValue === undefined) {
     return createUnaccessGetter<T>(currentIndex)
   }
-  const internalState = new State(initialValue)
+  const internalState = new State(updateBlankVal(initialValue))
 
   const setterGetter = createStateSetterGetterFunc(
     internalState,
@@ -956,7 +975,7 @@ function mountState<T>(initialValue: T) {
 function updateModel<T extends any[]>(q: () => IModelQuery, op?: IModelOption) {
   const currentIndex = currentRunnerScope!.hooks.length
   const initialValue: T =
-    currentRunnerScope!.intialContextData![currentIndex][1]
+    currentRunnerScope!.intialContextData![currentIndex]?.[1]
   if (initialValue === undefined) {
     return createUnaccessGetterAsync<T>(currentIndex)
   }
@@ -1006,7 +1025,7 @@ function updateClientModel<T extends any[]>(
 ) {
   const currentIndex = currentRunnerScope!.hooks.length
   const initialValue: T =
-    currentRunnerScope!.intialContextData![currentIndex][1]
+    currentRunnerScope!.intialContextData![currentIndex]?.[1]
   if (initialValue === undefined) {
     return createUnaccessGetterAsync<T>(currentIndex)
   }
@@ -1022,7 +1041,7 @@ function updateClientModel<T extends any[]>(
 
   if (!inServer) {
     internalModel.init = inServer
-    internalModel._internalValue = initialValue
+    internalModel._internalValue = initialValue || []
   }
 
   const setterGetter = createModelSetterGetterFunc<T>(
@@ -1085,7 +1104,7 @@ function createCacheSetterGetterFunc<SV>(
 function updateCache<T>(key: string, options: ICacheOptions<T>) {
   const currentIndex = currentRunnerScope!.hooks.length
   const initialValue: T =
-    currentRunnerScope!.intialContextData![currentIndex][1]
+    currentRunnerScope!.intialContextData![currentIndex]?.[1]
   if (initialValue === undefined) {
     return createUnaccessGetter<T>(currentIndex)
   }
@@ -1118,7 +1137,7 @@ function updateComputed<T>(
 function updateComputed<T>(fn: any): any {
   const currentIndex = currentRunnerScope!.hooks.length
   const initialValue: T =
-    currentRunnerScope!.intialContextData![currentIndex][1]
+    currentRunnerScope!.intialContextData![currentIndex]?.[1]
   if (initialValue === undefined) {
     return createUnaccessGetter<T>(currentIndex)
   }
@@ -1126,7 +1145,7 @@ function updateComputed<T>(fn: any): any {
   currentComputed = hook
   currentRunnerScope!.addHook(hook)
 
-  hook._internalValue = initialValue
+  hook._internalValue = updateBlankVal(initialValue)
 
   currentComputed = null
 
