@@ -55,6 +55,7 @@
     "lodash": "^4.17.21",
     "shelljs": "^0.8.5",
     "tarat-core": "workspace:*",
+    "tarat-connect": "workspace:*",
     "vite": "^2.9.9"
   }
 }
