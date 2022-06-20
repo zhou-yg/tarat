@@ -1,11 +1,11 @@
-import { useHook } from 'tarat-core'
+import { useTarat } from 'tarat-connect'
 import React, { useState } from 'react'
 import login from '../hooks/login.js'
 import s from '../styles/index.module.less'
 import classnames from 'classnames'
 
 const LoginFrame = () => {
-  const loginHook = useHook(login)
+  const loginHook = useTarat(login)
 
   window.loginHook = loginHook
 
