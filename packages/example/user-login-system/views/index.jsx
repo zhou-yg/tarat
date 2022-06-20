@@ -34,7 +34,7 @@ const LoginFrame = () => {
       ) : ''}
       <div className={s.footer}>
         <div>
-        <button>Sign</button>
+        <button onClick={() => loginHook.sign()}>Sign</button>
         sign and auto login <input type="checkbox" checked={loginHook.signAndAutoLogin()} onChange={e => {
           loginHook.signAndAutoLogin(() => e.target.checked)
         }} />
