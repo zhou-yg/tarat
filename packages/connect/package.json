@@ -1,0 +1,41 @@
+{
+  "name": "tarat-connect",
+  "version": "0.0.9",
+  "description": "useHook serverless framework",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
+    "format:commit": "npm run format && git commit -a -m 'feat(core): lint'",
+    "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs",
+    "build:watch": "npm run format && rollup --config rollup.config.mjs --watch"
+  },
+  "files": [
+    "src",
+    "dist",
+    "package.json"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhou-yg/tarat.git"
+  },
+  "author": "zhouyg",
+  "bugs": {
+    "url": "https://github.com/zhou-yg/tarat/issues"
+  },
+  "homepage": "https://github.com/zhou-yg/tarat#readme",
+  "dependencies": {
+    "tarat-core": "workspace:*"
+  },
+  "devDependencies": {
+    "tslib": "^2.4.0",
+    "rollup-plugin-dts": "^4.2.2",
+    "@jsdevtools/version-bump-prompt": "6.1.0",
+    "@rollup/plugin-node-resolve": "^13.3.0",
+    "@rollup/plugin-replace": "^4.0.0",
+    "@rollup/plugin-typescript": "^6.1.0",
+    "rollup": "^2.74.1",
+    "rollup-plugin-typescript2": "^0.31.2"
+  }
+}
