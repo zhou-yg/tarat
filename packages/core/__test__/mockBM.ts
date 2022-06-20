@@ -192,6 +192,31 @@ export function changeStateInputCompute(obj1: { num1: number }, num2: number) {
     changeS1
   }
 }
+
+export function changeMultiByInputCompute() {
+  const s1 = state({ num: 0 })
+
+  const changeS1 = inputCompute((v: number) => {
+    s1(d => {
+      d.num = v
+    })
+    if (s1().num > 5) {
+      s1(d => {
+        d.num = 10
+      })
+    } else {
+      s1(d => {
+        d.num = -10
+      })
+    }
+  })
+
+  return {
+    s1,
+    changeS1
+  }
+}
+
 export function changeStateInputComputeServer(
   obj1: { num1: number },
   num2: number

@@ -20,7 +20,8 @@ import {
   log,
   BM,
   checkQueryWhere,
-  cloneDeep
+  cloneDeep,
+  isPrimtive
 } from './util'
 import {
   produceWithPatches,
@@ -146,23 +147,10 @@ export class State<T = any> extends Hook {
       }
     }
   }
-  // @TODO should be upgrade for some badcase maybe
-  applyPatches(p: IPatch[]) {
-    log('[state.applyPatches]', p)
-    if (likeObject(this._internalValue)) {
-      const newValue = applyPatches(this._internalValue!, p)
-      this.update(newValue)
-    } else if (isDef(this._internalValue)) {
-      const newValue = applyPatches(this._internalValue!, p)
-      this.update(newValue)
-    } else {
-      const v = p[p.length - 1]?.value
-      this.update(v)
-    }
-  }
   applyInputComputePatches (ic: InputCompute) {
     let exist = this.inputComputePatchesMap.get(ic)
     if (exist) {
+      this.inputComputePatchesMap.delete(ic)
       this.update(exist[0], exist[1])
     }
   }
@@ -171,6 +159,9 @@ export class State<T = any> extends Hook {
     if (exist) {
       return exist[0]
     } else {
+      if (isPrimtive(this._internalValue)) {
+        return this._internalValue
+      }
       return shallowCopy(this._internalValue)
     }
   }
@@ -255,9 +246,14 @@ export class Model<T extends any[]> extends State<T[]> {
     const result: T = await getPlugin('Model').find(q.entity, { where: obj })
     return result.length > 0
   }
-  override async applyPatches(patches: IPatch[]) {
-    const newValue = applyPatches(this._internalValue, patches)
-    await this.updateWithPatches(newValue, patches)
+  override async applyInputComputePatches(ic: InputCompute) {
+    const exist = this.inputComputePatchesMap.get(ic)
+    if (exist) {
+      this.inputComputePatchesMap.delete(ic)
+      const patches = exist[1]
+      const newValue = applyPatches(this._internalValue, patches)
+      await this.updateWithPatches(newValue, patches)
+    }
   }
   async updateWithPatches(v: T[], patches: IPatch[]) {
     const oldValue = this._internalValue
@@ -413,15 +409,15 @@ export class Computed<T> extends State<T | undefined> {
   }
 }
 
-class InputCompute extends Hook {
-  constructor(public getter: InputComputeFn, public scope: CurrentRunnerScope) {
+class InputCompute<P extends any[] = any> extends Hook {
+  constructor(public getter: InputComputeFn<P>, public scope: CurrentRunnerScope) {
     super()
     scope.addHook(this)
   }
   inputFuncStart() {}
   async inputFuncEnd() {
     currentInputeCompute = null
-    await this.scope.applyComputePatches(this)
+    this.scope.applyComputePatches(this)
     unFreeze({ _hook: this })
     this.triggerEvent('after')
   }
@@ -443,7 +439,7 @@ class InputCompute extends Hook {
     })
   }
 }
-class InputComputeInServer extends InputCompute {
+class InputComputeInServer<P extends any[]> extends InputCompute<P> {
   async run(...args: any[]) {
     currentInputeCompute = this
     this.triggerEvent('before')
@@ -589,7 +585,7 @@ export class CurrentRunnerScope {
   //   }
   //   exist[1] = exist[1].concat(p)
   // }
-  async applyComputePatches(currentInputCompute: InputCompute) {
+  applyComputePatches(currentInputCompute: InputCompute) {
     // const dataWithPatches = this.computePatches
     // this.computePatches = []
     
@@ -1206,15 +1202,15 @@ export function computed<T>(fn: any): any {
   return currentHookFactory.computed<T>(fn)
 }
 
-type InputComputeFn = (...arg: any) => void
-type AsyncInputComputeFn = (...arg: any) => Promise<void>
+type InputComputeFn<T extends any[]> = (...arg: T) => void
+type AsyncInputComputeFn<T extends any[]> = (...arg: T) => Promise<void>
 
-export function inputCompute(
-  func: AsyncInputComputeFn
-): AsyncInputComputeFn & { _hook: Hook }
-export function inputCompute(
-  func: InputComputeFn
-): InputComputeFn & { _hook: Hook }
+export function inputCompute<T extends any[]>(
+  func: AsyncInputComputeFn<T>
+): AsyncInputComputeFn<T> & { _hook: Hook }
+export function inputCompute<T extends any[]>(
+  func: InputComputeFn<T>
+): InputComputeFn<T> & { _hook: Hook }
 export function inputCompute(func: any) {
   if (!currentRunnerScope) {
     throw new Error('[inputCompute] must under a tarat runner')
@@ -1222,14 +1218,20 @@ export function inputCompute(func: any) {
 
   const hook = new InputCompute(func, currentRunnerScope)
 
-  const wrapFunc: any = (...args: any) => {
+  const wrapFunc = (...args: any) => {
     return hook.run(...args)
   }
   wrapFunc._hook = hook
   return wrapFunc
 }
 
-export function inputComputeInServer(func: InputComputeFn) {
+export function inputComputeInServer<T extends any[]>(
+  func: AsyncInputComputeFn<T>
+): AsyncInputComputeFn<T> & { _hook: Hook }
+export function inputComputeInServer<T extends any[]>(
+  func: InputComputeFn<T>
+): AsyncInputComputeFn<T> & { _hook: Hook }
+export function inputComputeInServer(func: any) {
   if (!currentRunnerScope) {
     throw new Error('[inputComputeServer] must under a tarat runner')
   }
@@ -1243,7 +1245,7 @@ export function inputComputeInServer(func: InputComputeFn) {
 
   const hook = new InputComputeInServer(func, currentRunnerScope)
 
-  const wrapFunc: FInputComputeFunc = (...args: any) => {
+  const wrapFunc = (...args: any ) => {
     return hook.run(...args)
   }
   wrapFunc._hook = hook
