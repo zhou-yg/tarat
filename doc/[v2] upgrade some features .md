@@ -101,7 +101,7 @@ function userData () {
 sort by priority
 
 - 1.new feature
-  - core part
+  - part1: core
     - "cache" hook √
       - cookie
       - redis
@@ -113,13 +113,13 @@ sort by priority
     - "context" synchronism with 0 compute √
       -  differentiate query if immediate or not in two side
     - "InputCompute" access hook values isolation from the current hook
-  - connect part
+  - part2: connect
     - access hook in "views" component
       - react
-  - server part
-    - static compose dependent hook into current project
-      - extra relation description
-    - view mount container config entry
+  - part3: server
+    - support staticly importing other hook to current project
+      - extra Model relation description
+    - export config of view mount container
 - 2.upgrade performance
   - "model" global referrence
   - "context synchronism" abount depMaps
