@@ -1,3 +1,5 @@
+import { BM } from 'tarat-core'
+export { BM } from 'tarat-core'
 import { useAxiiHook } from './axii'
 import { useReactHook } from './react'
 
@@ -7,8 +9,6 @@ export function setHookAdaptor(runtime: any, type: 'react' | 'axii') {
   hookAdaptorRuntime = runtime
   hookAdaptorType = type
 }
-
-export type BM = (...prop: any) => any
 
 export function useHook<T extends BM>(bm: T): ReturnType<T> | undefined {
   switch (hookAdaptorType) {
