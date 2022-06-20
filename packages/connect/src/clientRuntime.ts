@@ -1,19 +1,14 @@
-import { setHookAdaptor, loadPlugin } from 'tarat-core'
+import { loadPlugin } from 'tarat-core'
+import { setHookAdaptor } from './adaptor'
 
-export default function clientRuntime (c: {
+export function clientRuntime(c: {
   framework: any
   name: 'react' | 'axii'
   modelConfig: any
   host: string
 }) {
+  const { framework = {}, name = 'react', modelConfig = {}, host = '/' } = c
 
-  const {
-    framework = {},
-    name = 'react',
-    modelConfig = {},
-    host = '/'  
-  } = c
- 
   setHookAdaptor(framework, name)
 
   const hostConfig = `${host}${(window as any).taratConfig?.apiPre || '_hook'}`
@@ -65,14 +60,14 @@ export default function clientRuntime (c: {
 
       return newContext
     },
-    ...modelConfig,
+    ...modelConfig
   })
 
   loadPlugin('Cache', {
-    async getValue (k, f) {
+    async getValue(k, f) {
       return undefined
     },
-    async setValue (k, v, f) {},
-    clearValue (k, f) {}
+    async setValue(k, v, f) {},
+    clearValue(k, f) {}
   })
 }
