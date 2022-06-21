@@ -79,7 +79,9 @@ describe('client model', () => {
       const runner = new Runner(mockBM.userModelClient)
       const result = runner.init()
   
-      expect(await result.users()).toEqual([
+      await runner.ready()
+
+      expect(result.users()).toEqual([
         { id: 1, name: 'a' },
       ])
     })
@@ -97,7 +99,9 @@ describe('client model', () => {
       // debuggerLog(true)
       const result = runner.init([], context)
   
-      expect(await result.users()).toEqual([
+      await runner.ready()
+
+      expect(result.users()).toEqual([
         { id: 3, name: 'c' },
       ])
     })

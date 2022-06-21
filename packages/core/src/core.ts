@@ -3,16 +3,11 @@ import {
   IPatch,
   isFunc,
   map,
-  getEnv,
-  isAsyncFunc,
   IHookContext,
   isDef,
   likeObject,
   isPromise,
   nextTick,
-  get,
-  set,
-  traverseValues,
   calculateChangedPath,
   isEqual,
   TPath,
@@ -20,12 +15,10 @@ import {
   log,
   BM,
   checkQueryWhere,
-  cloneDeep,
   isPrimtive
 } from './util'
 import {
   produceWithPatches,
-  produce,
   Draft,
   enablePatches,
   applyPatches
@@ -234,17 +227,23 @@ export class Model<T extends any[]> extends State<T[]> {
     this.init = false
     let resolve: Function
     this.getterPromise = new Promise(r => (resolve = r))
-    // @TODO：要确保时序，得阻止旧的query数据更新
-    const q = await this.getQueryWhere()
-    const valid = await this.enableQuery()
-    log('[Model.executeQuery] 1 q.entity, q.query: ', q.entity, q.query, valid)
-    if (valid) {
-      const result: T = await getPlugin('Model').find(q.entity, q.query)
-      log('[Model.executeQuery] 2 result: ', result)
-      this.update(result)
+    try {
+      // @TODO：要确保时序，得阻止旧的query数据更新
+      const q = await this.getQueryWhere()
+      const valid = await this.enableQuery()
+      log('[Model.executeQuery] 1 q.entity, q.query: ', q.entity, q.query, valid)
+      if (valid) {
+        const result: T = await getPlugin('Model').find(q.entity, q.query)
+        log('[Model.executeQuery] 2 result: ', result)
+        this.update(result)
+      }
+    } catch (e) {
+      log('[Model.executeQuery] error')
+      console.error(e)
+    } finally {
+      resolve!()
+      this.getterPromise = null
     }
-    resolve!()
-    this.getterPromise = null
   }
   async exist(obj: { [k: string]: any }) {
     const q = await this.getQueryWhere()
@@ -267,6 +266,9 @@ export class Model<T extends any[]> extends State<T[]> {
       this.update(v, patches)
     }
 
+    let resolve: Function
+    this.getterPromise = new Promise(r => (resolve = r))
+
     const { entity } = await this.getQueryWhere()
     try {
       const diff = calculateDiff(oldValue, patches)
@@ -277,6 +279,9 @@ export class Model<T extends any[]> extends State<T[]> {
       if (this.options.autoRollback) {
         this.update(oldValue)
       }
+    } finally {
+      resolve!()
+      this.getterPromise = null
     }
     await this.executeQuery()
   }
@@ -284,13 +289,14 @@ export class Model<T extends any[]> extends State<T[]> {
 
 class ClientModel<T extends any[]> extends Model<T> {
   override async executeQuery() {
+    let resolve: Function
+    this.getterPromise = new Promise(r => (resolve = r))
+
     const valid = await this.enableQuery()
     if (valid) {
       const context = this.scope.createInputComputeContext(this)
       log('[ClientModel.executeQuery] before post : ')
-      const queryPromise = getPlugin('Context').postQueryToServer(context)
-      this.getterPromise = queryPromise.then()
-      const result: IHookContext = await queryPromise
+      const result: IHookContext = await getPlugin('Context').postQueryToServer(context)
       this.getterPromise = null
 
       const index = this.scope.hooks.indexOf(this)
@@ -299,6 +305,8 @@ class ClientModel<T extends any[]> extends Model<T> {
         this.update(d[1])
       }
     }
+    resolve!()
+    this.getterPromise = null
   }
   override async updateWithPatches(v: T, patches: IPatch[]) {
     throw new Error('cant update in client')
@@ -314,6 +322,7 @@ export class Cache<T> extends State<T | undefined> {
   getterKey: string
   watcher: Watcher = new Watcher(this)
   source: State<T> | undefined
+  getterPromise: Promise<any> | null = null
   constructor(
     key: string,
     public options: ICacheOptions<T>,
@@ -326,46 +335,68 @@ export class Cache<T> extends State<T | undefined> {
     if (this.options.source) {
       this.source = this.options.source._hook
       this.watcher.addDep(this.source)
+
+      const { _internalValue } = this.source
+      const initVal = isPrimtive(_internalValue) ? _internalValue : shallowCopy(_internalValue)
+      super.update(initVal)
     }
   }
   notify(hook?: Hook) {
-    // not calling update prevent notify the watcher for current cache
-    this._internalValue = undefined
-
     const { from } = this.options
     const { source } = this
     if (hook && source && hook === source) {
+      // not calling update prevent notify the watcher for current cache
+      this._internalValue = undefined
       /**
        * just clear value in cache not update directly
        * reason 1: for lazy
        * reason 2: prevent writing conflict while coccurent writing at same time
        */
-      getPlugin('Cache').clearValue(this.getterKey, from)
+      getPlugin('Cache').clearValue(this.scope, this.getterKey, from)
+
+      this.executeQuery()
     }
   }
-  async getValue(): Promise<T | undefined> {
-    if (this.value !== undefined) {
-      return this.value
+  override get value(): T | undefined {
+    if (this._internalValue === undefined) {
+      this.executeQuery()
     }
+    return super.value
+  }
+  async executeQuery () {
     const { from } = this.options
     const { source } = this
-    const valueInCache = await getPlugin('Cache').getValue<T>(
-      this.getterKey,
-      from
-    )
-    if (valueInCache !== undefined) {
-      super.update(valueInCache)
-      return valueInCache
-    }
-    if (source) {
-      const valueInSource = source.value
 
-      super.update(valueInSource)
-      getPlugin('Cache').setValue(this.getterKey, valueInSource, from)
+    let resolve: Function
+    this.getterPromise = new Promise(r => (resolve = r))
 
-      return valueInSource
+    try {
+      const valueInCache = await getPlugin('Cache').getValue<T>(
+        this.scope,
+        this.getterKey,
+        from
+      )
+      if (valueInCache !== undefined) {
+        super.update(valueInCache)
+      } else if (source) {
+        const valueInSource = source.value
+  
+        super.update(valueInSource)
+        // unconcern the result of remote updateing
+        getPlugin('Cache').setValue(
+          this.scope,
+          this.getterKey,
+          valueInSource,
+          from
+        )
+      }
+    } catch (e) {
+      log(`[Cache.executeQuery] error`)
+      console.error(e)
+    } finally {
+      resolve!()
+      this.getterPromise = null
     }
-    return
   }
   // call by outer
   override async update(v?: T, patches?: IPatch[], silent?: boolean) {
@@ -377,7 +408,7 @@ export class Cache<T> extends State<T | undefined> {
       )
     } else {
       super.update(v, patches, silent)
-      await getPlugin('Cache').setValue(this.getterKey, v, from)
+      await getPlugin('Cache').setValue(this.scope, this.getterKey, v, from)
     }
   }
 }
@@ -393,12 +424,12 @@ export class Computed<T> extends State<T | undefined> {
   run() {
     currentComputed = this
     const r: any = this.getter()
-    currentComputed = null
     if (r && (r.then || r instanceof Promise)) {
       this.getterPromise = r
       r.then((asyncResult: T) => {
         this.update(asyncResult)
         this.getterPromise = null
+        currentComputed = null
       })
     } else {
       this.update(r)
@@ -451,8 +482,11 @@ class InputCompute<P extends any[] = any> extends Hook {
   }
 }
 class InputComputeInServer<P extends any[]> extends InputCompute<P> {
+  getterPromise: Promise<any> | null = null
   async run(...args: any[]) {
-    currentInputeCompute = this
+    let resolve: Function
+    this.getterPromise = new Promise(r => (resolve = r))
+
     this.triggerEvent('before')
     if (!checkFreeze({ _hook: this })) {
       const context = this.scope.createInputComputeContext(this, args)
@@ -460,6 +494,9 @@ class InputComputeInServer<P extends any[]> extends InputCompute<P> {
       this.scope.applyContext(result)
     }
     this.inputFuncEnd()
+
+    resolve!()
+    this.getterPromise = null
   }
 }
 class Effect<T> extends Hook {
@@ -478,6 +515,18 @@ class Effect<T> extends Hook {
     })
   }
 }
+
+/**
+ * 
+ * 
+ * 
+ * 
+ * top runner & scope
+ * 
+ * 
+ * 
+ * 
+ */
 
 // type HookChangedPath = string
 // type ContextHook = State | Hook | Model<any> | Cache<any>
@@ -588,23 +637,7 @@ export class CurrentRunnerScope {
     this.watcher.addDep(v)
   }
 
-  // addComputePatches(data: State, p: IPatch[]) {
-  //   let exist = this.computePatches.find(arr => arr[0] === data)
-  //   if (!exist) {
-  //     exist = [data, []]
-  //     this.computePatches.push(exist)
-  //   }
-  //   exist[1] = exist[1].concat(p)
-  // }
   applyComputePatches(currentInputCompute: InputCompute) {
-    // const dataWithPatches = this.computePatches
-    // this.computePatches = []
-
-    // await Promise.all(
-    //   dataWithPatches.map(([d, p]) => {
-    //     return d.applyPatches(p)
-    //   })
-    // )
     const hookModified = this.hooks.filter(h => {
       if (h && (h as State).inputComputePatchesMap) {
         return (h as State).inputComputePatchesMap.get(currentInputCompute)
@@ -657,19 +690,13 @@ export class CurrentRunnerScope {
       if (isDef(value)) {
         const state = hooks[index] as State
         switch (type) {
-          case 'data':
+          default:
             /**
              * default to keep silent because of deliver total context now
              */
-            state.update(value, [], true)
+            state.update?.(value, [], true)
             break
-          case 'patch':
-            {
-              const newValue = applyPatches(state.value, value)
-              state.update(newValue)
-            }
-            break
-        }
+         }
       }
     })
     this.notify()
@@ -799,7 +826,6 @@ function createStateSetterGetterFunc<SV>(
       if (isFunc(paramter)) {
         const [result, patches] = produceWithPatches(s.value, paramter)
         if (currentInputeCompute) {
-          // scope.addComputePatches(s, patches)
           s.addInputComputePatches(result, patches)
         } else {
           s.update(result, patches)
@@ -825,13 +851,12 @@ function createModelSetterGetterFunc<T extends any[]>(
   m: Model<T>,
   scope: CurrentRunnerScope
 ): {
-  (): Promise<T | undefined>
+  (): T | undefined
   (paramter: IModifyFunction<T | undefined>): Promise<[T | undefined, IPatch[]]>
 } {
-  return async (paramter?: any): Promise<any> => {
-    await m.ready()
+  return (paramter?: any): any => {
     if (paramter && isFunc(paramter)) {
-      const [result, patches] = produceWithPatches(m.value, paramter)
+      const [result, patches] = produceWithPatches<T>(shallowCopy(m.value), paramter)
       log(
         '[model setter] result, patches: ',
         !!currentInputeCompute,
@@ -839,10 +864,9 @@ function createModelSetterGetterFunc<T extends any[]>(
       )
 
       if (currentInputeCompute) {
-        // scope.addComputePatches(m, patches)
         m.addInputComputePatches(result, patches)
       } else {
-        await m.updateWithPatches(result, patches)
+        m.updateWithPatches(result, patches)
       }
       return [result, patches]
     }
@@ -858,11 +882,6 @@ let currentComputed: null | Computed<any> = null
 
 export function setCurrentComputed(c: Computed<any> | null) {
   currentComputed = c
-}
-
-interface FInputComputeFunc extends Function {
-  (...args: any): Promise<void>
-  _hook?: Hook
 }
 
 /**
@@ -927,10 +946,10 @@ function createUnaccessGetter<T>(index: number) {
   return newF
 }
 function createUnaccessGetterAsync<T extends any[]>(index: number) {
-  const f = async (): Promise<any> => {
+  const f = (): any => {
     throw new Error(`[update getter] cant access un initialized hook(${index})`)
   }
-  const newF: (() => Promise<any>) & { _hook: any; exist: any } = Object.assign(
+  const newF: (() => any) & { _hook: any; exist: any } = Object.assign(
     f,
     {
       _hook: null,
@@ -951,7 +970,7 @@ function updateState<T>(initialValue: T) {
   if (initialValue === undefined) {
     return createUnaccessGetter<T>(currentIndex)
   }
-  const internalState = new State(updateBlankVal(initialValue))
+  const internalState = new State(initialValue)
 
   const setterGetter = createStateSetterGetterFunc(
     internalState,
@@ -1084,29 +1103,27 @@ function mountClientModel<T extends any[]>(
 }
 
 function createCacheSetterGetterFunc<SV>(
-  s: Cache<SV>,
+  c: Cache<SV>,
   scope: CurrentRunnerScope
 ): {
-  (): Promise<SV>
-  (paramter: IModifyFunction<SV>): Promise<[SV, IPatch[]]>
+  (): SV
+  (paramter: IModifyFunction<SV>): [SV, IPatch[]]
 } {
-  return async (paramter?: any): Promise<any> => {
+  return (paramter?: any): any => {
     if (paramter) {
       if (isFunc(paramter)) {
-        const v = await s.getValue()
-        const [result, patches] = produceWithPatches(v, paramter)
+        const [result, patches] = produceWithPatches(c.value, paramter)
         if (currentInputeCompute) {
-          // scope.addComputePatches(s, patches)
-          s.addInputComputePatches(result, patches)
+          c.addInputComputePatches(result, patches)
         } else {
-          await s.update(result, patches)
+          c.update(result, patches)
         }
         return [result, patches]
       } else {
         throw new Error('[change cache] pass a function')
       }
     }
-    return s.getValue()
+    return c.value
   }
 }
 
@@ -1119,7 +1136,7 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
   }
 
   const hook = new Cache(key, options, currentRunnerScope!)
-  hook.getValue()
+  hook.executeQuery()
 
   const setterGetter = createCacheSetterGetterFunc(hook, currentRunnerScope!)
   const newSetterGetter = Object.assign(setterGetter, {
@@ -1154,7 +1171,7 @@ function updateComputed<T>(fn: any): any {
   currentComputed = hook
   currentRunnerScope!.addHook(hook)
 
-  hook._internalValue = updateBlankVal(initialValue)
+  hook._internalValue = (initialValue)
 
   currentComputed = null
 

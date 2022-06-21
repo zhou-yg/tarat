@@ -1,5 +1,6 @@
 import { IDiff, IHookContext } from './util'
 import type Cookies from 'cookies'
+import { CurrentRunnerScope } from './core'
 
 type IModelCreateData = Omit<IModelData, 'where'> | Omit<IModelData, 'where'>[]
 
@@ -69,9 +70,18 @@ const plugins: {
     executeDiff(entity: string, d: IDiff): Promise<void>
   }
   Cache?: {
-    getValue<T>(k: string, from: TCacheFrom): Promise<T | undefined>
-    setValue<T>(k: string, value: T, from: TCacheFrom): Promise<void>
-    clearValue(k: string, from: TCacheFrom): void
+    getValue<T>(
+      scope: CurrentRunnerScope | null,
+      k: string,
+      from: TCacheFrom
+    ): Promise<T | undefined>
+    setValue<T>(
+      scope: CurrentRunnerScope | null,
+      k: string,
+      value: T,
+      from: TCacheFrom
+    ): Promise<void>
+    clearValue(scope: CurrentRunnerScope | null, k: string, from: TCacheFrom): void
   }
   Context?: {
     postDiffToServer(entity: string, d: IDiff): Promise<void>
@@ -79,13 +89,16 @@ const plugins: {
     postQueryToServer(c: IHookContext): Promise<IHookContext>
   }
   GlobalRunning?: {
-    setCurrent(runningApi: IRunningContext | null): void
-    getCurrent(): IRunningContext | null
+    setCurrent(
+      scope: CurrentRunnerScope,
+      runningApi: IRunningContext | null
+    ): void
+    getCurrent(scope: CurrentRunnerScope): IRunningContext | null
   }
   cookie?: {
-    get<T>(k: string): Promise<T | undefined>
-    set<T>(k: string, value: T): Promise<void>
-    clear(k: string): void
+    get<T>(scope: CurrentRunnerScope | null, k: string): Promise<T | undefined>
+    set<T>(scope: CurrentRunnerScope | null, k: string, value: T): Promise<void>
+    clear(scope: CurrentRunnerScope | null, k: string): void
   }
 } = {}
 
@@ -97,15 +110,14 @@ type TPluginKey = keyof IPlugins
  * provide a default CachePlugin for distribution different cahce type
  */
 const defaultCachePlugin: IPlugins['Cache'] = {
-  async getValue(k, from) {
-    return getPlugin(from).get(k)
+  async getValue(scope, k, from) {
+    return getPlugin(from).get(scope, k)
   },
-  setValue(k, v, from) {
-    console.log('k, v, from: ', k, v, from)
-    return getPlugin(from).set(k, v)
+  setValue(scope, k, v, from) {
+    return getPlugin(from).set(scope, k, v)
   },
-  clearValue(k, from) {
-    getPlugin(from).clear(k)
+  clearValue(scope, k, from) {
+    getPlugin(from).clear(scope, k)
   }
 }
 

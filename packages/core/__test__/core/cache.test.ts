@@ -8,14 +8,16 @@ import * as mockBM from '../mockBM'
 describe('cache', () => {
   describe('mount cache', () => {
     beforeEach(() => {
-      getPlugin('Cache').clearValue('', 'cookie')
+      getPlugin('Cache').clearValue(null, '', 'cookie')
     })
   
     it ('simple cache', async () => {
       const runner = new Runner(mockBM.onlyCache)
       const result = runner.init()
   
-      const cVal = await result.c()
+      await runner.ready()
+
+      const cVal = result.c()
   
       expect(cVal).toBe(undefined)
     })
@@ -23,14 +25,18 @@ describe('cache', () => {
       const runner = new Runner(mockBM.onlyCache)
       const result = runner.init()
 
-      await result.c(() => ({
+
+      result.c(() => ({
         num: 1
       }))
-      const val = await result.c()
+
+      await runner.ready()
+
+      const val = result.c()
 
       expect(val).toEqual({ num: 1 })
       
-      const cookieVal = await getPlugin('Cache').getValue('num', 'cookie')
+      const cookieVal = await getPlugin('Cache').getValue(runner.scope, 'num', 'cookie')
       expect(cookieVal).toEqual({ num: 1 })
     })
 
@@ -40,9 +46,11 @@ describe('cache', () => {
 
       await result.changeC1(2)
       
-      expect(await result.c()).toEqual({ num:2 })
+      await runner.ready()
 
-      const cookieVal = await getPlugin('Cache').getValue('num', 'cookie')
+      expect(result.c()).toEqual({ num:2 })
+
+      const cookieVal = await getPlugin('Cache').getValue(runner.scope, 'num', 'cookie')
       expect(cookieVal).toEqual({ num: 2 })
     })
 
@@ -51,24 +59,27 @@ describe('cache', () => {
       const initialVal = { num: 0 }
       const result = runner.init([initialVal])
   
-      const cVal = await result.c()
-  
+      const cVal = result.c()
+      
       expect(cVal).toEqual(initialVal)
   
       result.s(d => {
         d.num = 1
       })
-  
+
       expect(result.c._hook._internalValue).toBe(undefined)
   
-      const cVal2 = await result.c()
+      await runner.ready()
+
+      const cVal2 = result.c()
+
       expect(cVal2).toEqual({ num: 1 })
     })
   })
   
   describe('update cache', () => {
     beforeEach(() => {
-      getPlugin('Cache').clearValue('', 'cookie')
+      getPlugin('Cache').clearValue(null, '', 'cookie')
     })
     it('initialize simple cache with context', async () => {
       const runner = new Runner(mockBM.onlyCache)
@@ -80,7 +91,9 @@ describe('cache', () => {
       })
       const result = runner.init([], context)
   
-      const cVal = await result.c()
+      await runner.ready()
+
+      const cVal = result.c()
   
       expect(cVal).toBe(undefined)
     })

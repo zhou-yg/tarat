@@ -19,8 +19,8 @@ describe('inputCompute', () => {
         let { data, index, args } = c
 
         expect(data).toEqual([
-          ['data', initArgs[0]],
-          ['data', 10],
+          ['state', initArgs[0]],
+          ['state', 10],
           ['inputCompute', null]
         ])
 
