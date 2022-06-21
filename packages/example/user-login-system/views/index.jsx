@@ -13,36 +13,59 @@ const LoginFrame = () => {
     show: !!loginHook?.errorTip()
   })
 
+  const alreadyLogin = loginHook.alreadyLogin()
+
   return (
     <div className={s.login}>
       <div className={s.title}>Welcome</div>
       
-      <div className={s.row} >
-        <input placeholder="username" onInput={e => {
-          loginHook.inputName(() => e.target.value)
-        }}  />
-      </div>
-      <div className={s.row} >
-        <input placeholder="password" onInput={e => {
-          loginHook.inputPassword(() => e.target.value)
-        }}  />
-      </div>
-      {loginHook?.errorTip() ? (
-        <div className={cls}>
-          {loginHook?.errorTip()}
-        </div>
-      ) : ''}
-      <div className={s.footer}>
-        <div>
-        <button onClick={() => loginHook.sign()}>Sign</button>
-        sign and auto login <input type="checkbox" checked={loginHook.signAndAutoLogin()} onChange={e => {
-          loginHook.signAndAutoLogin(() => e.target.checked)
-        }} />
-        </div>
-        <div>
-        <button onClick={() => loginHook.login()}>Login</button>
-        </div>
-      </div>
+      {alreadyLogin ? (
+        <>
+          <div className={s.row} >
+            账号：{loginHook.userData().name}
+          </div>
+          <div className={s.row} >
+            密码：{loginHook.userData().password}
+          </div>
+          <div className={s.footer}>
+            <div>
+              <button onClick={() => loginHook.logout()}>Logout</button>
+            </div>
+            <div>
+            </div>
+          </div>
+        </>
+      ) : 
+        <>
+          <div className={s.row} >
+            <input placeholder="username" onInput={e => {
+              loginHook.inputName(() => e.target.value)
+            }}  />
+          </div>
+          <div className={s.row} >
+            <input placeholder="password" onInput={e => {
+              loginHook.inputPassword(() => e.target.value)
+            }}  />
+          </div>
+          {loginHook?.errorTip() ? (
+            <div className={cls}>
+              {loginHook?.errorTip()}
+            </div>
+          ) : ''}
+          <div className={s.footer}>
+            <div>
+              <button onClick={() => loginHook.sign()}>Sign</button>
+              sign and auto login <input type="checkbox" checked={loginHook.signAndAutoLogin()} onChange={e => {
+                loginHook.signAndAutoLogin(() => e.target.checked)
+              }} />
+            </div>
+            <div>
+              <button onClick={() => loginHook.login()}>Login</button>
+            </div>
+          </div>
+        </>
+      }
+
       <pre>
         <code>
           alreadyLogin(): {String(loginHook.alreadyLogin())} <br/>

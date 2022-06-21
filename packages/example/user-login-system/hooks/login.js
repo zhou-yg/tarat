@@ -31,13 +31,12 @@ export default function login () {
       }
     }
   }))
-  const sessionStore = model(async () => {
-    console.log('await cookieId(): ', await cookieId())
+  const sessionStore = model(() => {
     return ({
       entity: 'sessionStore',
       query: {
         where: {
-          fromIndex: await cookieId()
+          fromIndex: cookieId()
         }
       }
     })
@@ -45,8 +44,10 @@ export default function login () {
 
   /* 9 */
 
-  const userIdInSession = computed(async () => {
-    const ss = await sessionStore()
+  const userIdInSession = computed(() => {
+    console.log('ss 1');
+    const ss = sessionStore()
+    console.log('ss 2', ss);
     if (ss && ss.length > 0) {
       return {
         name: ss[0].name,
@@ -54,21 +55,22 @@ export default function login () {
       }
     }
   })
-  const userDataByCookie = model(async () => ({
+  console.log('userIdInSession: ', userIdInSession._hook);
+  const userDataByCookie = model(() => ({
     entity: 'user',
     query: {
       where: {
-        name: (await userIdInSession())?.name,
-        password: (await userIdInSession())?.password,
+        name: (userIdInSession())?.name,
+        password: (userIdInSession())?.password,
       }
     }
   }))
   const userData = computed(async () => {
-    const u1 = await userDataByCookie()
+    const u1 = userDataByCookie()
     if (u1?.length > 0) {
       return u1[0]
     }
-    const u2 = await userDataByInput()
+    const u2 = userDataByInput()
     if (u2?.length > 0) {
       return u2[0]
     }
@@ -156,7 +158,12 @@ export default function login () {
   const logout = inputComputeInServer(() => {
     name(() => undefined)
     password(() => undefined)
-    cookieId(() => undefined)
+    const cid = cookieId()
+    cookieId(() => '')
+    userIdInSession(arr => {
+      const i = arr.findIndex(o => o.fromIndex === cid)
+      arr.splice(i, 1)
+    })
   })
 
   return {
