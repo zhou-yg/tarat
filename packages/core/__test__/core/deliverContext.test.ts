@@ -26,6 +26,49 @@ describe('initContext', () => {
     expect(result.s1()).toEqual(context.data[0][1])
     expect(result.s2()).toEqual(context.data[1][1])
   })
+  it('access state getter without context', () => {
+    const args: [ {num1: number}, number ] = [
+      { num1: 0 },
+      10
+    ]
+    const context: IHookContext = {
+      name: mockBM.plainObjectState.name,
+      initialArgList: [],
+      args: [],
+      data: [
+        ['state', { numStr: 'from context' }],
+        ['state', undefined]
+      ]
+    }
+    const runner = new Runner(mockBM.plainObjectState)
+    const result = runner.init(args, context)
+
+    expect(result.s1()).toEqual(context.data[0][1])
+
+    try {
+      result.s2()
+    } catch (e: any) {
+      expect(e.message).toBe('[update getter] cant access un initialized hook(1)')
+    }
+  })
+  it('access model getter without context', () => {
+    const context: IHookContext = {
+      name: mockBM.plainObjectState.name,
+      initialArgList: [],
+      args: [],
+      data: [
+        ['model', undefined]
+      ]
+    }
+    const runner = new Runner(mockBM.oneModel)
+    const result = runner.init([], context)
+
+    try {
+      result.m1()
+    } catch (e: any) {
+      expect(e.message).toBe('[update getter] cant access un initialized hook(0)')
+    }
+  })
   it('callHook remote', async () => {
 
     mockBM.initModelConfig({
