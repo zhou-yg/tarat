@@ -349,6 +349,29 @@ export function userModelComputedQuery() {
     targetName
   }
 }
+export function modelInComputed() {
+  const targetName = state('')
+  const users = model<Array<{ id: number, name: string }>>(
+    () => ({
+      entity: 'item',
+      query: {
+        where: {
+          name: targetName()
+        }
+      }
+    }),
+    { immediate: false }
+  )
+  const userNames = computed(() => {
+    return users()?.map(obj => obj.name) || []
+  })
+
+  return {
+    users,
+    userNames,
+    targetName
+  }
+}
 
 export function blankComputed(v: number) {
   const c = computed(() => {

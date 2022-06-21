@@ -111,9 +111,26 @@ describe('model', () => {
       await runner.ready()
       expect(result.users()).toEqual([{ id: 2, name: 'b' }])
     })
+
+    it('model used in computed', async () => {
+      const runner = new Runner(mockBM.modelInComputed)
+      const result = runner.init()
+
+      await runner.ready()
+
+      expect(result.userNames()).toEqual([])
+
+      result.targetName(() => 'a')
+
+      await runner.ready()
+
+      expect(result.users()).toEqual([
+        { id: 1, name: 'a' },
+      ])
+      expect(result.userNames()).toEqual(['a'])
+    })
   
     describe('modify (default=server) ', () => {
-  
       it('object:update property', async () => {
         const runner = new Runner(mockBM.userPessimisticModel)
         const result = runner.init()

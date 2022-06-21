@@ -15,7 +15,8 @@ import {
   log,
   BM,
   checkQueryWhere,
-  isPrimtive
+  isPrimtive,
+  last
 } from './util'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
 import { getPlugin, IModelQuery, TCacheFrom } from './plugin'
@@ -417,6 +418,21 @@ export class Cache<T> extends State<T | undefined> {
   }
 }
 
+
+
+let currentComputedStack: Computed<any>[] = []
+
+function pushComputed (c: Computed<any>) {
+  currentComputedStack.push(c)
+}
+function popComputed () {
+  currentComputedStack.pop()
+}
+
+export function setCurrentComputed(c: Computed<any>[]) {
+  currentComputedStack = c
+}
+
 export class Computed<T> extends State<T | undefined> {
   getterPromise: Promise<T> | null = null
   batchRunCancel: () => void = () => {}
@@ -426,9 +442,9 @@ export class Computed<T> extends State<T | undefined> {
     super(undefined)
   }
   run() {
-    currentComputed = this
+    pushComputed(this)
     const r: any = this.getter()
-    currentComputed = null
+    popComputed()
     if (r && (r.then || r instanceof Promise)) {
       this.getterPromise = r
       r.then((asyncResult: T) => {
@@ -784,12 +800,6 @@ function executeBM(f: BM, args: any = []) {
   const bmResult = f(...args)
 
   if (bmResult) {
-    map(bmResult, v => {
-      if (v instanceof State) {
-      } else if (v instanceof Model) {
-      } else if (isInputCompute(v)) {
-      }
-    })
   }
 
   return bmResult
@@ -800,8 +810,8 @@ export function internalProxy<T>(
   _internalValue: T,
   path: (string | number)[] = []
 ): T {
-  if (currentComputed) {
-    currentComputed.watcher.addDep(source, path)
+  if (currentComputedStack.length > 0) {
+    last(currentComputedStack).watcher.addDep(source, path)
     if (_internalValue && likeObject(_internalValue)) {
       const copyValue = shallowCopy(_internalValue)
       return new Proxy(copyValue as any, {
@@ -879,16 +889,6 @@ function createModelSetterGetterFunc<T extends any[]>(
     }
     return m.value
   }
-}
-
-function isInputCompute(v: any) {
-  return v.__inputComputeTag
-}
-
-let currentComputed: null | Computed<any> = null
-
-export function setCurrentComputed(c: Computed<any> | null) {
-  currentComputed = c
 }
 
 /**
