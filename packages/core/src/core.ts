@@ -428,12 +428,12 @@ export class Computed<T> extends State<T | undefined> {
   run() {
     currentComputed = this
     const r: any = this.getter()
+    currentComputed = null
     if (r && (r.then || r instanceof Promise)) {
       this.getterPromise = r
       r.then((asyncResult: T) => {
         this.update(asyncResult)
         this.getterPromise = null
-        currentComputed = null
       })
     } else {
       this.update(r)
@@ -1168,12 +1168,10 @@ function updateComputed<T>(fn: any): any {
     return createUnaccessGetter<T>(currentIndex)
   }
   const hook = new Computed<T>(fn)
-  currentComputed = hook
   currentRunnerScope!.addHook(hook)
-
+  // @TODO: update computed won't trigger
   hook._internalValue = initialValue
-
-  currentComputed = null
+  hook.run()
 
   const getter = () => hook.value
   const newGetter = Object.assign(getter, {
@@ -1189,12 +1187,9 @@ function mountComputed<T>(
 ): (() => T) & { _hook: Computed<T> }
 function mountComputed<T>(fn: any): any {
   const hook = new Computed<T>(fn)
-  currentComputed = hook
   currentRunnerScope!.addHook(hook)
-
+  
   hook.run()
-
-  currentComputed = null
 
   const getter = () => hook.value
   const newGetter = Object.assign(getter, {

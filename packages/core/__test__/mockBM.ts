@@ -384,6 +384,21 @@ export function computedWithArray() {
     guard
   }
 }
+export function nestedSimpleComputed() {
+  const s1 = state(1)
+  const c1 = computed(() => {
+    return s1() + 1
+  })
+  const c2 = computed(() => {
+    return c1() + 1
+  })
+
+  return {
+    s1,
+    c1,
+    c2
+  }
+}
 
 export function onlyCache() {
   const c = cache<{ num: number }>('num', {
