@@ -81,11 +81,7 @@ const plugins: {
       value: T,
       from: TCacheFrom
     ): Promise<void>
-    clearValue(
-      scope: CurrentRunnerScope,
-      k: string,
-      from: TCacheFrom
-    ): void
+    clearValue(scope: CurrentRunnerScope, k: string, from: TCacheFrom): void
   }
   Context?: {
     postDiffToServer(entity: string, d: IDiff): Promise<void>
