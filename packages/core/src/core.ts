@@ -418,14 +418,12 @@ export class Cache<T> extends State<T | undefined> {
   }
 }
 
-
-
 let currentComputedStack: Computed<any>[] = []
 
-function pushComputed (c: Computed<any>) {
+function pushComputed(c: Computed<any>) {
   currentComputedStack.push(c)
 }
-function popComputed () {
+function popComputed() {
   currentComputedStack.pop()
 }
 
@@ -1188,7 +1186,7 @@ function mountComputed<T>(
 function mountComputed<T>(fn: any): any {
   const hook = new Computed<T>(fn)
   currentRunnerScope!.addHook(hook)
-  
+
   hook.run()
 
   const getter = () => hook.value
