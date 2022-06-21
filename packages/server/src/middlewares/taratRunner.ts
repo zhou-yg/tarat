@@ -15,6 +15,7 @@ function wrapCtx (ctx: Application.ParameterizedContext) {
   return {
     cookies: {
       set (name: any, value: any) {
+        console.log('set(name, value): ', name, value);
         return ctx.cookies.set(name, value)
       },
       get: ctx.cookies.get.bind(ctx.cookies)
