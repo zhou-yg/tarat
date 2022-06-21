@@ -71,17 +71,21 @@ const plugins: {
   }
   Cache?: {
     getValue<T>(
-      scope: CurrentRunnerScope | null,
+      scope: CurrentRunnerScope,
       k: string,
       from: TCacheFrom
     ): Promise<T | undefined>
     setValue<T>(
-      scope: CurrentRunnerScope | null,
+      scope: CurrentRunnerScope,
       k: string,
       value: T,
       from: TCacheFrom
     ): Promise<void>
-    clearValue(scope: CurrentRunnerScope | null, k: string, from: TCacheFrom): void
+    clearValue(
+      scope: CurrentRunnerScope,
+      k: string,
+      from: TCacheFrom
+    ): void
   }
   Context?: {
     postDiffToServer(entity: string, d: IDiff): Promise<void>
@@ -96,9 +100,9 @@ const plugins: {
     getCurrent(scope: CurrentRunnerScope): IRunningContext | null
   }
   cookie?: {
-    get<T>(scope: CurrentRunnerScope | null, k: string): Promise<T | undefined>
-    set<T>(scope: CurrentRunnerScope | null, k: string, value: T): Promise<void>
-    clear(scope: CurrentRunnerScope | null, k: string): void
+    get<T>(scope: CurrentRunnerScope, k: string): Promise<T | undefined>
+    set<T>(scope: CurrentRunnerScope, k: string, value: T): Promise<void>
+    clear(scope: CurrentRunnerScope, k: string): void
   }
 } = {}
 

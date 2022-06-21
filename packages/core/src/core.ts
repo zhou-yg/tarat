@@ -17,12 +17,7 @@ import {
   checkQueryWhere,
   isPrimtive
 } from './util'
-import {
-  produceWithPatches,
-  Draft,
-  enablePatches,
-  applyPatches
-} from 'immer'
+import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
 import { getPlugin, IModelQuery, TCacheFrom } from './plugin'
 
 enablePatches()
@@ -231,7 +226,12 @@ export class Model<T extends any[]> extends State<T[]> {
       // @TODO：要确保时序，得阻止旧的query数据更新
       const q = await this.getQueryWhere()
       const valid = await this.enableQuery()
-      log('[Model.executeQuery] 1 q.entity, q.query: ', q.entity, q.query, valid)
+      log(
+        '[Model.executeQuery] 1 q.entity, q.query: ',
+        q.entity,
+        q.query,
+        valid
+      )
       if (valid) {
         const result: T = await getPlugin('Model').find(q.entity, q.query)
         log('[Model.executeQuery] 2 result: ', result)
@@ -296,7 +296,9 @@ class ClientModel<T extends any[]> extends Model<T> {
     if (valid) {
       const context = this.scope.createInputComputeContext(this)
       log('[ClientModel.executeQuery] before post : ')
-      const result: IHookContext = await getPlugin('Context').postQueryToServer(context)
+      const result: IHookContext = await getPlugin('Context').postQueryToServer(
+        context
+      )
       this.getterPromise = null
 
       const index = this.scope.hooks.indexOf(this)
@@ -337,7 +339,9 @@ export class Cache<T> extends State<T | undefined> {
       this.watcher.addDep(this.source)
 
       const { _internalValue } = this.source
-      const initVal = isPrimtive(_internalValue) ? _internalValue : shallowCopy(_internalValue)
+      const initVal = isPrimtive(_internalValue)
+        ? _internalValue
+        : shallowCopy(_internalValue)
       super.update(initVal)
     }
   }
@@ -363,7 +367,7 @@ export class Cache<T> extends State<T | undefined> {
     }
     return super.value
   }
-  async executeQuery () {
+  async executeQuery() {
     const { from } = this.options
     const { source } = this
 
@@ -380,7 +384,7 @@ export class Cache<T> extends State<T | undefined> {
         super.update(valueInCache)
       } else if (source) {
         const valueInSource = source.value
-  
+
         super.update(valueInSource)
         // unconcern the result of remote updateing
         getPlugin('Cache').setValue(
@@ -517,15 +521,15 @@ class Effect<T> extends Hook {
 }
 
 /**
- * 
- * 
- * 
- * 
+ *
+ *
+ *
+ *
  * top runner & scope
- * 
- * 
- * 
- * 
+ *
+ *
+ *
+ *
  */
 
 // type HookChangedPath = string
@@ -696,7 +700,7 @@ export class CurrentRunnerScope {
              */
             state.update?.(value, [], true)
             break
-         }
+        }
       }
     })
     this.notify()
@@ -856,7 +860,10 @@ function createModelSetterGetterFunc<T extends any[]>(
 } {
   return (paramter?: any): any => {
     if (paramter && isFunc(paramter)) {
-      const [result, patches] = produceWithPatches<T>(shallowCopy(m.value), paramter)
+      const [result, patches] = produceWithPatches<T>(
+        shallowCopy(m.value),
+        paramter
+      )
       log(
         '[model setter] result, patches: ',
         !!currentInputeCompute,
@@ -949,13 +956,10 @@ function createUnaccessGetter2<T extends any[]>(index: number) {
   const f = (): any => {
     throw new Error(`[update getter] cant access un initialized hook(${index})`)
   }
-  const newF: (() => any) & { _hook: any; exist: any } = Object.assign(
-    f,
-    {
-      _hook: null,
-      exist: () => true
-    }
-  )
+  const newF: (() => any) & { _hook: any; exist: any } = Object.assign(f, {
+    _hook: null,
+    exist: () => true
+  })
   return newF
 }
 
@@ -1167,7 +1171,7 @@ function updateComputed<T>(fn: any): any {
   currentComputed = hook
   currentRunnerScope!.addHook(hook)
 
-  hook._internalValue = (initialValue)
+  hook._internalValue = initialValue
 
   currentComputed = null
 

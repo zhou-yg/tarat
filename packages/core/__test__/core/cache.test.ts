@@ -8,7 +8,7 @@ import * as mockBM from '../mockBM'
 describe('cache', () => {
   describe('mount cache', () => {
     beforeEach(() => {
-      getPlugin('Cache').clearValue(null, '', 'cookie')
+      getPlugin('Cache').clearValue(null as any, '', 'cookie')
     })
   
     it ('simple cache', async () => {
@@ -79,7 +79,7 @@ describe('cache', () => {
   
   describe('update cache', () => {
     beforeEach(() => {
-      getPlugin('Cache').clearValue(null, '', 'cookie')
+      getPlugin('Cache').clearValue(null as any, '', 'cookie')
     })
     it('initialize simple cache with context', async () => {
       const runner = new Runner(mockBM.onlyCache)
