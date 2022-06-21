@@ -7,7 +7,7 @@ export type AnyObject = { [key: string]: any }
 export const ownKeys: (target: AnyObject) => PropertyKey[] = Reflect.ownKeys
 export const getOwnPropertyDescriptors = Object.getOwnPropertyDescriptors
 
-export function shallowCopy(base: any) {
+export function shallowCopy(base: any): any {
   if (isArray(base)) return Array.prototype.slice.call(base)
   const descriptors = getOwnPropertyDescriptors(base)
   let keys = ownKeys(descriptors)

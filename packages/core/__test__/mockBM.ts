@@ -10,7 +10,8 @@ import {
   clientModel,
   cache,
   IHookContext,
-  combineLatest
+  combineLatest,
+  CurrentRunnerScope
 } from '../src/'
 import { loadPlugin } from '../src/plugin'
 
@@ -56,15 +57,18 @@ export function initModelConfig(obj: any = {}) {
     },
     ...obj
   })
-  const cacheMap = new Map<string, any>()
+  const cacheMap = new Map<CurrentRunnerScope | null, Map<string, any>>()
   loadPlugin('cookie', {
-    async get(key) {
-      return cacheMap.get(key)
+    async get(scope, key) {
+      return cacheMap.get(scope)?.get(key)
     },
-    async set(k, v) {
-      cacheMap.set(k, v)
+    async set(scope, k, v) {
+      if (!cacheMap.get(scope)) {
+        cacheMap.set(scope, new Map())
+      }
+      cacheMap.get(scope)?.set(k, v)
     },
-    clear(k) {
+    clear() {
       cacheMap.clear()
     }
   })

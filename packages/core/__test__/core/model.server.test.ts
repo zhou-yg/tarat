@@ -65,7 +65,9 @@ describe('model', () => {
       const runner = new Runner(mockBM.userPessimisticModel)
       const result = runner.init()
       
-      expect(await result.users()).toEqual([
+      await runner.ready()
+
+      expect(result.users()).toEqual([
         { id: 1, name: 'a' },
         { id: 2, name: 'b' },
       ])
@@ -83,8 +85,10 @@ describe('model', () => {
       ])
   
       await result.createItem(3, 'c')
+      await runner.ready()
   
       const r2 = await result.items()
+      
   
       expect(r2).toEqual([
         { id: 1, name: 'a' },
@@ -96,13 +100,16 @@ describe('model', () => {
     it('query where computed', async () => {
       const runner = new Runner(mockBM.userModelComputedQuery)
       const result = runner.init()
-      expect(await result.users()).toEqual([])
+      await runner.ready()
+      expect(result.users()).toEqual([])
   
       result.targetName(() => 'a')
-      expect(await result.users()).toEqual([{ id: 1, name: 'a' }])
+      await runner.ready()
+      expect(result.users()).toEqual([{ id: 1, name: 'a' }])
   
       result.targetName(() => 'b')
-      expect(await result.users()).toEqual([{ id: 2, name: 'b' }])
+      await runner.ready()
+      expect(result.users()).toEqual([{ id: 2, name: 'b' }])
     })
   
     describe('modify (default=server) ', () => {
@@ -113,11 +120,16 @@ describe('model', () => {
         
         const newName = 'updated a'
   
-        await result.users((draft: any) => {
+        await runner.ready()
+
+        result.users((draft: any) => {
           draft[0].name = newName
         })
-  
-        const users = await result.users()
+
+        await runner.ready()
+
+        const users = result.users()
+
         expect(users).toEqual([
           { id: 1, name: newName },
           { id: 2, name: 'b' },  
@@ -143,11 +155,15 @@ describe('model', () => {
         const runner = new Runner(mockBM.userPessimisticModel)
         const result = runner.init()
   
-        await result.users((draft: any) => {
+        await runner.ready()
+
+        result.users((draft: any) => {
           delete draft[1].name
         })
   
-        expect(await result.users()).toEqual([
+        await runner.ready()
+
+        expect(result.users()).toEqual([
           { id: 1, name: 'a' },  
           { id: 2, name: null },  
         ])
@@ -155,16 +171,15 @@ describe('model', () => {
       it('array:create new element', async () => {
         const runner = new Runner(mockBM.userPessimisticModel)
         const result = runner.init()
-        
-        await mockBM.wait()
-  
+          
         const newObj = { name: 'c', id: 3 }
   
-        await result.users((draft: any) => {
+        result.users((draft: any) => {
           draft.push(newObj)
         })
-  
-        const users = await result.users()
+        await runner.ready()
+
+        const users = result.users()
   
         expect(users).toEqual([
           { id: 1, name: 'a' },
@@ -175,12 +190,16 @@ describe('model', () => {
       it('array:remove element', async () => {
         const runner = new Runner(mockBM.userPessimisticModel)
         const result = runner.init()
-  
-        await result.users((draft: any) => {
+
+        await runner.ready()
+
+        result.users((draft: any) => {
           draft.splice(0, 1)
         })
+
+        await runner.ready()
   
-        expect(await result.users()).toEqual([
+        expect(result.users()).toEqual([
           { id: 2, name: 'b' },  
         ])
       })
@@ -197,7 +216,9 @@ describe('model', () => {
       })
       const result = runner.init([], context)
       
-      expect(await result.users()).toEqual([
+      await runner.ready()
+
+      expect(result.users()).toEqual([
         { id: 1, name: 'a' },
         { id: 2, name: 'b' },
       ])

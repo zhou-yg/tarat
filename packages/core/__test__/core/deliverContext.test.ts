@@ -16,8 +16,8 @@ describe('initContext', () => {
       initialArgList: [],
       args: [],
       data: [
-        ['data', { numStr: 'from context' }],
-        ['data', null]
+        ['state', { numStr: 'from context' }],
+        ['state', null]
       ]
     }
     const runner = new Runner(mockBM.plainObjectState)
