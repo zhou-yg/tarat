@@ -3,17 +3,16 @@ import { getPlugin, IRunningContext, loadPlugin } from 'tarat-core'
 export function setCookies () {
 
   loadPlugin('cookie', {
-    async set(k, value) {
-      console.log('[setCookies] k, value: ', k, value);
+    async set(s, k, value) {
       if (value && typeof value === 'string'){
-        getPlugin('GlobalRunning').getCurrent()?.cookies.set(k, value)
+        getPlugin('GlobalRunning').getCurrent(s)?.cookies.set(k, value)
       }
     },
-    async get(k): Promise<any> {
-      return getPlugin('GlobalRunning').getCurrent()?.cookies.get(k)
+    async get(s, k): Promise<any> {
+      return getPlugin('GlobalRunning').getCurrent(s)?.cookies.get(k)
     },
-    clear(k) {
-      getPlugin('GlobalRunning').getCurrent()?.cookies.set(k, '')
+    clear(s, k) {
+      getPlugin('GlobalRunning').getCurrent(s)?.cookies.set(k, '')
     },
   })
 }

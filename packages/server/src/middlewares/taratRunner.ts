@@ -15,7 +15,6 @@ function wrapCtx (ctx: Application.ParameterizedContext) {
   return {
     cookies: {
       set (name: any, value: any) {
-        console.log('args: ', name, value);
         return ctx.cookies.set(name, value)
       },
       get: ctx.cookies.get.bind(ctx.cookies)
@@ -47,13 +46,13 @@ export default function taratMiddleware (args: {
         const hookFunc = await hookConfig.hookFunc
         const c: IHookContext = JSON.parse(ctx.request.body)
 
-        getPlugin('GlobalRunning').setCurrent(wrapCtx(ctx))
+        let runner = new Runner(hookFunc.default)
+        getPlugin('GlobalRunning').setCurrent(runner.scope, wrapCtx(ctx))
         console.log('ctx cookie: ', ctx.cookies.get('userDataKey'));
 
-        let runner = new Runner(hookFunc.default)
         runner.init(c.initialArgList, c)
 
-        getPlugin('GlobalRunning').setCurrent(null)
+        getPlugin('GlobalRunning').setCurrent(runner.scope, null)
         
         if (c.index !== undefined) {
           await runner.callHook(c.index, c.args)
