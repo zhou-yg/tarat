@@ -351,7 +351,7 @@ export function userModelComputedQuery() {
 }
 export function modelInComputed() {
   const targetName = state('')
-  const users = model<Array<{ id: number, name: string }>>(
+  const users = model<Array<{ id: number; name: string }>>(
     () => ({
       entity: 'item',
       query: {
