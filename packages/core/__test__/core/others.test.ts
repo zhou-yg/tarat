@@ -13,7 +13,7 @@ describe('internalProxy', () => {
     const c = new Computed(() => {
       return 0
     })
-    setCurrentComputed(c)
+    setCurrentComputed([c])
 
     const fronzedObj1 = { num: 0 }
     Object.freeze(fronzedObj1)
@@ -36,7 +36,7 @@ describe('internalProxy', () => {
     const newArr = v.arr.map(v => v + 1)
     expect(newArr).toEqual([2,3,4])
 
-    setCurrentComputed(null)
+    setCurrentComputed([])
   })
 })
 
