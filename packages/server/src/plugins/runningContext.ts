@@ -1,15 +1,17 @@
-import { IRunningContext, loadPlugin } from 'tarat-core'
+import { CurrentRunnerScope, IRunningContext, loadPlugin } from 'tarat-core'
 import { join } from 'path'
 
-let currentRunning: IRunningContext | null = null
+let currentRunningMap: Map<CurrentRunnerScope, IRunningContext> = new Map()
 
 export async function setRunning ()  {
   loadPlugin('GlobalRunning', {
-    setCurrent (api) {
-      currentRunning = api
+    setCurrent (s, api) {
+      if (api) {
+        currentRunningMap.set(s, api)
+      }
     },
-    getCurrent () {
-      return currentRunning
+    getCurrent (s) {
+      return currentRunningMap.get(s) || null
     }
   })
 }
