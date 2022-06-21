@@ -945,7 +945,7 @@ function createUnaccessGetter<T>(index: number) {
   })
   return newF
 }
-function createUnaccessGetterAsync<T extends any[]>(index: number) {
+function createUnaccessGetter2<T extends any[]>(index: number) {
   const f = (): any => {
     throw new Error(`[update getter] cant access un initialized hook(${index})`)
   }
@@ -957,10 +957,6 @@ function createUnaccessGetterAsync<T extends any[]>(index: number) {
     }
   )
   return newF
-}
-
-function updateBlankVal<T>(initialValue: T) {
-  return initialValue === null ? undefined : initialValue
 }
 
 function updateState<T>(initialValue: T) {
@@ -1005,7 +1001,7 @@ function updateModel<T extends any[]>(q: () => IModelQuery, op?: IModelOption) {
   const initialValue: T =
     currentRunnerScope!.intialContextData![currentIndex]?.[1]
   if (initialValue === undefined) {
-    return createUnaccessGetterAsync<T>(currentIndex)
+    return createUnaccessGetter2<T>(currentIndex)
   }
   const immediate = process.env.TARGET === 'server'
 
@@ -1055,7 +1051,7 @@ function updateClientModel<T extends any[]>(
   const initialValue: T =
     currentRunnerScope!.intialContextData![currentIndex]?.[1]
   if (initialValue === undefined) {
-    return createUnaccessGetterAsync<T>(currentIndex)
+    return createUnaccessGetter2<T>(currentIndex)
   }
   const inServer = process.env.TARGET === 'server'
 
