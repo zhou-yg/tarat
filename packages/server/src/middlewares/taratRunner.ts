@@ -54,7 +54,9 @@ export default function taratMiddleware (args: {
         runner.init(c.initialArgList, c)
 
         getPlugin('GlobalRunning').setCurrent(runner.scope, null)
-        
+
+        await runner.ready()
+
         if (c.index !== undefined) {
           await runner.callHook(c.index, c.args)
         }
