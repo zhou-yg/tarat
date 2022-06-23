@@ -39,7 +39,7 @@ function checkFreeze(target: { _hook?: { freezed?: boolean } }) {
 
 interface ITarget<T> {
   watcher: Watcher<T>
-  notify: (hook?: T, patches?: IPatch[]) => void
+  notify: (hook?: T, patches?: IPatch[], rc?: ReactiveChain) => void
 }
 
 interface ISource<U> {
@@ -50,11 +50,11 @@ interface ISource<U> {
 export class Watcher<T = Hook> {
   deps: Map<ISource<T>, (string | number)[][]> = new Map()
   constructor(public target: ITarget<ISource<T>>) {}
-  notify(dep: ISource<T>, path: TPath, patches?: IPatch[]) {
+  notify(dep: ISource<T>, path: TPath, patches?: IPatch[], reactiveChain?: ReactiveChain) {
     const paths = this.deps.get(dep)
     const matched = paths?.some(p => isEqual(p, path))
     if (matched) {
-      this.target.notify(dep, patches)
+      this.target.notify(dep, patches, reactiveChain)
     }
   }
   addDep(dep: ISource<T>, path: (number | string)[] = []) {
@@ -101,12 +101,12 @@ export class State<T = any> extends Hook {
     super()
     this._internalValue = data
   }
-  trigger(path: (number | string)[] = [''], patches?: IPatch[]) {
+  trigger(path: (number | string)[] = [''], patches?: IPatch[], reactiveChain?: ReactiveChain<T>) {
     if (!path || path.length === 0) {
       path = ['']
     }
     this.watchers.forEach(w => {
-      w.notify(this, path, patches)
+      w.notify(this, path, patches, reactiveChain)
     })
   }
   get value(): T {
@@ -115,32 +115,34 @@ export class State<T = any> extends Hook {
     }
     return internalProxy(this, this._internalValue)
   }
-  update(v: T, patches?: IPatch[], silent?: boolean) {
+  update(v: T, patches?: IPatch[], silent?: boolean, reactiveChain?: ReactiveChain<T>) {
     const oldValue = this._internalValue
     this._internalValue = v
     const shouldTrigger = oldValue !== v && !isEqual(oldValue, v)
     if (shouldTrigger) {
       this.modifiedTimstamp = Date.now()
     }
+    reactiveChain?.update()
+
     if (silent) {
       return
     }
 
     // trigger only changed
     if (shouldTrigger) {
-      this.trigger()
+      this.trigger(undefined, undefined, reactiveChain)
 
       if (patches && patches.length > 0) {
         const changedPathArr = calculateChangedPath(oldValue, patches)
-        changedPathArr.forEach(path => this.trigger(path, patches))
+        changedPathArr.forEach(path => this.trigger(path, patches, reactiveChain))
       }
     }
   }
-  applyInputComputePatches(ic: InputCompute) {
+  applyInputComputePatches(ic: InputCompute, reactiveChain?: ReactiveChain<T>) {
     let exist = this.inputComputePatchesMap.get(ic)
     if (exist) {
       this.inputComputePatchesMap.delete(ic)
-      this.update(exist[0], exist[1])
+      this.update(exist[0], exist[1], false, reactiveChain)
     }
   }
   getInputComputeDraftValue(): T {
@@ -191,9 +193,9 @@ export class Model<T extends any[]> extends State<T[]> {
       this.query()
     }
   }
-  notify() {
-    log(`[${this.constructor.name}.executeQuery]`)
-    this.executeQuery()
+  notify(h?: Hook, p?: IPatch[], reactiveChain?: ReactiveChain) {
+    log(`[${this.constructor.name}.executeQuery] withChain=${!!reactiveChain}`)
+    this.executeQuery(reactiveChain)
   }
   async getQueryWhere(): Promise<IModelQuery> {
     await this.queryWhereComputed!.getterPromise
@@ -219,7 +221,7 @@ export class Model<T extends any[]> extends State<T[]> {
     const valid = checkQueryWhere(q.query.where)
     return valid || this.options.ignoreEnable
   }
-  async executeQuery() {
+  async executeQuery(reactiveChain?: ReactiveChain) {
     this.init = false
     let resolve: Function
     this.getterPromise = new Promise(r => (resolve = r))
@@ -236,7 +238,7 @@ export class Model<T extends any[]> extends State<T[]> {
       if (valid) {
         const result: T = await getPlugin('Model').find(q.entity, q.query)
         log('[Model.executeQuery] 2 result: ', result)
-        this.update(result)
+        this.update(result, [], false, reactiveChain)
       }
     } catch (e) {
       log('[Model.executeQuery] error')
@@ -251,20 +253,20 @@ export class Model<T extends any[]> extends State<T[]> {
     const result: T = await getPlugin('Model').find(q.entity, { where: obj })
     return result.length > 0
   }
-  override async applyInputComputePatches(ic: InputCompute) {
+  override async applyInputComputePatches(ic: InputCompute, reactiveChain?: ReactiveChain) {
     const exist = this.inputComputePatchesMap.get(ic)
     if (exist) {
       this.inputComputePatchesMap.delete(ic)
       const patches = exist[1]
       const newValue = applyPatches(this._internalValue, patches)
-      await this.updateWithPatches(newValue, patches)
+      await this.updateWithPatches(newValue, patches, reactiveChain)
     }
   }
-  async updateWithPatches(v: T[], patches: IPatch[]) {
+  async updateWithPatches(v: T[], patches: IPatch[], reactiveChain?: ReactiveChain) {
     const oldValue = this._internalValue
     if (!this.options.pessimisticUpdate) {
       log('[Model.updateWithPatches] update internal v=', v)
-      this.update(v, patches)
+      this.update(v, patches, false, reactiveChain)
     }
 
     let resolve: Function
@@ -277,14 +279,15 @@ export class Model<T extends any[]> extends State<T[]> {
       await getPlugin('Model').executeDiff(entity, diff)
     } catch (e) {
       console.info('[updateWithPatches] postPatches fail', e)
-      if (this.options.autoRollback) {
-        this.update(oldValue)
-      }
+      // @TODO autoRollback value
+      // if (this.options.autoRollback) {
+      //   this.update(oldValue, [], true)
+      // }
     } finally {
       resolve!()
       this.getterPromise = null
     }
-    await this.executeQuery()
+    await this.executeQuery(reactiveChain)
   }
 }
 
@@ -346,7 +349,7 @@ export class Cache<T> extends State<T | undefined> {
       super.update(initVal)
     }
   }
-  notify(hook?: Hook) {
+  notify(hook?: Hook, p?: IPatch[], reactiveChain?: ReactiveChain) {
     const { from } = this.options
     const { source } = this
     if (hook && source && hook === source) {
@@ -359,7 +362,7 @@ export class Cache<T> extends State<T | undefined> {
        */
       getPlugin('Cache').clearValue(this.scope, this.getterKey, from)
 
-      this.executeQuery()
+      this.executeQuery(reactiveChain)
     }
   }
   override get value(): T | undefined {
@@ -368,7 +371,7 @@ export class Cache<T> extends State<T | undefined> {
     }
     return super.value
   }
-  async executeQuery() {
+  async executeQuery(reactiveChain?: ReactiveChain) {
     const { from } = this.options
     const { source } = this
 
@@ -382,11 +385,11 @@ export class Cache<T> extends State<T | undefined> {
         from
       )
       if (valueInCache !== undefined) {
-        super.update(valueInCache)
+        super.update(valueInCache, [], false, reactiveChain)
       } else if (source) {
         const valueInSource = source.value
 
-        super.update(valueInSource)
+        super.update(valueInSource, [], false, reactiveChain)
         // unconcern the result of remote updateing
         getPlugin('Cache').setValue(
           this.scope,
@@ -404,7 +407,7 @@ export class Cache<T> extends State<T | undefined> {
     }
   }
   // call by outer
-  override async update(v?: T, patches?: IPatch[], silent?: boolean) {
+  override async update(v?: T, patches?: IPatch[], silent?: boolean, reactiveChain?: ReactiveChain) {
     const { from } = this.options
     const { source } = this
     if (source) {
@@ -412,7 +415,7 @@ export class Cache<T> extends State<T | undefined> {
         '[Cache] can not update value directly while the cache has "source" in options '
       )
     } else {
-      super.update(v, patches, silent)
+      super.update(v, patches, silent, reactiveChain)
       await getPlugin('Cache').setValue(this.scope, this.getterKey, v, from)
     }
   }
@@ -439,25 +442,25 @@ export class Computed<T> extends State<T | undefined> {
   constructor(public getter: FComputedFunc<T> | FComputedFuncAsync<T>) {
     super(undefined)
   }
-  run() {
+  run(reactiveChain?: ReactiveChain) {
     pushComputed(this)
     const r: any = this.getter()
     popComputed()
     if (r && (r.then || r instanceof Promise)) {
       this.getterPromise = r
       r.then((asyncResult: T) => {
-        this.update(asyncResult)
+        this.update(asyncResult, [], false, reactiveChain)
         this.getterPromise = null
       })
     } else {
-      this.update(r)
+      this.update(r, [], false, reactiveChain)
     }
   }
-  notify() {
+  notify(h?: Hook, p?: IPatch[], reactiveChain?: ReactiveChain) {
     /**
      * trigger synchronism
      */
-    this.run()
+    this.run(reactiveChain)
 
     // this.batchRunCancel()
     // this.batchRunCancel = nextTick(() => {
@@ -477,7 +480,13 @@ class InputCompute<P extends any[] = any> extends Hook {
   inputFuncStart() {}
   async inputFuncEnd() {
     currentInputeCompute = null
-    this.scope.applyComputePatches(this)
+
+    let reactiveChain: ReactiveChain | undefined = undefined
+    if (currentReactiveChainFlag) {
+      reactiveChain = new ReactiveChain(this)
+    }
+    
+    this.scope.applyComputePatches(this, reactiveChain)
     unFreeze({ _hook: this })
     this.triggerEvent('after')
   }
@@ -612,6 +621,37 @@ class Effect<T> extends Hook {
 //   }
 // }
 
+/**
+ * 
+ */
+let currentReactiveChainFlag = false
+export function recordReactiveChain (open: boolean) {
+  currentReactiveChainFlag = open
+}
+/**
+ * collect reactive chain for debug
+ */
+export class ReactiveChain<T = any> {
+  oldValue: T | undefined
+  newValue: T | undefined
+  childSet: Set<ReactiveChain<T>> = new Set()
+  constructor (public state: State | InputCompute) {
+    if (state instanceof State) {
+      this.oldValue = state._internalValue
+    }
+  }
+  update () {
+    if (this.state instanceof State) {
+      this.newValue = this.state._internalValue
+    }
+  }
+  add (child: State<T>): ReactiveChain<T> {
+    const childChain = new ReactiveChain(child)
+    this.childSet.add(childChain)
+    return childChain
+  }
+}
+
 export class CurrentRunnerScope {
   hooks: Hook[] = []
   // computePatches: Array<[State, IPatch[]]> = []
@@ -623,6 +663,9 @@ export class CurrentRunnerScope {
   initialArgList: any[] = []
   intialContextData: IHookContext['data'] | null = null
   hookRunnerName = ''
+
+  reactiveChainStack: ReactiveChain[] = []
+
   onUpdate(f: Function) {
     this.outerListeners.push(f)
     return () => {
@@ -655,7 +698,7 @@ export class CurrentRunnerScope {
     this.watcher.addDep(v)
   }
 
-  applyComputePatches(currentInputCompute: InputCompute) {
+  applyComputePatches(currentInputCompute: InputCompute, reactiveChain?: ReactiveChain) {
     const hookModified = this.hooks.filter(h => {
       if (h && (h as State).inputComputePatchesMap) {
         return (h as State).inputComputePatchesMap.get(currentInputCompute)
@@ -664,7 +707,8 @@ export class CurrentRunnerScope {
 
     if (hookModified.length) {
       hookModified.forEach(h => {
-        ;(h as State).applyInputComputePatches(currentInputCompute)
+        const newChildChain = reactiveChain?.add((h as State))
+        ;(h as State).applyInputComputePatches(currentInputCompute, newChildChain)
       })
     }
   }
@@ -826,67 +870,12 @@ let currentInputeCompute: InputCompute | null = null
 
 type IModifyFunction<T> = (draft: Draft<T>) => void
 
-function createStateSetterGetterFunc<SV>(
-  s: State<SV>,
-  scope: CurrentRunnerScope
-): {
-  (): SV
-  (paramter: IModifyFunction<SV>): [SV, IPatch[]]
-} {
-  return (paramter?: any): any => {
-    if (paramter) {
-      if (isFunc(paramter)) {
-        const [result, patches] = produceWithPatches(s.value, paramter)
-        if (currentInputeCompute) {
-          s.addInputComputePatches(result, patches)
-        } else {
-          s.update(result, patches)
-        }
-        return [result, patches]
-      } else {
-        throw new Error('[change state] pass a function')
-      }
-    }
-    return s.value
-  }
-}
-
 interface IModelOption {
   immediate?: boolean
   unique?: boolean
   autoRollback?: boolean
   pessimisticUpdate?: boolean
   ignoreEnable?: boolean
-}
-
-function createModelSetterGetterFunc<T extends any[]>(
-  m: Model<T>,
-  scope: CurrentRunnerScope
-): {
-  (): T | undefined
-  (paramter: IModifyFunction<T | undefined>): Promise<[T | undefined, IPatch[]]>
-} {
-  return (paramter?: any): any => {
-    if (paramter && isFunc(paramter)) {
-      const [result, patches] = produceWithPatches<T>(
-        shallowCopy(m.value),
-        paramter
-      )
-      log(
-        '[model setter] result, patches: ',
-        !!currentInputeCompute,
-        JSON.stringify(patches, null, 2)
-      )
-
-      if (currentInputeCompute) {
-        m.addInputComputePatches(result, patches)
-      } else {
-        m.updateWithPatches(result, patches)
-      }
-      return [result, patches]
-    }
-    return m.value
-  }
 }
 
 /**
@@ -903,6 +892,7 @@ function createModelSetterGetterFunc<T extends any[]>(
  *
  *
  */
+
 export const mountHookFactory = {
   state: mountState,
   model: mountModel,
@@ -941,6 +931,99 @@ export let currentHookFactory: {
   combineLatest: typeof combineLatest
 } = updateHookFactory
 
+function createStateSetterGetterFunc<SV>(
+  s: State<SV>,
+): {
+  (): SV
+  (paramter: IModifyFunction<SV>): [SV, IPatch[]]
+} {
+  return (paramter?: any): any => {
+    if (paramter) {
+      if (isFunc(paramter)) {
+        let reactiveChain: ReactiveChain<SV> | undefined
+        if (currentReactiveChainFlag) {
+          reactiveChain = new ReactiveChain(s)
+        }
+        const [result, patches] = produceWithPatches(s.value, paramter)
+        if (currentInputeCompute) {
+          s.addInputComputePatches(result, patches)
+        } else {
+          s.update(result, patches, false, reactiveChain)
+        }
+        return [result, patches]
+      } else {
+        throw new Error('[change state] pass a function')
+      }
+    }
+    return s.value
+  }
+}
+
+function createModelSetterGetterFunc<T extends any[]>(
+  m: Model<T>,
+): {
+  (): T | undefined
+  (paramter: IModifyFunction<T | undefined>): Promise<[T | undefined, IPatch[]]>
+} {
+  return (paramter?: any): any => {
+    if (paramter && isFunc(paramter)) {
+      let reactiveChain: ReactiveChain<T> | undefined
+      if (currentReactiveChainFlag) {
+        reactiveChain = new ReactiveChain(m)
+      }
+
+      const [result, patches] = produceWithPatches<T>(
+        shallowCopy(m.value),
+        paramter
+      )
+      log(
+        '[model setter] result, patches: ',
+        !!currentInputeCompute,
+        JSON.stringify(patches, null, 2)
+      )
+
+      if (currentInputeCompute) {
+        m.addInputComputePatches(result, patches)
+      } else {
+        m.updateWithPatches(result, patches, reactiveChain)
+      }
+      return [result, patches]
+    }
+    return m.value
+  }
+}
+
+
+function createCacheSetterGetterFunc<SV>(
+  c: Cache<SV>,
+): {
+  (): SV
+  (paramter: IModifyFunction<SV>): [SV, IPatch[]]
+} {
+  return (paramter?: any): any => {
+    if (paramter) {
+      if (isFunc(paramter)) {
+        let reactiveChain: ReactiveChain<SV> | undefined
+        if (currentReactiveChainFlag) {
+          reactiveChain = new ReactiveChain(c)
+        }
+            
+        const [result, patches] = produceWithPatches(c.value, paramter)
+        if (currentInputeCompute) {
+          c.addInputComputePatches(result, patches)
+        } else {
+          c.update(result, patches, false, reactiveChain)
+        }
+        return [result, patches]
+      } else {
+        throw new Error('[change cache] pass a function')
+      }
+    }
+    return c.value
+  }
+}
+
+
 function createUnaccessGetter<T>(index: number) {
   const f = () => {
     throw new Error(`[update getter] cant access un initialized hook(${index})`)
@@ -972,7 +1055,6 @@ function updateState<T>(initialValue: T) {
 
   const setterGetter = createStateSetterGetterFunc(
     internalState,
-    currentRunnerScope!
   )
   currentRunnerScope!.addHook(internalState)
 
@@ -987,7 +1069,6 @@ function mountState<T>(initialValue: T) {
 
   const setterGetter = createStateSetterGetterFunc(
     internalState,
-    currentRunnerScope!
   )
   currentRunnerScope!.addHook(internalState)
 
@@ -1018,7 +1099,6 @@ function updateModel<T extends any[]>(q: () => IModelQuery, op?: IModelOption) {
 
   const setterGetter = createModelSetterGetterFunc<T>(
     internalModel,
-    currentRunnerScope!
   )
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalModel,
@@ -1035,7 +1115,6 @@ function mountModel<T extends any[]>(q: () => IModelQuery, op?: IModelOption) {
 
   const setterGetter = createModelSetterGetterFunc<T>(
     internalModel,
-    currentRunnerScope!
   )
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalModel,
@@ -1072,7 +1151,6 @@ function updateClientModel<T extends any[]>(
 
   const setterGetter = createModelSetterGetterFunc<T>(
     internalModel,
-    currentRunnerScope!
   )
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalModel,
@@ -1090,7 +1168,6 @@ function mountClientModel<T extends any[]>(
 
   const setterGetter = createModelSetterGetterFunc<T>(
     internalModel,
-    currentRunnerScope!
   )
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalModel,
@@ -1098,31 +1175,6 @@ function mountClientModel<T extends any[]>(
   })
 
   return newSetterGetter
-}
-
-function createCacheSetterGetterFunc<SV>(
-  c: Cache<SV>,
-  scope: CurrentRunnerScope
-): {
-  (): SV
-  (paramter: IModifyFunction<SV>): [SV, IPatch[]]
-} {
-  return (paramter?: any): any => {
-    if (paramter) {
-      if (isFunc(paramter)) {
-        const [result, patches] = produceWithPatches(c.value, paramter)
-        if (currentInputeCompute) {
-          c.addInputComputePatches(result, patches)
-        } else {
-          c.update(result, patches)
-        }
-        return [result, patches]
-      } else {
-        throw new Error('[change cache] pass a function')
-      }
-    }
-    return c.value
-  }
 }
 
 function updateCache<T>(key: string, options: ICacheOptions<T>) {
@@ -1136,7 +1188,7 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
   const hook = new Cache(key, options, currentRunnerScope!)
   hook.executeQuery()
 
-  const setterGetter = createCacheSetterGetterFunc(hook, currentRunnerScope!)
+  const setterGetter = createCacheSetterGetterFunc(hook)
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: hook
   })
@@ -1145,7 +1197,7 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
 function mountCache<T>(key: string, options: ICacheOptions<T>) {
   const hook = new Cache(key, options, currentRunnerScope!)
 
-  const setterGetter = createCacheSetterGetterFunc(hook, currentRunnerScope!)
+  const setterGetter = createCacheSetterGetterFunc(hook)
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: hook
   })
