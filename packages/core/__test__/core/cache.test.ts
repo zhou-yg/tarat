@@ -1,7 +1,4 @@
-import { cloneDeep, getPlugin, IDiff, IHookContext, IQueryWhere, set, setEnv } from '../../src/index'
-import {
-  Runner,
-} from '../../src/'
+import { Runner, cloneDeep, getPlugin, IDiff, IHookContext, IQueryWhere, set, setEnv } from '../../src/index'
 
 import * as mockBM from '../mockBM'
 

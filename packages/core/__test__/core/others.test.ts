@@ -1,5 +1,7 @@
-import { internalProxy, State, setCurrentComputed, Computed } from "../../src"
-import { Runner, cloneDeep, debuggerLog, IDiff, IHookContext, IQueryWhere, set, setEnv } from '../../src/index'
+import {
+  Runner, cloneDeep, debuggerLog, IDiff, IHookContext,
+  IQueryWhere, set, setEnv, internalProxy, State, setCurrentComputed, Computed
+} from '../../src/index'
 import * as mockBM from '../mockBM'
 
 describe('internalProxy', () => {
