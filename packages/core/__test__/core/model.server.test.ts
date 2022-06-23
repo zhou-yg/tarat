@@ -1,4 +1,4 @@
-import { Runner, cloneDeep, debuggerLog, IDiff, IHookContext, IQueryWhere, set, setEnv } from '../../src/index'
+import { Runner, cloneDeep, debuggerLog, IDiff, IHookContext, IQueryWhere, set, setEnv, startdReactiveChain, stopReactiveChain, State, Model, Computed } from '../../src/index'
 
 import * as mockBM from '../mockBM'
 import prisma, { clearAll } from '../prisma'
@@ -109,7 +109,7 @@ describe('model', () => {
       expect(result.users()).toEqual([{ id: 2, name: 'b' }])
     })
 
-    it('model used in computed', async () => {
+    it.only('model used in computed', async () => {
       const runner = new Runner(mockBM.modelInComputed)
       const result = runner.init()
 
@@ -117,9 +117,20 @@ describe('model', () => {
 
       expect(result.userNames()).toEqual([])
 
+      const chain = startdReactiveChain()
+
       result.targetName(() => 'a')
 
+      stopReactiveChain()
+
       await runner.ready()
+
+      expect(chain.children[0].hook).toBeInstanceOf(State)
+      expect(chain.children[0].oldValue).toBe('')
+      expect(chain.children[0].newValue).toBe('a')
+      expect(chain.children[0].children[0].hook).toBeInstanceOf(Computed)
+      expect(chain.children[0].children[0].children[0].hook).toBeInstanceOf(Model)
+      expect(chain.children[0].children[0].children[0].children[0].hook).toBeInstanceOf(Computed)
 
       expect(result.users()).toEqual([
         { id: 1, name: 'a' },
