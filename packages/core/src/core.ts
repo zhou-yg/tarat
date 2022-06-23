@@ -134,7 +134,9 @@ export class State<T = any> extends Hook {
 
       if (patches && patches.length > 0) {
         const changedPathArr = calculateChangedPath(oldValue, patches)
-        changedPathArr.forEach(path => this.trigger(path, patches, reactiveChain))
+        changedPathArr
+          .filter(p => p.length !== 0)
+          .forEach(path => this.trigger(path, patches, reactiveChain))
       }
     }
   }
@@ -195,7 +197,8 @@ export class Model<T extends any[]> extends State<T[]> {
   }
   notify(h?: Hook, p?: IPatch[], reactiveChain?: ReactiveChain) {
     log(`[${this.constructor.name}.executeQuery] withChain=${!!reactiveChain}`)
-    this.executeQuery(reactiveChain)
+    const newReactiveChain = reactiveChain?.add(this)
+    this.executeQuery(newReactiveChain)
   }
   async getQueryWhere(): Promise<IModelQuery> {
     await this.queryWhereComputed!.getterPromise
@@ -362,7 +365,8 @@ export class Cache<T> extends State<T | undefined> {
        */
       getPlugin('Cache').clearValue(this.scope, this.getterKey, from)
 
-      this.executeQuery(reactiveChain)
+      const newReactiveChain = reactiveChain?.add(this)
+      this.executeQuery(newReactiveChain)
     }
   }
   override get value(): T | undefined {
@@ -457,10 +461,11 @@ export class Computed<T> extends State<T | undefined> {
     }
   }
   notify(h?: Hook, p?: IPatch[], reactiveChain?: ReactiveChain) {
+    const newReactiveChain = reactiveChain?.add(this)
     /**
      * trigger synchronism
      */
-    this.run(reactiveChain)
+    this.run(newReactiveChain)
 
     // this.batchRunCancel()
     // this.batchRunCancel = nextTick(() => {
@@ -482,8 +487,8 @@ class InputCompute<P extends any[] = any> extends Hook {
     currentInputeCompute = null
 
     let reactiveChain: ReactiveChain | undefined = undefined
-    if (currentReactiveChainFlag) {
-      reactiveChain = new ReactiveChain(this)
+    if (currentReactiveChain) {
+      reactiveChain = currentReactiveChain.add(this)
     }
     
     this.scope.applyComputePatches(this, reactiveChain)
@@ -624,18 +629,24 @@ class Effect<T> extends Hook {
 /**
  * 
  */
-let currentReactiveChainFlag = false
-export function recordReactiveChain (open: boolean) {
-  currentReactiveChainFlag = open
+let currentReactiveChain: ReactiveChain | null = null
+export function startdReactiveChain (name: string = 'root') {
+  currentReactiveChain = new ReactiveChain()
+  currentReactiveChain.name = name
+  return currentReactiveChain
+}
+export function stopReactiveChain () {
+  currentReactiveChain = null
 }
 /**
  * collect reactive chain for debug
  */
 export class ReactiveChain<T = any> {
+  name?: string
   oldValue: T | undefined
   newValue: T | undefined
-  childSet: Set<ReactiveChain<T>> = new Set()
-  constructor (public state: State | InputCompute) {
+  children: ReactiveChain<T>[] = []
+  constructor (public state?: State<T> | InputCompute) {
     if (state instanceof State) {
       this.oldValue = state._internalValue
     }
@@ -645,9 +656,9 @@ export class ReactiveChain<T = any> {
       this.newValue = this.state._internalValue
     }
   }
-  add (child: State<T>): ReactiveChain<T> {
+  add (child: State<T> | InputCompute): ReactiveChain<T> {
     const childChain = new ReactiveChain(child)
-    this.childSet.add(childChain)
+    this.children.push(childChain)
     return childChain
   }
 }
@@ -941,8 +952,8 @@ function createStateSetterGetterFunc<SV>(
     if (paramter) {
       if (isFunc(paramter)) {
         let reactiveChain: ReactiveChain<SV> | undefined
-        if (currentReactiveChainFlag) {
-          reactiveChain = new ReactiveChain(s)
+        if (currentReactiveChain) {
+          reactiveChain = currentReactiveChain.add(s)
         }
         const [result, patches] = produceWithPatches(s.value, paramter)
         if (currentInputeCompute) {
@@ -968,8 +979,8 @@ function createModelSetterGetterFunc<T extends any[]>(
   return (paramter?: any): any => {
     if (paramter && isFunc(paramter)) {
       let reactiveChain: ReactiveChain<T> | undefined
-      if (currentReactiveChainFlag) {
-        reactiveChain = new ReactiveChain(m)
+      if (currentReactiveChain) {
+        reactiveChain = currentReactiveChain.add(m)
       }
 
       const [result, patches] = produceWithPatches<T>(
@@ -1004,8 +1015,8 @@ function createCacheSetterGetterFunc<SV>(
     if (paramter) {
       if (isFunc(paramter)) {
         let reactiveChain: ReactiveChain<SV> | undefined
-        if (currentReactiveChainFlag) {
-          reactiveChain = new ReactiveChain(c)
+        if (currentReactiveChain) {
+          reactiveChain = currentReactiveChain.add(c)
         }
             
         const [result, patches] = produceWithPatches(c.value, paramter)
