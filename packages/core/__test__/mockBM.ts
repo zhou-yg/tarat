@@ -475,3 +475,14 @@ export function combineTwoState() {
     final
   }
 }
+
+
+export function stateInComputed () {
+  const s2 = state(1)
+  const c1 = computed(() => s2() + 1)
+
+  return {
+    c1,
+    s2
+  }
+}
