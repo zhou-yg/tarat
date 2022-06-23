@@ -474,7 +474,7 @@ export class Computed<T> extends State<T | undefined> {
   }
 }
 
-class InputCompute<P extends any[] = any> extends Hook {
+export class InputCompute<P extends any[] = any> extends Hook {
   constructor(
     public getter: InputComputeFn<P>,
     public scope: CurrentRunnerScope
@@ -499,6 +499,9 @@ class InputCompute<P extends any[] = any> extends Hook {
     currentInputeCompute = this
     this.triggerEvent('before')
     if (!checkFreeze({ _hook: this })) {
+
+
+
       const funcResult = this.getter(...args)
       if (isPromise(funcResult)) {
         await Promise.resolve(funcResult)
@@ -646,20 +649,69 @@ export class ReactiveChain<T = any> {
   oldValue: T | undefined
   newValue: T | undefined
   children: ReactiveChain<T>[] = []
-  constructor (public state?: State<T> | InputCompute) {
-    if (state instanceof State) {
-      this.oldValue = state._internalValue
+  constructor (public hook?: State<T> | InputCompute) {
+    if (hook instanceof State) {
+      this.oldValue = hook._internalValue
     }
   }
   update () {
-    if (this.state instanceof State) {
-      this.newValue = this.state._internalValue
+    if (this.hook instanceof State) {
+      this.newValue = this.hook._internalValue
     }
   }
   add (child: State<T> | InputCompute): ReactiveChain<T> {
     const childChain = new ReactiveChain(child)
     this.children.push(childChain)
     return childChain
+  }
+  print () {
+
+    const preLink = '|--> '
+
+    const preHasNextSpace = '|   '
+    const preSpace = '    '
+
+    function dfi (current: ReactiveChain) {
+      const currentName = current.hook?.constructor.name || current.name || ''
+      const currentRows = [currentName]
+      if (current.oldValue !== undefined) {
+        currentRows.push(
+          `${preLink} old=${JSON.stringify(current.oldValue)}`
+        )
+      }
+      if (current.newValue !== undefined) {
+        currentRows.push(
+          `${preLink} new=${JSON.stringify(current.newValue)}`
+        )
+      }
+
+      if (current.children.length > 0) {
+        const names = current.children.map(dfi)
+        const rows: string[] = []
+        names.forEach((arr, i) => {
+          arr.forEach((childName, j) => {
+            if (j === 0) {
+              rows.push(`${preLink}${childName}`)
+            } else {
+              if (names[i + 1]) {
+                rows.push(`${preHasNextSpace}${childName}`)
+              } else {
+                rows.push(`${preSpace}${childName}`)
+              }
+            }
+          })
+        })
+        return [
+          ...currentRows,
+          ...rows,
+        ]
+      }
+      return [
+        ...currentRows
+      ]
+    }
+    const logRows = dfi(this)
+    console.log(logRows.join('\n'))
   }
 }
 
@@ -951,14 +1003,14 @@ function createStateSetterGetterFunc<SV>(
   return (paramter?: any): any => {
     if (paramter) {
       if (isFunc(paramter)) {
-        let reactiveChain: ReactiveChain<SV> | undefined
-        if (currentReactiveChain) {
-          reactiveChain = currentReactiveChain.add(s)
-        }
         const [result, patches] = produceWithPatches(s.value, paramter)
         if (currentInputeCompute) {
           s.addInputComputePatches(result, patches)
         } else {
+          let reactiveChain: ReactiveChain<SV> | undefined
+          if (currentReactiveChain) {
+            reactiveChain = currentReactiveChain.add(s)
+          }
           s.update(result, patches, false, reactiveChain)
         }
         return [result, patches]

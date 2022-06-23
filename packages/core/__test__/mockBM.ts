@@ -486,3 +486,37 @@ export function stateInComputed () {
     s2
   }
 }
+export function stateInNestedComputed () {
+  const s2 = state(1)
+  const c1 = computed(() => s2() + 1)
+  const c2 = computed(() => c1() + 1)
+
+  return {
+    c1,
+    c2,
+    s2
+  }
+}
+export function statesWithInputCompute () {
+  const s1 = state(0)
+  const s2 = state(1)
+  const c1 = computed(() => s2() + 1)
+  const c2 = computed(() => c1() + 1)
+
+  const c3 = computed(() => s1() + 1)
+
+  const ic = inputCompute(() => {
+    s1(v => v + 1)
+    s2(v => v + 1)
+  })
+
+  return {
+    c1,
+    c2,
+    s2,
+    s1,
+    ic,
+  }
+}
+
+
