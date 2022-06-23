@@ -1,7 +1,4 @@
-import { IHookContext } from '../../src/index'
-import {
-  Runner,
-} from '../../src/'
+import { Runner, IHookContext } from '../../src/index'
 
 import * as mockBM from '../mockBM'
 

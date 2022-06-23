@@ -1,7 +1,4 @@
-import { cloneDeep, debuggerLog, IDiff, IHookContext, IQueryWhere, set, setEnv } from '../../src/index'
-import {
-  Runner,
-} from '../../src'
+import { Runner, cloneDeep, debuggerLog, IDiff, IHookContext, IQueryWhere, set, setEnv } from '../../src/index'
 
 import * as mockBM from '../mockBM'
 import prisma, { clearAll } from '../prisma'
