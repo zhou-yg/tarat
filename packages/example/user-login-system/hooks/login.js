@@ -33,28 +33,22 @@ export default function login () {
 
   const cookieId = cache('userDataKey', { from: 'cookie' }) // just run in server because by it depends 'cookie'
   cookieId._hook.name = 'cookieId'
-  const userDataByInput = model(() => {
+  const userDataByInput = model('user', () => {
     if (name() && password()) {
       return {
-        entity: 'user',
-        query: {
-          where: {
-            name: name(), // maybe be unique?
-            password: password(),
-          }
+        where: {
+          name: name(), // maybe be unique?
+          password: password(),
         }
       }
     }
   })
   userDataByInput._hook.name = 'userDataByInput'
 
-  const sessionStore = model(() => {
+  const sessionStore = model('sessionStore', () => {
     return ({
-      entity: 'sessionStore',
-      query: {
-        where: {
-          fromIndex: cookieId()
-        }
+      where: {
+        fromIndex: cookieId()
       }
     })
   })
@@ -74,16 +68,13 @@ export default function login () {
   userIdInSession._hook.name = 'userIdInSession'
 
   console.log('userIdInSession: ', userIdInSession._hook);
-  const userDataByCookie = model(() => {
+  const userDataByCookie = model('user', () => {
     const u = userIdInSession()
     if (u) {
       return {
-        entity: 'user',
-        query: {
-          where: {
-            name: u.name,
-            password: u.password,
-          }
+        where: {
+          name: u.name,
+          password: u.password,
         }
       }
     }
