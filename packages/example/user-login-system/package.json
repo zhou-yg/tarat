@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "init": "pnpm install && npm run prisma:dev",
-    "dev": "npm run p:gen && tarat dev",
+    "dev": "tarat dev",
     "p:dev": "prisma migrate dev && prisma generate",
     "p:gen": "prisma generate",
     "p:deploy": "prisma migrate deploy",
