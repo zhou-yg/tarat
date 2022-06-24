@@ -11,17 +11,25 @@ import {nanoid} from 'nanoid'
 
 export default function login () {
   const name = state()
+  name._hook.name = 'name'
   const password = state()
+  password._hook.name = 'password'
 
   const inputName = state()
+  inputName._hook.name = 'inputName'
   const inputPassword = state()
+  inputPassword._hook.name = 'inputPassword'
   const repeatPassword = state()
-
+  repeatPassword._hook.name = 'repeatPassword'
+  
   const signAndAutoLogin = state(false)
+  signAndAutoLogin._hook.name = 'signAndAutoLogin'
+  
 
   /* 6 */
 
   const cookieId = cache('userDataKey', { from: 'cookie' }) // just run in server because by it depends 'cookie'
+  cookieId._hook.name = 'cookieId'
   const userDataByInput = model(() => ({
     entity: 'user',
     query: {
@@ -31,6 +39,8 @@ export default function login () {
       }
     }
   }))
+  userDataByInput._hook.name = 'userDataByInput'
+
   const sessionStore = model(() => {
     return ({
       entity: 'sessionStore',
@@ -41,6 +51,7 @@ export default function login () {
       }
     })
   }, { ignoreEnable: true })
+  sessionStore._hook.name = 'sessionStore'
 
   /* 9 */
 
@@ -55,6 +66,8 @@ export default function login () {
       }
     }
   })
+  userIdInSession._hook.name = 'userIdInSession'
+
   console.log('userIdInSession: ', userIdInSession._hook);
   const userDataByCookie = model(() => ({
     entity: 'user',
@@ -65,21 +78,28 @@ export default function login () {
       }
     }
   }))
+  userDataByCookie._hook.name = 'userDataByCookie'
+
   const userData = computed(async () => {
     const u1 = userDataByCookie()
+    console.log('u1: ', u1);
     if (u1?.length > 0) {
       return u1[0]
     }
     const u2 = userDataByInput()
+    console.log('u2: ', u2);
     if (u2?.length > 0) {
       return u2[0]
     }
   })
+  userData._hook.name = 'userData'
 
   const alreadyLogin = computed(() => {
     const ud = userData()
+    console.log('userData: ', ud);
     return !!ud
   })
+  alreadyLogin._hook.name = 'alreadyLogin'
 
   /**
    * login:
@@ -108,7 +128,10 @@ export default function login () {
     }
     return ''
   })
+  errorTip1._hook.name = 'errorTip1'
+
   const errorTip2 = state('')
+  errorTip2._hook.name = 'errorTip2'
 
   const errorTip = combineLatest([errorTip1, errorTip2])
 
@@ -130,6 +153,7 @@ export default function login () {
       errorTip2(() => 'user already exist')
     }
   })
+  sign._hook.name = 'sign'
 
   const login = inputComputeInServer(async () => {
     const inputNameVal = inputName()
@@ -154,17 +178,22 @@ export default function login () {
       errorTip2(() => `invalid password with "${inputNameVal}"`)
     }
   })
+  login._hook.name = 'login'
 
   const logout = inputComputeInServer(() => {
     name(() => undefined)
     password(() => undefined)
     const cid = cookieId()
+    console.log('logout cid: ', cid);
     cookieId(() => '')
-    userIdInSession(arr => {
+    sessionStore(arr => {
+      console.log('[userIdInSession] arr: ', arr);
       const i = arr.findIndex(o => o.fromIndex === cid)
+      console.log('[userIdInSession] logout i: ', i);
       arr.splice(i, 1)
     })
   })
+  logout._hook.name = 'logout'
 
   return {
     alreadyLogin,
