@@ -90,9 +90,7 @@ export function oneState(arg: { a: number }) {
   }
 }
 export function oneModel() {
-  const m1 = model(() => ({
-    entity: 'test-model',
-    query: {}
+  const m1 = model('test-model', () => ({
   }))
   return {
     m1
@@ -273,9 +271,8 @@ export function changeStateAsyncInputCompute(
 
 export function userPessimisticModel() {
   const users = model(
+    'item',
     () => ({
-      entity: 'item',
-      query: {}
     }),
     { immediate: true, pessimisticUpdate: true }
   )
@@ -287,9 +284,8 @@ export function userPessimisticModel() {
 
 export function userModelInputeCompute() {
   const items = model<{ id: number; name?: string }[]>(
+    'item',
     () => ({
-      entity: 'item',
-      query: {}
     }),
     { immediate: true, pessimisticUpdate: true }
   )
@@ -315,12 +311,10 @@ export function userModelInputeCompute() {
 export function userModelClient() {
   const num = state(1)
   const users = clientModel(
+    'item',
     () => ({
-      entity: 'item',
-      query: {
-        where: {
-          id: num()
-        }
+      where: {
+        id: num()
       }
     }),
     { immediate: true, pessimisticUpdate: true }
@@ -333,12 +327,10 @@ export function userModelClient() {
 export function userModelComputedQuery() {
   const targetName = state('')
   const users = model(
+    'item',
     () => ({
-      entity: 'item',
-      query: {
-        where: {
-          name: targetName()
-        }
+      where: {
+        name: targetName()
       }
     }),
     { immediate: true, pessimisticUpdate: true }
@@ -352,14 +344,12 @@ export function userModelComputedQuery() {
 export function modelInComputed() {
   const targetName = state('')
   const users = model<Array<{ id: number; name: string }>>(
+    'item',
     () => ({
-      entity: 'item',
-      query: {
-        where: {
-          name: targetName()
-        }
+      where: {
+        name: targetName()
       }
-    }),
+  }),
     { immediate: false }
   )
   const userNames = computed(() => {

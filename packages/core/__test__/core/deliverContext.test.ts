@@ -34,7 +34,7 @@ describe('initContext', () => {
       args: [],
       data: [
         ['state', { numStr: 'from context' }],
-        ['state', undefined]
+        ['state']
       ]
     }
     const runner = new Runner(mockBM.plainObjectState)
@@ -54,7 +54,7 @@ describe('initContext', () => {
       initialArgList: [],
       args: [],
       data: [
-        ['model', undefined]
+        ['model']
       ]
     }
     const runner = new Runner(mockBM.oneModel)

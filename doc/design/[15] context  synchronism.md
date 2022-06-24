@@ -176,3 +176,26 @@ inputCompute中，对state或model的修改，本质是对context的修改
 在执行周期结束之前，外面读取到的context还是旧，
 
 在执行完成之后，总体commit patches，外面读到了最新的context
+
+
+## blank value in context
+
+hook's internalValue
+- undefined
+  - 代表了当前hook是空的状态
+    - state初始化的时候没有默认值
+- []
+  - 2层含义：
+    - model是初始化
+      - model.init is true，说明model查询结果还没返回
+    - model的查询结果是空
+      - model.init is false
+- null
+  - 有值，但值是空
+
+context data's value: ['hookType', hookValue?]，这里应该从长度判断
+- 长度为1：
+  - 无值，代表当前这个synchronism context下，不需要这个hook
+- 长度为2：其它的都代表有值：undefined，null,[]
+  - 有值，代表当前这个synchronism context下，这个hook需要走updateXXHook，并且使用这个值作为初始值
+
