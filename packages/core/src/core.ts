@@ -120,7 +120,6 @@ export class State<T = any> extends Hook {
     })
   }
   get value(): T {
-
     if (currentInputeCompute) {
       return this.getInputComputeDraftValue()
     }
@@ -263,7 +262,7 @@ export class Model<T extends any[]> extends State<T[]> {
       if (valid) {
         result = await getPlugin('Model').find(this.entity, q)
         log('[Model.executeQuery] 2 result: ', result)
-      } 
+      }
       this.update(result, [], false, reactiveChain)
     } catch (e) {
       log('[Model.executeQuery] error')
@@ -484,7 +483,8 @@ export class Computed<T> extends State<T | undefined> {
   run(reactiveChain?: ReactiveChain) {
     pushComputed(this)
 
-    let oldCurrentReactiveChain: ReactiveChain | undefined = currentReactiveChain
+    let oldCurrentReactiveChain: ReactiveChain | undefined =
+      currentReactiveChain
     if (currentReactiveChain && reactiveChain) {
       currentReactiveChain = reactiveChain
     }
@@ -530,7 +530,8 @@ export class InputCompute<P extends any[] = any> extends Hook {
   async inputFuncEnd(reactiveChain?: ReactiveChain<P>) {
     currentInputeCompute = null
 
-    const updateReactiveChain: ReactiveChain | undefined = reactiveChain?.addUpdate(this)
+    const updateReactiveChain: ReactiveChain | undefined =
+      reactiveChain?.addUpdate(this)
 
     this.scope.applyComputePatches(this, updateReactiveChain)
     unFreeze({ _hook: this })
@@ -540,19 +541,19 @@ export class InputCompute<P extends any[] = any> extends Hook {
     currentInputeCompute = this
     this.triggerEvent('before')
 
-    let preservedCurrentReactiveChain: ReactiveChain | undefined = currentReactiveChain
+    let preservedCurrentReactiveChain: ReactiveChain | undefined =
+      currentReactiveChain
     const newReactiveChain = currentReactiveChain?.add(this)
     currentReactiveChain = newReactiveChain
 
     if (!checkFreeze({ _hook: this })) {
-        
       const funcResult = this.getter(...args)
 
       if (newReactiveChain) {
         newReactiveChain.async = isPromise(funcResult)
       }
       currentReactiveChain = preservedCurrentReactiveChain
-      
+
       if (isPromise(funcResult)) {
         await Promise.resolve(funcResult)
         return await this.inputFuncEnd(newReactiveChain)
@@ -576,7 +577,6 @@ class InputComputeInServer<P extends any[]> extends InputCompute<P> {
 
     this.triggerEvent('before')
     if (!checkFreeze({ _hook: this })) {
-
       const newReactiveChain = currentReactiveChain?.add(this)
       if (newReactiveChain) {
         newReactiveChain.async = true
@@ -707,7 +707,7 @@ export class ReactiveChain<T = any> {
   oldValue: T | undefined
   newValue: T | undefined
   children: ReactiveChain<T>[] = []
-  type?: 'update' |'notify' | 'call'
+  type?: 'update' | 'notify' | 'call'
   async?: boolean
   constructor(public hook?: State<T> | InputCompute) {
     if (hook instanceof State) {
@@ -1083,7 +1083,8 @@ function createStateSetterGetterFunc<SV>(s: State<SV>): {
         if (currentInputeCompute) {
           s.addInputComputePatches(result, patches)
         } else {
-          const reactiveChain: ReactiveChain<SV> | undefined = currentReactiveChain?.add(s)
+          const reactiveChain: ReactiveChain<SV> | undefined =
+            currentReactiveChain?.add(s)
           s.update(result, patches, false, reactiveChain)
         }
         return [result, patches]
@@ -1117,7 +1118,8 @@ function createModelSetterGetterFunc<T extends any[]>(
       if (currentInputeCompute) {
         m.addInputComputePatches(result, patches)
       } else {
-        const reactiveChain: ReactiveChain<T> | undefined = currentReactiveChain?.add(m)
+        const reactiveChain: ReactiveChain<T> | undefined =
+          currentReactiveChain?.add(m)
         m.updateWithPatches(result, patches, reactiveChain)
       }
       return [result, patches]
@@ -1137,7 +1139,8 @@ function createCacheSetterGetterFunc<SV>(c: Cache<SV>): {
         if (currentInputeCompute) {
           c.addInputComputePatches(result, patches)
         } else {
-          const reactiveChain: ReactiveChain<SV> | undefined = currentReactiveChain?.add(c)
+          const reactiveChain: ReactiveChain<SV> | undefined =
+            currentReactiveChain?.add(c)
           c.update(result, patches, false, reactiveChain)
         }
         return [result, patches]
@@ -1365,7 +1368,8 @@ function updateComputed<T>(fn: any): any {
   // @TODO: update computed won't trigger
   hook._internalValue = initialValue
 
-  const reactiveChain: ReactiveChain<T> | undefined = currentReactiveChain?.add(hook)
+  const reactiveChain: ReactiveChain<T> | undefined =
+    currentReactiveChain?.add(hook)
   hook.run(reactiveChain)
 
   const getter = () => hook.value
@@ -1384,7 +1388,8 @@ function mountComputed<T>(fn: any): any {
   const hook = new Computed<T>(fn)
   currentRunnerScope!.addHook(hook)
 
-  const reactiveChain: ReactiveChain<T> | undefined = currentReactiveChain?.add(hook)
+  const reactiveChain: ReactiveChain<T> | undefined =
+    currentReactiveChain?.add(hook)
   hook.run(reactiveChain)
 
   const getter = () => hook.value
