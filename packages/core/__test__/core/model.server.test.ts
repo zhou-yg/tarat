@@ -109,11 +109,26 @@ describe('model', () => {
       expect(result.users()).toEqual([{ id: 2, name: 'b' }])
     })
 
-    it('model used in computed', async () => {
+    it('model used in computed (with chain) ', async () => {
       const runner = new Runner(mockBM.modelInComputed)
+
+      const initChain = startdReactiveChain()
+
       const result = runner.init()
 
+      stopReactiveChain()
+
       await runner.ready()
+
+      const firstComputed = initChain.children[0]
+      expect(firstComputed.hook).toBeInstanceOf(Computed)
+      expect(firstComputed.children[0].hook).toBeInstanceOf(Model)
+      expect(firstComputed.children[0].type).toBe('call')
+      expect(firstComputed.children[0].children[0].hook).toBeInstanceOf(Computed)
+      expect(firstComputed.children[0].children[0].children[0].hook).toBeInstanceOf(State)
+      expect(firstComputed.children[0].children[0].children[0].type).toBe('call')
+      expect(firstComputed.children[0].children[0].children[1].hook).toBeInstanceOf(Model)
+
 
       expect(result.userNames()).toEqual([])
 
@@ -122,15 +137,16 @@ describe('model', () => {
       result.targetName(() => 'a')
 
       stopReactiveChain()
-
+      
       await runner.ready()
 
-      expect(chain.children[0].hook).toBeInstanceOf(State)
       expect(chain.children[0].oldValue).toBe('')
       expect(chain.children[0].newValue).toBe('a')
+      expect(chain.children[0].hook).toBeInstanceOf(State)
       expect(chain.children[0].children[0].hook).toBeInstanceOf(Computed)
-      expect(chain.children[0].children[0].children[0].hook).toBeInstanceOf(Model)
-      expect(chain.children[0].children[0].children[0].children[0].hook).toBeInstanceOf(Computed)
+      expect(chain.children[0].children[0].children[0].hook).toBeInstanceOf(State)
+      expect(chain.children[0].children[0].children[1].hook).toBeInstanceOf(Model)
+      expect(chain.children[0].children[0].children[1].children[0].hook).toBeInstanceOf(Computed)
 
       expect(result.users()).toEqual([
         { id: 1, name: 'a' },
