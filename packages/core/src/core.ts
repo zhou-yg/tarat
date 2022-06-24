@@ -208,7 +208,9 @@ export class Model<T extends any[]> extends State<T[]> {
 
     // default to immediate
     if (options.immediate || options.immediate === undefined) {
-      this.query()
+      const reactiveChain: ReactiveChain<T> | undefined =
+        currentReactiveChain?.add(this)
+      this.query(reactiveChain)
     }
   }
   notify(h?: Hook, p?: IPatch[], reactiveChain?: ReactiveChain) {
@@ -247,7 +249,7 @@ export class Model<T extends any[]> extends State<T[]> {
   async enableQuery() {
     const q = await this.getQueryWhere()
     const valid = q && checkQueryWhere(q)
-    return !!q || this.options.ignoreEnable
+    return !!q
   }
   async executeQuery(reactiveChain?: ReactiveChain) {
     this.init = false
@@ -323,26 +325,27 @@ export class Model<T extends any[]> extends State<T[]> {
 
 class ClientModel<T extends any[]> extends Model<T> {
   override async executeQuery() {
+    this.init = false
+
     let resolve: Function
     this.getterPromise = new Promise(r => (resolve = r))
 
     const valid = await this.enableQuery()
-    if (valid) {
+    if (valid || this.options.ignoreClientEnable) {
       const context = this.scope.createInputComputeContext(this)
       log('[ClientModel.executeQuery] before post : ')
       const result: IHookContext = await getPlugin('Context').postQueryToServer(
         context
       )
       this.getterPromise = null
-
+  
       const index = this.scope.hooks.indexOf(this)
       const d = result.data[index]
       if (d[1]) {
         this.update(d[1])
       }
-    } else {
-      this.update([])
     }
+
     resolve!()
     this.getterPromise = null
   }
@@ -400,7 +403,8 @@ export class Cache<T> extends State<T | undefined> {
   }
   override get value(): T | undefined {
     if (this._internalValue === undefined) {
-      this.executeQuery()
+      const newReactiveChain = currentReactiveChain?.addCall(this)
+      this.executeQuery(newReactiveChain)
     }
     return super.value
   }
@@ -706,6 +710,7 @@ export class ReactiveChain<T = any> {
   name?: string
   oldValue: T | undefined
   newValue: T | undefined
+  hasNewValue: boolean = false
   children: ReactiveChain<T>[] = []
   type?: 'update' | 'notify' | 'call'
   async?: boolean
@@ -716,6 +721,7 @@ export class ReactiveChain<T = any> {
   }
   update() {
     if (this.hook instanceof State) {
+      this.hasNewValue = true
       this.newValue = this.hook._internalValue
     }
   }
@@ -755,10 +761,12 @@ export class ReactiveChain<T = any> {
       } else {
         currentRows.push(`${preProp}cur=${JSON.stringify(current.oldValue)}`)
       }
-      if (current.newValue === undefined) {
-        currentRows.push(`${preProp}new=undef`)
-      } else {
-        currentRows.push(`${preProp}new=${JSON.stringify(current.newValue)}`)
+      if (current.hasNewValue) {
+        if (current.newValue === undefined) {
+          currentRows.push(`${preProp}new=undef`)
+        } else {
+          currentRows.push(`${preProp}new=${JSON.stringify(current.newValue)}`)
+        }
       }
 
       if (current.children.length > 0) {
@@ -1016,7 +1024,7 @@ interface IModelOption {
   unique?: boolean
   autoRollback?: boolean
   pessimisticUpdate?: boolean
-  ignoreEnable?: boolean
+  ignoreClientEnable?: boolean
 }
 
 /**
@@ -1037,7 +1045,6 @@ interface IModelOption {
 export const mountHookFactory = {
   state: mountState,
   model: mountModel,
-  clientModel: mountClientModel,
   cache: mountCache,
   computed: mountComputed,
   inputCompute,
@@ -1049,7 +1056,6 @@ export const mountHookFactory = {
 export const updateHookFactory = {
   state: updateState,
   model: updateModel,
-  clientModel: updateClientModel,
   cache: updateCache,
   computed: updateComputed,
   inputCompute,
@@ -1062,7 +1068,6 @@ export const updateHookFactory = {
 export let currentHookFactory: {
   state: typeof mountState
   model: typeof mountModel
-  clientModel: typeof mountClientModel
   cache: typeof mountCache
   computed: typeof mountComputed
   inputCompute: typeof inputCompute
@@ -1091,6 +1096,9 @@ function createStateSetterGetterFunc<SV>(s: State<SV>): {
       } else {
         throw new Error('[change state] pass a function')
       }
+    }
+    if (currentReactiveChain?.name === 'root') {
+      console.trace()
     }
     currentReactiveChain?.addCall(s)
     return s.value
@@ -1148,7 +1156,6 @@ function createCacheSetterGetterFunc<SV>(c: Cache<SV>): {
         throw new Error('[change cache] pass a function')
       }
     }
-    currentReactiveChain?.addCall(c)
     return c.value
   }
 }
@@ -1220,20 +1227,28 @@ function updateModel<T extends any[]>(
   const hasValue = hasValueInContext(
     currentRunnerScope!.intialContextData![currentIndex]
   )
+  const initialValue: T =
+    currentRunnerScope!.intialContextData![currentIndex]?.[1]
 
   if (!hasValue) {
     return createUnaccessGetter2<T>(currentIndex)
   }
-  const immediate = process.env.TARGET === 'server'
+
+  const inServer = process.env.TARGET === 'server'
 
   op = Object.assign({}, op, {
-    immediate
+    immediate: inServer
   })
 
   const internalModel =
-    process.env.TARGET === 'server'
+    inServer
       ? new Model<T>(e, q, op, currentRunnerScope!)
       : new ClientModel<T>(e, q, op, currentRunnerScope!)
+
+  if (!inServer) {
+    internalModel.init = inServer
+    internalModel._internalValue = initialValue || []
+  }    
 
   const setterGetter = createModelSetterGetterFunc<T>(internalModel)
   const newSetterGetter = Object.assign(setterGetter, {
@@ -1262,61 +1277,6 @@ function mountModel<T extends any[]>(
   return newSetterGetter
 }
 
-function updateClientModel<T extends any[]>(
-  e: string,
-  q: () => IModelQuery['query'],
-  op?: IModelOption
-) {
-  const currentIndex = currentRunnerScope!.hooks.length
-  const hasValue = hasValueInContext(
-    currentRunnerScope!.intialContextData![currentIndex]
-  )
-
-  const initialValue: T =
-    currentRunnerScope!.intialContextData![currentIndex]?.[1]
-  if (!hasValue) {
-    return createUnaccessGetter2<T>(currentIndex)
-  }
-  const inServer = process.env.TARGET === 'server'
-
-  op = Object.assign({}, op, {
-    immediate: inServer
-  })
-
-  const internalModel = inServer
-    ? new Model<T>(e, q, op, currentRunnerScope!)
-    : new ClientModel<T>(e, q, op, currentRunnerScope!)
-
-  if (!inServer) {
-    internalModel.init = inServer
-    internalModel._internalValue = initialValue || []
-  }
-
-  const setterGetter = createModelSetterGetterFunc<T>(internalModel)
-  const newSetterGetter = Object.assign(setterGetter, {
-    _hook: internalModel,
-    exist: internalModel.exist.bind(internalModel)
-  })
-
-  return newSetterGetter
-}
-
-function mountClientModel<T extends any[]>(
-  e: string,
-  q: () => IModelQuery['query'],
-  op?: IModelOption
-) {
-  const internalModel = new ClientModel<T>(e, q, op, currentRunnerScope!)
-
-  const setterGetter = createModelSetterGetterFunc<T>(internalModel)
-  const newSetterGetter = Object.assign(setterGetter, {
-    _hook: internalModel,
-    exist: internalModel.exist.bind(internalModel)
-  })
-
-  return newSetterGetter
-}
-
 function updateCache<T>(key: string, options: ICacheOptions<T>) {
   const currentIndex = currentRunnerScope!.hooks.length
   const hasValue = hasValueInContext(
@@ -1328,7 +1288,8 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
   }
 
   const hook = new Cache(key, options, currentRunnerScope!)
-  hook.executeQuery()
+  const reactiveChain: ReactiveChain<T> | undefined = currentReactiveChain?.add(hook)
+  hook.executeQuery(reactiveChain)
 
   const setterGetter = createCacheSetterGetterFunc(hook)
   const newSetterGetter = Object.assign(setterGetter, {
@@ -1415,17 +1376,6 @@ export function model<T extends any[]>(
     throw new Error('[model] must under a tarat runner')
   }
   return currentHookFactory.model<T>(e, q, op)
-}
-
-export function clientModel<T extends any[]>(
-  e: string,
-  q: () => IModelQuery['query'],
-  op?: IModelOption
-) {
-  if (!currentRunnerScope) {
-    throw new Error('[model] must under a tarat runner')
-  }
-  return currentHookFactory.clientModel<T>(e, q, op)
 }
 
 export function cache<T>(key: string, options: ICacheOptions<T>) {
