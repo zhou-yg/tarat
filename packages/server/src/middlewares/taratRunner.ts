@@ -57,18 +57,19 @@ export default function taratMiddleware (args: {
 
         let runner = new Runner(hookFunc.default)
         getPlugin('GlobalRunning').setCurrent(runner.scope, wrapCtx(ctx))
-        console.log('ctx cookie: ', ctx.cookies.get('userDataKey'));
+
+        console.log('=================================================')
 
         const chain1 = startdReactiveChain()
 
         runner.init(c.initialArgList, c)
 
         stopReactiveChain()
-        chain1.print()
 
         getPlugin('GlobalRunning').setCurrent(runner.scope, null)
 
         await runner.ready()
+        chain1.print()
 
         // debuggerLog(true)
 

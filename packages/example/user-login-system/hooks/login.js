@@ -33,7 +33,7 @@ export default function login () {
 
   const cookieId = cache('userDataKey', { from: 'cookie' }) // just run in server because by it depends 'cookie'
   cookieId._hook.name = 'cookieId'
-  const userDataByInput = model('user', () => {
+  const userDataByInput = model('user', (prev) => {
     if (name() && password()) {
       return {
         where: {
@@ -67,8 +67,7 @@ export default function login () {
   })
   userIdInSession._hook.name = 'userIdInSession'
 
-  console.log('userIdInSession: ', userIdInSession._hook);
-  const userDataByCookie = model('user', () => {
+  const userDataByCookie = model('user', (prev) => {
     const u = userIdInSession()
     if (u) {
       return {
@@ -81,7 +80,7 @@ export default function login () {
   })
   userDataByCookie._hook.name = 'userDataByCookie'
 
-  const userData = computed(async () => {
+  const userData = computed(() => {
     const u1 = userDataByCookie()
     console.log('u1: ', u1);
     if (u1?.length > 0) {
@@ -115,7 +114,7 @@ export default function login () {
    * 1.http error
    */
   const errorTip1 = computed(async () => {
-    if (name() && password() && await userData() === null) {
+    if (name() && password() && !userData()) {
       return 'invalid password'
     }
     if (repeatPassword() && repeatPassword() !== password()) {
@@ -191,7 +190,9 @@ export default function login () {
       console.log('[userIdInSession] arr: ', arr);
       const i = arr.findIndex(o => o.fromIndex === cid)
       console.log('[userIdInSession] logout i: ', i);
-      arr.splice(i, 1)
+      if (i >= 0) {
+        arr.splice(i, 1)
+      }
     })
   })
   logout._hook.name = 'logout'
