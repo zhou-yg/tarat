@@ -12,6 +12,9 @@ import {nanoid} from 'nanoid'
 export default function login () {
   const name = state()
   name._hook.name = 'name'
+
+  console.log('name():', name())
+
   const password = state()
   password._hook.name = 'password'
 
@@ -30,15 +33,19 @@ export default function login () {
 
   const cookieId = cache('userDataKey', { from: 'cookie' }) // just run in server because by it depends 'cookie'
   cookieId._hook.name = 'cookieId'
-  const userDataByInput = model(() => ({
-    entity: 'user',
-    query: {
-      where: {
-        name: name(), // maybe be unique?
-        password: password(),
+  const userDataByInput = model(() => {
+    if (name() && password()) {
+      return {
+        entity: 'user',
+        query: {
+          where: {
+            name: name(), // maybe be unique?
+            password: password(),
+          }
+        }
       }
     }
-  }))
+  })
   userDataByInput._hook.name = 'userDataByInput'
 
   const sessionStore = model(() => {
@@ -50,15 +57,13 @@ export default function login () {
         }
       }
     })
-  }, { ignoreEnable: true })
+  })
   sessionStore._hook.name = 'sessionStore'
 
   /* 9 */
 
   const userIdInSession = computed(() => {
-    console.log('ss 1');
     const ss = sessionStore()
-    console.log('ss 2', ss);
     if (ss && ss.length > 0) {
       return {
         name: ss[0].name,
@@ -69,15 +74,20 @@ export default function login () {
   userIdInSession._hook.name = 'userIdInSession'
 
   console.log('userIdInSession: ', userIdInSession._hook);
-  const userDataByCookie = model(() => ({
-    entity: 'user',
-    query: {
-      where: {
-        name: (userIdInSession())?.name,
-        password: (userIdInSession())?.password,
+  const userDataByCookie = model(() => {
+    const u = userIdInSession()
+    if (u) {
+      return {
+        entity: 'user',
+        query: {
+          where: {
+            name: u.name,
+            password: u.password,
+          }
+        }
       }
     }
-  }))
+  })
   userDataByCookie._hook.name = 'userDataByCookie'
 
   const userData = computed(async () => {
@@ -181,8 +191,8 @@ export default function login () {
   login._hook.name = 'login'
 
   const logout = inputComputeInServer(() => {
-    name(() => undefined)
-    password(() => undefined)
+    name(() => null)
+    password(() => null)
     const cid = cookieId()
     console.log('logout cid: ', cid);
     cookieId(() => '')

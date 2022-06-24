@@ -254,12 +254,7 @@ export class Model<T extends any[]> extends State<T[]> {
       // @TODO：要确保时序，得阻止旧的query数据更新
       const q = await this.getQueryWhere()
       const valid = await this.enableQuery()
-      log(
-        '[Model.executeQuery] 1 q.entity, q.query: ',
-        this.entity,
-        q,
-        valid
-      )
+      log('[Model.executeQuery] 1 q.entity, q.query: ', this.entity, q, valid)
       if (valid) {
         const result: T = await getPlugin('Model').find(this.entity, q)
         log('[Model.executeQuery] 2 result: ', result)
@@ -1077,7 +1072,7 @@ function createModelSetterGetterFunc<T extends any[]>(
         let reactiveChain: ReactiveChain<T> | undefined
         if (currentReactiveChain) {
           reactiveChain = currentReactiveChain.add(m)
-        }  
+        }
         m.updateWithPatches(result, patches, reactiveChain)
       }
       return [result, patches]
@@ -1138,7 +1133,9 @@ function hasValueInContext(d: IHookContext['data'][0]) {
 
 function updateState<T>(initialValue: T) {
   const currentIndex = currentRunnerScope!.hooks.length
-  const hasValue = hasValueInContext(currentRunnerScope!.intialContextData![currentIndex])
+  const hasValue = hasValueInContext(
+    currentRunnerScope!.intialContextData![currentIndex]
+  )
   initialValue = currentRunnerScope!.intialContextData![currentIndex]?.[1]
   // undefined means this hook wont needed in this progress
   if (!hasValue) {
@@ -1174,7 +1171,9 @@ function updateModel<T extends any[]>(
   op?: IModelOption
 ) {
   const currentIndex = currentRunnerScope!.hooks.length
-  const hasValue = hasValueInContext(currentRunnerScope!.intialContextData![currentIndex])
+  const hasValue = hasValueInContext(
+    currentRunnerScope!.intialContextData![currentIndex]
+  )
 
   if (!hasValue) {
     return createUnaccessGetter2<T>(currentIndex)
@@ -1198,7 +1197,11 @@ function updateModel<T extends any[]>(
 
   return newSetterGetter
 }
-function mountModel<T extends any[]>(e: string, q: () => IModelQuery['query'], op?: IModelOption) {
+function mountModel<T extends any[]>(
+  e: string,
+  q: () => IModelQuery['query'],
+  op?: IModelOption
+) {
   const internalModel =
     process.env.TARGET === 'server'
       ? new Model<T>(e, q, op, currentRunnerScope!)
@@ -1219,7 +1222,9 @@ function updateClientModel<T extends any[]>(
   op?: IModelOption
 ) {
   const currentIndex = currentRunnerScope!.hooks.length
-  const hasValue = hasValueInContext(currentRunnerScope!.intialContextData![currentIndex])
+  const hasValue = hasValueInContext(
+    currentRunnerScope!.intialContextData![currentIndex]
+  )
 
   const initialValue: T =
     currentRunnerScope!.intialContextData![currentIndex]?.[1]
@@ -1268,7 +1273,9 @@ function mountClientModel<T extends any[]>(
 
 function updateCache<T>(key: string, options: ICacheOptions<T>) {
   const currentIndex = currentRunnerScope!.hooks.length
-  const hasValue = hasValueInContext(currentRunnerScope!.intialContextData![currentIndex])
+  const hasValue = hasValueInContext(
+    currentRunnerScope!.intialContextData![currentIndex]
+  )
 
   if (!hasValue) {
     return createUnaccessGetter<T>(currentIndex)
@@ -1301,7 +1308,9 @@ function updateComputed<T>(
 ): (() => T) & { _hook: Computed<T> }
 function updateComputed<T>(fn: any): any {
   const currentIndex = currentRunnerScope!.hooks.length
-  const hasValue = hasValueInContext(currentRunnerScope!.intialContextData![currentIndex])
+  const hasValue = hasValueInContext(
+    currentRunnerScope!.intialContextData![currentIndex]
+  )
 
   const initialValue: T =
     currentRunnerScope!.intialContextData![currentIndex]?.[1]

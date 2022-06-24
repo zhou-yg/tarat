@@ -90,8 +90,7 @@ export function oneState(arg: { a: number }) {
   }
 }
 export function oneModel() {
-  const m1 = model('test-model', () => ({
-  }))
+  const m1 = model('test-model', () => ({}))
   return {
     m1
   }
@@ -270,12 +269,10 @@ export function changeStateAsyncInputCompute(
 }
 
 export function userPessimisticModel() {
-  const users = model(
-    'item',
-    () => ({
-    }),
-    { immediate: true, pessimisticUpdate: true }
-  )
+  const users = model('item', () => ({}), {
+    immediate: true,
+    pessimisticUpdate: true
+  })
 
   return {
     users
@@ -283,12 +280,10 @@ export function userPessimisticModel() {
 }
 
 export function userModelInputeCompute() {
-  const items = model<{ id: number; name?: string }[]>(
-    'item',
-    () => ({
-    }),
-    { immediate: true, pessimisticUpdate: true }
-  )
+  const items = model<{ id: number; name?: string }[]>('item', () => ({}), {
+    immediate: true,
+    pessimisticUpdate: true
+  })
 
   const fn = async (id: number, name: string) => {
     const exist = await items.exist({ name })
@@ -349,7 +344,7 @@ export function modelInComputed() {
       where: {
         name: targetName()
       }
-  }),
+    }),
     { immediate: false }
   )
   const userNames = computed(() => {

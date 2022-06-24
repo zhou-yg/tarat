@@ -1,6 +1,23 @@
 import { loadPlugin } from 'tarat-core'
 import { setHookAdaptor } from './adaptor'
 
+const undefTag = '__tarat_undefined_placehodler_tag__'
+
+export function stringifyWithUndef(data: object) {
+  return JSON.stringify(data, (k, v) => {
+    return v === undefined ? undefTag : v
+  })
+}
+
+export function parseWithUndef(str: string) {
+  return JSON.parse(str, (k, v) => {
+    if (v === undefTag) {
+      return undefined
+    }
+    return v
+  })
+}
+
 export function clientRuntime(c: {
   framework: any
   name: 'react' | 'axii'
@@ -38,7 +55,7 @@ export function clientRuntime(c: {
     async postDiffToServer(entity, diff) {
       await fetch(`${diffPath}`, {
         method: 'POST',
-        body: JSON.stringify({
+        body: stringifyWithUndef({
           entity,
           diff
         })
@@ -47,16 +64,20 @@ export function clientRuntime(c: {
     async postComputeToServer(c) {
       const newContext = await fetch(`${hostConfig}/${c.name}`, {
         method: 'POST',
-        body: JSON.stringify(c)
-      }).then(r => r.json())
+        body: stringifyWithUndef(c)
+      })
+        .then(r => r.text())
+        .then(parseWithUndef)
 
       return newContext
     },
     async postQueryToServer(c) {
       const newContext = await fetch(`${hostConfig}/${c.name}`, {
         method: 'POST',
-        body: JSON.stringify(c)
-      }).then(r => r.json())
+        body: stringifyWithUndef(c)
+      })
+        .then(r => r.text())
+        .then(parseWithUndef)
 
       return newContext
     },
