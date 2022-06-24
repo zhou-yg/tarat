@@ -43,13 +43,19 @@ describe('internalProxy', () => {
 })
 
 describe('little hooks', () => {
-  it('combineLatest', () => {
+  it('combineLatest', async () => {
     const runner = new Runner(mockBM.combineTwoState)
     const result = runner.init()
 
     expect(result.final()).toBe(2)
+
+    await mockBM.wait()
+
     result.s1(() => 4)
     expect(result.final()).toBe(4)
+
+    await mockBM.wait()
+
     result.s2(() => 6)
     expect(result.final()).toBe(7)
   })

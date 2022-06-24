@@ -109,7 +109,7 @@ describe('model', () => {
       expect(result.users()).toEqual([{ id: 2, name: 'b' }])
     })
 
-    it.only('model used in computed', async () => {
+    it('model used in computed', async () => {
       const runner = new Runner(mockBM.modelInComputed)
       const result = runner.init()
 

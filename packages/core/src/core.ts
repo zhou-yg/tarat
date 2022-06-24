@@ -191,11 +191,12 @@ export class State<T = any> extends Hook {
 
 export class Model<T extends any[]> extends State<T[]> {
   getterPromise: Promise<T> | null = null
-  queryWhereComputed: Computed<IModelQuery> | null = null
+  queryWhereComputed: Computed<IModelQuery['query']> | null = null
   watcher: Watcher = new Watcher(this)
   init = true
   constructor(
-    getQueryWhere: () => IModelQuery,
+    public entity: string,
+    getQueryWhere: () => IModelQuery['query'],
     public options: IModelOption = {},
     public scope: CurrentRunnerScope
   ) {
@@ -215,7 +216,7 @@ export class Model<T extends any[]> extends State<T[]> {
     const newReactiveChain = reactiveChain?.add(this)
     this.executeQuery(newReactiveChain)
   }
-  async getQueryWhere(): Promise<IModelQuery> {
+  async getQueryWhere(): Promise<IModelQuery['query']> {
     await this.queryWhereComputed!.getterPromise
     return this.queryWhereComputed!.value!
   }
@@ -242,7 +243,7 @@ export class Model<T extends any[]> extends State<T[]> {
   }
   async enableQuery() {
     const q = await this.getQueryWhere()
-    const valid = checkQueryWhere(q.query.where)
+    const valid = q && checkQueryWhere(q)
     return valid || this.options.ignoreEnable
   }
   async executeQuery(reactiveChain?: ReactiveChain) {
@@ -255,12 +256,12 @@ export class Model<T extends any[]> extends State<T[]> {
       const valid = await this.enableQuery()
       log(
         '[Model.executeQuery] 1 q.entity, q.query: ',
-        q.entity,
-        q.query,
+        this.entity,
+        q,
         valid
       )
       if (valid) {
-        const result: T = await getPlugin('Model').find(q.entity, q.query)
+        const result: T = await getPlugin('Model').find(this.entity, q)
         log('[Model.executeQuery] 2 result: ', result)
         this.update(result, [], false, reactiveChain)
       }
@@ -273,8 +274,7 @@ export class Model<T extends any[]> extends State<T[]> {
     }
   }
   async exist(obj: { [k: string]: any }) {
-    const q = await this.getQueryWhere()
-    const result: T = await getPlugin('Model').find(q.entity, { where: obj })
+    const result: T = await getPlugin('Model').find(this.entity, { where: obj })
     return result.length > 0
   }
   override async applyInputComputePatches(
@@ -303,7 +303,7 @@ export class Model<T extends any[]> extends State<T[]> {
     let resolve: Function
     this.getterPromise = new Promise(r => (resolve = r))
 
-    const { entity } = await this.getQueryWhere()
+    const { entity } = this
     try {
       const diff = calculateDiff(oldValue, patches)
       log('[Model.updateWithPatches] diff: ', diff)
@@ -812,6 +812,7 @@ export class CurrentRunnerScope {
     const { hooks } = this
     const hookIndex = h ? hooks.indexOf(h) : -1
     const hooksData: IHookContext['data'] = hooks.map(hook => {
+      // clientModel same as Model
       // if (hook instanceof ClientModel) {
       //   return ['clientModel', hook.value]
       // }
@@ -1131,11 +1132,16 @@ function createUnaccessGetter2<T extends any[]>(index: number) {
   return newF
 }
 
+function hasValueInContext(d: IHookContext['data'][0]) {
+  return d?.length === 2
+}
+
 function updateState<T>(initialValue: T) {
   const currentIndex = currentRunnerScope!.hooks.length
+  const hasValue = hasValueInContext(currentRunnerScope!.intialContextData![currentIndex])
   initialValue = currentRunnerScope!.intialContextData![currentIndex]?.[1]
   // undefined means this hook wont needed in this progress
-  if (initialValue === undefined) {
+  if (!hasValue) {
     return createUnaccessGetter<T>(currentIndex)
   }
   const internalState = new State(initialValue)
@@ -1162,11 +1168,15 @@ function mountState<T>(initialValue: T) {
   return newSetterGetter
 }
 
-function updateModel<T extends any[]>(q: () => IModelQuery, op?: IModelOption) {
+function updateModel<T extends any[]>(
+  e: string,
+  q: () => IModelQuery['query'],
+  op?: IModelOption
+) {
   const currentIndex = currentRunnerScope!.hooks.length
-  const initialValue: T =
-    currentRunnerScope!.intialContextData![currentIndex]?.[1]
-  if (initialValue === undefined) {
+  const hasValue = hasValueInContext(currentRunnerScope!.intialContextData![currentIndex])
+
+  if (!hasValue) {
     return createUnaccessGetter2<T>(currentIndex)
   }
   const immediate = process.env.TARGET === 'server'
@@ -1177,8 +1187,8 @@ function updateModel<T extends any[]>(q: () => IModelQuery, op?: IModelOption) {
 
   const internalModel =
     process.env.TARGET === 'server'
-      ? new Model<T>(q, op, currentRunnerScope!)
-      : new ClientModel<T>(q, op, currentRunnerScope!)
+      ? new Model<T>(e, q, op, currentRunnerScope!)
+      : new ClientModel<T>(e, q, op, currentRunnerScope!)
 
   const setterGetter = createModelSetterGetterFunc<T>(internalModel)
   const newSetterGetter = Object.assign(setterGetter, {
@@ -1188,11 +1198,11 @@ function updateModel<T extends any[]>(q: () => IModelQuery, op?: IModelOption) {
 
   return newSetterGetter
 }
-function mountModel<T extends any[]>(q: () => IModelQuery, op?: IModelOption) {
+function mountModel<T extends any[]>(e: string, q: () => IModelQuery['query'], op?: IModelOption) {
   const internalModel =
     process.env.TARGET === 'server'
-      ? new Model<T>(q, op, currentRunnerScope!)
-      : new ClientModel<T>(q, op, currentRunnerScope!)
+      ? new Model<T>(e, q, op, currentRunnerScope!)
+      : new ClientModel<T>(e, q, op, currentRunnerScope!)
 
   const setterGetter = createModelSetterGetterFunc<T>(internalModel)
   const newSetterGetter = Object.assign(setterGetter, {
@@ -1204,13 +1214,16 @@ function mountModel<T extends any[]>(q: () => IModelQuery, op?: IModelOption) {
 }
 
 function updateClientModel<T extends any[]>(
-  q: () => IModelQuery,
+  e: string,
+  q: () => IModelQuery['query'],
   op?: IModelOption
 ) {
   const currentIndex = currentRunnerScope!.hooks.length
+  const hasValue = hasValueInContext(currentRunnerScope!.intialContextData![currentIndex])
+
   const initialValue: T =
     currentRunnerScope!.intialContextData![currentIndex]?.[1]
-  if (initialValue === undefined) {
+  if (!hasValue) {
     return createUnaccessGetter2<T>(currentIndex)
   }
   const inServer = process.env.TARGET === 'server'
@@ -1220,8 +1233,8 @@ function updateClientModel<T extends any[]>(
   })
 
   const internalModel = inServer
-    ? new Model<T>(q, op, currentRunnerScope!)
-    : new ClientModel<T>(q, op, currentRunnerScope!)
+    ? new Model<T>(e, q, op, currentRunnerScope!)
+    : new ClientModel<T>(e, q, op, currentRunnerScope!)
 
   if (!inServer) {
     internalModel.init = inServer
@@ -1238,10 +1251,11 @@ function updateClientModel<T extends any[]>(
 }
 
 function mountClientModel<T extends any[]>(
-  q: () => IModelQuery,
+  e: string,
+  q: () => IModelQuery['query'],
   op?: IModelOption
 ) {
-  const internalModel = new ClientModel<T>(q, op, currentRunnerScope!)
+  const internalModel = new ClientModel<T>(e, q, op, currentRunnerScope!)
 
   const setterGetter = createModelSetterGetterFunc<T>(internalModel)
   const newSetterGetter = Object.assign(setterGetter, {
@@ -1254,9 +1268,9 @@ function mountClientModel<T extends any[]>(
 
 function updateCache<T>(key: string, options: ICacheOptions<T>) {
   const currentIndex = currentRunnerScope!.hooks.length
-  const initialValue: T =
-    currentRunnerScope!.intialContextData![currentIndex]?.[1]
-  if (initialValue === undefined) {
+  const hasValue = hasValueInContext(currentRunnerScope!.intialContextData![currentIndex])
+
+  if (!hasValue) {
     return createUnaccessGetter<T>(currentIndex)
   }
 
@@ -1287,9 +1301,11 @@ function updateComputed<T>(
 ): (() => T) & { _hook: Computed<T> }
 function updateComputed<T>(fn: any): any {
   const currentIndex = currentRunnerScope!.hooks.length
+  const hasValue = hasValueInContext(currentRunnerScope!.intialContextData![currentIndex])
+
   const initialValue: T =
     currentRunnerScope!.intialContextData![currentIndex]?.[1]
-  if (initialValue === undefined) {
+  if (!hasValue) {
     return createUnaccessGetter<T>(currentIndex)
   }
   const hook = new Computed<T>(fn)
@@ -1331,23 +1347,25 @@ export function state<T>(initialValue: T) {
 }
 
 export function model<T extends any[]>(
-  q: () => IModelQuery,
+  e: string,
+  q: () => IModelQuery['query'],
   op?: IModelOption
 ) {
   if (!currentRunnerScope) {
     throw new Error('[model] must under a tarat runner')
   }
-  return currentHookFactory.model<T>(q, op)
+  return currentHookFactory.model<T>(e, q, op)
 }
 
 export function clientModel<T extends any[]>(
-  q: () => IModelQuery,
+  e: string,
+  q: () => IModelQuery['query'],
   op?: IModelOption
 ) {
   if (!currentRunnerScope) {
     throw new Error('[model] must under a tarat runner')
   }
-  return currentHookFactory.clientModel<T>(q, op)
+  return currentHookFactory.clientModel<T>(e, q, op)
 }
 
 export function cache<T>(key: string, options: ICacheOptions<T>) {
