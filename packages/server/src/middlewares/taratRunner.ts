@@ -1,4 +1,4 @@
-import { IHookContext, Runner, getPlugin, IDiff } from 'tarat-core'
+import { IHookContext, Runner, getPlugin, IDiff, debuggerLog, startdReactiveChain, stopReactiveChain } from 'tarat-core'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'
 import { setCookies, setPrisma, setRunning, setER  } from '../plugins/'
@@ -15,10 +15,14 @@ function wrapCtx (ctx: Application.ParameterizedContext) {
   return {
     cookies: {
       set (name: any, value: any) {
-        console.log('set(name, value): ', name, value);
+        console.log('[Cookies] set(name, value): ', name, value);
         return ctx.cookies.set(name, value)
       },
-      get: ctx.cookies.get.bind(ctx.cookies)
+      get (name: any) {
+        const val = ctx.cookies.get(name)
+        console.log('[Cookies] get(name, value): ', name, val);
+        return val
+      }
     }
   }
 }
@@ -51,16 +55,31 @@ export default function taratMiddleware (args: {
         getPlugin('GlobalRunning').setCurrent(runner.scope, wrapCtx(ctx))
         console.log('ctx cookie: ', ctx.cookies.get('userDataKey'));
 
+        const chain1 = startdReactiveChain()
+
         runner.init(c.initialArgList, c)
+
+        stopReactiveChain()
+        chain1.print()
 
         getPlugin('GlobalRunning').setCurrent(runner.scope, null)
 
         await runner.ready()
 
+        // debuggerLog(true)
+
+        const chain2 = startdReactiveChain()
+
         if (c.index !== undefined) {
           await runner.callHook(c.index, c.args)
         }
+
+        stopReactiveChain()
+
         await runner.ready()
+
+        chain2.print()
+
         const context = runner.scope.createInputComputeContext()
 
         
