@@ -50,7 +50,12 @@ interface ISource<U> {
 export class Watcher<T = Hook> {
   deps: Map<ISource<T>, (string | number)[][]> = new Map()
   constructor(public target: ITarget<ISource<T>>) {}
-  notify(dep: ISource<T>, path: TPath, patches?: IPatch[], reactiveChain?: ReactiveChain) {
+  notify(
+    dep: ISource<T>,
+    path: TPath,
+    patches?: IPatch[],
+    reactiveChain?: ReactiveChain
+  ) {
     const paths = this.deps.get(dep)
     const matched = paths?.some(p => isEqual(p, path))
     if (matched) {
@@ -83,6 +88,7 @@ export class Watcher<T = Hook> {
 }
 
 export class Hook {
+  name?: string
   freezed?: boolean
   watchers = new Set<Watcher<typeof this>>()
   addWatcher(w: Watcher<Hook>) {
@@ -101,7 +107,11 @@ export class State<T = any> extends Hook {
     super()
     this._internalValue = data
   }
-  trigger(path: (number | string)[] = [''], patches?: IPatch[], reactiveChain?: ReactiveChain<T>) {
+  trigger(
+    path: (number | string)[] = [''],
+    patches?: IPatch[],
+    reactiveChain?: ReactiveChain<T>
+  ) {
     if (!path || path.length === 0) {
       path = ['']
     }
@@ -115,7 +125,12 @@ export class State<T = any> extends Hook {
     }
     return internalProxy(this, this._internalValue)
   }
-  update(v: T, patches?: IPatch[], silent?: boolean, reactiveChain?: ReactiveChain<T>) {
+  update(
+    v: T,
+    patches?: IPatch[],
+    silent?: boolean,
+    reactiveChain?: ReactiveChain<T>
+  ) {
     const oldValue = this._internalValue
     this._internalValue = v
     const shouldTrigger = oldValue !== v && !isEqual(oldValue, v)
@@ -217,7 +232,13 @@ export class Model<T extends any[]> extends State<T[]> {
   }
   query() {
     log(`[${this.constructor.name}.query]`)
-    this.queryWhereComputed?.run()
+
+    let reactiveChain: ReactiveChain | undefined = undefined
+    if (currentReactiveChain) {
+      reactiveChain = currentReactiveChain.add(this)
+    }
+
+    this.queryWhereComputed?.run(reactiveChain)
   }
   async enableQuery() {
     const q = await this.getQueryWhere()
@@ -256,7 +277,10 @@ export class Model<T extends any[]> extends State<T[]> {
     const result: T = await getPlugin('Model').find(q.entity, { where: obj })
     return result.length > 0
   }
-  override async applyInputComputePatches(ic: InputCompute, reactiveChain?: ReactiveChain) {
+  override async applyInputComputePatches(
+    ic: InputCompute,
+    reactiveChain?: ReactiveChain
+  ) {
     const exist = this.inputComputePatchesMap.get(ic)
     if (exist) {
       this.inputComputePatchesMap.delete(ic)
@@ -265,7 +289,11 @@ export class Model<T extends any[]> extends State<T[]> {
       await this.updateWithPatches(newValue, patches, reactiveChain)
     }
   }
-  async updateWithPatches(v: T[], patches: IPatch[], reactiveChain?: ReactiveChain) {
+  async updateWithPatches(
+    v: T[],
+    patches: IPatch[],
+    reactiveChain?: ReactiveChain
+  ) {
     const oldValue = this._internalValue
     if (!this.options.pessimisticUpdate) {
       log('[Model.updateWithPatches] update internal v=', v)
@@ -411,7 +439,12 @@ export class Cache<T> extends State<T | undefined> {
     }
   }
   // call by outer
-  override async update(v?: T, patches?: IPatch[], silent?: boolean, reactiveChain?: ReactiveChain) {
+  override async update(
+    v?: T,
+    patches?: IPatch[],
+    silent?: boolean,
+    reactiveChain?: ReactiveChain
+  ) {
     const { from } = this.options
     const { source } = this
     if (source) {
@@ -490,7 +523,7 @@ export class InputCompute<P extends any[] = any> extends Hook {
     if (currentReactiveChain) {
       reactiveChain = currentReactiveChain.add(this)
     }
-    
+
     this.scope.applyComputePatches(this, reactiveChain)
     unFreeze({ _hook: this })
     this.triggerEvent('after')
@@ -499,9 +532,6 @@ export class InputCompute<P extends any[] = any> extends Hook {
     currentInputeCompute = this
     this.triggerEvent('before')
     if (!checkFreeze({ _hook: this })) {
-
-
-
       const funcResult = this.getter(...args)
       if (isPromise(funcResult)) {
         await Promise.resolve(funcResult)
@@ -630,15 +660,15 @@ class Effect<T> extends Hook {
 // }
 
 /**
- * 
+ *
  */
 let currentReactiveChain: ReactiveChain | null = null
-export function startdReactiveChain (name: string = 'root') {
+export function startdReactiveChain(name: string = 'root') {
   currentReactiveChain = new ReactiveChain()
   currentReactiveChain.name = name
   return currentReactiveChain
 }
-export function stopReactiveChain () {
+export function stopReactiveChain() {
   currentReactiveChain = null
 }
 /**
@@ -649,40 +679,41 @@ export class ReactiveChain<T = any> {
   oldValue: T | undefined
   newValue: T | undefined
   children: ReactiveChain<T>[] = []
-  constructor (public hook?: State<T> | InputCompute) {
+  constructor(public hook?: State<T> | InputCompute) {
     if (hook instanceof State) {
       this.oldValue = hook._internalValue
     }
   }
-  update () {
+  update() {
     if (this.hook instanceof State) {
       this.newValue = this.hook._internalValue
     }
   }
-  add (child: State<T> | InputCompute): ReactiveChain<T> {
+  add(child: State<T> | InputCompute): ReactiveChain<T> {
+    // if (this.name === 'root' && child instanceof Cache) {
+    //   console.trace()
+    // }
     const childChain = new ReactiveChain(child)
     this.children.push(childChain)
     return childChain
   }
-  print () {
+  print() {
+    const preLink = '|->'
+    const preHasNextSpace = '|  '
+    const preSpace = '   '
 
-    const preLink = '|--> '
+    function dfi(current: ReactiveChain) {
+      let currentName = current.hook?.constructor.name || current.name || ''
+      if (current.hook?.name) {
+        currentName = `${currentName}(${current.hook?.name})`
+      }
 
-    const preHasNextSpace = '|   '
-    const preSpace = '    '
-
-    function dfi (current: ReactiveChain) {
-      const currentName = current.hook?.constructor.name || current.name || ''
       const currentRows = [currentName]
       if (current.oldValue !== undefined) {
-        currentRows.push(
-          `${preLink} old=${JSON.stringify(current.oldValue)}`
-        )
+        currentRows.push(`${preLink} old=${JSON.stringify(current.oldValue)}`)
       }
       if (current.newValue !== undefined) {
-        currentRows.push(
-          `${preLink} new=${JSON.stringify(current.newValue)}`
-        )
+        currentRows.push(`${preLink} new=${JSON.stringify(current.newValue)}`)
       }
 
       if (current.children.length > 0) {
@@ -701,14 +732,9 @@ export class ReactiveChain<T = any> {
             }
           })
         })
-        return [
-          ...currentRows,
-          ...rows,
-        ]
+        return [...currentRows, ...rows]
       }
-      return [
-        ...currentRows
-      ]
+      return [...currentRows]
     }
     const logRows = dfi(this)
     console.log(logRows.join('\n'))
@@ -761,7 +787,10 @@ export class CurrentRunnerScope {
     this.watcher.addDep(v)
   }
 
-  applyComputePatches(currentInputCompute: InputCompute, reactiveChain?: ReactiveChain) {
+  applyComputePatches(
+    currentInputCompute: InputCompute,
+    reactiveChain?: ReactiveChain
+  ) {
     const hookModified = this.hooks.filter(h => {
       if (h && (h as State).inputComputePatchesMap) {
         return (h as State).inputComputePatchesMap.get(currentInputCompute)
@@ -770,8 +799,11 @@ export class CurrentRunnerScope {
 
     if (hookModified.length) {
       hookModified.forEach(h => {
-        const newChildChain = reactiveChain?.add((h as State))
-        ;(h as State).applyInputComputePatches(currentInputCompute, newChildChain)
+        const newChildChain = reactiveChain?.add(h as State)
+        ;(h as State).applyInputComputePatches(
+          currentInputCompute,
+          newChildChain
+        )
       })
     }
   }
@@ -994,9 +1026,7 @@ export let currentHookFactory: {
   combineLatest: typeof combineLatest
 } = updateHookFactory
 
-function createStateSetterGetterFunc<SV>(
-  s: State<SV>,
-): {
+function createStateSetterGetterFunc<SV>(s: State<SV>): {
   (): SV
   (paramter: IModifyFunction<SV>): [SV, IPatch[]]
 } {
@@ -1023,18 +1053,13 @@ function createStateSetterGetterFunc<SV>(
 }
 
 function createModelSetterGetterFunc<T extends any[]>(
-  m: Model<T>,
+  m: Model<T>
 ): {
   (): T | undefined
   (paramter: IModifyFunction<T | undefined>): Promise<[T | undefined, IPatch[]]>
 } {
   return (paramter?: any): any => {
     if (paramter && isFunc(paramter)) {
-      let reactiveChain: ReactiveChain<T> | undefined
-      if (currentReactiveChain) {
-        reactiveChain = currentReactiveChain.add(m)
-      }
-
       const [result, patches] = produceWithPatches<T>(
         shallowCopy(m.value),
         paramter
@@ -1048,6 +1073,10 @@ function createModelSetterGetterFunc<T extends any[]>(
       if (currentInputeCompute) {
         m.addInputComputePatches(result, patches)
       } else {
+        let reactiveChain: ReactiveChain<T> | undefined
+        if (currentReactiveChain) {
+          reactiveChain = currentReactiveChain.add(m)
+        }  
         m.updateWithPatches(result, patches, reactiveChain)
       }
       return [result, patches]
@@ -1056,25 +1085,21 @@ function createModelSetterGetterFunc<T extends any[]>(
   }
 }
 
-
-function createCacheSetterGetterFunc<SV>(
-  c: Cache<SV>,
-): {
+function createCacheSetterGetterFunc<SV>(c: Cache<SV>): {
   (): SV
   (paramter: IModifyFunction<SV>): [SV, IPatch[]]
 } {
   return (paramter?: any): any => {
     if (paramter) {
       if (isFunc(paramter)) {
-        let reactiveChain: ReactiveChain<SV> | undefined
-        if (currentReactiveChain) {
-          reactiveChain = currentReactiveChain.add(c)
-        }
-            
         const [result, patches] = produceWithPatches(c.value, paramter)
         if (currentInputeCompute) {
           c.addInputComputePatches(result, patches)
         } else {
+          let reactiveChain: ReactiveChain<SV> | undefined
+          if (currentReactiveChain) {
+            reactiveChain = currentReactiveChain.add(c)
+          }
           c.update(result, patches, false, reactiveChain)
         }
         return [result, patches]
@@ -1085,7 +1110,6 @@ function createCacheSetterGetterFunc<SV>(
     return c.value
   }
 }
-
 
 function createUnaccessGetter<T>(index: number) {
   const f = () => {
@@ -1116,9 +1140,7 @@ function updateState<T>(initialValue: T) {
   }
   const internalState = new State(initialValue)
 
-  const setterGetter = createStateSetterGetterFunc(
-    internalState,
-  )
+  const setterGetter = createStateSetterGetterFunc(internalState)
   currentRunnerScope!.addHook(internalState)
 
   const newSetterGetter = Object.assign(setterGetter, {
@@ -1130,9 +1152,7 @@ function updateState<T>(initialValue: T) {
 function mountState<T>(initialValue: T) {
   const internalState = new State(initialValue)
 
-  const setterGetter = createStateSetterGetterFunc(
-    internalState,
-  )
+  const setterGetter = createStateSetterGetterFunc(internalState)
   currentRunnerScope!.addHook(internalState)
 
   const newSetterGetter = Object.assign(setterGetter, {
@@ -1160,9 +1180,7 @@ function updateModel<T extends any[]>(q: () => IModelQuery, op?: IModelOption) {
       ? new Model<T>(q, op, currentRunnerScope!)
       : new ClientModel<T>(q, op, currentRunnerScope!)
 
-  const setterGetter = createModelSetterGetterFunc<T>(
-    internalModel,
-  )
+  const setterGetter = createModelSetterGetterFunc<T>(internalModel)
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalModel,
     exist: internalModel.exist.bind(internalModel)
@@ -1176,9 +1194,7 @@ function mountModel<T extends any[]>(q: () => IModelQuery, op?: IModelOption) {
       ? new Model<T>(q, op, currentRunnerScope!)
       : new ClientModel<T>(q, op, currentRunnerScope!)
 
-  const setterGetter = createModelSetterGetterFunc<T>(
-    internalModel,
-  )
+  const setterGetter = createModelSetterGetterFunc<T>(internalModel)
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalModel,
     exist: internalModel.exist.bind(internalModel)
@@ -1212,9 +1228,7 @@ function updateClientModel<T extends any[]>(
     internalModel._internalValue = initialValue || []
   }
 
-  const setterGetter = createModelSetterGetterFunc<T>(
-    internalModel,
-  )
+  const setterGetter = createModelSetterGetterFunc<T>(internalModel)
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalModel,
     exist: internalModel.exist.bind(internalModel)
@@ -1229,9 +1243,7 @@ function mountClientModel<T extends any[]>(
 ) {
   const internalModel = new ClientModel<T>(q, op, currentRunnerScope!)
 
-  const setterGetter = createModelSetterGetterFunc<T>(
-    internalModel,
-  )
+  const setterGetter = createModelSetterGetterFunc<T>(internalModel)
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalModel,
     exist: internalModel.exist.bind(internalModel)
