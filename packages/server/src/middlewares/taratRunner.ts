@@ -1,4 +1,8 @@
-import { IHookContext, Runner, getPlugin, IDiff, debuggerLog, startdReactiveChain, stopReactiveChain } from 'tarat-core'
+import {
+  IHookContext, Runner, getPlugin, IDiff, debuggerLog, startdReactiveChain,
+  stopReactiveChain
+} from 'tarat-core'
+import { parseWithUndef } from 'tarat-connect'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'
 import { setCookies, setPrisma, setRunning, setER  } from '../plugins/'
@@ -49,7 +53,7 @@ export default function taratMiddleware (args: {
       const hookConfig = hooks.find(h => h.name === hookName)
       if (hookConfig) {        
         const hookFunc = await hookConfig.hookFunc
-        const c: IHookContext = JSON.parse(ctx.request.body)
+        const c: IHookContext = parseWithUndef(ctx.request.body)
 
         let runner = new Runner(hookFunc.default)
         getPlugin('GlobalRunning').setCurrent(runner.scope, wrapCtx(ctx))
