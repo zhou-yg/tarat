@@ -15,7 +15,7 @@ function matchHookName (path: string) {
   }
 }
 
-function wrapCtx (ctx: Application.ParameterizedContext) {
+export function wrapCtx (ctx: Application.ParameterizedContext) {
   return {
     cookies: {
       set (name: any, value: any) {
