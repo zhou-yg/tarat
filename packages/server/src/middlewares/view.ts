@@ -5,6 +5,8 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { ViteDevServer } from "vite";
 import { fileURLToPath } from 'url'
+import { getPlugin, IHookContext, Runner, startdReactiveChain, stopReactiveChain } from "tarat-core";
+import { wrapCtx } from "./taratRunner";
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -27,7 +29,31 @@ const template = compile(fs.readFileSync(templateFilePath).toString())
 
     if (viewConfig) {
 
+      const hookName = ctx.request.query.hook
+
+      const loginHook = args.config.hooks.find(c => c.name === hookName)
+
+      let context: { [k: string]: IHookContext } = {}
+      if (loginHook) {
+        const hookFunc = await loginHook.hookFunc
+        const runner = new Runner(hookFunc.default)
+        getPlugin('GlobalRunning').setCurrent(runner.scope, wrapCtx(ctx))
+
+        const chain = startdReactiveChain()
+        runner.init()
+        stopReactiveChain()
+
+        getPlugin('GlobalRunning').setCurrent(runner.scope, null)
+
+        await runner.ready()
+        chain.print()
+        Object.assign(context, {
+          [hookFunc.default.name]: runner.scope.createInputComputeContext()
+        })
+      }
+
       let html = template({
+        hookContextMap: JSON.stringify(context),
         src: viewConfig.file,
         configJSON: JSON.stringify({
           apiPre: args.config.apiPre,
