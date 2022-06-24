@@ -13,8 +13,6 @@ export default function login () {
   const name = state()
   name._hook.name = 'name'
 
-  console.log('name():', name())
-
   const password = state()
   password._hook.name = 'password'
 
@@ -33,6 +31,7 @@ export default function login () {
 
   const cookieId = cache('userDataKey', { from: 'cookie' }) // just run in server because by it depends 'cookie'
   cookieId._hook.name = 'cookieId'
+
   const userDataByInput = model('user', (prev) => {
     if (name() && password()) {
       return {
@@ -46,18 +45,23 @@ export default function login () {
   userDataByInput._hook.name = 'userDataByInput'
 
   const sessionStore = model('sessionStore', () => {
-    return ({
-      where: {
-        fromIndex: cookieId()
-      }
-    })
-  })
+    const cid = cookieId()
+    // client: ps, server: no?
+    if (cid) {
+      return ({
+        where: {
+          fromIndex: cid
+        }
+      })
+    }
+  }, { ignoreClientEnable: true })
   sessionStore._hook.name = 'sessionStore'
 
   /* 9 */
 
   const userIdInSession = computed(() => {
     const ss = sessionStore()
+    console.log('ss: ', ss);
     if (ss && ss.length > 0) {
       return {
         name: ss[0].name,
