@@ -476,8 +476,7 @@ export function combineTwoState() {
   }
 }
 
-
-export function stateInComputed () {
+export function stateInComputed() {
   const s2 = state(1)
   const c1 = computed(() => s2() + 1)
 
@@ -486,7 +485,7 @@ export function stateInComputed () {
     s2
   }
 }
-export function stateInNestedComputed () {
+export function stateInNestedComputed() {
   const s2 = state(1)
   const c1 = computed(() => s2() + 1)
   const c2 = computed(() => c1() + 1)
@@ -497,7 +496,7 @@ export function stateInNestedComputed () {
     s2
   }
 }
-export function statesWithInputCompute () {
+export function statesWithInputCompute() {
   const s1 = state(0)
   const s2 = state(1)
   const c1 = computed(() => s2() + 1)
@@ -515,8 +514,6 @@ export function statesWithInputCompute () {
     c2,
     s2,
     s1,
-    ic,
+    ic
   }
 }
-
-
