@@ -120,6 +120,7 @@ export class State<T = any> extends Hook {
     })
   }
   get value(): T {
+
     if (currentInputeCompute) {
       return this.getInputComputeDraftValue()
     }
@@ -222,7 +223,8 @@ export class Model<T extends any[]> extends State<T[]> {
   }
   override get value(): T[] {
     if (this.init) {
-      this.query()
+      const reactiveChain = currentReactiveChain?.addCall(this)
+      this.query(reactiveChain)
     }
     return super.value
   }
@@ -231,20 +233,22 @@ export class Model<T extends any[]> extends State<T[]> {
       await this.getterPromise
     }
   }
-  query() {
+  query(reactiveChain?: ReactiveChain) {
     log(`[${this.constructor.name}.query]`)
 
-    let reactiveChain: ReactiveChain | undefined = undefined
-    if (currentReactiveChain) {
-      reactiveChain = currentReactiveChain.add(this)
+    if (!reactiveChain) {
+      reactiveChain = currentReactiveChain
     }
 
-    this.queryWhereComputed?.run(reactiveChain)
+    if (this.queryWhereComputed) {
+      const newReactiveChain = reactiveChain?.add(this.queryWhereComputed)
+      this.queryWhereComputed.run(newReactiveChain)
+    }
   }
   async enableQuery() {
     const q = await this.getQueryWhere()
     const valid = q && checkQueryWhere(q)
-    return valid || this.options.ignoreEnable
+    return !!q || this.options.ignoreEnable
   }
   async executeQuery(reactiveChain?: ReactiveChain) {
     this.init = false
@@ -255,11 +259,12 @@ export class Model<T extends any[]> extends State<T[]> {
       const q = await this.getQueryWhere()
       const valid = await this.enableQuery()
       log('[Model.executeQuery] 1 q.entity, q.query: ', this.entity, q, valid)
+      let result: T[] = []
       if (valid) {
-        const result: T = await getPlugin('Model').find(this.entity, q)
+        result = await getPlugin('Model').find(this.entity, q)
         log('[Model.executeQuery] 2 result: ', result)
-        this.update(result, [], false, reactiveChain)
-      }
+      } 
+      this.update(result, [], false, reactiveChain)
     } catch (e) {
       log('[Model.executeQuery] error')
       console.error(e)
@@ -336,6 +341,8 @@ class ClientModel<T extends any[]> extends Model<T> {
       if (d[1]) {
         this.update(d[1])
       }
+    } else {
+      this.update([])
     }
     resolve!()
     this.getterPromise = null
@@ -476,7 +483,16 @@ export class Computed<T> extends State<T | undefined> {
   }
   run(reactiveChain?: ReactiveChain) {
     pushComputed(this)
-    const r: any = this.getter()
+
+    let oldCurrentReactiveChain: ReactiveChain | undefined = currentReactiveChain
+    if (currentReactiveChain && reactiveChain) {
+      currentReactiveChain = reactiveChain
+    }
+    // making sure the hook called by computed can register thier chain
+    const r: any = this.getter(this._internalValue)
+
+    currentReactiveChain = oldCurrentReactiveChain
+
     popComputed()
     if (r && (r.then || r instanceof Promise)) {
       this.getterPromise = r
@@ -511,29 +527,40 @@ export class InputCompute<P extends any[] = any> extends Hook {
     scope.addHook(this)
   }
   inputFuncStart() {}
-  async inputFuncEnd() {
+  async inputFuncEnd(reactiveChain?: ReactiveChain<P>) {
     currentInputeCompute = null
 
-    let reactiveChain: ReactiveChain | undefined = undefined
-    if (currentReactiveChain) {
-      reactiveChain = currentReactiveChain.add(this)
-    }
+    const updateReactiveChain: ReactiveChain | undefined = reactiveChain?.addUpdate(this)
 
-    this.scope.applyComputePatches(this, reactiveChain)
+    this.scope.applyComputePatches(this, updateReactiveChain)
     unFreeze({ _hook: this })
     this.triggerEvent('after')
   }
   async run(...args: any): Promise<void> {
     currentInputeCompute = this
     this.triggerEvent('before')
+
+    let preservedCurrentReactiveChain: ReactiveChain | undefined = currentReactiveChain
+    const newReactiveChain = currentReactiveChain?.add(this)
+    currentReactiveChain = newReactiveChain
+
     if (!checkFreeze({ _hook: this })) {
+        
       const funcResult = this.getter(...args)
+
+      if (newReactiveChain) {
+        newReactiveChain.async = isPromise(funcResult)
+      }
+      currentReactiveChain = preservedCurrentReactiveChain
+      
       if (isPromise(funcResult)) {
         await Promise.resolve(funcResult)
-        return await this.inputFuncEnd()
+        return await this.inputFuncEnd(newReactiveChain)
       }
     }
-    return this.inputFuncEnd()
+    currentReactiveChain = preservedCurrentReactiveChain
+
+    return this.inputFuncEnd(newReactiveChain)
   }
   triggerEvent(timing: 'before' | 'after') {
     this.watchers.forEach(w => {
@@ -549,6 +576,12 @@ class InputComputeInServer<P extends any[]> extends InputCompute<P> {
 
     this.triggerEvent('before')
     if (!checkFreeze({ _hook: this })) {
+
+      const newReactiveChain = currentReactiveChain?.add(this)
+      if (newReactiveChain) {
+        newReactiveChain.async = true
+      }
+
       const context = this.scope.createInputComputeContext(this, args)
       const result = await getPlugin('Context').postComputeToServer(context)
       this.scope.applyContext(result)
@@ -657,14 +690,14 @@ class Effect<T> extends Hook {
 /**
  *
  */
-let currentReactiveChain: ReactiveChain | null = null
+let currentReactiveChain: ReactiveChain | undefined = undefined
 export function startdReactiveChain(name: string = 'root') {
   currentReactiveChain = new ReactiveChain()
   currentReactiveChain.name = name
   return currentReactiveChain
 }
 export function stopReactiveChain() {
-  currentReactiveChain = null
+  currentReactiveChain = undefined
 }
 /**
  * collect reactive chain for debug
@@ -674,6 +707,8 @@ export class ReactiveChain<T = any> {
   oldValue: T | undefined
   newValue: T | undefined
   children: ReactiveChain<T>[] = []
+  type?: 'update' |'notify' | 'call'
+  async?: boolean
   constructor(public hook?: State<T> | InputCompute) {
     if (hook instanceof State) {
       this.oldValue = hook._internalValue
@@ -685,15 +720,23 @@ export class ReactiveChain<T = any> {
     }
   }
   add(child: State<T> | InputCompute): ReactiveChain<T> {
-    // if (this.name === 'root' && child instanceof Cache) {
-    //   console.trace()
-    // }
     const childChain = new ReactiveChain(child)
     this.children.push(childChain)
     return childChain
   }
+  addCall(child: State<T> | InputCompute): ReactiveChain<T> {
+    const childChain = this.add(child)
+    childChain.type = 'call'
+    return childChain
+  }
+  addUpdate(child: State<T> | InputCompute): ReactiveChain<T> {
+    const childChain = this.add(child)
+    childChain.type = 'update'
+    return childChain
+  }
   print() {
-    const preLink = '|->'
+    const preLink = '|--> '
+    const preProp = '|-- '
     const preHasNextSpace = '|  '
     const preSpace = '   '
 
@@ -702,13 +745,20 @@ export class ReactiveChain<T = any> {
       if (current.hook?.name) {
         currentName = `${currentName}(${current.hook?.name})`
       }
+      if (current.type) {
+        currentName = `${current.type}: ${currentName}`
+      }
 
       const currentRows = [currentName]
-      if (current.oldValue !== undefined) {
-        currentRows.push(`${preLink} old=${JSON.stringify(current.oldValue)}`)
+      if (current.oldValue === undefined) {
+        currentRows.push(`${preProp}cur=undef`)
+      } else {
+        currentRows.push(`${preProp}cur=${JSON.stringify(current.oldValue)}`)
       }
-      if (current.newValue !== undefined) {
-        currentRows.push(`${preLink} new=${JSON.stringify(current.newValue)}`)
+      if (current.newValue === undefined) {
+        currentRows.push(`${preProp}new=undef`)
+      } else {
+        currentRows.push(`${preProp}new=${JSON.stringify(current.newValue)}`)
       }
 
       if (current.children.length > 0) {
@@ -1033,10 +1083,7 @@ function createStateSetterGetterFunc<SV>(s: State<SV>): {
         if (currentInputeCompute) {
           s.addInputComputePatches(result, patches)
         } else {
-          let reactiveChain: ReactiveChain<SV> | undefined
-          if (currentReactiveChain) {
-            reactiveChain = currentReactiveChain.add(s)
-          }
+          const reactiveChain: ReactiveChain<SV> | undefined = currentReactiveChain?.add(s)
           s.update(result, patches, false, reactiveChain)
         }
         return [result, patches]
@@ -1044,6 +1091,7 @@ function createStateSetterGetterFunc<SV>(s: State<SV>): {
         throw new Error('[change state] pass a function')
       }
     }
+    currentReactiveChain?.addCall(s)
     return s.value
   }
 }
@@ -1069,10 +1117,7 @@ function createModelSetterGetterFunc<T extends any[]>(
       if (currentInputeCompute) {
         m.addInputComputePatches(result, patches)
       } else {
-        let reactiveChain: ReactiveChain<T> | undefined
-        if (currentReactiveChain) {
-          reactiveChain = currentReactiveChain.add(m)
-        }
+        const reactiveChain: ReactiveChain<T> | undefined = currentReactiveChain?.add(m)
         m.updateWithPatches(result, patches, reactiveChain)
       }
       return [result, patches]
@@ -1092,10 +1137,7 @@ function createCacheSetterGetterFunc<SV>(c: Cache<SV>): {
         if (currentInputeCompute) {
           c.addInputComputePatches(result, patches)
         } else {
-          let reactiveChain: ReactiveChain<SV> | undefined
-          if (currentReactiveChain) {
-            reactiveChain = currentReactiveChain.add(c)
-          }
+          const reactiveChain: ReactiveChain<SV> | undefined = currentReactiveChain?.add(c)
           c.update(result, patches, false, reactiveChain)
         }
         return [result, patches]
@@ -1103,6 +1145,7 @@ function createCacheSetterGetterFunc<SV>(c: Cache<SV>): {
         throw new Error('[change cache] pass a function')
       }
     }
+    currentReactiveChain?.addCall(c)
     return c.value
   }
 }
@@ -1321,7 +1364,9 @@ function updateComputed<T>(fn: any): any {
   currentRunnerScope!.addHook(hook)
   // @TODO: update computed won't trigger
   hook._internalValue = initialValue
-  hook.run()
+
+  const reactiveChain: ReactiveChain<T> | undefined = currentReactiveChain?.add(hook)
+  hook.run(reactiveChain)
 
   const getter = () => hook.value
   const newGetter = Object.assign(getter, {
@@ -1339,7 +1384,8 @@ function mountComputed<T>(fn: any): any {
   const hook = new Computed<T>(fn)
   currentRunnerScope!.addHook(hook)
 
-  hook.run()
+  const reactiveChain: ReactiveChain<T> | undefined = currentReactiveChain?.add(hook)
+  hook.run(reactiveChain)
 
   const getter = () => hook.value
   const newGetter = Object.assign(getter, {
@@ -1381,8 +1427,8 @@ export function cache<T>(key: string, options: ICacheOptions<T>) {
   return currentHookFactory.cache<T>(key, options)
 }
 
-type FComputedFuncAsync<T> = () => Promise<T>
-type FComputedFunc<T> = () => T
+type FComputedFuncAsync<T> = (prev?: T) => Promise<T>
+type FComputedFunc<T> = (prev?: T) => T
 
 export function computed<T>(
   fn: FComputedFuncAsync<T>

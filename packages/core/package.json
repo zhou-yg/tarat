@@ -6,7 +6,7 @@
   "types": "./dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "watch-unit": "npm run p:gen && jest --watch -- __test__/core/chain.test.ts",
+    "watch-unit": "npm run p:gen && jest --watch -- __test__/core/model.server.test.ts",
     "test-unit": "jest",
     "test-ci": "npm run p:gen && TEST=CI jest",
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
