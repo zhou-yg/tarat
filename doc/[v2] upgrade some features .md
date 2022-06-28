@@ -100,6 +100,8 @@ function userData () {
 
 sort by priority
 
+- 0.test example: login-system √
+
 - 1.new feature
   - part1: core
     - "cache" hook √
@@ -120,9 +122,11 @@ sort by priority
     - support staticly importing other hook to current project
       - extra Model relation description
     - export config of view mount container
+    - "context synchronism" with depMaps
+      - depends AST
+    - BM drives view
 - 2.upgrade performance
   - "model" global referrence
-  - "context synchronism" abount depMaps
 - 3.upgrade development experience
   - cleint data mode
   - run production

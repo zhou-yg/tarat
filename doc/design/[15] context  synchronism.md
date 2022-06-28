@@ -88,7 +88,9 @@ core principles sort by priority:
 
 ## solution
 
-参考[react的hooks实现](https://github.com/facebook/react/blob/79f54c16dc3d5298e6037df75db2beb3552896e9/packages/react-reconciler/src/ReactFiberHooks.new.js#L2827)
+Context的注入和同步，参考React hooks的链表数据结构的实现细节 [https://zhou-yg.github.io/#t14](https://zhou-yg.github.io/#t14)
+
+还有源码细节参考[react的hooks实现](https://github.com/facebook/react/blob/79f54c16dc3d5298e6037df75db2beb3552896e9/packages/react-reconciler/src/ReactFiberHooks.new.js#L2827)
 
 ## differentiate mount/update
 
