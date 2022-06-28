@@ -11,9 +11,6 @@ function serverlessUnit () {
 }
 ```
 
-Context的注入和同步，参考React hooks的链表数据结构的实现细节 [https://zhou-yg.github.io/#t14](https://zhou-yg.github.io/#t14)
-
-
 ## Model的组合
 
 Model背后对应的DB也需要考虑组合的场景，组合的时候应是从DB到逻辑，再到UI的全链路组合
