@@ -338,7 +338,7 @@ class ClientModel<T extends any[]> extends Model<T> {
         context
       )
       this.getterPromise = null
-  
+
       const index = this.scope.hooks.indexOf(this)
       const d = result.data[index]
       if (d[1]) {
@@ -1240,15 +1240,14 @@ function updateModel<T extends any[]>(
     immediate: inServer
   })
 
-  const internalModel =
-    inServer
-      ? new Model<T>(e, q, op, currentRunnerScope!)
-      : new ClientModel<T>(e, q, op, currentRunnerScope!)
+  const internalModel = inServer
+    ? new Model<T>(e, q, op, currentRunnerScope!)
+    : new ClientModel<T>(e, q, op, currentRunnerScope!)
 
   if (!inServer) {
     internalModel.init = inServer
     internalModel._internalValue = initialValue || []
-  }    
+  }
 
   const setterGetter = createModelSetterGetterFunc<T>(internalModel)
   const newSetterGetter = Object.assign(setterGetter, {
@@ -1288,7 +1287,8 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
   }
 
   const hook = new Cache(key, options, currentRunnerScope!)
-  const reactiveChain: ReactiveChain<T> | undefined = currentReactiveChain?.add(hook)
+  const reactiveChain: ReactiveChain<T> | undefined =
+    currentReactiveChain?.add(hook)
   hook.executeQuery(reactiveChain)
 
   const setterGetter = createCacheSetterGetterFunc(hook)

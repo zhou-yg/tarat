@@ -16,6 +16,9 @@
     "dist"
   ],
   "scripts": {
+    "watch-unit": "jest --watch -- __test__/compiler/parser.test.ts",
+    "test-unit": "jest",
+    "test-ci": "TEST=CI jest",
     "build": "node scripts/build.mjs",
     "build:dev": "rollup --config rollup.config.mjs",
     "build:watch": "npm run build && rollup --config rollup.config.mjs --watch",
@@ -46,6 +49,9 @@
   "dependencies": {
     "@koa/cors": "^3.3.0",
     "@rollup/plugin-json": "^4.1.0",
+    "@types/estree": "^0.0.52",
+    "acorn": "^8.7.1",
+    "acorn-walk": "^8.2.0",
     "cac": "^6.7.12",
     "ejs": "^3.1.8",
     "esbuild": "^0.14.43",
@@ -53,6 +59,7 @@
     "express-to-koa": "^2.0.0",
     "koa-body": "^5.0.0",
     "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "shelljs": "^0.8.5",
     "tarat-connect": "workspace:*",
     "tarat-core": "workspace:*",

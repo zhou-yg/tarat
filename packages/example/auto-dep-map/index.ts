@@ -1,7 +1,9 @@
 import { parse } from "./parser.js";
-import { readFileSync } from 'fs'
+import { readFileSync, writeFileSync } from 'fs'
 
 
 const hookJs = readFileSync('./hooks/login.js').toString()
 
-parse(hookJs)
+const deps = parse(hookJs)
+
+writeFileSync('./login.deps.json', JSON.stringify(deps, null, 2))
