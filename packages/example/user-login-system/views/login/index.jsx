@@ -1,15 +1,13 @@
 import { useTarat } from 'tarat-connect'
 import React, { useState } from 'react'
 import login from '../hooks/login.js'
-import s from '../styles/index.module.less'
+import s from './index.module.less'
 import classnames from 'classnames'
 import { startdReactiveChain, stopReactiveChain } from 'tarat-core'
 
 const LoginFrame = () => {
   const loginHook = useTarat(login)
   
-  window.loginHook = loginHook
-
   const cls = classnames(s.row, {
     show: !!loginHook?.errorTip()
   })
@@ -77,7 +75,5 @@ const LoginFrame = () => {
     </div>
   )
 }
-
-document.title = 'Welcome!'
 
 export default LoginFrame
