@@ -8,8 +8,6 @@ describe('parser', () => {
 
     const deps = parse(code)
 
-    mockUtil.writeDepsMock(BM, deps)
-
     expect(deps).toEqual({
       singleBM: [
         [1, [0]]
@@ -23,13 +21,34 @@ describe('parser', () => {
 
     const deps = parse(code)
 
-    mockUtil.writeDepsMock(BM, deps)
-
     expect(deps).toEqual({
       singleBM: [
         [1, [0]],
         [2, [1, 0]]
       ]
+    })    
+  })
+  it ('parse model.query', () => {
+    const BM = 'model.js'
+    const code = mockUtil.readMock(BM)
+
+    const deps = parse(code)
+
+    expect(deps).toEqual({
+      singleBM: [
+        [1, [0]],
+        [2, [0, 1]]
+      ]
+    })    
+  })
+  it ('parse simple model', () => {
+    const BM = 'simpleModel.js'
+    const code = mockUtil.readMock(BM)
+
+    const deps = parse(code)
+
+    expect(deps).toEqual({
+      singleBM: []
     })    
   })
 })
