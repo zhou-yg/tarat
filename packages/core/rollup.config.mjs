@@ -17,6 +17,22 @@ export default [
     input: 'src/index.ts',
     output: {
       file: 'dist/index.server.js',
+      format: 'umd'
+    },
+  },
+  {
+    plugins: [
+      tsPlugin({
+        clean: true,
+        tsconfig: './tsconfig.json',
+      }),
+      replace({
+        'process.env.TARGET': '"server"'
+      }),
+    ],
+    input: 'src/index.ts',
+    output: {
+      file: 'dist/index.server.mjs',
       format: 'esm'
     },
   },
