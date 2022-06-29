@@ -2,8 +2,7 @@
   "name": "tarat-core",
   "version": "0.0.9",
   "description": "useHook serverless framework",
-  "main": "./dist/index.server.js",
-  "module": "./dist/index.server.mjs",
+  "main": "./dist/index.server.mjs",
   "types": "./dist/index.d.ts",
   "type": "module",
   "scripts": {
