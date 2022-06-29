@@ -3,6 +3,7 @@
   "hooks": [
     {
       "name": "login",
+      "query": ["key1", "key2"],
       "exports": []
     }
   ]
