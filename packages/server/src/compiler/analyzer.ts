@@ -1,6 +1,6 @@
 import acorn, { parse as acornParse } from 'acorn'
 import * as walk from 'acorn-walk'
-import { set, get } from 'tarat-core'
+import { set, get } from 'lodash'
 import type {
   ArrowFunctionExpression,
   AssignmentExpression,

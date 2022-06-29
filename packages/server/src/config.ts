@@ -10,6 +10,9 @@ export const defaultConfig = () => ({
   viewsDirectory: 'views', // in tarat the display unit maybe page or component, they should belong to "views"
   hooksDirectory: 'hooks',
   
+  appDirectory: 'app',
+  pageDirectory: 'pages',
+
   // server side
   apiPre: '_hook',
 
@@ -86,6 +89,10 @@ function readViews (viewDir: string, dir: string, parent?: IViewConfig) {
   return viewConfigs.flat()
 } 
 
+function readPages (viewDir: string, dir: string) {
+  return readViews(viewDir, dir)
+}
+
 export interface IServerHookConfig {
   filePath: string
   file: string
@@ -159,10 +166,17 @@ export async function readConfig (arg: {
 
   const viewsDirectory = path.join(cwd, config.viewsDirectory)
   const hooksDirectory = path.join(cwd, config.hooksDirectory)
+  const appDirectory = path.join(cwd, config.appDirectory)
+  const pagesDirectory = path.join(appDirectory, config.pageDirectory)
 
   const views = readViews(viewsDirectory, '/')
   views.forEach(c => {
     c.file = path.join('./', config.viewsDirectory, c.file)
+  })
+
+  const pages = readPages(pagesDirectory, '/')
+  pages.forEach(c => {
+    c.file = path.join('./', config.appDirectory, config.pageDirectory, c.file)
   })
 
   const hooks = readHooks(hooksDirectory)
@@ -172,5 +186,6 @@ export async function readConfig (arg: {
     cwd,
     hooks,
     views,
+    pages,
   }
 }
