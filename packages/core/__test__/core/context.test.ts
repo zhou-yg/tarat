@@ -86,7 +86,7 @@ describe('initContext', () => {
   })
 
   describe('with depsMap', () => {
-    it.only('call remote with deps', async () => {
+    it('call remote with deps', async () => {
       mockBM.initModelConfig({
         async postComputeToServer (c: IHookContext) {
           process.env.TARGET = 'server'
