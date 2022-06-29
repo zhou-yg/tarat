@@ -11,11 +11,10 @@ export default function singleBM () {
     return v * 2
   })
 
-
   const ic = inputComputeInServer(() => {
     if (c1() > 0) {
       throw new Error('')
-    } else {
+    } else if (s1()) {
       s1(v => '')
     }
   })
