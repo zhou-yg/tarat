@@ -60,6 +60,7 @@ export class Watcher<T = Hook> {
     const matched = paths?.some(p => isEqual(p, path))
     if (matched) {
       this.target.notify(dep, patches, reactiveChain)
+      return true
     }
   }
   addDep(dep: ISource<T>, path: (number | string)[] = []) {
@@ -110,14 +111,24 @@ export class State<T = any> extends Hook {
   trigger(
     path: (number | string)[] = [''],
     patches?: IPatch[],
-    reactiveChain?: ReactiveChain<T>
+    reactiveChain?: ReactiveChain<T>,
+    triggeredSet?: Set<Watcher>
   ) {
     if (!path || path.length === 0) {
       path = ['']
     }
+    if (!triggeredSet) {
+      triggeredSet = new Set()
+    }
     this.watchers.forEach(w => {
-      w.notify(this, path, patches, reactiveChain)
+      if (triggeredSet?.has(w)) {
+        return
+      }
+      if (w.notify(this, path, patches, reactiveChain)) {
+        triggeredSet?.add(w)
+      }
     })
+    return triggeredSet
   }
   get value(): T {
     if (currentInputeCompute) {
@@ -145,13 +156,13 @@ export class State<T = any> extends Hook {
 
     // trigger only changed
     if (shouldTrigger) {
-      this.trigger(undefined, undefined, reactiveChain)
+      const triggeredSet = this.trigger(undefined, undefined, reactiveChain)
 
       if (patches && patches.length > 0) {
         const changedPathArr = calculateChangedPath(oldValue, patches)
         changedPathArr
           .filter(p => p.length !== 0)
-          .forEach(path => this.trigger(path, patches, reactiveChain))
+          .forEach(path => this.trigger(path, patches, reactiveChain, triggeredSet))
       }
     }
   }
@@ -804,6 +815,7 @@ export class CurrentRunnerScope {
   watcher: Watcher<Hook> = new Watcher(this)
   initialArgList: any[] = []
   intialContextData: IHookContext['data'] | null = null
+  intialContextDeps: IHookContext['deps'] | null = null
   hookRunnerName = ''
 
   reactiveChainStack: ReactiveChain[] = []
@@ -830,6 +842,7 @@ export class CurrentRunnerScope {
 
   setInitialContextData(contex: IHookContext) {
     this.intialContextData = contex['data']
+    this.intialContextDeps = contex['deps']
   }
 
   addHook(v: Hook) {
@@ -838,6 +851,25 @@ export class CurrentRunnerScope {
     }
     this.hooks.push(v)
     this.watcher.addDep(v)
+  }
+  applyDepsMap () {
+    const deps = this.intialContextDeps
+    deps?.forEach(([hookIndex, deps]) => {
+      deps.forEach(triggerHookIndex => {
+        const triggerHook = this.hooks[triggerHookIndex]
+        if (
+          this.hooks[hookIndex] instanceof Computed
+          // this.hooks[hookIndex] instanceof InputCompute
+        ) {
+          (this.hooks[hookIndex] as Computed<any>).watcher.addDep(triggerHook)
+        }
+        if (
+          this.hooks[hookIndex] instanceof Model
+        ) {
+          (this.hooks[hookIndex] as Model<any>).queryWhereComputed?.watcher.addDep(triggerHook)
+        }
+      })
+    })
   }
 
   applyComputePatches(
@@ -884,14 +916,47 @@ export class CurrentRunnerScope {
       if (hook instanceof State) {
         return ['state', hook.value]
       }
-      return ['undef', undefined]
+      return ['unseriazlied']
     })
+
+    const deps: IHookContext['deps'] = []
+    if (h) {
+      const waitHookIndexSet = new Set([hookIndex])
+      let preventDeath = 0
+      while (waitHookIndexSet.size > 0 && preventDeath++ < 1e4) {
+        const arr = [...waitHookIndexSet]
+        for (const currentHookIndex of arr) {
+          if (preventDeath++ > 1e4) {
+            break
+          }
+          this.intialContextDeps?.forEach(([hi, getD, setD]) => {
+            if (hi === currentHookIndex) {
+              if (!deps.find(arr => arr[0] === hi)) {
+                deps.push(
+                  [hi, getD, setD]
+                )
+                setD.forEach(num => {
+                  this.intialContextDeps?.forEach(([relationHI, getD2]) => {
+                    if (getD2.includes(num)) {
+                      waitHookIndexSet.add(relationHI)
+                    }
+                  })
+                })
+              }
+            }
+          })
+          waitHookIndexSet.delete(currentHookIndex)
+        }
+      }
+    }
+
     return {
       initialArgList: this.initialArgList,
       name: this.hookRunnerName,
       data: hooksData,
       index: hookIndex,
-      args: args || []
+      args: args || [],
+      deps
     }
   }
   applyContext(c: IHookContext) {
@@ -901,6 +966,8 @@ export class CurrentRunnerScope {
       if (isDef(value)) {
         const state = hooks[index] as State
         switch (type) {
+          case 'unseriazlied':
+            break
           default:
             /**
              * default to keep silent because of deliver total context now
@@ -960,6 +1027,8 @@ export class Runner<T extends BM> {
     }
 
     const result: ReturnType<T> = executeBM(this.bm, args)
+
+    this.scope.applyDepsMap()
 
     currentRunnerScope = null
 
@@ -1329,9 +1398,9 @@ function updateComputed<T>(fn: any): any {
   // @TODO: update computed won't trigger
   hook._internalValue = initialValue
 
-  const reactiveChain: ReactiveChain<T> | undefined =
-    currentReactiveChain?.add(hook)
-  hook.run(reactiveChain)
+  // const reactiveChain: ReactiveChain<T> | undefined =
+  //   currentReactiveChain?.add(hook)
+  // hook.run(reactiveChain)
 
   const getter = () => hook.value
   const newGetter = Object.assign(getter, {

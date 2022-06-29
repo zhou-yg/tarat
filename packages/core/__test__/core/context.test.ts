@@ -41,7 +41,6 @@ describe('initContext', () => {
     const result = runner.init(args, context)
 
     expect(result.s1()).toEqual(context.data[0][1])
-
     try {
       result.s2()
     } catch (e: any) {
@@ -67,23 +66,8 @@ describe('initContext', () => {
     }
   })
   it('callHook remote', async () => {
+    mockBM.useSimpleServerMiddleware(mockBM.changeStateInputComputeServer)
 
-    mockBM.initModelConfig({
-      async postComputeToServer (c: IHookContext) {
-        process.env.TARGET = 'server'
-        const serverRunner = new Runner(mockBM.changeStateInputComputeServer)
-        serverRunner.init(c.initialArgList as [any, any], c)
-
-        if (c.index) {
-          await serverRunner.callHook(c.index, c.args)
-        }
-        const context = serverRunner.scope.createInputComputeContext()
-
-        process.env.TARGET = ''
-
-        return context
-      }
-    })
     const args: [ {num1: number}, number ] = [
       { num1: 0 },
       1
@@ -99,5 +83,60 @@ describe('initContext', () => {
 
     expect(r.s1()).toEqual({ num1: newVal })
     expect(r.s2()).toEqual(args[1])
+  })
+
+  describe('with depsMap', () => {
+    it.only('call remote with deps', async () => {
+      mockBM.initModelConfig({
+        async postComputeToServer (c: IHookContext) {
+          process.env.TARGET = 'server'
+          const serverRunner = new Runner(mockBM.changeStateInputComputeServer2)
+
+          expect(c.deps).toEqual([
+            [4, [], [0]],
+            [2, [0], []],
+          ])
+
+          const serverR = serverRunner.init([], c)
+    
+          if (c.index) {
+            await serverRunner.callHook(c.index, c.args)
+          }
+          const context = serverRunner.scope.createInputComputeContext()
+    
+          process.env.TARGET = ''
+
+          expect(serverR.c1._hook.getter).toBeCalledTimes(1)
+          
+          return context
+        }
+      })
+      const clientRunner = new Runner(mockBM.changeStateInputComputeServer2)
+  
+      const context = mockBM.initContext({
+        data: [
+          ['state', { num: 1 }],
+          ['state', 2],
+          ['computed', 3],
+          ['computed', 4],
+        ],
+        deps: [
+          [2, [0], []],
+          [3, [1], []],
+          [4, [], [0]]
+        ]
+      })
+      const r = clientRunner.init([], context)
+
+      expect(r.s1()).toEqual({ num: 1 })
+      expect(r.s2()).toEqual(2)
+      expect(r.s1._hook.watchers.size).toBe(2)
+
+      const newVal = 10
+      await r.changeS1(newVal)
+
+      expect(r.s1()).toEqual({ num: newVal })
+      expect(r.c1()).toEqual(newVal * 2)
+    })
   })
 })

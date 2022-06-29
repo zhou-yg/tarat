@@ -7,11 +7,12 @@ import {
   freeze,
   inputComputeInServer,
   computed,
-  clientModel,
   cache,
   IHookContext,
   combineLatest,
-  CurrentRunnerScope
+  CurrentRunnerScope,
+  Runner,
+  BM
 } from '../src/'
 import { loadPlugin } from '../src/plugin'
 
@@ -19,14 +20,16 @@ initModelConfig()
 
 export function initContext(arg: {
   name?: IHookContext['name']
-  data?: IHookContext['data']
+  data?: IHookContext['data'],
+  deps?: IHookContext['deps']
 }): IHookContext {
   return {
     initialArgList: [],
     name: arg.name || '',
     data: arg.data || [],
     index: 1,
-    args: []
+    args: [],
+    deps: arg.deps || []
   }
 }
 
@@ -70,6 +73,25 @@ export function initModelConfig(obj: any = {}) {
     },
     clear() {
       cacheMap.clear()
+    }
+  })
+}
+
+export function useSimpleServerMiddleware (bm: BM) {
+  initModelConfig({
+    async postComputeToServer (c: IHookContext) {
+      process.env.TARGET = 'server'
+      const serverRunner = new Runner(bm)
+      serverRunner.init(c.initialArgList as [any, any], c)
+
+      if (c.index) {
+        await serverRunner.callHook(c.index, c.args)
+      }
+      const context = serverRunner.scope.createInputComputeContext()
+
+      process.env.TARGET = ''
+
+      return context
     }
   })
 }
@@ -237,6 +259,29 @@ export function changeStateInputComputeServer(
     changeS1
   }
 }
+export function changeStateInputComputeServer2() {
+
+  const s1 = state({ num: 0 })
+  const s2 = state(1)
+
+  const c1 = computed(jest.fn(() => {
+    return s1().num * 2
+  }))
+  const c2 = computed(() => {
+    return s2() * 2
+  })
+  /* 4 */
+  const changeS1 = inputComputeInServer((v: number) => {
+    s1(draft => {
+      draft.num = v
+    })
+  })
+
+  return {
+    s1, s2, c1, c2,
+    changeS1
+  }
+}
 
 export function changeStateAsyncInputCompute(
   obj1: { num1: number },
@@ -305,7 +350,7 @@ export function userModelInputeCompute() {
 
 export function userModelClient() {
   const num = state(1)
-  const users = clientModel(
+  const users = model(
     'item',
     () => ({
       where: {
