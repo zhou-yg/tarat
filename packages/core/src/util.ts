@@ -224,7 +224,7 @@ export function nextTick(fn: () => void) {
 
 export type TContextData =
   | 'data'
-  | 'undef'
+  | 'unseriazlied'
   | 'state'
   | 'patch'
   | 'inputCompute'
@@ -239,6 +239,7 @@ export interface IHookContext {
   index?: number
   args: any[]
   name: string
+  deps?: Array<[number, number[], number[]]>
 }
 
 export function findWithDefault<T>(

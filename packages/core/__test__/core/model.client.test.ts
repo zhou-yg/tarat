@@ -76,8 +76,10 @@ describe('client model', () => {
     })
   
     it('post query to server', async () => {
+      process.env.TARGET = 'client'
       const runner = new Runner(mockBM.userModelClient)
       const result = runner.init()
+      process.env.TARGET = 'server'
   
       await runner.ready()
 
@@ -88,6 +90,7 @@ describe('client model', () => {
   })
   describe('update model', () => {
     it('query immediate with context', async () => {
+      process.env.TARGET = 'client'
       const runner = new Runner(mockBM.userModelClient)
       const cd: IHookContext['data'] = [
         ['data', 3],
@@ -98,7 +101,8 @@ describe('client model', () => {
       })
       // debuggerLog(true)
       const result = runner.init([], context)
-  
+      process.env.TARGET = 'server'
+    
       await runner.ready()
 
       expect(result.users()).toEqual([

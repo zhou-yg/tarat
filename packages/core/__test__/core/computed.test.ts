@@ -93,28 +93,7 @@ describe('computed', () => {
     })
   })
   describe('update computed', () => {
-    it ('use primitive state, getter still run again', () => {
-      const num1 = 1
-      const num2 = 2
-      const runner = new Runner(mockBM.onePrimitiveStateComputed)
-      const cd: IHookContext['data'] = [
-        ['data', 2],
-        ['data', 10]  
-      ]
-      const context = mockBM.initContext({
-        data: cd,
-      })
-      const result = runner.init([num1, num2], context)
-  
-      // expect(result.c()).toBe(cd[1][1])
-      expect(result.c()).toBe(cd[0][1] + num2)
-  
-      expect(result.s._hook.watchers.size).toBe(2)
-      expect(result.s._hook.watchers.has(runner.scope.watcher)).toBe(true)
-      expect(result.s._hook.watchers.has(result.c._hook.watcher)).toBe(true)
-    })
-    // @TODO: this is a correct test case
-    // it ('use primitive state, getter wont run', () => {
+    // it ('use primitive state, getter still run again', () => {
     //   const num1 = 1
     //   const num2 = 2
     //   const runner = new Runner(mockBM.onePrimitiveStateComputed)
@@ -128,10 +107,52 @@ describe('computed', () => {
     //   const result = runner.init([num1, num2], context)
   
     //   // expect(result.c()).toBe(cd[1][1])
+    //   expect(result.c()).toBe(cd[0][1] + num2)
   
-    //   expect(result.s._hook.watchers.size).toBe(1)
+    //   expect(result.s._hook.watchers.size).toBe(2)
     //   expect(result.s._hook.watchers.has(runner.scope.watcher)).toBe(true)
-    //   expect(result.s._hook.watchers.has(result.c._hook.watcher)).toBe(false)
+    //   expect(result.s._hook.watchers.has(result.c._hook.watcher)).toBe(true)
     // })
+    it ('use primitive state, getter wont run', () => {
+      const num1 = 1
+      const num2 = 2
+      const runner = new Runner(mockBM.onePrimitiveStateComputed)
+      const cd: IHookContext['data'] = [
+        ['data', 2],
+        ['data', 10]  
+      ]
+      const context = mockBM.initContext({
+        data: cd,
+      })
+      const result = runner.init([num1, num2], context)
+    
+      expect(result.s._hook.watchers.size).toBe(1)
+      expect(result.s._hook.watchers.has(runner.scope.watcher)).toBe(true)
+      
+      expect(result.c()).toBe(cd[1][1])
+      expect(result.s._hook.watchers.has(result.c._hook.watcher)).toBe(false)
+    })
+    it ('use primitive state with depsMap , getter wont run but has dep relation', () => {
+      const num1 = 1
+      const num2 = 2
+      const runner = new Runner(mockBM.onePrimitiveStateComputed)
+      const cd: IHookContext['data'] = [
+        ['data', 2],
+        ['data', 10]  
+      ]
+      const context = mockBM.initContext({
+        data: cd,
+        deps: [
+          [1, [0], []]
+        ]
+      })
+      const result = runner.init([num1, num2], context)
+    
+      expect(result.s._hook.watchers.size).toBe(2)
+      expect(result.s._hook.watchers.has(runner.scope.watcher)).toBe(true)
+      
+      expect(result.c()).toBe(cd[1][1])
+      expect(result.s._hook.watchers.has(result.c._hook.watcher)).toBe(true)
+    })
   })
 })
