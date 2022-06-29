@@ -30,21 +30,56 @@ function hook () {
 
 但是没有flag的话会无法识别到myState里的具体字段的依赖，因为在getter里是会有动态逻辑，但这不影响大粒度的state依赖关系
 
-
-
 ```javascript
 // must be PlainObject
 const hookDepMaps = [
-  {
-    target: 0, // can find target hook by the unique index
-    deps: [ 1 ]
-  },
-  {
-    target: 2,
-    deps: [ 3, 4 ]
-  }
+  [
+    0, // can find target hook by the unique index
+    [1], // get operation in 0 hook
+    [], // set operation in 0 hook (currently, only InputCompute support this)
+  ],
+  [
+    2,
+    [3],
+    [4]
+  ]
 ]
 ```
+
+deps静态分析的存储位置
+
+- 生成额外的独立文件，好处是简单
+  - 问题：在开发时比较奇怪，得先进行跑命令行监听才行
+
+
+### BM 嵌套下
+
+```javascript 
+import {
+  BM2,
+} from './BM2'
+
+import BM2Deps from './BM2.deps.json
+
+// deps = [0, ]
+
+function BM1 () {
+  const s1 = state()
+
+  const r2 = useOtherHook(BM2, [], BM2Deps) // 此时BM2的下标是从1开始
+
+  const s2 = state()
+}
+```
+
+在BM组合下，由于deps是依据当前BM的hook下标进行唯一确定的，所以在组合BM的情况下，需要进行下标的平移计算，确保下标能对应到原本的hook
+
+计算的时机：
+- 静态时
+  - 问题：难以分析出hook内部引用的其它BM的 所在位置顺序和层次，来源，需要介入到构建系统才行
+- 运行时
+  - 问题：需要显示的感知到deps的存在，
+    - 优化：也许可以通过构建编译自动替换掉
 
 ### 妥协场
 
