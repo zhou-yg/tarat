@@ -125,12 +125,16 @@ function findInScopeMap (s: IScopeMap, targetHook: CallExpression) {
  * find the callled hook caller in other caller hook
  */
 function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
-  const depsMap: Map<number, Set<number>> = new Map
+  const depsMap: Map<number, {
+    set: Set<number>,
+    get: Set<number>
+  }> = new Map
 
   walk.ancestor(BMNode as any, {
     CallExpression (n, s, ancestor) {
-      const callee = (n as any as CallExpression).callee
-
+      const { callee } = (n as any as CallExpression)
+      const hasArguments = (n as any as CallExpression)['arguments']?.length > 0
+      
       let existSourceInScope: CallExpression | undefined
 
       switch (callee.type) {
@@ -168,11 +172,17 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
           if (v1 && v2) {
             let deps = depsMap.get(v2.hookIndex)
             if (!deps) {
-              deps = new Set<number>()
+              deps = {
+                get: new Set<number>(),
+                set: new Set<number>()
+              }
               depsMap.set(v2.hookIndex, deps)
             }
-
-            deps.add(v1.hookIndex)
+            if (hasArguments) {
+              deps.set.add(v1.hookIndex)
+            } else {
+              deps.get.add(v1.hookIndex)
+            }
           }
         }
       }
@@ -181,13 +191,14 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
   return depsMap
 }
 
-function convertDepsToJSON(m: Map<number, Set<number>>) {
-  const arr: ([number, number[]])[] = []
+function convertDepsToJSON(m: Map<number, { set: Set<number>, get: Set<number> }>) {
+  const arr: ([number, number[], number[]])[] = []
 
   for (const [k, v] of m.entries()) {
     arr.push([
       k,
-      [...v]
+      [...v.get],
+      [...v.set],
     ])
   }
   return arr
