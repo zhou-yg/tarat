@@ -6,7 +6,7 @@
   "main": "./dist/server.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "tarat": "./dist/cli/index.js"
+    "tarat": "./dist/cli/index.mjs"
   },
   "files": [
     "src",
@@ -19,7 +19,7 @@
     "watch-unit": "jest --watch -- __test__/compiler/parser.test.ts",
     "test-unit": "jest",
     "test-ci": "TEST=CI jest",
-    "build": "node scripts/build.mjs",
+    "build": "rm -rf dist/ && node scripts/build.mjs",
     "build:dev": "rollup --config rollup.config.mjs",
     "build:watch": "npm run build && rollup --config rollup.config.mjs --watch",
     "release": "npm run build && bump --commit \"release: tarat-core v%s\" --push && npm publish --access public"

@@ -15,16 +15,14 @@ function matchHookName (path: string) {
   }
 }
 
-export function wrapCtx (ctx: Application.ParameterizedContext) {
+export function wrapCtx (ctx: any) {
   return {
     cookies: {
       set (name: any, value: any) {
-        console.log('[Cookies] set(name, value): ', name, value);
         return ctx.cookies.set(name, value)
       },
       get (name: any) {
         const val = ctx.cookies.get(name)
-        console.log('[Cookies] get(name, value): ', name, val);
         return val
       }
     }

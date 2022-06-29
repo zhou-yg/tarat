@@ -14,7 +14,7 @@ export default [
     ],
     input: 'cli/index.ts',
     output: {
-      file: 'dist/cli/index.js',
+      file: 'dist/cli/index.mjs',
       format: 'esm'
     }
   },

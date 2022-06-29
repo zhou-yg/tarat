@@ -24,6 +24,8 @@ export function setupBasicServer (app: Application) {
 }
 
 export async function createDevServer (c: IConfig) {
+  console.log('c: ', c);
+  
   const app = new Koa()
   setupBasicServer(app)
 
