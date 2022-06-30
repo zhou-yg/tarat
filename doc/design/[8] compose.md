@@ -1,15 +1,107 @@
 # compose
 
-业务逻辑单元除了关注自身，也是需要能复用存量的业务逻辑，允许嵌套组合
+BM是一条纵线，在完善了自身功能逻辑的情况下，最重要的便是能被充分复用
 
+复用可以视作跟其他BM在 View/Hook/Model层（类似于传统的MVC架构）的两两连接，进行按需组合
+
+同时明确在组合的时候要明确组合的类型，时机方式：
+- 类型
+  - View
+  - Hook
+  - Model
+- 时机
+  - 动态运行时
+  - 静态编译时
+
+根据上面的3大项的笛卡尔积之后，总计最多有 (3x3)x2=18 种情况
+
+再加未来可能还有更多的选项加入，所以在思考组合时要面临一个非常复杂的网络
+
+但好在有些组合条件显然是不合理的，所以可以稍稍降低一点情况
+
+## 时机
+
+运行时和编译时最大的差别在于，声明关系的时候是运行时获取的，还是编译先确定的，这里取决于类型本身和用户开发体验
+
+比如
 ```javascript
-function serverlessUnit () {
-  const b = model()
-  const { a, computeA } = otherUnit()
-
-  return { a, b, computeA }
+// BM2
+function hook1 () {
+  const s = state()
+}
+// BM1
+function hook1 () {
+  const h2 = useHook(hook2)
 }
 ```
+
+在编译BM1的时候，直接把 useHook(hook2)的部分作为静态代码整合进去，对于消费者，得到的就是一个完成的BM1产物，里面也包含了BM2.hook1代码
+
+这是编译时，也就对BM的代码层面的复用
+
+
+比如 
+```javascript
+// BM2
+function View2 () {
+  const hook = useHook(hook2)
+  return <div></div>
+}
+// BM1
+function Page1() {
+  return (<View2 server={{ server: 'https://127.0.0.1' }}>)
+}
+```
+在上面的例子里，访问 /page1 时，View1会运行时的渲染View2的，在SSR的模式下，Page1要进行有效的渲染，必须先执行View2，再执行hook2，
+
+执行hook2的时候，并不是时机执行hook2内的代码，只是在执行一个api proxy
+
+这是运行时的组合时机，在逻辑层是对已经在线的服务的复用，UI层还是代码的复用
+
+## 组合枚举
+
+- model
+  - model 
+    - 静态
+      - 场景：当前model1可以直接引入了model2的结构声明，并补充关联关系
+    - 动态
+      - 问题：当前model1无法直接跟remote model2直接建立关联，这个场景在model层就无法实现，需要借助hook
+  - hook
+  - view
+    - 问题：model不能反向组合hook，view
+- hook
+  - model
+    - 静态
+      - 场景：同model的静态组合
+    - 动态
+      - 场景：可以调用remote model的，只要配置好链接和权限，同常规的server框架调用DB。但在这里还可以有更好的方式
+  - hook
+    - 静态：
+      - 场景：常规的hook2引入，可以使用hook2的内部状态和方法，同时在组合hook2的时候默认会静态组合model
+    - 动态：
+      - 场景：remote hook调用，类似于现在的服务调用，配置好远端地址，权限等
+  - view
+    - 问题：要想清楚hook驱动view渲染，还是view内部订阅消费了hook。只要前者的情况下，才能有hook->view的组合
+- view
+  - model
+    - 问题：view层不能直连操作model，所以没有
+  - hook
+    - 静态
+      - 场景：直接引入hook2 as lib，正常使用
+    - 动态
+      - 场景：远端加载动态hook，用配置项 替换 代码导入
+  - view
+    - 静态：直接引入view2 as Component，正常代码开发使用
+    - 动态：远端加载，类似于iframe或微前端的动态加载，用配置项 替换 代码导入
+  
+通过上面的 4 + 4 + 2 = 10 总结一下，组合是有序的，只能组合当前层或下一层者： 
+
+- view -> view, view -> hook
+- hook -> hook, hook -> model
+- model -> model
+
+即： 1.view -> 2.hook -> 3.model
+
 
 ## model compose
 
@@ -18,7 +110,6 @@ Model背后对应的DB也需要考虑组合的场景，组合的时候应是从D
 静态和动态有不同的逻辑
 - 静态，需要版本管理
 - 动态，需要版本，网络架构等基础运维层的支持
-
 
 ### 静态模式
 
@@ -75,20 +166,69 @@ enhanceRelation = [
 这里还得考虑下是前后数据逻辑不兼容，需要停机更新的情况
 
 
-## view compose
 
-view层的组合关系有2种：
+## hook/model compose
 
-- 包含
-  - 包含本BM或其他BM的view
-- 并列
-  - 这种情况下需要声明额外的容器View，来标明他们的并列关系，对于容器而言这也是一种包含关系
+### hook -> model
+静态的，首先是依赖于model间的静态组合，下层model组合后，这里hook就只能直接在model里使用
 
-面向用户展示的，view的终点都是 in Page，Page可以视作是一种特殊的View
+动态的，类似于传统MVC架构下，service层连接DB并调用，
 
-所以层次思路就是：Page -> View1 -> View2 跟路由系统非常类似
+所以这里需要像传统架构那样，提供远端连接
 
-Page可以视作特殊的一种容器，还需要额外承担渲染，所以为了实现 View in Page，有2点必不可少：
+有2个问题需要注意：
+- 远端model存在的问题是会丢失prisma schema信息，需要同时import 远端 prisma client
+- DB 连接池的问题
+
+```javascript
+function BM () {
+
+  const m = model('items', query, {
+    url: 'mysql://root:123456@localhost:3306/db'
+  })
+}
+```
+### hook -> hook2
+
+静态的，常规的库导入即可，在导入的时候注意 hook depsMap的初始化
+
+动态的，远端调用hook2的“接口”，在使用的时候，需要import对应hook来作为调用库使用，
+
+在消费远端hook时的模式时，也是通过同步context来完成，通信层面确保跟调用hook的通信方式一致
+
+当消费远端hook的时候，逻辑应该是阻塞的，需要等待返回后才能进行下一步, 同时在频繁获取时会有异步时序的问题
+
+注意：这跟现在的同步computed，异步获取再更新的过程有点冲突
+
+为了性能考虑，在消费远端hook时应该能识别当前hook会使用到的具体属性key，确保没用到的key不会产生额外的计算
+
+## view/hook compose
+
+通常是在页面渲染 SSR 和 CSR的时候用于获取数据并渲染，直接或间接的借助hook获取数据
+
+### view -> hook
+
+静态的，动态的 都均如同 hook -> hook
+
+因为目的是一致的，为了获取数据
+
+
+### view -> view
+
+静态的，import常规的UI组件一致，正常使用
+
+动态的，相对复杂
+
+view需要下载ui组件需要才能进行渲染，但是在远端的view里也可能会包含hook，
+
+在这个情况下：view1 -> dynamic view2 -> view2 static hook2
+
+当中的view2的静态hook2需要转变为动态hook2
+
+
+## page
+
+Page可以视作特殊的一种容器，是组合多个view并作为渲染, 还需要额外承担渲染，所以为了实现 View in Page，有2点必不可少：
 
 - 路由系统
   - 声明页面之间的关系
