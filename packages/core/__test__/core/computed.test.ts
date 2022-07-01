@@ -1,4 +1,5 @@
 import {
+  getDeps,
   IHookContext,
   Runner,
 } from '../../src/'
@@ -52,7 +53,7 @@ describe('computed', () => {
       expect(result.c()).toBe(num1 + num2)
   
       expect(runner.scope.hooks.length).toBe(2)
-      expect((runner.scope.hooks[1]).watchers.size).toBe(1)
+      expect((runner.scope.hooks[1])?.watchers.size).toBe(1)
   
       result.s((v: number) => v + 1)
       // await mockBM.wait()
@@ -113,19 +114,31 @@ describe('computed', () => {
     //   expect(result.s._hook.watchers.has(runner.scope.watcher)).toBe(true)
     //   expect(result.s._hook.watchers.has(result.c._hook.watcher)).toBe(true)
     // })
-    it ('use primitive state, getter wont re-run', () => {
+    it ('use primitive state without deps, getter wont re-run', () => {
       const num1 = 1
       const num2 = 2
+
       const runner = new Runner(mockBM.onePrimitiveStateComputed)
+
       const cd: IHookContext['data'] = [
         ['data', 2],
-        ['data', 10]  
+        ['data', 10]
       ]
       const context = mockBM.initContext({
         data: cd,
       })
+
+
+      // force delete deps for test
+      const deps = getDeps(mockBM.onePrimitiveStateComputed)
+      // @ts-ignore
+      delete mockBM.onePrimitiveStateComputed.__deps__
+
       const result = runner.init([num1, num2], context)
-    
+
+      // @ts-ignore
+      mockBM.onePrimitiveStateComputed.__deps__ = deps
+      
       expect(result.s._hook.watchers.size).toBe(1)
       expect(result.s._hook.watchers.has(runner.scope.watcher)).toBe(true)
       
@@ -142,9 +155,6 @@ describe('computed', () => {
       ]
       const context = mockBM.initContext({
         data: cd,
-        deps: [
-          ['h', 1, [0]]
-        ]
       })
       const result = runner.init([num1, num2], context)
     

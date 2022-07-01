@@ -22,7 +22,6 @@ initModelConfig()
 export function initContext(arg: {
   name?: IHookContext['name']
   data?: IHookContext['data'],
-  deps?: IHookContext['deps']
 }): IHookContext {
   return {
     initialArgList: [],
@@ -30,7 +29,6 @@ export function initContext(arg: {
     data: arg.data || [],
     index: 1,
     args: [],
-    deps: arg.deps || []
   }
 }
 
@@ -283,6 +281,13 @@ export function changeStateInputComputeServer2() {
     changeS1
   }
 }
+Object.assign(changeStateInputComputeServer2, {
+  __deps__: [
+    ['h', 2, [0], []],
+    ['h', 3, [1], []],
+    ['h', 4, [], [0]]
+  ]
+})
 
 export function changeStateAsyncInputCompute(
   obj1: { num1: number },
@@ -417,6 +422,12 @@ export function onePrimitiveStateComputed(v1: number, v2: number) {
   })
   return { s, c }
 }
+Object.assign(onePrimitiveStateComputed, {
+  __deps__: [
+    ['h', 1, [0]]
+  ]
+})
+
 export function asyncComputed(v1: number, v2: number) {
   const s = state(v1)
   const c = computed(async () => {
@@ -559,7 +570,9 @@ export function simpleSS () {
   return { s1, s2 }
 }
 Object.assign(simpleSS, {
-  __deps__: [ [1, [0]] ]
+  __deps__: [
+    ['h', 1, [0]]
+  ]
 })
 
 export function composeWithSS () {
@@ -574,7 +587,9 @@ export function composeWithSS () {
   return { s1, s2, simpleSSResult }
 }
 Object.assign(composeWithSS, {
-  __deps__: [ [1, [0]] ]
+  __deps__: [
+    ['h', 1, [0]]
+  ]
 })
 
 
@@ -588,10 +603,6 @@ export function composeWithSS2 () {
   const s33 = computed(() => {
     return s1() + simpleSSResult.s1() + ss1() + s2() 
   })
-
-  // function a () {
-  //   ic () && ic2()
-  // }
 
   return { s1, s33, simpleSSResult }
 }
