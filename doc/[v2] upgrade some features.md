@@ -105,16 +105,16 @@ sort by priority
 - 1.new feature
   - part1: core
     - "cache" hook √
-      - cookie
-      - redis
+      - cookie √
+      - redis √
     - "mode" √
-      - "model" directive
-        - exist
-      - "model" lazy query aysnc
-      - computed with state
+      - "model" directive √
+        - exist √
+      - "model" lazy query aysnc √
+      - computed with state √
     - "context" synchronism with 0 compute √
-      -  differentiate query if immediate or not in two side
-    - "InputCompute" access hook values isolation from the current hook
+      -  differentiate query if immediate or not in two side √
+    - "InputCompute" access hook values isolation from the current hook √
   - part2: connect
     - access hook in "views" component
       - react
@@ -123,7 +123,7 @@ sort by priority
       - extra Model relation description
     - export config of view mount container
     - "context synchronism" only pass dependent hooks √
-      - depends AST
+      - depends AST √
     - BM drives view
 - 2.upgrade performance
   - "model" global referrence
