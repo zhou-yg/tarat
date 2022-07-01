@@ -7,6 +7,7 @@
   "type": "module",
   "scripts": {
     "watch-unit": "jest --watch -- __test__/core/context.test.ts",
+    "unit2": "sh scripts/dev-unit.sh",
     "test-unit": "jest",
     "test-ci": "npm run p:gen && TEST=CI jest",
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",

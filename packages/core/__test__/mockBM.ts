@@ -12,7 +12,8 @@ import {
   combineLatest,
   CurrentRunnerScope,
   Runner,
-  BM
+  BM,
+  compose
 } from '../src/'
 import { loadPlugin } from '../src/plugin'
 
@@ -547,3 +548,61 @@ export function statesWithInputCompute() {
     ic
   }
 }
+
+export function simpleSS () {
+  const s1 = state(0)
+
+  const s2 = computed(() => {
+    return s1()
+  })
+
+  return { s1, s2 }
+}
+Object.assign(simpleSS, {
+  __deps__: [ [1, [0]] ]
+})
+
+export function composeWithSS () {
+  const s1 = state(0)
+
+  const simpleSSResult = compose(simpleSS)
+
+  const s2 = computed(() => {
+    return s1()
+  })
+
+  return { s1, s2, simpleSSResult }
+}
+Object.assign(composeWithSS, {
+  __deps__: [ [1, [0]] ]
+})
+
+
+export function composeWithSS2 () {
+  const s1 = state(0)
+
+  const simpleSSResult = compose(simpleSS)
+  const { s1: ss1 } = compose(simpleSS)
+  const { s2 } = compose(simpleSS)
+
+  const s33 = computed(() => {
+    return s1() + simpleSSResult.s1() + ss1() + s2() 
+  })
+
+  // function a () {
+  //   ic () && ic2()
+  // }
+
+  return { s1, s33, simpleSSResult }
+}
+Object.assign(composeWithSS2, {
+  __deps__: [
+    ['h', 1, [
+      'g',
+      0,
+      ['c', 0, 's1'],
+      ['c', 1, 's1'],
+      ['c', 2, 's2']
+    ]]
+  ]
+})
