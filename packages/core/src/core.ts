@@ -16,7 +16,10 @@ import {
   BM,
   checkQueryWhere,
   isPrimtive,
-  last
+  last,
+  getDeps,
+  cloneDeep,
+  THookDeps
 } from './util'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
 import { getPlugin, IModelQuery, TCacheFrom } from './plugin'
@@ -806,8 +809,10 @@ export class ReactiveChain<T = any> {
 }
 
 export class CurrentRunnerScope {
+  
   hooks: Hook[] = []
-  // computePatches: Array<[State, IPatch[]]> = []
+  composes: any[] = []  // store the compose execute resutl
+
   outerListeners: Function[] = []
   stateChangeCallbackRunning = false
   stateChangeCallbackCancel = () => {}
@@ -854,22 +859,59 @@ export class CurrentRunnerScope {
   }
   applyDepsMap () {
     const deps = this.intialContextDeps
-    deps?.forEach(([hookIndex, deps]) => {
+    deps?.forEach(([name, hookIndex, deps]) => {
       deps.forEach(triggerHookIndex => {
-        const triggerHook = this.hooks[triggerHookIndex]
-        if (
-          this.hooks[hookIndex] instanceof Computed
-          // this.hooks[hookIndex] instanceof InputCompute
-        ) {
-          (this.hooks[hookIndex] as Computed<any>).watcher.addDep(triggerHook)
+        let triggerHook: Hook | undefined
+
+        if (Array.isArray(triggerHookIndex)) {
+          const [type, composeIndex, variableName] = triggerHookIndex
+          if (type === 'c') {
+            const setterGetterFunc: { _hook: Hook } | undefined = this.composes[composeIndex]?.[variableName]
+            triggerHook = this.hooks.find(h => h === setterGetterFunc?._hook)
+          }
+          // @TODO: maybe unknow case
+        } else {
+          triggerHook = this.hooks[triggerHookIndex]
         }
-        if (
-          this.hooks[hookIndex] instanceof Model
-        ) {
-          (this.hooks[hookIndex] as Model<any>).queryWhereComputed?.watcher.addDep(triggerHook)
+        if (triggerHook) {
+          if (
+            this.hooks[hookIndex] instanceof Computed
+            // this.hooks[hookIndex] instanceof InputCompute
+          ) {
+            (this.hooks[hookIndex] as Computed<any>).watcher.addDep(triggerHook)
+          }
+          if (
+            this.hooks[hookIndex] instanceof Model
+          ) {
+            (this.hooks[hookIndex] as Model<any>).queryWhereComputed?.watcher.addDep(triggerHook)
+          }
         }
       })
     })
+  }
+
+  appendComposeDeps (si: number, ei: number, deps?: IHookContext['deps']) {
+    if (!deps) {
+      return
+    }
+    const composeHooksLen = ei - si
+
+    const modifiedDeps = (this.intialContextDeps || []).map((a) => {
+      const arr: THookDeps[0] = cloneDeep(a)
+
+      if (arr[1] >= si) {
+        arr[1] += composeHooksLen
+      }
+      if (arr[2]) {
+        arr[2] = arr[2].map(v => typeof v === 'number' && v >= si ? v + composeHooksLen : v)
+      }
+      if (arr[3]) {
+        arr[3] = arr[3].map(v => typeof v === 'number' && v >= si ? v + composeHooksLen : v)
+      }
+      return arr
+    })
+
+    this.intialContextDeps = modifiedDeps.concat(deps)
   }
 
   applyComputePatches(
@@ -929,18 +971,32 @@ export class CurrentRunnerScope {
           if (preventDeath++ > 1e4) {
             break
           }
-          this.intialContextDeps?.forEach(([hi, getD, setD]) => {
+          this.intialContextDeps?.forEach(([name, hi, getD, setD]) => {
             if (hi === currentHookIndex) {
-              if (!deps.find(arr => arr[0] === hi)) {
+              if (!deps.find(arr => arr[1] === hi)) {
                 deps.push(
-                  [hi, getD, setD]
+                  ['h', hi, getD, setD]
                 )
-                setD.forEach(num => {
-                  this.intialContextDeps?.forEach(([relationHI, getD2]) => {
-                    if (getD2.includes(num)) {
-                      waitHookIndexSet.add(relationHI)
-                    }
-                  })
+                setD?.forEach(numOrArr => {
+                  let num: number = -1
+                  if (Array.isArray(numOrArr)) {
+                    const [type, composeIndex, variableName] = numOrArr
+                    if (type === 'c') {
+                      const setterGetterFunc: { _hook: Hook } | undefined = this.composes[composeIndex]?.[variableName]
+                      if (setterGetterFunc?._hook) {
+                        num = this.hooks.indexOf(setterGetterFunc._hook)
+                      }
+                    }          
+                  } else {
+                    num = numOrArr
+                  }
+                  if (num > -1) {
+                    this.intialContextDeps?.forEach(([name, relationHI, getD2]) => {
+                      if (getD2.includes(num)) {
+                        waitHookIndexSet.add(relationHI)
+                      }
+                    })
+                  }
                 })
               }
             }
@@ -1554,4 +1610,28 @@ export function combineLatest<T>(arr: Array<{ _hook: State<T> }>): () => T {
 
     return latestState.value
   }
+}
+
+/**
+ * using another BM inside of BM
+ * the important thing is that should consider how to compose their depsMap
+ */
+ export function compose<T extends BM> (f: T, args?: any[]) {
+  if (!currentRunnerScope) {
+    throw new Error('[useBM] must run side of BM')
+  }
+
+  const startIndex = currentRunnerScope.hooks.length
+
+  const insideResult: ReturnType<T> = executeBM(f, args)
+
+  currentRunnerScope.composes.push(insideResult)
+
+  const endIndex = currentRunnerScope.hooks.length
+
+  const deps = getDeps(f)
+
+  currentRunnerScope.appendComposeDeps(startIndex, endIndex, deps)
+
+  return insideResult
 }
