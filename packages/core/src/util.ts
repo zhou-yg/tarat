@@ -224,7 +224,7 @@ export function nextTick(fn: () => void) {
 
 export type TContextData =
   | 'data'
-  | 'unseriazlied'
+  | 'unserialized'
   | 'state'
   | 'patch'
   | 'inputCompute'

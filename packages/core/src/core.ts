@@ -1023,7 +1023,7 @@ export class CurrentRunnerScope {
           return ['state', hook.value]
         }
       }
-      return ['unseriazlied']
+      return ['unserialized']
     })
 
     return {
@@ -1041,7 +1041,7 @@ export class CurrentRunnerScope {
       if (isDef(value)) {
         const state = hooks[index] as State
         switch (type) {
-          case 'unseriazlied':
+          case 'unserialized':
             break
           default:
             /**
