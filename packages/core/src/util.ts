@@ -239,8 +239,15 @@ export interface IHookContext {
   index?: number
   args: any[]
   name: string
-  deps?: Array<[number, number[], number[]]>
+  deps?: THookDeps
 }
+
+export type THookDeps = Array<[
+  'h',
+  number,
+  (number | ['c', number, string])[],  // get
+  (number | ['c', number, string])[]?,  // set
+]>
 
 export function findWithDefault<T>(
   arr: T[],
@@ -644,4 +651,14 @@ export function checkQueryWhere(where: IQueryWhere['where']): boolean {
       })
     : true
 }
-export type BM = (...prop: any) => any
+
+export function getDeps(f: BM) {
+  return f.__deps__
+}
+
+export interface BM extends Function {
+  (...prop: any): any
+  __deps__?: IHookContext['deps']
+}
+
+// export type BM = (...prop: any) => any
