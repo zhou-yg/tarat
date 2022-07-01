@@ -597,18 +597,23 @@ export function composeWithSS2 () {
   const s1 = state(0)
 
   const simpleSSResult = compose(simpleSS)
-  const { s1: ss1 } = compose(simpleSS)
+
+  const ic = inputCompute(() => {
+    s1(v => v + 1)
+  })
+
   const { s2 } = compose(simpleSS)
 
   const s33 = computed(() => {
-    return s1() + simpleSSResult.s1() + ss1() + s2() 
+    return s1() + simpleSSResult.s1() + s2() 
   })
 
-  return { s1, s33, simpleSSResult }
+  return { s1, ic, s33, simpleSSResult }
 }
 Object.assign(composeWithSS2, {
   __deps__: [
-    ['h', 1, [
+    ['h', 2, [], [0]],
+    ['h', 2, [
       'g',
       0,
       ['c', 0, 's1'],

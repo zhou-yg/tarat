@@ -89,8 +89,12 @@ describe('initContext', () => {
     it('call remote with deps', async () => {
       mockBM.initModelConfig({
         async postComputeToServer (c: IHookContext) {
+          console.log('c: ', c);
           process.env.TARGET = 'server'
           const serverRunner = new Runner(mockBM.changeStateInputComputeServer2)
+
+          expect(c.data[1]).toEqual(['unserialized'])
+          expect(c.data[3]).toEqual(['unserialized'])
 
           const serverR = serverRunner.init([], c)
     
