@@ -7,8 +7,16 @@ import type {
   CallExpression, FunctionDeclaration,
   Identifier,
   MemberExpression,
+  ObjectPattern,
   VariableDeclarator
 } from 'estree'
+
+import type { THookDeps } from 'tarat-core'
+
+
+function isDef (v: any) {
+  return v === undefined
+}
 
 const hookGenerateNames = [
   'state',
@@ -19,12 +27,19 @@ const hookGenerateNames = [
   'inputComputeInServer',
 ]
 
+const composeName = 'compose'
+
 /**
  * must use the export from tarat hoo
  */
 function isHookCaller (node: CallExpression) {
   return node.type === 'CallExpression' && 
     (node.callee.type === 'Identifier' && hookGenerateNames.includes(node.callee.name))
+}
+
+function isComposeCaller (node: CallExpression) {
+  return node.type === 'CallExpression' && 
+    (node.callee.type === 'Identifier' && composeName === node.callee.name)
 }
 
 function getMemberExpressionKeys (m: MemberExpression, keys: string[] = []): string[] {
@@ -49,14 +64,23 @@ function getMemberExpressionKeys (m: MemberExpression, keys: string[] = []): str
 type TBMNode = FunctionDeclaration | ArrowFunctionExpression
 
 
-interface IScopeValue {
+interface IScopeValueBase {
   variablesNode: MemberExpression | Identifier
   sourceHook: CallExpression
+  originIdentifier?: string
+  type: string
+}
+interface IScopeValue extends IScopeValueBase {
+  type: 'hook'
   hookIndex: number,
+}
+interface IScopeValue2 extends IScopeValueBase {
+  type: 'compose'
+  composeIndex: number,
 }
 
 interface IScopeMap {
-  [key: string]: IScopeMap | IScopeValue
+  [key: string]: IScopeMap | IScopeValue | IScopeValue2
 }
 /**
  * all hooks must be called at top
@@ -68,35 +92,92 @@ function collectHookVaraibles (BMNode: TBMNode) {
   const scopeMap: IScopeMap = {}
 
   let hookIndex = 0
+  let composeIndex = 0
 
   walk.ancestor(BMNode as any, {
     CallExpression(n, s, ancestor) {
       const isHook = isHookCaller(n as any as CallExpression)
-      if (isHook) {
+      const isCompose = isComposeCaller(n as any as CallExpression)
+      if (isHook || isCompose) {
         const hookVariable = ancestor[ancestor.length - 2] as any as AssignmentExpression | VariableDeclarator
         switch (hookVariable.type) {
           case 'AssignmentExpression':
             if (hookVariable.left.type === 'MemberExpression') {
               const memberKeys = getMemberExpressionKeys(hookVariable.left)
               
-              set(scopeMap, memberKeys, {
-                variablesNode: hookVariable.left,
-                sourceHook: n,
-                hookIndex: hookIndex++,
-              })
+              if (isHook) {
+                set(scopeMap, memberKeys, {
+                  type: 'hook',
+                  variablesNode: hookVariable.left,
+                  sourceHook: n,
+                  hookIndex: hookIndex++,
+                })
+              } else if (isCompose) {
+                set(scopeMap, memberKeys, {
+                  type: 'compose',
+                  variablesNode: hookVariable.left,
+                  sourceHook: n,
+                  composeIndex: composeIndex++,
+                })
+              }
             }
             break
           case 'VariableDeclarator':
-            if (hookVariable.id.type === 'Identifier') {
-              set(scopeMap, hookVariable.id.name, {
-                variablesNode: hookVariable.id,
-                sourceHook: n,
-                hookIndex: hookIndex++,
-              })
+            {
+              let names: { origin?: string, name: string }[] = []
+              switch (hookVariable.id.type) {
+                case 'Identifier':
+                  names = [{
+                    name: hookVariable.id.name
+                  }]
+                  break
+                case 'ObjectPattern':
+                  hookVariable.id.properties.forEach(p => {
+                    switch (p.type) {
+                      case 'Property':
+                        if (p.key.type === 'Identifier' && p.value.type === 'Identifier') {
+                          names.push({
+                            origin: p.key.name,
+                            name: p.value.name,
+                          })
+                        }
+                        break
+                      case 'RestElement':
+                        throw new Error('to be supported')
+                        break
+                    }
+                  })
+                  break
+              }
+
+              if (isHook) {
+                names.forEach(({ origin, name }) => {
+                  set(scopeMap, name, {
+                    type: 'hook',
+                    variablesNode: hookVariable.id,
+                    sourceHook: n,
+                    hookIndex: hookIndex++,
+                    originIdentifier: origin,
+                  })
+                })
+              } else if (isCompose) {
+                names.forEach(({ origin, name }) => {
+                  set(scopeMap, name, {
+                    type: 'compose',
+                    variablesNode: hookVariable.id,
+                    sourceHook: n,
+                    originIdentifier: origin,
+                    composeIndex: composeIndex++,
+                  })
+                })
+              }
             }
             break
         }
       }
+      // if (isCompose) {
+      //   console.log('isCompose: ', ancestor);
+      // }
     }
   })
 
@@ -104,7 +185,7 @@ function collectHookVaraibles (BMNode: TBMNode) {
 }
 
 function findInScopeMap (s: IScopeMap, targetHook: CallExpression) {
-  let found: IScopeValue | undefined
+  let found: IScopeValue | IScopeValue2 | undefined
   Object.keys(s).forEach(k => {
     if (!found) {
       if (s[k].sourceHook) {
@@ -124,11 +205,12 @@ function findInScopeMap (s: IScopeMap, targetHook: CallExpression) {
 /**
  * find the callled hook caller in other caller hook
  */
+type TOriginDepsMap = Map<number, {
+  get: Set<THookDeps[0][2][0]>,
+  set: Set<THookDeps[0][2][0]>,
+}>
 function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
-  const depsMap: Map<number, {
-    set: Set<number>,
-    get: Set<number>
-  }> = new Map
+  const depsMap: TOriginDepsMap = new Map
 
   walk.ancestor(BMNode as any, {
     CallExpression (n, s, ancestor) {
@@ -137,14 +219,21 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
       
       let existSourceInScope: CallExpression | undefined
 
+      let lastCalleeName: string = ''
+
       switch (callee.type) {
         case 'Identifier':
           const calleeName = callee.name
-          existSourceInScope = get(scope, calleeName)?.sourceHook as CallExpression
+          const scopeValue = get(scope, calleeName)
+          if (scopeValue) {
+            existSourceInScope = scopeValue.sourceHook as CallExpression
+          }
+          lastCalleeName = calleeName
           break
         case 'MemberExpression':
           const calleeKeys = getMemberExpressionKeys(callee)
-          existSourceInScope = get(scope, calleeKeys)?.sourceHook as CallExpression
+          existSourceInScope = get(scope, calleeKeys.slice(0, -1))?.sourceHook as CallExpression
+          lastCalleeName = calleeKeys[calleeKeys.length - 1]
           break
       }
 
@@ -167,23 +256,37 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
         }
         if (parentCallerHook) {
           const v1 = findInScopeMap(scope, existSourceInScope)
-          const v2 = findInScopeMap(scope, parentCallerHook)
+          const parentCaller = findInScopeMap(scope, parentCallerHook)
 
-          if (v1 && v2) {
-            let deps = depsMap.get(v2.hookIndex)
+          if (parentCaller?.type === 'hook') {
+            let deps = depsMap.get(parentCaller.hookIndex)
             if (!deps) {
               deps = {
-                get: new Set<number>(),
-                set: new Set<number>()
+                get: new Set(),
+                set: new Set()
               }
-              depsMap.set(v2.hookIndex, deps)
+              depsMap.set(parentCaller.hookIndex, deps)
             }
-            if (hasArguments) {
-              deps.set.add(v1.hookIndex)
-            } else {
-              deps.get.add(v1.hookIndex)
+
+            switch (v1?.type) {
+              case 'hook':
+                if (hasArguments) {
+                  deps.set.add(v1.hookIndex)
+                } else {
+                  deps.get.add(v1.hookIndex)
+                }  
+                break
+              case 'compose':
+                let name = v1.originIdentifier ? v1.originIdentifier : lastCalleeName
+                if (hasArguments) {
+                  deps.set.add(['c', v1.composeIndex, name])
+                } else {
+                  deps.get.add(['c', v1.composeIndex, name])
+                }
+                break
             }
           }
+
         }
       }
     }
@@ -191,15 +294,19 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
   return depsMap
 }
 
-function convertDepsToJSON(m: Map<number, { set: Set<number>, get: Set<number> }>) {
-  const arr: ([number, number[], number[]])[] = []
+function convertDepsToJSON(m: TOriginDepsMap) {
+  const arr: THookDeps = []
 
   for (const [k, v] of m.entries()) {
-    arr.push([
+    const r: THookDeps[0] = [
+      'h',
       k,
       [...v.get],
-      [...v.set],
-    ])
+    ]
+    if (v.set.size > 0) {
+      r.push([...v.set])
+    }
+    arr.push(r)
   }
   return arr
 }
@@ -207,6 +314,9 @@ function convertDepsToJSON(m: Map<number, { set: Set<number>, get: Set<number> }
 
 function generateBMDepMaps (BMNode: TBMNode) {
   const scopeMap = collectHookVaraibles(BMNode)
+  
+  // console.log('scopeMap: ', scopeMap);
+
   const depsMap = collectCallerWithAncestor(BMNode, scopeMap)
 
   return depsMap
@@ -254,7 +364,7 @@ function matchBMFunction (ast:acorn.Node) {
   return BMNodes
 }
 
-export function parse (hookCode: string) {
+export function parseDeps (hookCode: string) {
   
   const ast = acornParse(hookCode, {
     ecmaVersion: 'latest',

@@ -1,6 +1,5 @@
 import { readFileSync, writeFileSync } from 'fs'
 import * as path from 'path'
-import { fileURLToPath } from 'url'
 
 export function readMock (n: string) {
 

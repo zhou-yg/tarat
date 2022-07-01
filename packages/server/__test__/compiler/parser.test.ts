@@ -1,5 +1,5 @@
 import * as mockUtil from '../mockUtil'
-import { parse } from '../../src/compiler/analyzer'
+import { parseDeps as parse } from '../../src/compiler/analyzer'
 
 describe('parser', () => {
   it ('parse single BM', () => {
@@ -10,7 +10,7 @@ describe('parser', () => {
 
     expect(deps).toEqual({
       singleBM: [
-        [1, [0], []]
+        ['h', 1, [0]]
       ]
     })
   })
@@ -23,8 +23,8 @@ describe('parser', () => {
 
     expect(deps).toEqual({
       singleBM: [
-        [1, [0], []],
-        [2, [1, 0], [0]]
+        ['h', 1, [0]],
+        ['h', 2, [1, 0], [0]]
       ]
     })    
   })
@@ -36,8 +36,8 @@ describe('parser', () => {
 
     expect(deps).toEqual({
       singleBM: [
-        [1, [0], []],
-        [2, [0, 1], []]
+        ['h', 1, [0]],
+        ['h', 2, [0, 1]]
       ]
     })    
   })
@@ -50,5 +50,25 @@ describe('parser', () => {
     expect(deps).toEqual({
       singleBM: []
     })    
+  })
+
+  it('parsw with compose', () => {
+    const BM = 'compose2.js'
+    const code = mockUtil.readMock(BM)
+
+    const deps = parse(code)
+    // console.log('deps: ', JSON.stringify(deps, null, 2));
+
+    expect(deps).toEqual({
+      composeWithSS2: [
+        ['h', 1, [], [0]],
+        ['h', 2, [
+          0,
+          ['c', 0, 's1'],
+          ['c', 1, 's2'],
+          ['c', 2, 's1'],
+        ]]
+      ]
+    })
   })
 })
