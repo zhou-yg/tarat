@@ -89,7 +89,6 @@ describe('initContext', () => {
     it('call remote with deps', async () => {
       mockBM.initModelConfig({
         async postComputeToServer (c: IHookContext) {
-          console.log('c: ', c);
           process.env.TARGET = 'server'
           const serverRunner = new Runner(mockBM.changeStateInputComputeServer2)
 
