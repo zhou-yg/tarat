@@ -810,7 +810,7 @@ export class ReactiveChain<T = any> {
 
 export class CurrentRunnerScope {
   
-  hooks: Hook[] = []
+  hooks: (Hook | undefined)[] = []
   composes: any[] = []  // store the compose execute resutl
 
   outerListeners: Function[] = []
@@ -820,7 +820,7 @@ export class CurrentRunnerScope {
   watcher: Watcher<Hook> = new Watcher(this)
   initialArgList: any[] = []
   intialContextData: IHookContext['data'] | null = null
-  intialContextDeps: IHookContext['deps'] | null = null
+  intialContextDeps: THookDeps | undefined
   hookRunnerName = ''
 
   reactiveChainStack: ReactiveChain[] = []
@@ -847,21 +847,23 @@ export class CurrentRunnerScope {
 
   setInitialContextData(contex: IHookContext) {
     this.intialContextData = contex['data']
-    this.intialContextDeps = contex['deps']
+  }
+  setInitialContextDeps(d?: THookDeps) {
+    this.intialContextDeps = d
   }
 
-  addHook(v: Hook) {
-    if (this.hooks.indexOf(v) !== -1) {
+  addHook(v: Hook | undefined) {
+    if (v && this.hooks.indexOf(v) !== -1) {
       throw new Error('add repeat hook')
     }
     this.hooks.push(v)
-    this.watcher.addDep(v)
+    v && this.watcher.addDep(v)
   }
   applyDepsMap () {
     const deps = this.intialContextDeps
     deps?.forEach(([name, hookIndex, deps]) => {
       deps.forEach(triggerHookIndex => {
-        let triggerHook: Hook | undefined
+        let triggerHook: Hook | undefined | null
 
         if (Array.isArray(triggerHookIndex)) {
           const [type, composeIndex, variableName] = triggerHookIndex
@@ -890,7 +892,7 @@ export class CurrentRunnerScope {
     })
   }
 
-  appendComposeDeps (si: number, ei: number, deps?: IHookContext['deps']) {
+  appendComposeDeps (si: number, ei: number, deps?: THookDeps) {
     if (!deps) {
       return
     }
@@ -938,30 +940,8 @@ export class CurrentRunnerScope {
   createInputComputeContext(h?: Hook, args?: any[]): IHookContext {
     const { hooks } = this
     const hookIndex = h ? hooks.indexOf(h) : -1
-    const hooksData: IHookContext['data'] = hooks.map(hook => {
-      // clientModel same as Model
-      // if (hook instanceof ClientModel) {
-      //   return ['clientModel', hook.value]
-      // }
-      if (hook instanceof Model) {
-        return ['model', hook.value]
-      }
-      if (hook instanceof Computed) {
-        return ['computed', hook.value]
-      }
-      if (hook instanceof Cache) {
-        return ['cache', hook.value]
-      }
-      if (hook instanceof InputCompute) {
-        return ['inputCompute', null]
-      }
-      if (hook instanceof State) {
-        return ['state', hook.value]
-      }
-      return ['unseriazlied']
-    })
 
-    const deps: IHookContext['deps'] = []
+    const deps: THookDeps = []
     if (h) {
       const waitHookIndexSet = new Set([hookIndex])
       let preventDeath = 0
@@ -1006,13 +986,52 @@ export class CurrentRunnerScope {
       }
     }
 
+    const noDeps = deps.length === 0
+    const needDeliverHookIndexSet = new Set<number>()
+    if (!noDeps) {
+      deps.forEach((arr) => {
+        needDeliverHookIndexSet.add(arr[1])
+  
+        arr[2]?.forEach(numOrArr => {
+          if (typeof numOrArr === 'number') {
+            needDeliverHookIndexSet.add(numOrArr)
+          }
+        })
+        arr[3]?.forEach(numOrArr => {
+          if (typeof numOrArr === 'number') {
+            needDeliverHookIndexSet.add(numOrArr)
+          }
+        })
+      })
+    }
+
+    const hooksData: IHookContext['data'] = hooks.map((hook, i) => {
+      if (noDeps || needDeliverHookIndexSet.has(i)) {
+        if (hook instanceof Model) {
+          return ['model', hook.value]
+        }
+        if (hook instanceof Computed) {
+          return ['computed', hook.value]
+        }
+        if (hook instanceof Cache) {
+          return ['cache', hook.value]
+        }
+        if (hook instanceof InputCompute) {
+          return ['inputCompute', null]
+        }
+        if (hook instanceof State) {
+          return ['state', hook.value]
+        }
+      }
+      return ['unseriazlied']
+    })
+
     return {
       initialArgList: this.initialArgList,
       name: this.hookRunnerName,
       data: hooksData,
       index: hookIndex,
       args: args || [],
-      deps
     }
   }
   applyContext(c: IHookContext) {
@@ -1037,7 +1056,7 @@ export class CurrentRunnerScope {
   }
   ready(): Promise<void> {
     const asyncHooks = this.hooks.filter(h =>
-      Reflect.has(h, 'getterPromise')
+      h && Reflect.has(h, 'getterPromise')
     ) as unknown as { getterPromise: Promise<any> | null }[]
 
     let readyResolve: () => void
@@ -1082,9 +1101,15 @@ export class Runner<T extends BM> {
       currentHookFactory = mountHookFactory
     }
 
+    const deps = getDeps(this.bm)
+    currentRunnerScope.setInitialContextDeps(deps)
+
     const result: ReturnType<T> = executeBM(this.bm, args)
 
-    this.scope.applyDepsMap()
+    // becase of some hook won't run at intitial time with initialContext
+    if (initialContext) {
+      this.scope.applyDepsMap()
+    }
 
     currentRunnerScope = null
 
@@ -1317,6 +1342,7 @@ function updateState<T>(initialValue: T) {
   initialValue = currentRunnerScope!.intialContextData![currentIndex]?.[1]
   // undefined means this hook wont needed in this progress
   if (!hasValue) {
+    currentRunnerScope!.addHook(undefined)
     return createUnaccessGetter<T>(currentIndex)
   }
   const internalState = new State(initialValue)
@@ -1356,6 +1382,7 @@ function updateModel<T extends any[]>(
     currentRunnerScope!.intialContextData![currentIndex]?.[1]
 
   if (!hasValue) {
+    currentRunnerScope!.addHook(undefined)
     return createUnaccessGetter2<T>(currentIndex)
   }
 
@@ -1408,6 +1435,7 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
   )
 
   if (!hasValue) {
+    currentRunnerScope!.addHook(undefined)
     return createUnaccessGetter<T>(currentIndex)
   }
 
@@ -1447,6 +1475,7 @@ function updateComputed<T>(fn: any): any {
   const initialValue: T =
     currentRunnerScope!.intialContextData![currentIndex]?.[1]
   if (!hasValue) {
+    currentRunnerScope!.addHook(undefined)
     return createUnaccessGetter<T>(currentIndex)
   }
   const hook = new Computed<T>(fn)

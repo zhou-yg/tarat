@@ -239,7 +239,6 @@ export interface IHookContext {
   index?: number
   args: any[]
   name: string
-  deps?: THookDeps
 }
 
 export type THookDeps = Array<[
@@ -658,7 +657,7 @@ export function getDeps(f: BM) {
 
 export interface BM extends Function {
   (...prop: any): any
-  __deps__?: IHookContext['deps']
+  __deps__?: THookDeps
 }
 
 // export type BM = (...prop: any) => any

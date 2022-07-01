@@ -92,11 +92,6 @@ describe('initContext', () => {
           process.env.TARGET = 'server'
           const serverRunner = new Runner(mockBM.changeStateInputComputeServer2)
 
-          expect(c.deps).toEqual([
-            ['h', 4, [], [0]],
-            ['h', 2, [0], []],
-          ])
-
           const serverR = serverRunner.init([], c)
     
           if (c.index) {
@@ -119,11 +114,6 @@ describe('initContext', () => {
           ['state', 2],
           ['computed', 3],
           ['computed', 4],
-        ],
-        deps: [
-          ['h', 2, [0], []],
-          ['h', 3, [1], []],
-          ['h', 4, [], [0]]
         ]
       })
       const r = clientRunner.init([], context)
