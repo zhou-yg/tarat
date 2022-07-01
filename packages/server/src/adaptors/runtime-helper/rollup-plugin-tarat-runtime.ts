@@ -11,12 +11,12 @@ const templateFilePath = path.join(__dirname, templateFile)
 
 const template = compile(fs.readFileSync(templateFilePath).toString())
 
-function isPage (cwd: string, viewsDirectory: string, id: string) {
+function isPage (cwd: string, pagesDirectory: string, id: string) {
   const id2 = id.replace(cwd, '')
-  return /\.(j|t)sx$/.test(id2) && (new RegExp(`^\/${viewsDirectory}\/`)).test(id2)
+  return /\.(j|t)sx$/.test(id2) && (new RegExp(`^\/${pagesDirectory}\/`)).test(id2)
 }
 
-const viewsDirectory = 'views'
+const pagesDirectory = 'app/pages'
 const mountedAppId = 'app'
 
 const taratRuntimeEntryFlag = '?taratRuntime'
@@ -32,7 +32,7 @@ export default function taratRuntimeRollupPlugin (): any {
       const resolution = await this.resolve(source, importer, { skipSelf: true, ...options });
       if (!resolution || resolution.external) return resolution;
 
-      const page = isPage(cwd, viewsDirectory, resolution.id)
+      const page = isPage(cwd, pagesDirectory, resolution.id)
         
       if (page) {
         return `${resolution.id}${taratRuntimeEntryFlag}`        
