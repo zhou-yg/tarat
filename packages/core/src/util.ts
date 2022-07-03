@@ -241,12 +241,14 @@ export interface IHookContext {
   name: string
 }
 
-export type THookDeps = Array<[
-  'h',
-  number,
-  (number | ['c', number, string])[],  // get
-  (number | ['c', number, string])[]?,  // set
-]>
+export type THookDeps = Array<
+  [
+    'h',
+    number,
+    (number | ['c', number, string])[], // get
+    (number | ['c', number, string])[]? // set
+  ]
+>
 
 export function findWithDefault<T>(
   arr: T[],

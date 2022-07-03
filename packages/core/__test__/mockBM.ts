@@ -21,14 +21,14 @@ initModelConfig()
 
 export function initContext(arg: {
   name?: IHookContext['name']
-  data?: IHookContext['data'],
+  data?: IHookContext['data']
 }): IHookContext {
   return {
     initialArgList: [],
     name: arg.name || '',
     data: arg.data || [],
     index: 1,
-    args: [],
+    args: []
   }
 }
 
@@ -76,9 +76,9 @@ export function initModelConfig(obj: any = {}) {
   })
 }
 
-export function useSimpleServerMiddleware (bm: BM) {
+export function useSimpleServerMiddleware(bm: BM) {
   initModelConfig({
-    async postComputeToServer (c: IHookContext) {
+    async postComputeToServer(c: IHookContext) {
       process.env.TARGET = 'server'
       const serverRunner = new Runner(bm)
       serverRunner.init(c.initialArgList as [any, any], c)
@@ -259,13 +259,14 @@ export function changeStateInputComputeServer(
   }
 }
 export function changeStateInputComputeServer2() {
-
   const s1 = state({ num: 0 })
   const s2 = state(1)
 
-  const c1 = computed(jest.fn(() => {
-    return s1().num * 2
-  }))
+  const c1 = computed(
+    jest.fn(() => {
+      return s1().num * 2
+    })
+  )
   const c2 = computed(() => {
     return s2() * 2
   })
@@ -277,7 +278,10 @@ export function changeStateInputComputeServer2() {
   })
 
   return {
-    s1, s2, c1, c2,
+    s1,
+    s2,
+    c1,
+    c2,
     changeS1
   }
 }
@@ -423,9 +427,7 @@ export function onePrimitiveStateComputed(v1: number, v2: number) {
   return { s, c }
 }
 Object.assign(onePrimitiveStateComputed, {
-  __deps__: [
-    ['h', 1, [0]]
-  ]
+  __deps__: [['h', 1, [0]]]
 })
 
 export function asyncComputed(v1: number, v2: number) {
@@ -560,7 +562,7 @@ export function statesWithInputCompute() {
   }
 }
 
-export function simpleSS () {
+export function simpleSS() {
   const s1 = state(0)
 
   const s2 = computed(() => {
@@ -570,12 +572,10 @@ export function simpleSS () {
   return { s1, s2 }
 }
 Object.assign(simpleSS, {
-  __deps__: [
-    ['h', 1, [0]]
-  ]
+  __deps__: [['h', 1, [0]]]
 })
 
-export function composeWithSS () {
+export function composeWithSS() {
   const s1 = state(0)
 
   const simpleSSResult = compose(simpleSS)
@@ -587,13 +587,10 @@ export function composeWithSS () {
   return { s1, s2, simpleSSResult }
 }
 Object.assign(composeWithSS, {
-  __deps__: [
-    ['h', 1, [0]]
-  ]
+  __deps__: [['h', 1, [0]]]
 })
 
-
-export function composeWithSS2 () {
+export function composeWithSS2() {
   const s1 = state(0)
 
   const simpleSSResult = compose(simpleSS)
@@ -605,7 +602,7 @@ export function composeWithSS2 () {
   const { s2 } = compose(simpleSS)
 
   const s33 = computed(() => {
-    return s1() + simpleSSResult.s1() + s2() 
+    return s1() + simpleSSResult.s1() + s2()
   })
 
   return { s1, ic, s33, simpleSSResult }
@@ -613,10 +610,6 @@ export function composeWithSS2 () {
 Object.assign(composeWithSS2, {
   __deps__: [
     ['h', 2, [], [0]],
-    ['h', 2, [
-      0,
-      ['c', 0, 's1'],
-      ['c', 2, 's2']
-    ]]
+    ['h', 2, [0, ['c', 0, 's1'], ['c', 2, 's2']]]
   ]
 })
