@@ -1,14 +1,15 @@
-import Index, { hooks } from '../../views/login'
+import React from 'react'
+import Login from '../../views/login/index.jsx'
 
 export const meta = () => ({
   title: '测试登录页面'
 })
 
-document.title = 'Welcome!'
+// document.title = 'Welcome!'
 
 export default () => {
 
   return (
-    <Index />
+    <Login />
   )
 }
