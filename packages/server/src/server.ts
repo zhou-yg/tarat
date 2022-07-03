@@ -5,7 +5,7 @@ import Koa from 'koa'
 import e2k from 'express-to-koa'
 
 import taratRunner from "./middlewares/taratRunner";
-import view from "./middlewares/view";
+import page from "./middlewares/page";
 
 import { createServer } from "vite";
 import { IConfig } from "./config";
@@ -23,9 +23,7 @@ export function setupBasicServer (app: Application) {
   return app
 }
 
-export async function createDevServer (c: IConfig) {
-  console.log('c: ', c);
-  
+export async function createDevServer (c: IConfig) {  
   const app = new Koa()
   setupBasicServer(app)
 
@@ -51,15 +49,15 @@ export async function createDevServer (c: IConfig) {
 
   app.use(e2k(vite.middlewares))
   
-  app.use(view({
+  app.use(page({
     config: c,
-    views: c.views,
+    pages: c.pages,
     vite,
   }))
 
   app.listen(c.port)
 
-  const defaultView = c.views[0]?.name || ''
+  const defaultView = c.pages[0]?.name || ''
 
   console.log(`start listen on http://localhost:${c.port}/${defaultView}`)
 }

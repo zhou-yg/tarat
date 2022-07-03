@@ -18,8 +18,6 @@ cac
       cwd,
     })
 
-    console.log(config)
-
     createDevServer(config)
   })
 
