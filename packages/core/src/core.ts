@@ -165,7 +165,9 @@ export class State<T = any> extends Hook {
         const changedPathArr = calculateChangedPath(oldValue, patches)
         changedPathArr
           .filter(p => p.length !== 0)
-          .forEach(path => this.trigger(path, patches, reactiveChain, triggeredSet))
+          .forEach(path =>
+            this.trigger(path, patches, reactiveChain, triggeredSet)
+          )
       }
     }
   }
@@ -208,6 +210,9 @@ export class Model<T extends any[]> extends State<T[]> {
   queryWhereComputed: Computed<IModelQuery['query']> | null = null
   watcher: Watcher = new Watcher(this)
   init = true
+  // just update latest query
+  queryTimeIndex: number = 0
+
   constructor(
     public entity: string,
     getQueryWhere: () => IModelQuery['query'],
@@ -244,6 +249,7 @@ export class Model<T extends any[]> extends State<T[]> {
     return super.value
   }
   async ready() {
+    console.log('this.getterPromise: ', this.getterPromise)
     if (this.getterPromise) {
       await this.getterPromise
     }
@@ -266,9 +272,20 @@ export class Model<T extends any[]> extends State<T[]> {
     return !!q
   }
   async executeQuery(reactiveChain?: ReactiveChain) {
+    this.queryTimeIndex++
+    let currentQueryTimeIndex = this.queryTimeIndex
+
     this.init = false
     let resolve: Function
-    this.getterPromise = new Promise(r => (resolve = r))
+
+    this.getterPromise = new Promise(
+      r =>
+        (resolve = () => {
+          log('[Model.executeQuery] promise resolve')
+          // @ts-ignore
+          r()
+        })
+    )
     try {
       // @TODO：要确保时序，得阻止旧的query数据更新
       const q = await this.getQueryWhere()
@@ -276,14 +293,19 @@ export class Model<T extends any[]> extends State<T[]> {
       log('[Model.executeQuery] 1 q.entity, q.query: ', this.entity, q, valid)
       let result: T[] = []
       if (valid) {
-        result = await getPlugin('Model').find(this.entity, q)
-        log('[Model.executeQuery] 2 result: ', result)
+        if (this.queryTimeIndex <= currentQueryTimeIndex) {
+          result = await getPlugin('Model').find(this.entity, q)
+          log('[Model.executeQuery] 2 result: ', result)
+        }
       }
-      this.update(result, [], false, reactiveChain)
+      if (this.queryTimeIndex <= currentQueryTimeIndex) {
+        this.update(result, [], false, reactiveChain)
+      }
     } catch (e) {
       log('[Model.executeQuery] error')
       console.error(e)
     } finally {
+      log('[Model.executeQuery] end')
       resolve!()
       this.getterPromise = null
     }
@@ -378,6 +400,9 @@ export class Cache<T> extends State<T | undefined> {
   watcher: Watcher = new Watcher(this)
   source: State<T> | undefined
   getterPromise: Promise<any> | null = null
+  // for only update latest value
+  queryTimeIndex = 0
+
   constructor(
     key: string,
     public options: ICacheOptions<T>,
@@ -423,6 +448,9 @@ export class Cache<T> extends State<T | undefined> {
     return super.value
   }
   async executeQuery(reactiveChain?: ReactiveChain) {
+    this.queryTimeIndex++
+    let currentQueryTimeIndex = this.queryTimeIndex
+
     const { from } = this.options
     const { source } = this
 
@@ -435,6 +463,10 @@ export class Cache<T> extends State<T | undefined> {
         this.getterKey,
         from
       )
+      if (currentQueryTimeIndex >= this.queryTimeIndex) {
+        return
+      }
+      log('[Cache.executeQuery] valueInCache=', valueInCache)
       if (valueInCache !== undefined) {
         super.update(valueInCache, [], false, reactiveChain)
       } else if (source) {
@@ -453,6 +485,7 @@ export class Cache<T> extends State<T | undefined> {
       log(`[Cache.executeQuery] error`)
       console.error(e)
     } finally {
+      log(`[Cache.executeQuery] end ${currentQueryTimeIndex}`)
       resolve!()
       this.getterPromise = null
     }
@@ -809,9 +842,8 @@ export class ReactiveChain<T = any> {
 }
 
 export class CurrentRunnerScope {
-  
   hooks: (Hook | undefined)[] = []
-  composes: any[] = []  // store the compose execute resutl
+  composes: any[] = [] // store the compose execute resutl
 
   outerListeners: Function[] = []
   stateChangeCallbackRunning = false
@@ -859,7 +891,7 @@ export class CurrentRunnerScope {
     this.hooks.push(v)
     v && this.watcher.addDep(v)
   }
-  applyDepsMap () {
+  applyDepsMap() {
     const deps = this.intialContextDeps
     deps?.forEach(([name, hookIndex, deps]) => {
       deps.forEach(triggerHookIndex => {
@@ -868,7 +900,8 @@ export class CurrentRunnerScope {
         if (Array.isArray(triggerHookIndex)) {
           const [type, composeIndex, variableName] = triggerHookIndex
           if (type === 'c') {
-            const setterGetterFunc: { _hook: Hook } | undefined = this.composes[composeIndex]?.[variableName]
+            const setterGetterFunc: { _hook: Hook } | undefined =
+              this.composes[composeIndex]?.[variableName]
             triggerHook = this.hooks.find(h => h === setterGetterFunc?._hook)
           }
           // @TODO: maybe unknow case
@@ -880,35 +913,41 @@ export class CurrentRunnerScope {
             this.hooks[hookIndex] instanceof Computed
             // this.hooks[hookIndex] instanceof InputCompute
           ) {
-            (this.hooks[hookIndex] as Computed<any>).watcher.addDep(triggerHook)
+            ;(this.hooks[hookIndex] as Computed<any>).watcher.addDep(
+              triggerHook
+            )
           }
-          if (
-            this.hooks[hookIndex] instanceof Model
-          ) {
-            (this.hooks[hookIndex] as Model<any>).queryWhereComputed?.watcher.addDep(triggerHook)
+          if (this.hooks[hookIndex] instanceof Model) {
+            ;(
+              this.hooks[hookIndex] as Model<any>
+            ).queryWhereComputed?.watcher.addDep(triggerHook)
           }
         }
       })
     })
   }
 
-  appendComposeDeps (si: number, ei: number, deps?: THookDeps) {
+  appendComposeDeps(si: number, ei: number, deps?: THookDeps) {
     if (!deps) {
       return
     }
     const composeHooksLen = ei - si
 
-    const modifiedDeps = (this.intialContextDeps || []).map((a) => {
+    const modifiedDeps = (this.intialContextDeps || []).map(a => {
       const arr: THookDeps[0] = cloneDeep(a)
 
       if (arr[1] >= si) {
         arr[1] += composeHooksLen
       }
       if (arr[2]) {
-        arr[2] = arr[2].map(v => typeof v === 'number' && v >= si ? v + composeHooksLen : v)
+        arr[2] = arr[2].map(v =>
+          typeof v === 'number' && v >= si ? v + composeHooksLen : v
+        )
       }
       if (arr[3]) {
-        arr[3] = arr[3].map(v => typeof v === 'number' && v >= si ? v + composeHooksLen : v)
+        arr[3] = arr[3].map(v =>
+          typeof v === 'number' && v >= si ? v + composeHooksLen : v
+        )
       }
       return arr
     })
@@ -954,28 +993,29 @@ export class CurrentRunnerScope {
           this.intialContextDeps?.forEach(([name, hi, getD, setD]) => {
             if (hi === currentHookIndex) {
               if (!deps.find(arr => arr[1] === hi)) {
-                deps.push(
-                  ['h', hi, getD, setD]
-                )
+                deps.push(['h', hi, getD, setD])
                 setD?.forEach(numOrArr => {
                   let num: number = -1
                   if (Array.isArray(numOrArr)) {
                     const [type, composeIndex, variableName] = numOrArr
                     if (type === 'c') {
-                      const setterGetterFunc: { _hook: Hook } | undefined = this.composes[composeIndex]?.[variableName]
+                      const setterGetterFunc: { _hook: Hook } | undefined =
+                        this.composes[composeIndex]?.[variableName]
                       if (setterGetterFunc?._hook) {
                         num = this.hooks.indexOf(setterGetterFunc._hook)
                       }
-                    }          
+                    }
                   } else {
                     num = numOrArr
                   }
                   if (num > -1) {
-                    this.intialContextDeps?.forEach(([name, relationHI, getD2]) => {
-                      if (getD2.includes(num)) {
-                        waitHookIndexSet.add(relationHI)
+                    this.intialContextDeps?.forEach(
+                      ([name, relationHI, getD2]) => {
+                        if (getD2.includes(num)) {
+                          waitHookIndexSet.add(relationHI)
+                        }
                       }
-                    })
+                    )
                   }
                 })
               }
@@ -989,9 +1029,9 @@ export class CurrentRunnerScope {
     const noDeps = deps.length === 0
     const needDeliverHookIndexSet = new Set<number>()
     if (!noDeps) {
-      deps.forEach((arr) => {
+      deps.forEach(arr => {
         needDeliverHookIndexSet.add(arr[1])
-  
+
         arr[2]?.forEach(numOrArr => {
           if (typeof numOrArr === 'number') {
             needDeliverHookIndexSet.add(numOrArr)
@@ -1031,7 +1071,7 @@ export class CurrentRunnerScope {
       name: this.hookRunnerName,
       data: hooksData,
       index: hookIndex,
-      args: args || [],
+      args: args || []
     }
   }
   applyContext(c: IHookContext) {
@@ -1055,15 +1095,25 @@ export class CurrentRunnerScope {
     this.notify()
   }
   ready(): Promise<void> {
-    const asyncHooks = this.hooks.filter(h =>
-      h && Reflect.has(h, 'getterPromise')
+    const asyncHooks = this.hooks.filter(
+      h => h && Reflect.has(h, 'getterPromise')
     ) as unknown as { getterPromise: Promise<any> | null }[]
 
     let readyResolve: () => void
     let readyPromise = new Promise<void>(resolve => (readyResolve = resolve))
 
+    let max = asyncHooks.length * 2
+    let i = 0
     async function wait() {
-      let notReadyHooks = asyncHooks.map(h => h.getterPromise).filter(Boolean)
+      if (i++ > max) {
+        throw new Error('[Scope.ready] unexpect loop for ready')
+        return readyResolve()
+      }
+      let notReadyHooks = asyncHooks
+        .filter(h => {
+          return !!h.getterPromise
+        })
+        .map(h => h.getterPromise)
       if (notReadyHooks.length === 0) {
         readyResolve()
       } else {
@@ -1246,9 +1296,6 @@ function createStateSetterGetterFunc<SV>(s: State<SV>): {
       } else {
         throw new Error('[change state] pass a function')
       }
-    }
-    if (currentReactiveChain?.name === 'root') {
-      console.trace()
     }
     currentReactiveChain?.addCall(s)
     return s.value
@@ -1453,6 +1500,8 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
 function mountCache<T>(key: string, options: ICacheOptions<T>) {
   const hook = new Cache(key, options, currentRunnerScope!)
 
+  currentReactiveChain?.add(hook)
+
   const setterGetter = createCacheSetterGetterFunc(hook)
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: hook
@@ -1645,7 +1694,7 @@ export function combineLatest<T>(arr: Array<{ _hook: State<T> }>): () => T {
  * using another BM inside of BM
  * the important thing is that should consider how to compose their depsMap
  */
- export function compose<T extends BM> (f: T, args?: any[]) {
+export function compose<T extends BM>(f: T, args?: any[]) {
   if (!currentRunnerScope) {
     throw new Error('[useBM] must run side of BM')
   }
