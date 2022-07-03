@@ -1,5 +1,5 @@
 {
-  "name": "todos-app",
+  "name": "user-login-system",
   "version": "0.0.1",
   "description": "tarat service application for todos example",
   "main": "index.js",
@@ -18,6 +18,7 @@
     "schema": "./models/schema.prisma"
   },
   "dependencies": {
+    "@babel/preset-react": "^7.18.6",
     "@prisma/client": "^3.14.0",
     "@types/react-dom": "^18.0.5",
     "classnames": "^2.3.1",
@@ -26,7 +27,7 @@
     "prisma": "^3.14.0",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
-    "tarat-connect": "workspace:^0.0.9",
+    "tarat-connect": "workspace:*",
     "tarat-core": "workspace:*",
     "tarat-server": "workspace:*",
     "vite": "^2.9.9"
