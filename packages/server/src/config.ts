@@ -13,6 +13,10 @@ export const defaultConfig = () => ({
   appDirectory: 'app',
   pageDirectory: 'pages',
 
+  entryServer: 'entry.server', // .(j|t)sx in app 
+
+  devCacheDirectory: '.tarat', // in cwd
+
   // server side
   apiPre: '_hook',
 
