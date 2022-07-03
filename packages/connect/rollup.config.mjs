@@ -25,5 +25,27 @@ export default [
     plugins: [
       dts(),
     ],
-  }
+  },
+  // {
+  //   input: "src/driver.ts",
+  //   output: [
+  //     { file: "dist/driver.d.ts", format: "es" }
+  //   ],
+  //   plugins: [
+  //     dts(),
+  //   ],
+  // },
+  // {
+  //   plugins: [
+  //     tsPlugin({
+  //       clean: true,
+  //       tsconfig: './tsconfig.json',
+  //     }),
+  //   ],
+  //   input: 'src/driver.ts',
+  //   output: {
+  //     file: 'dist/driver.js',
+  //     format: 'esm'
+  //   },
+  // },
 ]

@@ -8,6 +8,10 @@ let hookAdaptorType: 'react' | 'axii' | null = null
 export function setHookAdaptor(runtime: any, type: 'react' | 'axii') {
   hookAdaptorRuntime = runtime
   hookAdaptorType = type
+  return () => {
+    hookAdaptorRuntime = null
+    hookAdaptorType = null
+  }
 }
 
 export function useHook<T extends BM>(bm: T): ReturnType<T> | undefined {
