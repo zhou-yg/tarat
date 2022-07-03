@@ -21,8 +21,8 @@ export function parseWithUndef(str: string) {
 export function clientRuntime(c: {
   framework: any
   name: 'react' | 'axii'
-  modelConfig: any
-  host: string
+  modelConfig?: any
+  host?: string
 }) {
   const { framework = {}, name = 'react', modelConfig = {}, host = '/' } = c
 
