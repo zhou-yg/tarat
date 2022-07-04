@@ -7,7 +7,7 @@ import { ViteDevServer } from "vite";
 import { fileURLToPath } from 'url'
 import { debuggerLog, getPlugin, IHookContext, Runner, startdReactiveChain, stopReactiveChain } from "tarat-core";
 import { wrapCtx } from "./taratRunner";
-import { buildEntryServer } from "../compiler/build";
+import { buildEntryServer, buildRoutes } from "../compiler/build";
 import { renderToString } from 'react-dom/server'
 import { RenderDriver, renderWithDriverContext, DriverContext } from 'tarat-connect'
 import React, { createElement } from "react";
@@ -15,22 +15,35 @@ import React, { createElement } from "react";
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const templateFile = './viewTemplate.ejs'
+const templateFile = './pageTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
 
 const template = compile(fs.readFileSync(templateFilePath).toString())
 
 
-async function renderPage (ctx: Application.ParameterizedContext, config: IConfig, viewConfig: IViewConfig) {
-  const r = await buildEntryServer(config)
+async function matchRoutes(c: IConfig) {
+}
+
+async function renderPage (ctx: Application.ParameterizedContext, config: IConfig) {
+  const [r, r2] = await Promise.all([
+    buildEntryServer(config),
+    buildRoutes(config),
+  ])
+
   // const r = {
   //   entry: '/Users/yunge/Documents/tarat/packages/example/user-login-system/.tarat/entry.server.js',
   // }
 
 
-  if (r?.entry) {
-    const entryFunctionModule = await import(r.entry)
-    
+  if (r?.entry && r2?.routesEntry) {
+    const [
+      entryFunctionModule,
+      routesEntryModule,
+    ] = await Promise.all([
+      import(r.entry),
+      import(r2.routesEntry),
+    ])
+
     const driver = new RenderDriver()
 
     let cancelGlobalRunning = () => {}
@@ -43,7 +56,11 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
     })
 
     const appEntry = renderWithDriverContext(
-      entryFunctionModule.default(viewConfig.name, DriverContext),
+      entryFunctionModule.default(
+        routesEntryModule.default({
+          location: ctx.request.path
+        })
+      ),
       driver,
     )
     // console.log('entryFunctionModule.default: ', viewConfig.name, entryFunctionModule.default.toString());
@@ -79,16 +96,21 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
    pages: IViewConfig[]
    vite: ViteDevServer
 }) : Application.Middleware {
+
+  console.log('args.config:', args.config)
+
+  buildRoutes(args.config)
+
   return async (ctx, next) => {
-    const path = ctx.request.path
-    const viewConfig = args.pages.find(v => v.path === path)
+    const pathname = ctx.request.path
+    const viewConfig = args.pages.find(v => v.path === pathname || v.path === path.join(pathname, 'index'))
+    console.log('viewConfig: ', viewConfig);
 
     if (viewConfig) {
       let context: { [k: string]: IHookContext[] } = {}
       let ssrHTML = ''
-      const hookName = ctx.request.query.hook
 
-      const r = await renderPage(ctx, args.config, viewConfig)
+      const r = await renderPage(ctx, args.config)
       if (r) {
         for (const v of r.driver.BMValuesMap) {
           context[v[0]] = v[1].map((runner: Runner<any>) => runner.scope.createInputComputeContext())
@@ -105,7 +127,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
           diffPath: args.config.diffPath,
         })
       })
-      html = await args.vite.transformIndexHtml(path, html)
+      html = await args.vite.transformIndexHtml(pathname, html)
 
       ctx.body = html
 

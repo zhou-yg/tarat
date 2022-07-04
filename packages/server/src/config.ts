@@ -13,7 +13,9 @@ export const defaultConfig = () => ({
   appDirectory: 'app',
   pageDirectory: 'pages',
 
-  entryServer: 'entry.server', // .(j|t)sx in app 
+  entryServer: 'entry.server', // .(j|t)sx in app
+  routesServer: 'routes.server', // serve for tarat self
+  routes: 'routes', // serve for tarat self
 
   devCacheDirectory: '.tarat', // in cwd
 
@@ -44,7 +46,7 @@ export interface IViewConfig {
    * `routes/gists/$username`.
    */
   id: string
-  parentId?: string
+  parentId: string
   /**
    * The path this route uses to match on the URL pathname.
    */
@@ -61,12 +63,15 @@ export interface IViewConfig {
 
 const isIndexFlagn = (f: string) => /^index.(j|t)sx$/.test(f) || /\/index.(j|t)sx$/.test(f)
 
+const isPageFile = (f: string) => /\.(j|t)sx$/.test(f)
+
 function defineView (viewDir: string, file: string, name: string, parent?: IViewConfig): IViewConfig[] {
+
   const configs: IViewConfig[] = []
   const currentFileOrDirPath = path.join(viewDir, file)
   const current: IViewConfig = {
     id: file,
-    parentId: parent?.id,
+    parentId: parent?.id || '',
     path: file.replace(/\.\w+/, ''),
     file,
     name: name.replace(/\.\w+/, ''),
@@ -85,7 +90,11 @@ function defineView (viewDir: string, file: string, name: string, parent?: IView
 function readViews (viewDir: string, dir: string, parent?: IViewConfig) {
   const views = fs.readdirSync(path.join(viewDir, dir))
 
-  const viewConfigs = views.map(f => {
+  const viewConfigs = views.filter(f => {
+    const file = path.join(viewDir, dir, f)
+
+    return isPageFile(file) || fs.lstatSync(file).isDirectory()
+  }).map(f => {
     const file = path.join(dir, f)
     return defineView(viewDir, file, f, parent)
   })
@@ -94,7 +103,23 @@ function readViews (viewDir: string, dir: string, parent?: IViewConfig) {
 } 
 
 function readPages (viewDir: string, dir: string) {
-  return readViews(viewDir, dir)
+  const pages = readViews(viewDir, dir)
+
+  // pages.forEach(r => {
+  //   if (!r.parentId) {
+  //     r.parentId = 'pages'
+  //   }
+  // })
+
+  // pages.push({
+  //   id: 'pages',
+  //   name: 'pages',
+  //   parentId: '',
+  //   file: '',
+  //   path: '/'
+  // })
+
+  return pages
 }
 
 export interface IServerHookConfig {

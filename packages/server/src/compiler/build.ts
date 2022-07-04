@@ -1,12 +1,24 @@
-import { IConfig } from "../config";
+import { IConfig, IViewConfig } from "../config";
 import * as fs from 'fs'
 import * as path from 'path'
+import { compile } from 'ejs'
+import { fileURLToPath } from 'url'
 import { InputOptions, ModuleFormat, OutputOptions, Plugin, rollup, RollupBuild } from 'rollup' 
 import resolve from '@rollup/plugin-node-resolve';
 import { babel  } from '@rollup/plugin-babel';
 import json from '@rollup/plugin-json'
 import less from 'rollup-plugin-less'
 import commonjs from "@rollup/plugin-commonjs";
+import * as prettier from 'prettier'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+const templateFile = './routesTemplate.ejs'
+const templateFilePath = path.join(__dirname, templateFile)
+
+const routesTemplate = compile(fs.readFileSync(templateFilePath).toString())
+
 
 interface IBuildOption {
   input: InputOptions
@@ -63,25 +75,154 @@ function getEntryFile (f: string) {
   }
 }
 
-export async function buildEntryServer (c: IConfig) {
-  const entrySererFile = path.join(c.cwd, c.appDirectory, c.entryServer)
+interface IRouteChild extends IViewConfig {
+  children: IRouteChild[]
+}
 
-  const r = getEntryFile(entrySererFile)
+interface IRoutesTree {
+  [k: string]: IRouteChild
+}
+
+function defineRoutesTree (pages: IConfig['pages']) {
+  const routesMap: IRoutesTree = {}
+  pages.forEach(p => {
+    routesMap[p.id] = Object.assign({
+      children: []
+    }, p)
+  })
+
+  pages.forEach(p => {
+    if (p.parentId) {
+      if (!routesMap[p.parentId]) {
+        routesMap[p.parentId] = {
+          path: p.parentId,
+          file: '',
+          name: p.parentId.replace(/^\//, ''),
+          parentId: '',
+          id: p.parentId,
+          children: []
+        }
+      }
+      const child = routesMap[p.id]
+      routesMap[p.parentId].children.push(child)
+    }
+  })
+
+  return Object.values(routesMap).filter(p => !p.parentId)
+}
+
+function upperFirst (s: string) {
+  return s ? (s[0].toUpperCase() + s.substring(1)) : ''
+}
+
+function generateRoutesContent (routes: IRouteChild[], depth = 0, parentNmae = ''): string {
+  const routeArr = routes.map((r, i) => {
+    let Cpt = ''
+    if (r.file) {
+      Cpt = `${upperFirst(parentNmae)}${upperFirst(r.name)}`
+    } else {
+      const childIndex = r.children.find(c => c.index)
+      Cpt = childIndex ? `${upperFirst(parentNmae)}${upperFirst(r.name) || '/'}${upperFirst(childIndex.name)}` : ''
+    }
+    let element = ''
+    if (Cpt) {
+      element = `element={<${Cpt} />}`
+    }
+
+    return [
+      `<Route path="${r.name}" ${element} >`,
+      r.children.length > 0 ? generateRoutesContent(r.children, depth + 1, r.name) : '',
+      `</Route>`
+    ].map(s => `${new Array(depth * 2).fill(' ').join('')}${s}`).join('\n');
+  })
+
+  return routeArr.join('\n')
+}
+
+function generateRoutesImports (routes: IRouteChild[], parentNmae = '') {
+  let importsArr: [string, string][] = []
+  routes.forEach(r => {
+    if (r.file) {
+      importsArr.push([
+        `${upperFirst(parentNmae)}${upperFirst(r.name)}`,
+        r.file,
+      ])
+    }
+    if (r.children) {
+      const childImports = generateRoutesImports(r.children, r.name)
+      importsArr.push(...childImports)
+    }
+  })
+
+  return importsArr
+}
+
+export async function buildRoutes(c: IConfig) {
+  const autoGenerateRoutesFile = path.join(c.cwd, c.appDirectory, c.routes)
+  const distRoutesFile = path.join(c.cwd, c.devCacheDirectory, `${c.routesServer}.js`)
+
+  const ext = '.jsx'
+
+  const routesTreeArr = defineRoutesTree(c.pages)
+
+  const imports = generateRoutesImports(routesTreeArr)
+  const importsWithAbsolutePath = imports.map(([n, f]) => {
+    return `import ${n} from '${path.join(c.cwd, f)}'`
+  }).join('\n')
+
+  const r = generateRoutesContent(routesTreeArr)
+
+  const routeIndex = routesTreeArr.find(r => r.index)
+  const index = routeIndex ? `<Route path="/" element={<Index />} />` : ''
+
+  const routesStr = routesTemplate({
+    imports: importsWithAbsolutePath,
+    index,
+    routes: r
+  })
+
+  const autoRoutesFile = `${autoGenerateRoutesFile}${ext}`
+  fs.writeFileSync(autoRoutesFile, prettier.format(routesStr))
+
+  const inputOptions: IBuildOption = {
+    input: {
+      external: ['react', 'tarat-core', 'tarat-connect'],
+      input: autoRoutesFile,
+      plugins
+    },
+    output: [{
+      file: distRoutesFile,
+      format: 'esm',
+    }]
+  }
+
+  await build(inputOptions)
+
+  return {
+    routesEntry: distRoutesFile,
+  }
+}
+
+const plugins: Plugin[] = [
+  less() as any,
+  json(),
+  commonjs(),
+  resolve({
+    extensions: ['.jsx', '.tsx']
+  }),
+  babel({
+    exclude: 'node_modules/**',
+    presets: ['@babel/preset-react']
+  })
+]
+
+export async function buildEntryServer (c: IConfig) {
+  const entryServerFile = path.join(c.cwd, c.appDirectory, c.entryServer)
+
+  const r = getEntryFile(entryServerFile)
   
   if (r?.file) {
     const outputFileDir = path.join(c.cwd, c.devCacheDirectory)
-    const plugins: Plugin[] = [
-      less() as any,
-      json(),
-      commonjs(),
-      resolve({
-        extensions: ['.jsx', '.tsx']
-      }),
-      babel({
-        exclude: 'node_modules/**',
-        presets: ['@babel/preset-react']
-      })
-    ]
 
     const distEntry = path.join(outputFileDir, `${c.entryServer}.js`)
 
