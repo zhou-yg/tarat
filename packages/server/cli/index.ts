@@ -1,8 +1,6 @@
 import cacFactory from "cac";
 import pkg from '../package.json'
-
-import { readConfig } from "../src/config";
-import { createDevServer } from "../src/server";
+import dev from "./dev";
 
 const cac = cacFactory('tarat-server')
 
@@ -14,11 +12,7 @@ cac
     default: '9001'
   })
   .action(async (options: { port: number }) => {
-    const config = await readConfig({
-      cwd,
-    })
-
-    createDevServer(config)
+    dev(cwd)
   })
 
 cac.help()

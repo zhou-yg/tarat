@@ -62,7 +62,6 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
     await Promise.all(allRunedHook.map((runner: Runner<any>) => runner.ready()))
 
     console.log('driver: ', driver);
-
     console.log('html: ', html);
 
     return {
