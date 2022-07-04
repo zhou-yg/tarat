@@ -17,19 +17,34 @@ export function renderWithDriverContext(
 }
 
 export class RenderDriver {
+  mode?: 'collect' | 'consume'
+
   BMValuesMap: Map<string, Runner<any>[]> = new Map()
 
-  pushListener?:(runner: Runner<any>) => void
+  pushListener?: (runner: Runner<any>) => void
 
   pop(name: string) {
     return this.BMValuesMap.get(name)?.pop()
   }
 
-  onPush (f: (runner: Runner<any>) => void) {
+  getContext(name: string) {
+    if (this.mode !== 'consume') {
+      return
+    }
+    return this.BMValuesMap.get(name)?.map(r =>
+      r.scope.createInputComputeContext()
+    )
+  }
+
+  onPush(f: (runner: Runner<any>) => void) {
     this.pushListener = f
   }
 
   push(runner: Runner<any>, name: string) {
+    if (this.mode !== 'collect') {
+      return
+    }
+
     let values = this.BMValuesMap.get(name)
     if (!values) {
       values = []
