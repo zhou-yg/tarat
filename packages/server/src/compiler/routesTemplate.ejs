@@ -1,0 +1,23 @@
+import React from 'react'
+import {
+  Routes,
+  Route,
+} from "react-router-dom"
+import {
+  StaticRouter,
+} from "react-router-dom/server.js"
+
+<%- imports %>
+
+export default function App({
+  location
+}) {
+  return (
+    <StaticRouter>
+      <Routes location={location}>
+        <%- index %>
+        <%- routes %>
+      </Routes>  
+    </StaticRouter>
+  );
+}

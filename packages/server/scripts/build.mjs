@@ -11,10 +11,14 @@ const { cp } = shelljs;
     cwd: process.cwd()
   })
   
-  cp('src/middlewares/viewTemplate.ejs', 'dist/cli/')
-  cp('src/middlewares/viewTemplate.ejs', 'dist/')
+  cp('src/middlewares/pageTemplate.ejs', 'dist/cli/')
+  cp('src/middlewares/pageTemplate.ejs', 'dist/')
+
   cp('src/adaptors/runtime-helper/defaultRenderReact.ejs', 'dist/cli/')
   cp('src/adaptors/runtime-helper/defaultRenderReact.ejs', 'dist/')
+
+  cp('src/compiler/routesTemplate.ejs', 'dist/cli/')
+  cp('src/compiler/routesTemplate.ejs', 'dist/')
 
   console.log('build end')
 
