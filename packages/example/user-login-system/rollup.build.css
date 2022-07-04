@@ -4,6 +4,90 @@
 .setting {
   display: block;
 }
+.user {
+  display: block;
+}
+.setting {
+  display: block;
+}
+.login {
+  border: 1px solid #eee;
+  width: 600px;
+  padding: 20px;
+}
+.title {
+  font-size: 20px;
+  text-align: center;
+}
+.row {
+  padding: 10px 40px;
+}
+.row > input {
+  box-sizing: border-box;
+  border-radius: 4px;
+  padding: 10px;
+  width: 100%;
+  outline: 0;
+  border: 1px solid #999;
+  font-size: 18px;
+}
+.footer {
+  padding: 10px 40px;
+  display: flex;
+  justify-content: space-between;
+}
+.footer > div {
+  display: flex;
+  align-items: center;
+}
+.footer input {
+  width: 20px;
+  height: 20px;
+}
+.footer button {
+  padding: 4px;
+  margin: 0 10px;
+  font-size: 20px;
+}
+.login {
+  border: 1px solid #eee;
+  width: 600px;
+  padding: 20px;
+}
+.title {
+  font-size: 20px;
+  text-align: center;
+}
+.row {
+  padding: 10px 40px;
+}
+.row > input {
+  box-sizing: border-box;
+  border-radius: 4px;
+  padding: 10px;
+  width: 100%;
+  outline: 0;
+  border: 1px solid #999;
+  font-size: 18px;
+}
+.footer {
+  padding: 10px 40px;
+  display: flex;
+  justify-content: space-between;
+}
+.footer > div {
+  display: flex;
+  align-items: center;
+}
+.footer input {
+  width: 20px;
+  height: 20px;
+}
+.footer button {
+  padding: 4px;
+  margin: 0 10px;
+  font-size: 20px;
+}
 .login {
   border: 1px solid #eee;
   width: 600px;

@@ -45,6 +45,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
     ])
 
     const driver = new RenderDriver()
+    driver.mode = 'collect'
 
     let cancelGlobalRunning = () => {}
 
@@ -78,12 +79,28 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
     }
     await Promise.all(allRunedHook.map((runner: Runner<any>) => runner.ready()))
 
-    console.log('driver: ', driver);
-    console.log('html: ', html);
+    driver.mode = 'consume'
+    const appEntryUpdate = renderWithDriverContext(
+      entryFunctionModule.default(
+        routesEntryModule.default({
+          location: ctx.request.path
+        })
+      ),
+      driver,
+    )
+    // console.log('entryFunctionModule.default: ', viewConfig.name, entryFunctionModule.default.toString());
+
+    // const html = renderToString(entryFunctionModule.default(viewConfig.name))
+    const html2 = renderToString(appEntryUpdate.root)
+
+    // console.log('driver: ', driver);
+    // console.log('html: ', html);
+    // console.log('html2: ', html2);
 
     return {
       driver,
       html,
+      html2
     }
   }
 }
@@ -115,7 +132,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
         for (const v of r.driver.BMValuesMap) {
           context[v[0]] = v[1].map((runner: Runner<any>) => runner.scope.createInputComputeContext())
         }
-        ssrHTML = r.html
+        ssrHTML = r.html2
       }
 
       let html = template({
