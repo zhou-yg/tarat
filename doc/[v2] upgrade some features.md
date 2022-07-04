@@ -124,7 +124,8 @@ sort by priority
     - export config of view mount container
     - "context synchronism" only pass dependent hooks √
       - depends AST √
-    - BM drives view
+    - BM drives view √
+    - migrate from esm to cjs
 - 2.upgrade performance
   - "model" global referrence
 - 3.upgrade development experience
