@@ -1,6 +1,9 @@
 {
   "name": "markdown-editor",
   "version": "1.0.0",
+  "tarat": {
+    
+  },
   "description": "",
   "main": "index.js",
   "scripts": {

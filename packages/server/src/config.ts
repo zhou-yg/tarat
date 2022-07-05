@@ -27,7 +27,10 @@ export const defaultConfig = () => ({
   port: 9100,
   model: {
     engine: 'prisma'
-  }
+  },
+
+  // compose
+  compose: []
 })
 
 export type IDefaultConfig = ReturnType<typeof defaultConfig> & {

@@ -19,7 +19,19 @@ BM是一条纵线，在完善了自身功能逻辑的情况下，最重要的便
 
 但好在有些组合条件显然是不合理的，所以可以稍稍降低一点情况
 
+## 协议
+
+当 BM compose another BM，当前BM的 server framework 需要知道哪些BM被引入了？
+
+方式有：
+- 依赖检查
+  - 说明：根据特定的pkg名称规则（如：tarat-bm-xxx） 或 packageJSON.tarat 字段
+- 手动声明
+  - tarat.config.js#compose字段中加入被组合的npm pkg名称，较为繁琐，适用于特殊场景：开发阶段，
+
 ## 时机
+
+有2个时机：编译，运行时
 
 运行时和编译时最大的差别在于，声明关系的时候是运行时获取的，还是编译先确定的，这里取决于类型本身和用户开发体验
 
@@ -37,8 +49,9 @@ function hook1 () {
 
 在编译BM1的时候，直接把 useHook(hook2)的部分作为静态代码整合进去，对于消费者，得到的就是一个完成的BM1产物，里面也包含了BM2.hook1代码
 
-这是编译时，也就对BM的代码层面的复用
+如果涉及到了model，那么在初始化时，显示的提供指令，将依赖的静态BM的prisma.schema进行组合再拼装，生成到当前BM models中
 
+这是编译时，也就对BM的代码层面的复用
 
 比如 
 ```javascript
@@ -122,8 +135,8 @@ Model背后对应的DB也需要考虑组合的场景，组合的时候应是从D
 Model x Model时，静态它们之间的表还是只是简单的线性增加，如果想进一步加强联系，必须加入更多的补充说明
 
 ```javascript
-// enhanceRelation.js
-enhanceRelation = [
+// models/prisma.enhance.json
+[
   {
     from: {
       entity: 'Entity1',
