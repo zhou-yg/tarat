@@ -2,6 +2,7 @@ import tsPlugin from 'rollup-plugin-typescript2'
 import dts from "rollup-plugin-dts"
 import replace from '@rollup/plugin-replace';
 import json from '@rollup/plugin-json'
+import commonjs from "@rollup/plugin-commonjs";
 
 export default [
   {
@@ -11,6 +12,7 @@ export default [
         clean: true,
         tsconfig: './tsconfig.json',
       }),
+      commonjs(),
     ],
     input: 'cli/index.ts',
     output: {
@@ -24,6 +26,7 @@ export default [
         clean: true,
         tsconfig: './tsconfig.json',
       }),
+      commonjs(),
     ],
     input: "src/index.ts",
     output: [

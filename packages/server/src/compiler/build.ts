@@ -9,6 +9,8 @@ import { babel  } from '@rollup/plugin-babel';
 import json from '@rollup/plugin-json'
 import less from 'rollup-plugin-less'
 import commonjs from "@rollup/plugin-commonjs";
+import postcss from 'rollup-plugin-postcss'
+import styles from 'rollup-plugin-styles'
 import * as prettier from 'prettier'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -25,12 +27,12 @@ interface IBuildOption {
   output: OutputOptions[]
 }
 
-async function build (op: IBuildOption) {
+async function build (c: IConfig, op: IBuildOption) {
 
   let bundle: RollupBuild | undefined
   try {
     bundle = await rollup(op.input)
-    await generateOutput(bundle, op.output)
+    await generateOutput(c, bundle, op.output)
   } catch (e) {
     console.error(e)
   } finally {
@@ -38,11 +40,14 @@ async function build (op: IBuildOption) {
   }
 }
 
-async function generateOutput(bundle: RollupBuild, o: IBuildOption['output']) {
+async function generateOutput(c: IConfig, bundle: RollupBuild, o: IBuildOption['output']) {
   for (const op of o) {
     const { output } = await bundle.generate(op)
     for (const chunkOrAsset of output) {
       if (chunkOrAsset.type === 'asset') {
+        const target = path.join(c.cwd, c.devCacheDirectory, chunkOrAsset.fileName)
+        fs.writeFileSync(target, chunkOrAsset.source)
+
       } else if (chunkOrAsset.type === 'chunk') {
         const dir = op.file?.replace(chunkOrAsset.fileName, '')
         if (dir && !fs.existsSync(dir)) {
@@ -160,6 +165,7 @@ function generateRoutesImports (routes: IRouteChild[], parentNmae = '') {
 export async function buildRoutes(c: IConfig) {
   const autoGenerateRoutesFile = path.join(c.cwd, c.appDirectory, c.routes)
   const distRoutesFile = path.join(c.cwd, c.devCacheDirectory, `${c.routesServer}.js`)
+  const distRoutesFileCss = path.join(c.devCacheDirectory, `${c.routesServer}.css`)
 
   const ext = '.jsx'
 
@@ -188,23 +194,29 @@ export async function buildRoutes(c: IConfig) {
     input: {
       external: ['react', 'tarat-core', 'tarat-connect'],
       input: autoRoutesFile,
-      plugins
+      plugins: plugins([
+        postcss({
+          extract: true,
+        }),
+      ])
     },
     output: [{
+      // dir: path.join(c.cwd, c.devCacheDirectory), used when generating multiple chunks
       file: distRoutesFile,
       format: 'esm',
     }]
   }
 
-  await build(inputOptions)
+  await build(c, inputOptions)
 
   return {
     routesEntry: distRoutesFile,
+    css: path.join(c.cwd, distRoutesFileCss)
   }
 }
 
-const plugins: Plugin[] = [
-  less() as any,
+const plugins: (arr: Plugin[]) => Plugin[] = (arr: Plugin[]) => ([
+  ...arr,
   json(),
   commonjs(),
   resolve({
@@ -214,7 +226,7 @@ const plugins: Plugin[] = [
     exclude: 'node_modules/**',
     presets: ['@babel/preset-react']
   })
-]
+])
 
 export async function buildEntryServer (c: IConfig) {
   const entryServerFile = path.join(c.cwd, c.appDirectory, c.entryServer)
@@ -225,25 +237,31 @@ export async function buildEntryServer (c: IConfig) {
     const outputFileDir = path.join(c.cwd, c.devCacheDirectory)
 
     const distEntry = path.join(outputFileDir, `${c.entryServer}.js`)
+    const distEntryCss = path.join(outputFileDir, `${c.entryServer}.css`)
 
     const inputOptions: IBuildOption = {
       input: {
         external: ['react', 'tarat-core', 'tarat-connect'],
         input: r.file,
-        plugins,
+        plugins: plugins([
+          postcss({
+            extract: true,
+          }),  
+        ]),
       },
       output: [{
         // dir: outputFileDir,
         file: distEntry,
         format: 'esm',
+
       }],
     }
 
-    console.log('inputOptions: ', inputOptions);
-    await build(inputOptions)
+    await build(c, inputOptions)
 
     return {
-      entry: distEntry
+      entry: distEntry,
+      css: distEntryCss
     }
   }
 }

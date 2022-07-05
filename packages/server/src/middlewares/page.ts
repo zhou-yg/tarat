@@ -97,10 +97,14 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
     // console.log('html: ', html);
     // console.log('html2: ', html2);
 
+    const entryServerCss = fs.existsSync(r.css) ? fs.readFileSync(r.css).toString() : ''
+    const css = fs.existsSync(r2.css) ? fs.readFileSync(r2.css).toString() : ''
+
     return {
       driver,
       html,
-      html2
+      html2,
+      css: css + entryServerCss,
     }
   }
 }
@@ -138,6 +142,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
       let html = template({
         hookContextMap: JSON.stringify(context),
         src: viewConfig.file,
+        css: r?.css,
         ssrHTML,
         configJSON: JSON.stringify({
           apiPre: args.config.apiPre,
