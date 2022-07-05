@@ -88,10 +88,10 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
       ),
       driver,
     )
-    // console.log('entryFunctionModule.default: ', viewConfig.name, entryFunctionModule.default.toString());
-
-    // const html = renderToString(entryFunctionModule.default(viewConfig.name))
     const html2 = renderToString(appEntryUpdate.root)
+
+    // console.log('entryFunctionModule.default: ', viewConfig.name, entryFunctionModule.default.toString());
+    // const html = renderToString(entryFunctionModule.default(viewConfig.name))
 
     // console.log('driver: ', driver);
     // console.log('html: ', html);

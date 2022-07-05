@@ -12,6 +12,7 @@ const LoginFrame = () => {
   })
 
   const alreadyLogin = loginHook.alreadyLogin()
+  console.log('alreadyLogin: ', alreadyLogin);
 
   return (
     <div className={s.login}>

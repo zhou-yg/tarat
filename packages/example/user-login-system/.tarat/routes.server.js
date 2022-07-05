@@ -2300,6 +2300,10 @@ function StaticRouter({
 
 var StaticRouter_1 = server.StaticRouter = StaticRouter;
 
+var loginDeps = {
+  login: [["h", 7, [0, 1]], ["h", 8, [6]], ["h", 9, [8]], ["h", 10, [9]], ["h", 11, [10, 7]], ["h", 12, [11]], ["h", 13, [0, 1, 11, 4]], ["h", 15, [2, 3, 5], [7, 16, 14]], ["h", 16, [2, 3], [7, 0, 1, 8, 6, 14]], ["h", 17, [6], [0, 1, 6, 8]]]
+};
+
 const urlAlphabet = 'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
 
 const POOL_SIZE_MULTIPLIER = 128;
@@ -2328,26 +2332,31 @@ let nanoid = (size = 21) => {
   return id;
 };
 
+Object.assign(login, {
+  __deps__: loginDeps.login
+});
 function login() {
   const name = state();
-  name._hook.name = 'name';
+  name._hook && (name._hook.name = 'name');
   const password = state();
-  password._hook.name = 'password';
+  password._hook && (password._hook.name = 'password');
   const inputName = state();
-  inputName._hook.name = 'inputName';
+  inputName._hook && (inputName._hook.name = 'inputName');
   const inputPassword = state();
-  inputPassword._hook.name = 'inputPassword';
+  inputPassword._hook && (inputPassword._hook.name = 'inputPassword');
   const repeatPassword = state();
-  repeatPassword._hook.name = 'repeatPassword';
+  repeatPassword._hook && (repeatPassword._hook.name = 'repeatPassword');
   const signAndAutoLogin = state(false);
-  signAndAutoLogin._hook.name = 'signAndAutoLogin';
+  signAndAutoLogin._hook && (signAndAutoLogin._hook.name = 'signAndAutoLogin');
   /* 6 */
 
   const cookieId = cache('userDataKey', {
     from: 'cookie'
   }); // just run in server because by it depends 'cookie'
 
-  cookieId._hook.name = 'cookieId';
+  cookieId._hook && (cookieId._hook.name = 'cookieId');
+  /* 7 */
+
   const userDataByInput = model('user', prev => {
     if (name() && password()) {
       return {
@@ -2359,8 +2368,8 @@ function login() {
       };
     }
   });
-  userDataByInput._hook.name = 'userDataByInput';
-  const sessionStore = model('sessionStore', () => {
+  userDataByInput._hook && (userDataByInput._hook.name = 'userDataByInput');
+  const sessionStore = model('sessionStore', prev => {
     const cid = cookieId(); // client: ps, server: no?
 
     if (cid) {
@@ -2373,7 +2382,7 @@ function login() {
   }, {
     ignoreClientEnable: true
   });
-  sessionStore._hook.name = 'sessionStore';
+  sessionStore._hook && (sessionStore._hook.name = 'sessionStore');
   /* 9 */
 
   const userIdInSession = computed(() => {
@@ -2387,7 +2396,7 @@ function login() {
       };
     }
   });
-  userIdInSession._hook.name = 'userIdInSession';
+  userIdInSession._hook && (userIdInSession._hook.name = 'userIdInSession');
   const userDataByCookie = model('user', prev => {
     const u = userIdInSession();
 
@@ -2400,7 +2409,9 @@ function login() {
       };
     }
   });
-  userDataByCookie._hook.name = 'userDataByCookie';
+  userDataByCookie._hook && (userDataByCookie._hook.name = 'userDataByCookie');
+  /* 11 */
+
   const userData = computed(() => {
     const u1 = userDataByCookie();
     console.log('u1: ', u1);
@@ -2416,13 +2427,15 @@ function login() {
       return u2[0];
     }
   });
-  userData._hook.name = 'userData';
+  userData._hook && (userData._hook.name = 'userData');
+  /* 12 */
+
   const alreadyLogin = computed(() => {
     const ud = userData();
     console.log('userData: ', ud);
     return !!ud;
   });
-  alreadyLogin._hook.name = 'alreadyLogin';
+  alreadyLogin._hook && (alreadyLogin._hook.name = 'alreadyLogin');
   /**
    * login:
    * 1.invalid password
@@ -2455,9 +2468,9 @@ function login() {
 
     return '';
   });
-  errorTip1._hook.name = 'errorTip1';
+  errorTip1._hook && (errorTip1._hook.name = 'errorTip1');
   const errorTip2 = state('');
-  errorTip2._hook.name = 'errorTip2';
+  errorTip2._hook && (errorTip2._hook.name = 'errorTip2');
   const errorTip = combineLatest([errorTip1, errorTip2]);
   const sign = inputComputeInServer(async () => {
     const inputNameVal = inputName();
@@ -2482,7 +2495,9 @@ function login() {
       errorTip2(() => 'user already exist');
     }
   });
-  sign._hook.name = 'sign';
+  sign._hook && (sign._hook.name = 'sign');
+  /* 16 */
+
   const login = inputComputeInServer(async () => {
     const inputNameVal = inputName();
     const inputPasswordVal = inputPassword();
@@ -2507,7 +2522,7 @@ function login() {
       errorTip2(() => `invalid password with "${inputNameVal}"`);
     }
   });
-  login._hook.name = 'login';
+  login._hook && (login._hook.name = 'login');
   const logout = inputComputeInServer(() => {
     name(() => null);
     password(() => null);
@@ -2524,7 +2539,7 @@ function login() {
       }
     });
   });
-  logout._hook.name = 'logout';
+  logout._hook && (logout._hook.name = 'logout');
   return {
     alreadyLogin,
     name,
@@ -2608,6 +2623,7 @@ const LoginFrame = () => {
     show: !!loginHook?.errorTip()
   });
   const alreadyLogin = loginHook.alreadyLogin();
+  console.log('alreadyLogin: ', alreadyLogin);
   return /*#__PURE__*/React$1.createElement("div", {
     className: s$1.login
   }, /*#__PURE__*/React$1.createElement("div", {
