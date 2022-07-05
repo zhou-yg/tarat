@@ -886,11 +886,12 @@ export class CurrentRunnerScope {
   setInitialContextData(context: IHookContext) {
     this.intialContextData = context['data']
     if (context.index !== undefined && typeof context.index === 'number') {
+
       if (this.intialContextDeps?.length && context.index !== undefined) {
-        this.initialHooksSet = new Set(
-          this.getRelatedHookIndexes(context.index)
-        )
-        console.log('initialHooksSet: ', this.initialHooksSet, context.index);
+        const s = this.getRelatedHookIndexes(context.index)
+        if (s.size !== 0) {
+          this.initialHooksSet = s
+        }
       }
     }
   }
