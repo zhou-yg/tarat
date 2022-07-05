@@ -7,31 +7,35 @@ import {
   inputCompute,
   inputComputeInServer,
 } from 'tarat-core'
+import loginDeps from './login.deps.js'
 import {nanoid} from 'nanoid'
+
+Object.assign(login, {
+  __deps__: loginDeps.login
+})
 
 export default function login () {
   const name = state()
-  name._hook.name = 'name'
+  name._hook && (name._hook.name = 'name')
 
   const password = state()
-  password._hook.name = 'password'
+  password._hook && (password._hook.name = 'password')
 
   const inputName = state()
-  inputName._hook.name = 'inputName'
+  inputName._hook && (inputName._hook.name = 'inputName')
   const inputPassword = state()
-  inputPassword._hook.name = 'inputPassword'
+  inputPassword._hook && (inputPassword._hook.name = 'inputPassword')
   const repeatPassword = state()
-  repeatPassword._hook.name = 'repeatPassword'
+  repeatPassword._hook && (repeatPassword._hook.name = 'repeatPassword')
   
   const signAndAutoLogin = state(false)
-  signAndAutoLogin._hook.name = 'signAndAutoLogin'
+  signAndAutoLogin._hook && (signAndAutoLogin._hook.name = 'signAndAutoLogin')
   
 
   /* 6 */
-
   const cookieId = cache('userDataKey', { from: 'cookie' }) // just run in server because by it depends 'cookie'
-  cookieId._hook.name = 'cookieId'
-
+  cookieId._hook && (cookieId._hook.name = 'cookieId')
+  /* 7 */
   const userDataByInput = model('user', (prev) => {
     if (name() && password()) {
       return {
@@ -42,9 +46,9 @@ export default function login () {
       }
     }
   })
-  userDataByInput._hook.name = 'userDataByInput'
+  userDataByInput._hook && (userDataByInput._hook.name = 'userDataByInput')
 
-  const sessionStore = model('sessionStore', () => {
+  const sessionStore = model('sessionStore', (prev) => {
     const cid = cookieId()
     // client: ps, server: no?
     if (cid) {
@@ -55,10 +59,9 @@ export default function login () {
       })
     }
   }, { ignoreClientEnable: true })
-  sessionStore._hook.name = 'sessionStore'
+  sessionStore._hook && (sessionStore._hook.name = 'sessionStore')
 
   /* 9 */
-
   const userIdInSession = computed(() => {
     const ss = sessionStore()
     console.log('ss: ', ss);
@@ -69,7 +72,7 @@ export default function login () {
       }
     }
   })
-  userIdInSession._hook.name = 'userIdInSession'
+  userIdInSession._hook && (userIdInSession._hook.name = 'userIdInSession')
 
   const userDataByCookie = model('user', (prev) => {
     const u = userIdInSession()
@@ -82,8 +85,9 @@ export default function login () {
       }
     }
   })
-  userDataByCookie._hook.name = 'userDataByCookie'
+  userDataByCookie._hook && (userDataByCookie._hook.name = 'userDataByCookie')
 
+  /* 11 */
   const userData = computed(() => {
     const u1 = userDataByCookie()
     console.log('u1: ', u1);
@@ -96,14 +100,15 @@ export default function login () {
       return u2[0]
     }
   })
-  userData._hook.name = 'userData'
+  userData._hook && (userData._hook.name = 'userData')
 
+  /* 12 */
   const alreadyLogin = computed(() => {
     const ud = userData()
     console.log('userData: ', ud);
     return !!ud
   })
-  alreadyLogin._hook.name = 'alreadyLogin'
+  alreadyLogin._hook && (alreadyLogin._hook.name = 'alreadyLogin')
 
   /**
    * login:
@@ -132,10 +137,10 @@ export default function login () {
     }
     return ''
   })
-  errorTip1._hook.name = 'errorTip1'
+  errorTip1._hook && (errorTip1._hook.name = 'errorTip1')
 
   const errorTip2 = state('')
-  errorTip2._hook.name = 'errorTip2'
+  errorTip2._hook && (errorTip2._hook.name = 'errorTip2')
 
   const errorTip = combineLatest([errorTip1, errorTip2])
 
@@ -157,8 +162,9 @@ export default function login () {
       errorTip2(() => 'user already exist')
     }
   })
-  sign._hook.name = 'sign'
+  sign._hook && (sign._hook.name = 'sign')
 
+  /* 16 */
   const login = inputComputeInServer(async () => {
     const inputNameVal = inputName()
     const inputPasswordVal = inputPassword()
@@ -182,7 +188,7 @@ export default function login () {
       errorTip2(() => `invalid password with "${inputNameVal}"`)
     }
   })
-  login._hook.name = 'login'
+  login._hook && (login._hook.name = 'login')
 
   const logout = inputComputeInServer(() => {
     name(() => null)
@@ -199,7 +205,7 @@ export default function login () {
       }
     })
   })
-  logout._hook.name = 'logout'
+  logout._hook && (logout._hook.name = 'logout')
 
   return {
     alreadyLogin,
