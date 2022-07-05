@@ -5,3 +5,6 @@ interface Require {
   resolve: RequireResolve;
   cache: any;
 }
+
+
+declare module 'rollup-plugin-postcss'
