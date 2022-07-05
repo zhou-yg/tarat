@@ -1724,13 +1724,19 @@ export function before(callback: () => void, targets: { _hook?: Hook }[]) {
 export function combineLatest<T>(arr: Array<{ _hook: State<T> }>): () => T {
   return () => {
     const latestState = arr.slice(1).reduce((latest, { _hook }) => {
+      if (!_hook) {
+        return latest
+      }
+      if (!latest) {
+        return _hook
+      }
       if (_hook.modifiedTimstamp > latest.modifiedTimstamp) {
         return _hook
       }
       return latest
     }, arr[0]._hook)
 
-    return latestState.value
+    return latestState?.value
   }
 }
 
