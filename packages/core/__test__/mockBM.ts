@@ -22,12 +22,13 @@ initModelConfig()
 export function initContext(arg: {
   name?: IHookContext['name']
   data?: IHookContext['data']
+  index: number | undefined
 }): IHookContext {
   return {
     initialArgList: [],
     name: arg.name || '',
     data: arg.data || [],
-    index: 1,
+    index: arg.index,
     args: []
   }
 }
@@ -258,6 +259,12 @@ export function changeStateInputComputeServer(
     changeS1
   }
 }
+Object.assign(changeStateInputComputeServer, {
+  __deps__: [
+    ['h', 2, [], [0]]
+  ]
+})
+
 export function changeStateInputComputeServer2() {
   const s1 = state({ num: 0 })
   const s2 = state(1)

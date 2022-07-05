@@ -253,6 +253,7 @@ describe('model', () => {
         ['data', { id: 1, name: 'a' }],
       ]
       const context = mockBM.initContext({
+        index: undefined,
         data: cd
       })
       const result = runner.init([], context)

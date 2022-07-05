@@ -367,6 +367,7 @@ class ClientModel<T extends any[]> extends Model<T> {
     this.getterPromise = new Promise(r => (resolve = r))
 
     const valid = await this.enableQuery()
+    // @TODO: ignoreClientEnable will useless
     if (valid || this.options.ignoreClientEnable) {
       const context = this.scope.createInputComputeContext(this)
       log('[ClientModel.executeQuery] before post : ')
@@ -426,7 +427,9 @@ export class Cache<T> extends State<T | undefined> {
   notify(hook?: Hook, p?: IPatch[], reactiveChain?: ReactiveChain) {
     const { from } = this.options
     const { source } = this
+
     if (hook && source && hook === source) {
+      log('[Cache.notify] source changed')
       // not calling update prevent notify the watcher for current cache
       this._internalValue = undefined
       /**
@@ -463,7 +466,7 @@ export class Cache<T> extends State<T | undefined> {
         this.getterKey,
         from
       )
-      if (currentQueryTimeIndex >= this.queryTimeIndex) {
+      if (this.queryTimeIndex > currentQueryTimeIndex) {
         return
       }
       log('[Cache.executeQuery] valueInCache=', valueInCache)
@@ -635,7 +638,7 @@ class InputComputeInServer<P extends any[]> extends InputCompute<P> {
 
       const context = this.scope.createInputComputeContext(this, args)
       const result = await getPlugin('Context').postComputeToServer(context)
-      this.scope.applyContext(result)
+      this.scope.applyContextFromServer(result)
     }
     this.inputFuncEnd()
 
@@ -852,8 +855,11 @@ export class CurrentRunnerScope {
   watcher: Watcher<Hook> = new Watcher(this)
   initialArgList: any[] = []
   intialContextData: IHookContext['data'] | null = null
-  intialContextDeps: THookDeps | undefined
+  intialContextDeps?: THookDeps
+  initialHooksSet?: Set<number>
   hookRunnerName = ''
+
+  intialCallHookIndex?: number
 
   reactiveChainStack: ReactiveChain[] = []
 
@@ -877,8 +883,13 @@ export class CurrentRunnerScope {
     this.hookRunnerName = name
   }
 
-  setInitialContextData(contex: IHookContext) {
-    this.intialContextData = contex['data']
+  setInitialContextData(context: IHookContext) {
+    this.intialContextData = context['data'];
+    if (context.index !== undefined && typeof context.index === 'number') {
+      if (this.intialContextDeps?.length) {
+        this.initialHooksSet = new Set(this.getRelatedHookIndexes(context.index))
+      }
+    }
   }
   setInitialContextDeps(d?: THookDeps) {
     this.intialContextDeps = d
@@ -891,6 +902,7 @@ export class CurrentRunnerScope {
     this.hooks.push(v)
     v && this.watcher.addDep(v)
   }
+  
   applyDepsMap() {
     const deps = this.intialContextDeps
     deps?.forEach(([name, hookIndex, deps]) => {
@@ -976,77 +988,117 @@ export class CurrentRunnerScope {
     }
   }
 
+  /**
+   * get all related hook index by curernet hookIndex
+   * design logic: 
+   * 1.getD -> getD -> getD
+   * 2.setD in who's getD -> getD
+   */
+  getRelatedHookIndexes (hookIndex: number) {
+    let preventDeath = 0
+
+    const waitHookIndexSet = new Set([hookIndex])
+    const reachedHookIndexSet = new Set<number>()
+
+    const deps = new Set<number>()
+
+    if (waitHookIndexSet.size > 0) {
+
+      for (const currentHookIndex of waitHookIndexSet) {
+        if (preventDeath++ > 1e4 || reachedHookIndexSet.has(currentHookIndex)) {
+          break
+        }
+        reachedHookIndexSet.add(currentHookIndex)
+
+
+        this.intialContextDeps?.forEach(([name, hi, getD, setD]) => {
+          if (hi === currentHookIndex) {
+            // setD: to find who use hook in setD
+            setD?.forEach(numOrArr => {
+              let num: number = -1
+              if (Array.isArray(numOrArr)) {
+                const [type, composeIndex, variableName] = numOrArr
+                if (type === 'c') {
+                  const setterGetterFunc: { _hook: Hook } | undefined =
+                    this.composes[composeIndex]?.[variableName]
+                  if (setterGetterFunc?._hook) {
+                    num = this.hooks.indexOf(setterGetterFunc._hook)
+                  }
+                }
+              } else {
+                num = numOrArr
+              }
+              if (num > -1) {
+                waitHookIndexSet.add(num)
+                deps.add(num)
+                this.intialContextDeps?.forEach(
+                  ([name, relationHI, getD2]) => {
+                    if (getD2.includes(num)) {
+                      deps.add(relationHI)
+                      waitHookIndexSet.add(relationHI)
+                    }
+                  }
+                )
+              }
+            })
+            // getD: to find the hook directly
+            getD?.forEach(numOrArr => {
+              let num: number = -1
+              if (Array.isArray(numOrArr)) {
+                const [type, composeIndex, variableName] = numOrArr
+                if (type === 'c') {
+                  const setterGetterFunc: { _hook: Hook } | undefined =
+                    this.composes[composeIndex]?.[variableName]
+                  if (setterGetterFunc?._hook) {
+                    num = this.hooks.indexOf(setterGetterFunc._hook)
+                  }
+                }
+              } else {
+                num = numOrArr
+              }
+              if (num > -1) {
+                waitHookIndexSet.add(num)
+                deps.add(num)
+                this.intialContextDeps?.forEach(
+                  ([name, relationHI, getD2]) => {
+                    if (getD2.includes(num)) {
+                      deps.add(relationHI)
+                      waitHookIndexSet.add(relationHI)
+                    }
+                  }
+                )
+              }
+            })
+          }
+        })
+      }
+    }
+
+    return deps
+  }
+  /**
+   * need deliver context principles, sort by priority:
+   * 1.model/cache(server) needn't
+   * 2.state
+   * 3.related set/get
+   */
   createInputComputeContext(h?: Hook, args?: any[]): IHookContext {
     const { hooks } = this
     const hookIndex = h ? hooks.indexOf(h) : -1
 
-    const deps: THookDeps = []
+    let deps = new Set<number>()
     if (h) {
-      const waitHookIndexSet = new Set([hookIndex])
-      let preventDeath = 0
-      while (waitHookIndexSet.size > 0 && preventDeath++ < 1e4) {
-        const arr = [...waitHookIndexSet]
-        for (const currentHookIndex of arr) {
-          if (preventDeath++ > 1e4) {
-            break
-          }
-          this.intialContextDeps?.forEach(([name, hi, getD, setD]) => {
-            if (hi === currentHookIndex) {
-              if (!deps.find(arr => arr[1] === hi)) {
-                deps.push(['h', hi, getD, setD])
-                setD?.forEach(numOrArr => {
-                  let num: number = -1
-                  if (Array.isArray(numOrArr)) {
-                    const [type, composeIndex, variableName] = numOrArr
-                    if (type === 'c') {
-                      const setterGetterFunc: { _hook: Hook } | undefined =
-                        this.composes[composeIndex]?.[variableName]
-                      if (setterGetterFunc?._hook) {
-                        num = this.hooks.indexOf(setterGetterFunc._hook)
-                      }
-                    }
-                  } else {
-                    num = numOrArr
-                  }
-                  if (num > -1) {
-                    this.intialContextDeps?.forEach(
-                      ([name, relationHI, getD2]) => {
-                        if (getD2.includes(num)) {
-                          waitHookIndexSet.add(relationHI)
-                        }
-                      }
-                    )
-                  }
-                })
-              }
-            }
-          })
-          waitHookIndexSet.delete(currentHookIndex)
-        }
-      }
+      deps = this.getRelatedHookIndexes(hookIndex)
     }
-
-    const noDeps = deps.length === 0
-    const needDeliverHookIndexSet = new Set<number>()
-    if (!noDeps) {
-      deps.forEach(arr => {
-        needDeliverHookIndexSet.add(arr[1])
-
-        arr[2]?.forEach(numOrArr => {
-          if (typeof numOrArr === 'number') {
-            needDeliverHookIndexSet.add(numOrArr)
-          }
-        })
-        arr[3]?.forEach(numOrArr => {
-          if (typeof numOrArr === 'number') {
-            needDeliverHookIndexSet.add(numOrArr)
-          }
-        })
-      })
-    }
+    const noDeps = deps.size === 0
 
     const hooksData: IHookContext['data'] = hooks.map((hook, i) => {
-      if (noDeps || needDeliverHookIndexSet.has(i)) {
+      if (noDeps || deps.has(i)) {
+        // means: client -> server, doesn't need model, server must query again
+        if (hook instanceof ClientModel) {
+          return ['clientModel']
+        }
+        // means: server -> client
         if (hook instanceof Model) {
           return ['model', hook.value]
         }
@@ -1074,7 +1126,7 @@ export class CurrentRunnerScope {
       args: args || []
     }
   }
-  applyContext(c: IHookContext) {
+  applyContextFromServer(c: IHookContext) {
     const contextData = c.data
     const { hooks } = this
     contextData.forEach(([type, value], index) => {
@@ -1144,6 +1196,10 @@ export class Runner<T extends BM> {
     }
     currentRunnerScope = this.scope
     currentRunnerScope.setIntialArgs(args || [], this.bm.name)
+
+    const deps = getDeps(this.bm)
+    currentRunnerScope.setInitialContextDeps(deps)
+
     if (initialContext) {
       currentRunnerScope.setInitialContextData(initialContext)
       currentHookFactory = updateHookFactory
@@ -1151,8 +1207,6 @@ export class Runner<T extends BM> {
       currentHookFactory = mountHookFactory
     }
 
-    const deps = getDeps(this.bm)
-    currentRunnerScope.setInitialContextDeps(deps)
 
     const result: ReturnType<T> = executeBM(this.bm, args)
 
@@ -1353,6 +1407,7 @@ function createCacheSetterGetterFunc<SV>(c: Cache<SV>): {
         throw new Error('[change cache] pass a function')
       }
     }
+    currentReactiveChain?.addCall(c)
     return c.value
   }
 }
@@ -1377,18 +1432,14 @@ function createUnaccessGetter2<T extends any[]>(index: number) {
   return newF
 }
 
-function hasValueInContext(d: IHookContext['data'][0]) {
-  return d?.length === 2
-}
-
 function updateState<T>(initialValue: T) {
-  const currentIndex = currentRunnerScope!.hooks.length
-  const hasValue = hasValueInContext(
-    currentRunnerScope!.intialContextData![currentIndex]
-  )
+  const { hooks, initialHooksSet } = currentRunnerScope!
+  const currentIndex = hooks.length
+  const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
+  
   initialValue = currentRunnerScope!.intialContextData![currentIndex]?.[1]
   // undefined means this hook wont needed in this progress
-  if (!hasValue) {
+  if (!valid) {
     currentRunnerScope!.addHook(undefined)
     return createUnaccessGetter<T>(currentIndex)
   }
@@ -1421,14 +1472,14 @@ function updateModel<T extends any[]>(
   q: () => IModelQuery['query'],
   op?: IModelOption
 ) {
-  const currentIndex = currentRunnerScope!.hooks.length
-  const hasValue = hasValueInContext(
-    currentRunnerScope!.intialContextData![currentIndex]
-  )
+  const { hooks, initialHooksSet } = currentRunnerScope!
+  const currentIndex = hooks.length
+  const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
+
   const initialValue: T =
     currentRunnerScope!.intialContextData![currentIndex]?.[1]
 
-  if (!hasValue) {
+  if (!valid) {
     currentRunnerScope!.addHook(undefined)
     return createUnaccessGetter2<T>(currentIndex)
   }
@@ -1476,12 +1527,11 @@ function mountModel<T extends any[]>(
 }
 
 function updateCache<T>(key: string, options: ICacheOptions<T>) {
-  const currentIndex = currentRunnerScope!.hooks.length
-  const hasValue = hasValueInContext(
-    currentRunnerScope!.intialContextData![currentIndex]
-  )
+  const { hooks, initialHooksSet } = currentRunnerScope!
+  const currentIndex = hooks.length
+  const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
 
-  if (!hasValue) {
+  if (!valid) {
     currentRunnerScope!.addHook(undefined)
     return createUnaccessGetter<T>(currentIndex)
   }
@@ -1516,14 +1566,13 @@ function updateComputed<T>(
   fn: FComputedFunc<T>
 ): (() => T) & { _hook: Computed<T> }
 function updateComputed<T>(fn: any): any {
-  const currentIndex = currentRunnerScope!.hooks.length
-  const hasValue = hasValueInContext(
-    currentRunnerScope!.intialContextData![currentIndex]
-  )
+  const { hooks, initialHooksSet } = currentRunnerScope!
+  const currentIndex = hooks.length
+  const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
 
   const initialValue: T =
     currentRunnerScope!.intialContextData![currentIndex]?.[1]
-  if (!hasValue) {
+  if (!valid) {
     currentRunnerScope!.addHook(undefined)
     return createUnaccessGetter<T>(currentIndex)
   }

@@ -13,24 +13,17 @@ describe('inputCompute', () => {
 
     mockBM.initModelConfig({
       async postComputeToServer (c: IHookContext) {
-        let { data, index, args } = c
+        process.env.TARGET = 'server'
+        const runner = new Runner(mockBM.changeStateInputComputeServer)
 
-        expect(data).toEqual([
-          ['state', initArgs[0]],
-          ['state', 10],
-          ['inputCompute', null]
-        ])
+        runner.init(c.initialArgList as [any, any], c)
 
-        expect(index).toBe(2)
-
-        expect(args).toEqual([newVal1])
-
-        data = cloneDeep(data)
-        data[0][1] = { num1: args?.[0] }
-
-        return {
-          data
+        if (c.index) {
+          await runner.callHook(c.index, c.args)
         }
+
+        process.env.TARGET = ''
+        return runner.scope.createInputComputeContext()
       }  
     })
 

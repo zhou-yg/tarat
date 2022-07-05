@@ -114,7 +114,7 @@ describe('computed', () => {
     //   expect(result.s._hook.watchers.has(runner.scope.watcher)).toBe(true)
     //   expect(result.s._hook.watchers.has(result.c._hook.watcher)).toBe(true)
     // })
-    it ('use primitive state without deps, getter wont re-run', () => {
+    it('use primitive state without deps, getter wont re-run', () => {
       const num1 = 1
       const num2 = 2
 
@@ -125,6 +125,7 @@ describe('computed', () => {
         ['data', 10]
       ]
       const context = mockBM.initContext({
+        index: undefined,
         data: cd,
       })
 
@@ -154,6 +155,7 @@ describe('computed', () => {
         ['data', 10]  
       ]
       const context = mockBM.initContext({
+        index: undefined,
         data: cd,
       })
       const result = runner.init([num1, num2], context)

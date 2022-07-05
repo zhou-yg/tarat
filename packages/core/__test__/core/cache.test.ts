@@ -1,4 +1,4 @@
-import { Runner, cloneDeep, getPlugin, IDiff, IHookContext, IQueryWhere, set, setEnv } from '../../src/index'
+import { Runner, cloneDeep, getPlugin, IDiff, IHookContext, IQueryWhere, set, setEnv, debuggerLog } from '../../src/index'
 
 import * as mockBM from '../mockBM'
 
@@ -51,7 +51,7 @@ describe('cache', () => {
       expect(cookieVal).toEqual({ num: 2 })
     })
 
-    it ('cache with source', async () => {
+    it('cache with source', async () => {
       const runner = new Runner(mockBM.cacheWithSource)
       const initialVal = { num: 0 }
       const result = runner.init([initialVal])
@@ -59,7 +59,7 @@ describe('cache', () => {
       const cVal = result.c()
       
       expect(cVal).toEqual(initialVal)
-  
+      
       result.s(d => {
         d.num = 1
       })
@@ -84,6 +84,7 @@ describe('cache', () => {
         ['data', 2],
       ]
       const context = mockBM.initContext({
+        index: 0,
         data: cd,
       })
       const result = runner.init([], context)
