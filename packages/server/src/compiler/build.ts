@@ -7,10 +7,8 @@ import { InputOptions, ModuleFormat, OutputOptions, Plugin, rollup, RollupBuild 
 import resolve from '@rollup/plugin-node-resolve';
 import { babel  } from '@rollup/plugin-babel';
 import json from '@rollup/plugin-json'
-import less from 'rollup-plugin-less'
 import commonjs from "@rollup/plugin-commonjs";
 import postcss from 'rollup-plugin-postcss'
-import styles from 'rollup-plugin-styles'
 import * as prettier from 'prettier'
 
 const __filename = fileURLToPath(import.meta.url)
