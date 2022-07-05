@@ -260,9 +260,7 @@ export function changeStateInputComputeServer(
   }
 }
 Object.assign(changeStateInputComputeServer, {
-  __deps__: [
-    ['h', 2, [], [0]]
-  ]
+  __deps__: [['h', 2, [], [0]]]
 })
 
 export function changeStateInputComputeServer2() {

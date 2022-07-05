@@ -884,10 +884,12 @@ export class CurrentRunnerScope {
   }
 
   setInitialContextData(context: IHookContext) {
-    this.intialContextData = context['data'];
+    this.intialContextData = context['data']
     if (context.index !== undefined && typeof context.index === 'number') {
       if (this.intialContextDeps?.length) {
-        this.initialHooksSet = new Set(this.getRelatedHookIndexes(context.index))
+        this.initialHooksSet = new Set(
+          this.getRelatedHookIndexes(context.index)
+        )
       }
     }
   }
@@ -902,7 +904,7 @@ export class CurrentRunnerScope {
     this.hooks.push(v)
     v && this.watcher.addDep(v)
   }
-  
+
   applyDepsMap() {
     const deps = this.intialContextDeps
     deps?.forEach(([name, hookIndex, deps]) => {
@@ -990,11 +992,11 @@ export class CurrentRunnerScope {
 
   /**
    * get all related hook index by curernet hookIndex
-   * design logic: 
+   * design logic:
    * 1.getD -> getD -> getD
    * 2.setD in who's getD -> getD
    */
-  getRelatedHookIndexes (hookIndex: number) {
+  getRelatedHookIndexes(hookIndex: number) {
     let preventDeath = 0
 
     const waitHookIndexSet = new Set([hookIndex])
@@ -1003,13 +1005,11 @@ export class CurrentRunnerScope {
     const deps = new Set<number>()
 
     if (waitHookIndexSet.size > 0) {
-
       for (const currentHookIndex of waitHookIndexSet) {
         if (preventDeath++ > 1e4 || reachedHookIndexSet.has(currentHookIndex)) {
           break
         }
         reachedHookIndexSet.add(currentHookIndex)
-
 
         this.intialContextDeps?.forEach(([name, hi, getD, setD]) => {
           if (hi === currentHookIndex) {
@@ -1031,14 +1031,12 @@ export class CurrentRunnerScope {
               if (num > -1) {
                 waitHookIndexSet.add(num)
                 deps.add(num)
-                this.intialContextDeps?.forEach(
-                  ([name, relationHI, getD2]) => {
-                    if (getD2.includes(num)) {
-                      deps.add(relationHI)
-                      waitHookIndexSet.add(relationHI)
-                    }
+                this.intialContextDeps?.forEach(([name, relationHI, getD2]) => {
+                  if (getD2.includes(num)) {
+                    deps.add(relationHI)
+                    waitHookIndexSet.add(relationHI)
                   }
-                )
+                })
               }
             })
             // getD: to find the hook directly
@@ -1059,14 +1057,12 @@ export class CurrentRunnerScope {
               if (num > -1) {
                 waitHookIndexSet.add(num)
                 deps.add(num)
-                this.intialContextDeps?.forEach(
-                  ([name, relationHI, getD2]) => {
-                    if (getD2.includes(num)) {
-                      deps.add(relationHI)
-                      waitHookIndexSet.add(relationHI)
-                    }
+                this.intialContextDeps?.forEach(([name, relationHI, getD2]) => {
+                  if (getD2.includes(num)) {
+                    deps.add(relationHI)
+                    waitHookIndexSet.add(relationHI)
                   }
-                )
+                })
               }
             })
           }
@@ -1206,7 +1202,6 @@ export class Runner<T extends BM> {
     } else {
       currentHookFactory = mountHookFactory
     }
-
 
     const result: ReturnType<T> = executeBM(this.bm, args)
 
@@ -1436,7 +1431,7 @@ function updateState<T>(initialValue: T) {
   const { hooks, initialHooksSet } = currentRunnerScope!
   const currentIndex = hooks.length
   const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
-  
+
   initialValue = currentRunnerScope!.intialContextData![currentIndex]?.[1]
   // undefined means this hook wont needed in this progress
   if (!valid) {
