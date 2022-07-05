@@ -97,6 +97,7 @@ describe('client model', () => {
         ['data', [{ id: 3, name: 'c' }]]
       ]
       const context = mockBM.initContext({
+        index: undefined,
         data: cd
       })
       // debuggerLog(true)

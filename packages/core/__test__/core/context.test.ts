@@ -112,6 +112,7 @@ describe('initContext', () => {
       const clientRunner = new Runner(mockBM.changeStateInputComputeServer2)
   
       const context = mockBM.initContext({
+        index: 4,
         data: [
           ['state', { num: 1 }],
           ['state', 2],
@@ -122,7 +123,7 @@ describe('initContext', () => {
       const r = clientRunner.init([], context)
 
       expect(r.s1()).toEqual({ num: 1 })
-      expect(r.s2()).toEqual(2)
+      expect(r.s2._hook).toEqual(null)
       expect(r.s1._hook.watchers.size).toBe(2)
 
       const newVal = 10

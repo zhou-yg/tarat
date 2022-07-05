@@ -45,6 +45,7 @@ describe('state', () => {
         ['data', 12]
       ]
       const context = mockBM.initContext({
+        index: undefined,
         data: cd
       })
       const result = runner.init(args, context)
