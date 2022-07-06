@@ -3,8 +3,6 @@ import * as fs from 'fs'
 import l from 'lodash'
 const { merge } = l
 
-import * as esbuild from 'esbuild';
-
 export const defaultConfig = () => ({
   // client about
   viewsDirectory: 'views', // in tarat the display unit maybe page or component, they should belong to "views"
@@ -108,20 +106,6 @@ function readViews (viewDir: string, dir: string, parent?: IViewConfig) {
 function readPages (viewDir: string, dir: string) {
   const pages = readViews(viewDir, dir)
 
-  // pages.forEach(r => {
-  //   if (!r.parentId) {
-  //     r.parentId = 'pages'
-  //   }
-  // })
-
-  // pages.push({
-  //   id: 'pages',
-  //   name: 'pages',
-  //   parentId: '',
-  //   file: '',
-  //   path: '/'
-  // })
-
   return pages
 }
 
@@ -129,26 +113,8 @@ export interface IServerHookConfig {
   filePath: string
   file: string
   name: string
-  hookFunc: Promise<{ default: (...args: any[]) => any }>
+  // hookFunc: Promise<{ default: (...args: any[]) => any }>
 }
-
-// async function esbuildFile (dir: string, f: string, filePath: string) {
-//   if (!/\.(m)?js$/.test(filePath)) {
-//     return Promise.resolve().then(() => {
-//       return esbuild.build({
-//         entryPoints: [filePath],
-//         outbase: dir,
-//         bundle: false,
-//         outdir: esbuildOutputDir,
-//         platform: 'node'
-//       })
-//     }).then((r) => {
-//       const name = f.replace(/\.\w+/, '')
-//       return import((esbuildOutputDir + `${name}.js`))
-//     })
-//   }
-//   return import(filePath)
-// }
 
 export function readHooks(dir: string) {
   const hooks = fs.readdirSync(dir)
@@ -167,7 +133,6 @@ export function readHooks(dir: string) {
       filePath,
       file: f,
       name: f.replace(/\.\w+/, ''),
-      hookFunc: import(filePath)
     }
   })
 

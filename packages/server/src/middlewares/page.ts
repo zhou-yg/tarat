@@ -12,9 +12,6 @@ import { renderToString } from 'react-dom/server'
 import { RenderDriver, renderWithDriverContext, DriverContext } from 'tarat-connect'
 import React, { createElement } from "react";
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
 const templateFile = './pageTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
 
@@ -117,8 +114,6 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
    pages: IViewConfig[]
    vite: ViteDevServer
 }) : Application.Middleware {
-
-  console.log('args.config:', args.config)
 
   buildRoutes(args.config)
 

@@ -1,6 +1,6 @@
 import acorn, { parse as acornParse } from 'acorn'
 import * as walk from 'acorn-walk'
-import { set, get } from 'lodash-es'
+import { set, get } from 'lodash'
 import type {
   ArrowFunctionExpression,
   AssignmentExpression,
@@ -54,7 +54,8 @@ function getMemberExpressionKeys (m: MemberExpression, keys: string[] = []): str
         return keys.concat(m.object.name).concat(cur)
         break
       default:
-        throw new Error('[getMemberExpressionKeys] unexpect node type')
+        console.error((m as any).object)
+        // throw new Error('[getMemberExpressionKeys] unexpect node type')
         break
     }
   }
@@ -222,6 +223,7 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
       let lastCalleeName: string = ''
 
       switch (callee.type) {
+        // scene: "callee()"
         case 'Identifier':
           const calleeName = callee.name
           const scopeValue = get(scope, calleeName)
@@ -230,7 +232,9 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
           }
           lastCalleeName = calleeName
           break
+        // scene: "xxx.callee()" or "otherComposeHookResult.xxxCallee()"
         case 'MemberExpression':
+          console.log('callee: ', callee);
           const calleeKeys = getMemberExpressionKeys(callee)
           existSourceInScope = get(scope, calleeKeys.slice(0, -1))?.sourceHook as CallExpression
           lastCalleeName = calleeKeys[calleeKeys.length - 1]

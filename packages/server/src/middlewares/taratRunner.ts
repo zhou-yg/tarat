@@ -3,9 +3,11 @@ import {
   stopReactiveChain
 } from 'tarat-core'
 import { parseWithUndef } from 'tarat-connect'
+import * as path from 'path'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'
 import { setCookies, setPrisma, setRunning, setER  } from '../plugins/'
+import { buildHooks } from '../compiler/build'
 
 function matchHookName (path: string) {
   const arr = path.split('/').filter(Boolean)
@@ -33,7 +35,7 @@ export function wrapCtx (ctx: any) {
  * @TODO should provide by @tarat-run by default
  */
 export default function taratMiddleware (args: {
-  config: Pick<IConfig, 'hooks' | 'apiPre' | 'diffPath' | 'cwd'> & { model?: IConfig['model'] }
+  config: IConfig
 }) : Application.Middleware{
   const { hooks, apiPre, diffPath, cwd, model } = args.config
 
@@ -45,12 +47,19 @@ export default function taratMiddleware (args: {
     setER()
   }
 
+  const promiseBuild = buildHooks(args.config)
+
   return async (ctx, next) => {
     const { pre, hookName } = matchHookName(ctx.request.path)
     if (pre === apiPre && ctx.request.method === 'POST') {      
       const hookConfig = hooks.find(h => h.name === hookName)
-      if (hookConfig) {        
-        const hookFunc = await hookConfig.hookFunc
+      if (hookConfig) {
+        const r = await promiseBuild
+        if (!r.entryHooksDir) {
+          throw new Error('unfind hooks build result')
+        }
+
+        const hookFunc = require(path.join(r.entryHooksDir, `${hookName}.js`))
         const c: IHookContext = parseWithUndef(ctx.request.body)
 
         let runner = new Runner(hookFunc.default)
