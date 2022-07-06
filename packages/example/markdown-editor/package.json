@@ -1,19 +1,41 @@
 {
   "name": "markdown-editor",
   "version": "1.0.0",
-  "tarat": {
-    
-  },
+  "tarat": {},
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "init": "pnpm install && npm run prisma:dev",
-    "dev": "tarat dev",
+    "dev": "node --experimental-specifier-resolution=node node_modules/tarat-server/dist/cli/index.mjs dev",
     "p:dev": "prisma migrate dev && prisma generate",
     "p:gen": "prisma generate",
     "p:deploy": "prisma migrate deploy",
     "p:studio": "prisma studio"
   },
+  "prisma": {
+    "schema": "./models/schema.prisma"
+  },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@babel/preset-react": "^7.18.6",
+    "@prisma/client": "^3.15.1",
+    "@uiw/react-md-editor": "^3.14.4",
+    "markdown-it": "^13.0.1",
+    "prisma": "^3.15.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown-editor-lite": "^1.3.2",
+    "react-router-dom": "^6.3.0",
+    "tarat-connect": "workspace:^0.0.9",
+    "tarat-core": "workspace:^0.0.9",
+    "tarat-server": "workspace:^0.0.8",
+    "uc.micro": "^1.0.6"
+  },
+  "devDependencies": {
+    "linkify-it": "^4.0.1",
+    "mdurl": "^1.0.1",
+    "punycode": "^2.1.1"
+  }
 }
