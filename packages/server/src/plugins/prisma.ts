@@ -14,12 +14,13 @@ export async function setPrisma (cwd: string)  {
       return prisma[e].findMany(w)
     },
     async update(e, w) {
-      return []
+      return prisma[e].update(w)
     },
     async remove(e, d) {
-      return []
+      return prisma[e].delete(d)
     },
-    async create(e, d) {
+    async create(e, q) {
+      return prisma[e].create(q)
     },
     // should check relation here
     async executeDiff(e, d) {
