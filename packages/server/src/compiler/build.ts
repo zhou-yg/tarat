@@ -10,9 +10,7 @@ import json from '@rollup/plugin-json'
 import commonjs from "@rollup/plugin-commonjs";
 import postcss from 'rollup-plugin-postcss'
 import * as prettier from 'prettier'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+import * as esbuild from 'esbuild';
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -201,7 +199,7 @@ export async function buildRoutes(c: IConfig) {
     output: [{
       // dir: path.join(c.cwd, c.devCacheDirectory), used when generating multiple chunks
       file: distRoutesFile,
-      format: 'esm',
+      format: 'commonjs',
     }]
   }
 
@@ -250,7 +248,7 @@ export async function buildEntryServer (c: IConfig) {
       output: [{
         // dir: outputFileDir,
         file: distEntry,
-        format: 'esm',
+        format: 'commonjs',
 
       }],
     }
@@ -261,5 +259,34 @@ export async function buildEntryServer (c: IConfig) {
       entry: distEntry,
       css: distEntryCss
     }
+  }
+}
+
+async function esbuildHooks (hooks: IConfig['hooks'], outputDir: string) {
+
+  const points: string[] = []
+  hooks.map(h => {
+    const { filePath, name } = h
+    if (/\.(m)?(j|t)s$/.test(filePath)) {
+      points.push(filePath)
+    }
+  })
+  await esbuild.build({
+    entryPoints: points,
+    // outbase: dir,
+    bundle: false,
+    outdir: outputDir,
+    platform: 'node',
+    format: 'cjs'
+  })
+}
+
+export async function buildHooks (c: IConfig) {
+  const esbuildOutputDir = path.join(c.cwd, c.devCacheDirectory, c.hooksDirectory)
+
+  await esbuildHooks(c.hooks, esbuildOutputDir)
+
+  return {
+    entryHooksDir: esbuildOutputDir
   }
 }

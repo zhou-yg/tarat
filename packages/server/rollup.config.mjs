@@ -16,23 +16,23 @@ export default [
     ],
     input: 'cli/index.ts',
     output: {
-      file: 'dist/cli/index.mjs',
-      format: 'esm'
+      file: 'dist/cli/index.js',
+      format: 'umd'
     }
   },
-  {
-    plugins: [
-      tsPlugin({
-        clean: true,
-        tsconfig: './tsconfig.json',
-      }),
-      commonjs(),
-    ],
-    input: "src/index.ts",
-    output: [
-      { file: "dist/index.js", format: "es" }
-    ],
-  },
+  // {
+  //   plugins: [
+  //     tsPlugin({
+  //       clean: true,
+  //       tsconfig: './tsconfig.json',
+  //     }),
+  //     commonjs(),
+  //   ],
+  //   input: "src/index.ts",
+  //   output: [
+  //     { file: "dist/index.js", format: "es" }
+  //   ],
+  // },
   {
     plugins: [
       dts()

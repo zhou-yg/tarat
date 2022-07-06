@@ -2,11 +2,10 @@
   "name": "tarat-server",
   "version": "0.0.8",
   "description": "tarat ssr framework server side",
-  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "tarat": "./dist/cli/index.mjs"
+    "tarat": "./dist/cli/index.js"
   },
   "files": [
     "src",
