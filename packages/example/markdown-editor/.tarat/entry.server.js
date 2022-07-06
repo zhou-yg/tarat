@@ -1,9 +1,15 @@
-import React from 'react';
+'use strict';
+
+var React = require('react');
+
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+var React__default = /*#__PURE__*/_interopDefaultLegacy(React);
 
 var entry_server = (doc => {
-  return /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/React__default["default"].createElement("div", {
     id: "server-side-render"
   }, doc);
 });
 
-export { entry_server as default };
+module.exports = entry_server;

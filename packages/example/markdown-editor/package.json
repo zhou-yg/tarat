@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "tarat": {},
   "description": "",
-  "type": "module",
   "main": "index.js",
   "scripts": {
     "init": "pnpm install && npm run prisma:dev",
-    "dev": "node --experimental-specifier-resolution=node node_modules/tarat-server/dist/cli/index.mjs dev",
+    "dev2": "node --experimental-specifier-resolution=node node_modules/tarat-server/dist/cli/index.mjs dev",
+    "dev": "tarat dev",
     "p:dev": "prisma migrate dev && prisma generate",
     "p:gen": "prisma generate",
     "p:deploy": "prisma migrate deploy",

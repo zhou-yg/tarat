@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "description": "tarat service application for todos example",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "init": "pnpm install && npm run prisma:dev",
     "dev": "tarat dev",
@@ -25,7 +24,7 @@
     "classnames": "^2.3.1",
     "concat-with-sourcemaps": "^1.1.0",
     "lodash": "^4.17.21",
-    "nanoid": "^4.0.0",
+    "nanoid": "2.1.11",
     "prisma": "^3.14.0",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
