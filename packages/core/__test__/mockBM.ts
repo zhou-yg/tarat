@@ -298,6 +298,23 @@ Object.assign(changeStateInputComputeServer2, {
   ]
 })
 
+export function changeStateInputComputeServer3() {
+  const s1 = state(false)
+  const s2 = state(0)
+
+  const changeS2 = inputComputeInServer((v: number) => {
+    if (s1()) {
+      s2(() => v)  
+    }
+  })
+
+  return {
+    s1,
+    s2,
+    changeS2
+  }
+}
+
 export function changeStateAsyncInputCompute(
   obj1: { num1: number },
   num2: number
@@ -376,9 +393,16 @@ export function userModelClient() {
   )
 
   return {
+    num,
     users
   }
 }
+Object.assign(userModelClient, {
+  __deps__: [
+    ['h', 1, [0]]
+  ]
+})
+
 export function userModelComputedQuery() {
   const targetName = state('')
   const users = model(
