@@ -14,12 +14,15 @@ export function setHookAdaptor(runtime: any, type: 'react' | 'axii') {
   }
 }
 
-export function useHook<T extends BM>(bm: T): ReturnType<T> | undefined {
+export function useHook<T extends BM>(
+  bm: T,
+  args?: any[]
+): ReturnType<T> | undefined {
   switch (hookAdaptorType) {
     case 'react':
-      return useReactHook(hookAdaptorRuntime, bm)
+      return useReactHook(hookAdaptorRuntime, bm, args)
     case 'axii':
-      return useAxiiHook(hookAdaptorRuntime, bm)
+      return useAxiiHook(hookAdaptorRuntime, bm, args)
   }
 }
 export const useTarat = useHook
