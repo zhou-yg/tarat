@@ -1,66 +1,45 @@
-import React from 'react';
-import 'tarat-connect';
-import { state, cache, model, computed, combineLatest, inputComputeInServer } from 'tarat-core';
-import { randomFillSync } from 'crypto';
+'use strict';
+
+var React = require('react');
+require('tarat-connect');
+var taratCore = require('tarat-core');
+var nanoid = require('nanoid');
+
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+var React__default = /*#__PURE__*/_interopDefaultLegacy(React);
+var nanoid__default = /*#__PURE__*/_interopDefaultLegacy(nanoid);
 
 var loginDeps = {
   login: [["h", 7, [0, 1]], ["h", 8, [6]], ["h", 9, [8]], ["h", 10, [9]], ["h", 11, [10, 7]], ["h", 12, [11]], ["h", 13, [0, 1, 11, 4]], ["h", 15, [2, 3, 5], [7, 16, 14]], ["h", 16, [2, 3], [7, 0, 1, 8, 6, 14]], ["h", 17, [6], [0, 1, 6, 8]]]
-};
-
-const urlAlphabet = 'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
-
-const POOL_SIZE_MULTIPLIER = 128;
-let pool, poolOffset;
-
-let fillPool = bytes => {
-  if (!pool || pool.length < bytes) {
-    pool = Buffer.allocUnsafe(bytes * POOL_SIZE_MULTIPLIER);
-    randomFillSync(pool);
-    poolOffset = 0;
-  } else if (poolOffset + bytes > pool.length) {
-    randomFillSync(pool);
-    poolOffset = 0;
-  }
-
-  poolOffset += bytes;
-};
-let nanoid = (size = 21) => {
-  fillPool(size -= 0);
-  let id = '';
-
-  for (let i = poolOffset - size; i < poolOffset; i++) {
-    id += urlAlphabet[pool[i] & 63];
-  }
-
-  return id;
 };
 
 Object.assign(login, {
   __deps__: loginDeps.login
 });
 function login() {
-  const name = state();
+  const name = taratCore.state();
   name._hook && (name._hook.name = 'name');
-  const password = state();
+  const password = taratCore.state();
   password._hook && (password._hook.name = 'password');
-  const inputName = state();
+  const inputName = taratCore.state();
   inputName._hook && (inputName._hook.name = 'inputName');
-  const inputPassword = state();
+  const inputPassword = taratCore.state();
   inputPassword._hook && (inputPassword._hook.name = 'inputPassword');
-  const repeatPassword = state();
+  const repeatPassword = taratCore.state();
   repeatPassword._hook && (repeatPassword._hook.name = 'repeatPassword');
-  const signAndAutoLogin = state(false);
+  const signAndAutoLogin = taratCore.state(false);
   signAndAutoLogin._hook && (signAndAutoLogin._hook.name = 'signAndAutoLogin');
   /* 6 */
 
-  const cookieId = cache('userDataKey', {
+  const cookieId = taratCore.cache('userDataKey', {
     from: 'cookie'
   }); // just run in server because by it depends 'cookie'
 
   cookieId._hook && (cookieId._hook.name = 'cookieId');
   /* 7 */
 
-  const userDataByInput = model('user', prev => {
+  const userDataByInput = taratCore.model('user', prev => {
     if (name() && password()) {
       return {
         where: {
@@ -72,7 +51,7 @@ function login() {
     }
   });
   userDataByInput._hook && (userDataByInput._hook.name = 'userDataByInput');
-  const sessionStore = model('sessionStore', prev => {
+  const sessionStore = taratCore.model('sessionStore', prev => {
     const cid = cookieId(); // client: ps, server: no?
 
     if (cid) {
@@ -88,7 +67,7 @@ function login() {
   sessionStore._hook && (sessionStore._hook.name = 'sessionStore');
   /* 9 */
 
-  const userIdInSession = computed(() => {
+  const userIdInSession = taratCore.computed(() => {
     const ss = sessionStore();
     console.log('ss: ', ss);
 
@@ -100,7 +79,7 @@ function login() {
     }
   });
   userIdInSession._hook && (userIdInSession._hook.name = 'userIdInSession');
-  const userDataByCookie = model('user', prev => {
+  const userDataByCookie = taratCore.model('user', prev => {
     const u = userIdInSession();
 
     if (u) {
@@ -115,7 +94,7 @@ function login() {
   userDataByCookie._hook && (userDataByCookie._hook.name = 'userDataByCookie');
   /* 11 */
 
-  const userData = computed(() => {
+  const userData = taratCore.computed(() => {
     const u1 = userDataByCookie();
     console.log('u1: ', u1);
 
@@ -133,7 +112,7 @@ function login() {
   userData._hook && (userData._hook.name = 'userData');
   /* 12 */
 
-  const alreadyLogin = computed(() => {
+  const alreadyLogin = taratCore.computed(() => {
     const ud = userData();
     console.log('userData: ', ud);
     return !!ud;
@@ -152,7 +131,7 @@ function login() {
    * 1.http error
    */
 
-  const errorTip1 = computed(async () => {
+  const errorTip1 = taratCore.computed(async () => {
     if (name() && password() && !userData()) {
       return 'invalid password';
     }
@@ -172,10 +151,10 @@ function login() {
     return '';
   });
   errorTip1._hook && (errorTip1._hook.name = 'errorTip1');
-  const errorTip2 = state('');
+  const errorTip2 = taratCore.state('');
   errorTip2._hook && (errorTip2._hook.name = 'errorTip2');
-  const errorTip = combineLatest([errorTip1, errorTip2]);
-  const sign = inputComputeInServer(async () => {
+  const errorTip = taratCore.combineLatest([errorTip1, errorTip2]);
+  const sign = taratCore.inputComputeInServer(async () => {
     const inputNameVal = inputName();
     const inputPasswordVal = inputPassword();
     const r = await userDataByInput.exist({
@@ -201,7 +180,7 @@ function login() {
   sign._hook && (sign._hook.name = 'sign');
   /* 16 */
 
-  const login = inputComputeInServer(async () => {
+  const login = taratCore.inputComputeInServer(async () => {
     const inputNameVal = inputName();
     const inputPasswordVal = inputPassword();
     const valid = await userDataByInput.exist({
@@ -212,7 +191,7 @@ function login() {
     if (valid) {
       name(() => inputNameVal);
       password(() => inputPasswordVal);
-      const nid = nanoid();
+      const nid = nanoid__default["default"]();
       sessionStore(draft => {
         draft.push({
           name: inputNameVal,
@@ -226,7 +205,7 @@ function login() {
     }
   });
   login._hook && (login._hook.name = 'login');
-  const logout = inputComputeInServer(() => {
+  const logout = taratCore.inputComputeInServer(() => {
     name(() => null);
     password(() => null);
     const cid = cookieId();
@@ -317,9 +296,9 @@ var classnames = {exports: {}};
 })(classnames);
 
 var entry_server = (doc => {
-  return /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/React__default["default"].createElement("div", {
     id: "server-side-render"
   }, doc);
 });
 
-export { entry_server as default };
+module.exports = entry_server;

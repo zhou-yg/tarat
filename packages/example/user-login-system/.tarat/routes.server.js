@@ -1,7 +1,14 @@
-import React$1, { createContext, Children, isValidElement, Fragment, useContext, useMemo, useRef, useEffect, useCallback, createElement, useState, useLayoutEffect, forwardRef } from 'react';
-import { useTarat } from 'tarat-connect';
-import { state, cache, model, computed, combineLatest, inputComputeInServer } from 'tarat-core';
-import { randomFillSync } from 'crypto';
+'use strict';
+
+var React$1 = require('react');
+var taratConnect = require('tarat-connect');
+var taratCore = require('tarat-core');
+var nanoid = require('nanoid');
+
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+var React__default = /*#__PURE__*/_interopDefaultLegacy(React$1);
+var nanoid__default = /*#__PURE__*/_interopDefaultLegacy(nanoid);
 
 function _extends$1() {
   _extends$1 = Object.assign ? Object.assign.bind() : function (target) {
@@ -838,19 +845,19 @@ var history$1 = /*#__PURE__*/Object.freeze({
  *
  * @license MIT
  */
-const NavigationContext = /*#__PURE__*/createContext(null);
+const NavigationContext = /*#__PURE__*/React$1.createContext(null);
 
 if (process.env.NODE_ENV !== "production") {
   NavigationContext.displayName = "Navigation";
 }
 
-const LocationContext = /*#__PURE__*/createContext(null);
+const LocationContext = /*#__PURE__*/React$1.createContext(null);
 
 if (process.env.NODE_ENV !== "production") {
   LocationContext.displayName = "Location";
 }
 
-const RouteContext = /*#__PURE__*/createContext({
+const RouteContext = /*#__PURE__*/React$1.createContext({
   outlet: null,
   matches: []
 });
@@ -1282,7 +1289,7 @@ function useHref(to) {
   let {
     basename,
     navigator
-  } = useContext(NavigationContext);
+  } = React$1.useContext(NavigationContext);
   let {
     hash,
     pathname,
@@ -1310,7 +1317,7 @@ function useHref(to) {
 
 
 function useInRouterContext() {
-  return useContext(LocationContext) != null;
+  return React$1.useContext(LocationContext) != null;
 }
 /**
  * Returns the current location object, which represents the current URL in web
@@ -1328,7 +1335,7 @@ function useLocation() {
   !useInRouterContext() ? process.env.NODE_ENV !== "production" ? invariant(false, // TODO: This error is probably because they somehow have 2 versions of the
   // router loaded. We can help them understand how to avoid that.
   "useLocation() may be used only in the context of a <Router> component.") : invariant(false) : void 0;
-  return useContext(LocationContext).location;
+  return React$1.useContext(LocationContext).location;
 }
 /**
  * Returns the current navigation action which describes how the router came to
@@ -1339,7 +1346,7 @@ function useLocation() {
 
 
 function useNavigationType() {
-  return useContext(LocationContext).navigationType;
+  return React$1.useContext(LocationContext).navigationType;
 }
 /**
  * Returns true if the URL for the given "to" value matches the current URL.
@@ -1357,7 +1364,7 @@ function useMatch(pattern) {
   let {
     pathname
   } = useLocation();
-  return useMemo(() => matchPath(pattern, pathname), [pathname, pattern]);
+  return React$1.useMemo(() => matchPath(pattern, pathname), [pathname, pattern]);
 }
 /**
  * The interface for the navigate() function returned from useNavigate().
@@ -1378,19 +1385,19 @@ function useNavigate() {
   let {
     basename,
     navigator
-  } = useContext(NavigationContext);
+  } = React$1.useContext(NavigationContext);
   let {
     matches
-  } = useContext(RouteContext);
+  } = React$1.useContext(RouteContext);
   let {
     pathname: locationPathname
   } = useLocation();
   let routePathnamesJson = JSON.stringify(matches.map(match => match.pathnameBase));
-  let activeRef = useRef(false);
-  useEffect(() => {
+  let activeRef = React$1.useRef(false);
+  React$1.useEffect(() => {
     activeRef.current = true;
   });
-  let navigate = useCallback(function (to, options) {
+  let navigate = React$1.useCallback(function (to, options) {
     if (options === void 0) {
       options = {};
     }
@@ -1414,7 +1421,7 @@ function useNavigate() {
   return navigate;
 }
 
-const OutletContext = /*#__PURE__*/createContext(null);
+const OutletContext = /*#__PURE__*/React$1.createContext(null);
 /**
  * Returns the context (if provided) for the child route at this level of the route
  * hierarchy.
@@ -1422,7 +1429,7 @@ const OutletContext = /*#__PURE__*/createContext(null);
  */
 
 function useOutletContext() {
-  return useContext(OutletContext);
+  return React$1.useContext(OutletContext);
 }
 /**
  * Returns the element for the child route at this level of the route
@@ -1433,10 +1440,10 @@ function useOutletContext() {
 
 
 function useOutlet(context) {
-  let outlet = useContext(RouteContext).outlet;
+  let outlet = React$1.useContext(RouteContext).outlet;
 
   if (outlet) {
-    return /*#__PURE__*/createElement(OutletContext.Provider, {
+    return /*#__PURE__*/React$1.createElement(OutletContext.Provider, {
       value: context
     }, outlet);
   }
@@ -1454,7 +1461,7 @@ function useOutlet(context) {
 function useParams() {
   let {
     matches
-  } = useContext(RouteContext);
+  } = React$1.useContext(RouteContext);
   let routeMatch = matches[matches.length - 1];
   return routeMatch ? routeMatch.params : {};
 }
@@ -1468,12 +1475,12 @@ function useParams() {
 function useResolvedPath(to) {
   let {
     matches
-  } = useContext(RouteContext);
+  } = React$1.useContext(RouteContext);
   let {
     pathname: locationPathname
   } = useLocation();
   let routePathnamesJson = JSON.stringify(matches.map(match => match.pathnameBase));
-  return useMemo(() => resolveTo(to, JSON.parse(routePathnamesJson), locationPathname), [to, routePathnamesJson, locationPathname]);
+  return React$1.useMemo(() => resolveTo(to, JSON.parse(routePathnamesJson), locationPathname), [to, routePathnamesJson, locationPathname]);
 }
 /**
  * Returns the element of the route that matched the current location, prepared
@@ -1491,7 +1498,7 @@ function useRoutes(routes, locationArg) {
   "useRoutes() may be used only in the context of a <Router> component.") : invariant(false) : void 0;
   let {
     matches: parentMatches
-  } = useContext(RouteContext);
+  } = React$1.useContext(RouteContext);
   let routeMatch = parentMatches[parentMatches.length - 1];
   let parentParams = routeMatch ? routeMatch.params : {};
   let parentPathname = routeMatch ? routeMatch.pathname : "/";
@@ -1561,7 +1568,7 @@ function _renderMatches(matches, parentMatches) {
 
   if (matches == null) return null;
   return matches.reduceRight((outlet, match, index) => {
-    return /*#__PURE__*/createElement(RouteContext.Provider, {
+    return /*#__PURE__*/React$1.createElement(RouteContext.Provider, {
       children: match.route.element !== undefined ? match.route.element : outlet,
       value: {
         outlet,
@@ -1584,7 +1591,7 @@ function MemoryRouter(_ref) {
     initialEntries,
     initialIndex
   } = _ref;
-  let historyRef = useRef();
+  let historyRef = React$1.useRef();
 
   if (historyRef.current == null) {
     historyRef.current = createMemoryHistory({
@@ -1594,12 +1601,12 @@ function MemoryRouter(_ref) {
   }
 
   let history = historyRef.current;
-  let [state, setState] = useState({
+  let [state, setState] = React$1.useState({
     action: history.action,
     location: history.location
   });
-  useLayoutEffect(() => history.listen(setState), [history]);
-  return /*#__PURE__*/createElement(Router, {
+  React$1.useLayoutEffect(() => history.listen(setState), [history]);
+  return /*#__PURE__*/React$1.createElement(Router, {
     basename: basename,
     children: children,
     location: state.location,
@@ -1627,9 +1634,9 @@ function Navigate(_ref2) {
   !useInRouterContext() ? process.env.NODE_ENV !== "production" ? invariant(false, // TODO: This error is probably because they somehow have 2 versions of
   // the router loaded. We can help them understand how to avoid that.
   "<Navigate> may be used only in the context of a <Router> component.") : invariant(false) : void 0;
-  process.env.NODE_ENV !== "production" ? warning$1(!useContext(NavigationContext).static, "<Navigate> must not be used on the initial render in a <StaticRouter>. " + "This is a no-op, but you should modify your code so the <Navigate> is " + "only ever rendered in response to some user interaction or state change.") : void 0;
+  process.env.NODE_ENV !== "production" ? warning$1(!React$1.useContext(NavigationContext).static, "<Navigate> must not be used on the initial render in a <StaticRouter>. " + "This is a no-op, but you should modify your code so the <Navigate> is " + "only ever rendered in response to some user interaction or state change.") : void 0;
   let navigate = useNavigate();
-  useEffect(() => {
+  React$1.useEffect(() => {
     navigate(to, {
       replace,
       state
@@ -1679,7 +1686,7 @@ function Router(_ref3) {
   } = _ref3;
   !!useInRouterContext() ? process.env.NODE_ENV !== "production" ? invariant(false, "You cannot render a <Router> inside another <Router>." + " You should never have more than one in your app.") : invariant(false) : void 0;
   let basename = normalizePathname(basenameProp);
-  let navigationContext = useMemo(() => ({
+  let navigationContext = React$1.useMemo(() => ({
     basename,
     navigator,
     static: staticProp
@@ -1696,7 +1703,7 @@ function Router(_ref3) {
     state = null,
     key = "default"
   } = locationProp;
-  let location = useMemo(() => {
+  let location = React$1.useMemo(() => {
     let trailingPathname = stripBasename(pathname, basename);
 
     if (trailingPathname == null) {
@@ -1717,9 +1724,9 @@ function Router(_ref3) {
     return null;
   }
 
-  return /*#__PURE__*/createElement(NavigationContext.Provider, {
+  return /*#__PURE__*/React$1.createElement(NavigationContext.Provider, {
     value: navigationContext
-  }, /*#__PURE__*/createElement(LocationContext.Provider, {
+  }, /*#__PURE__*/React$1.createElement(LocationContext.Provider, {
     children: children,
     value: {
       location,
@@ -1756,14 +1763,14 @@ function Routes(_ref4) {
 
 function createRoutesFromChildren(children) {
   let routes = [];
-  Children.forEach(children, element => {
-    if (! /*#__PURE__*/isValidElement(element)) {
+  React$1.Children.forEach(children, element => {
+    if (! /*#__PURE__*/React$1.isValidElement(element)) {
       // Ignore non-elements. This allows people to more easily inline
       // conditionals in their route config.
       return;
     }
 
-    if (element.type === Fragment) {
+    if (element.type === React$1.Fragment) {
       // Transparently support React.Fragment and its children.
       routes.push.apply(routes, createRoutesFromChildren(element.props.children));
       return;
@@ -1870,7 +1877,7 @@ function BrowserRouter(_ref) {
     children,
     window
   } = _ref;
-  let historyRef = useRef();
+  let historyRef = React$1.useRef();
 
   if (historyRef.current == null) {
     historyRef.current = createBrowserHistory({
@@ -1879,12 +1886,12 @@ function BrowserRouter(_ref) {
   }
 
   let history = historyRef.current;
-  let [state, setState] = useState({
+  let [state, setState] = React$1.useState({
     action: history.action,
     location: history.location
   });
-  useLayoutEffect(() => history.listen(setState), [history]);
-  return /*#__PURE__*/createElement(Router, {
+  React$1.useLayoutEffect(() => history.listen(setState), [history]);
+  return /*#__PURE__*/React$1.createElement(Router, {
     basename: basename,
     children: children,
     location: state.location,
@@ -1904,7 +1911,7 @@ function HashRouter(_ref2) {
     children,
     window
   } = _ref2;
-  let historyRef = useRef();
+  let historyRef = React$1.useRef();
 
   if (historyRef.current == null) {
     historyRef.current = createHashHistory({
@@ -1913,12 +1920,12 @@ function HashRouter(_ref2) {
   }
 
   let history = historyRef.current;
-  let [state, setState] = useState({
+  let [state, setState] = React$1.useState({
     action: history.action,
     location: history.location
   });
-  useLayoutEffect(() => history.listen(setState), [history]);
-  return /*#__PURE__*/createElement(Router, {
+  React$1.useLayoutEffect(() => history.listen(setState), [history]);
+  return /*#__PURE__*/React$1.createElement(Router, {
     basename: basename,
     children: children,
     location: state.location,
@@ -1940,12 +1947,12 @@ function HistoryRouter(_ref3) {
     children,
     history
   } = _ref3;
-  const [state, setState] = useState({
+  const [state, setState] = React$1.useState({
     action: history.action,
     location: history.location
   });
-  useLayoutEffect(() => history.listen(setState), [history]);
-  return /*#__PURE__*/createElement(Router, {
+  React$1.useLayoutEffect(() => history.listen(setState), [history]);
+  return /*#__PURE__*/React$1.createElement(Router, {
     basename: basename,
     children: children,
     location: state.location,
@@ -1966,7 +1973,7 @@ function isModifiedEvent(event) {
  */
 
 
-const Link = /*#__PURE__*/forwardRef(function LinkWithRef(_ref4, ref) {
+const Link = /*#__PURE__*/React$1.forwardRef(function LinkWithRef(_ref4, ref) {
   let {
     onClick,
     reloadDocument,
@@ -1995,7 +2002,7 @@ const Link = /*#__PURE__*/forwardRef(function LinkWithRef(_ref4, ref) {
   return (
     /*#__PURE__*/
     // eslint-disable-next-line jsx-a11y/anchor-has-content
-    createElement("a", _extends({}, rest, {
+    React$1.createElement("a", _extends({}, rest, {
       href: href,
       onClick: handleClick,
       ref: ref,
@@ -2012,7 +2019,7 @@ if (process.env.NODE_ENV !== "production") {
  */
 
 
-const NavLink = /*#__PURE__*/forwardRef(function NavLinkWithRef(_ref5, ref) {
+const NavLink = /*#__PURE__*/React$1.forwardRef(function NavLinkWithRef(_ref5, ref) {
   let {
     "aria-current": ariaCurrentProp = "page",
     caseSensitive = false,
@@ -2054,7 +2061,7 @@ const NavLink = /*#__PURE__*/forwardRef(function NavLinkWithRef(_ref5, ref) {
   let style = typeof styleProp === "function" ? styleProp({
     isActive
   }) : styleProp;
-  return /*#__PURE__*/createElement(Link, _extends({}, rest, {
+  return /*#__PURE__*/React$1.createElement(Link, _extends({}, rest, {
     "aria-current": ariaCurrent,
     className: className,
     ref: ref,
@@ -2087,7 +2094,7 @@ function useLinkClickHandler(to, _temp) {
   let navigate = useNavigate();
   let location = useLocation();
   let path = useResolvedPath(to);
-  return useCallback(event => {
+  return React$1.useCallback(event => {
     if (event.button === 0 && ( // Ignore everything but left clicks
     !target || target === "_self") && // Let browser handle "target=_blank" etc.
     !isModifiedEvent(event) // Ignore clicks with modifier keys
@@ -2111,9 +2118,9 @@ function useLinkClickHandler(to, _temp) {
 
 function useSearchParams(defaultInit) {
   process.env.NODE_ENV !== "production" ? warning(typeof URLSearchParams !== "undefined", "You cannot use the `useSearchParams` hook in a browser that does not " + "support the URLSearchParams API. If you need to support Internet " + "Explorer 11, we recommend you load a polyfill such as " + "https://github.com/ungap/url-search-params\n\n" + "If you're unsure how to load polyfills, we recommend you check out " + "https://polyfill.io/v3/ which provides some recommendations about how " + "to load polyfills only for users that need them, instead of for every " + "user.") : void 0;
-  let defaultSearchParamsRef = useRef(createSearchParams(defaultInit));
+  let defaultSearchParamsRef = React$1.useRef(createSearchParams(defaultInit));
   let location = useLocation();
-  let searchParams = useMemo(() => {
+  let searchParams = React$1.useMemo(() => {
     let searchParams = createSearchParams(location.search);
 
     for (let key of defaultSearchParamsRef.current.keys()) {
@@ -2127,7 +2134,7 @@ function useSearchParams(defaultInit) {
     return searchParams;
   }, [location.search]);
   let navigate = useNavigate();
-  let setSearchParams = useCallback((nextInit, navigateOptions) => {
+  let setSearchParams = React$1.useCallback((nextInit, navigateOptions) => {
     navigate("?" + createSearchParams(nextInit), navigateOptions);
   }, [navigate]);
   return [searchParams, setSearchParams];
@@ -2237,7 +2244,7 @@ var require$$2 = /*@__PURE__*/getAugmentedNamespace(reactRouterDom$1);
 Object.defineProperty(server, '__esModule', {
   value: true
 });
-var React = React$1;
+var React = React__default["default"];
 var history = require$$1;
 var reactRouterDom = require$$2;
 /**
@@ -2304,60 +2311,32 @@ var loginDeps = {
   login: [["h", 7, [0, 1]], ["h", 8, [6]], ["h", 9, [8]], ["h", 10, [9]], ["h", 11, [10, 7]], ["h", 12, [11]], ["h", 13, [0, 1, 11, 4]], ["h", 15, [2, 3, 5], [7, 16, 14]], ["h", 16, [2, 3], [7, 0, 1, 8, 6, 14]], ["h", 17, [6], [0, 1, 6, 8]]]
 };
 
-const urlAlphabet = 'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
-
-const POOL_SIZE_MULTIPLIER = 128;
-let pool, poolOffset;
-
-let fillPool = bytes => {
-  if (!pool || pool.length < bytes) {
-    pool = Buffer.allocUnsafe(bytes * POOL_SIZE_MULTIPLIER);
-    randomFillSync(pool);
-    poolOffset = 0;
-  } else if (poolOffset + bytes > pool.length) {
-    randomFillSync(pool);
-    poolOffset = 0;
-  }
-
-  poolOffset += bytes;
-};
-let nanoid = (size = 21) => {
-  fillPool(size -= 0);
-  let id = '';
-
-  for (let i = poolOffset - size; i < poolOffset; i++) {
-    id += urlAlphabet[pool[i] & 63];
-  }
-
-  return id;
-};
-
 Object.assign(login, {
   __deps__: loginDeps.login
 });
 function login() {
-  const name = state();
+  const name = taratCore.state();
   name._hook && (name._hook.name = 'name');
-  const password = state();
+  const password = taratCore.state();
   password._hook && (password._hook.name = 'password');
-  const inputName = state();
+  const inputName = taratCore.state();
   inputName._hook && (inputName._hook.name = 'inputName');
-  const inputPassword = state();
+  const inputPassword = taratCore.state();
   inputPassword._hook && (inputPassword._hook.name = 'inputPassword');
-  const repeatPassword = state();
+  const repeatPassword = taratCore.state();
   repeatPassword._hook && (repeatPassword._hook.name = 'repeatPassword');
-  const signAndAutoLogin = state(false);
+  const signAndAutoLogin = taratCore.state(false);
   signAndAutoLogin._hook && (signAndAutoLogin._hook.name = 'signAndAutoLogin');
   /* 6 */
 
-  const cookieId = cache('userDataKey', {
+  const cookieId = taratCore.cache('userDataKey', {
     from: 'cookie'
   }); // just run in server because by it depends 'cookie'
 
   cookieId._hook && (cookieId._hook.name = 'cookieId');
   /* 7 */
 
-  const userDataByInput = model('user', prev => {
+  const userDataByInput = taratCore.model('user', prev => {
     if (name() && password()) {
       return {
         where: {
@@ -2369,7 +2348,7 @@ function login() {
     }
   });
   userDataByInput._hook && (userDataByInput._hook.name = 'userDataByInput');
-  const sessionStore = model('sessionStore', prev => {
+  const sessionStore = taratCore.model('sessionStore', prev => {
     const cid = cookieId(); // client: ps, server: no?
 
     if (cid) {
@@ -2385,7 +2364,7 @@ function login() {
   sessionStore._hook && (sessionStore._hook.name = 'sessionStore');
   /* 9 */
 
-  const userIdInSession = computed(() => {
+  const userIdInSession = taratCore.computed(() => {
     const ss = sessionStore();
     console.log('ss: ', ss);
 
@@ -2397,7 +2376,7 @@ function login() {
     }
   });
   userIdInSession._hook && (userIdInSession._hook.name = 'userIdInSession');
-  const userDataByCookie = model('user', prev => {
+  const userDataByCookie = taratCore.model('user', prev => {
     const u = userIdInSession();
 
     if (u) {
@@ -2412,7 +2391,7 @@ function login() {
   userDataByCookie._hook && (userDataByCookie._hook.name = 'userDataByCookie');
   /* 11 */
 
-  const userData = computed(() => {
+  const userData = taratCore.computed(() => {
     const u1 = userDataByCookie();
     console.log('u1: ', u1);
 
@@ -2430,7 +2409,7 @@ function login() {
   userData._hook && (userData._hook.name = 'userData');
   /* 12 */
 
-  const alreadyLogin = computed(() => {
+  const alreadyLogin = taratCore.computed(() => {
     const ud = userData();
     console.log('userData: ', ud);
     return !!ud;
@@ -2449,7 +2428,7 @@ function login() {
    * 1.http error
    */
 
-  const errorTip1 = computed(async () => {
+  const errorTip1 = taratCore.computed(async () => {
     if (name() && password() && !userData()) {
       return 'invalid password';
     }
@@ -2469,10 +2448,10 @@ function login() {
     return '';
   });
   errorTip1._hook && (errorTip1._hook.name = 'errorTip1');
-  const errorTip2 = state('');
+  const errorTip2 = taratCore.state('');
   errorTip2._hook && (errorTip2._hook.name = 'errorTip2');
-  const errorTip = combineLatest([errorTip1, errorTip2]);
-  const sign = inputComputeInServer(async () => {
+  const errorTip = taratCore.combineLatest([errorTip1, errorTip2]);
+  const sign = taratCore.inputComputeInServer(async () => {
     const inputNameVal = inputName();
     const inputPasswordVal = inputPassword();
     const r = await userDataByInput.exist({
@@ -2498,7 +2477,7 @@ function login() {
   sign._hook && (sign._hook.name = 'sign');
   /* 16 */
 
-  const login = inputComputeInServer(async () => {
+  const login = taratCore.inputComputeInServer(async () => {
     const inputNameVal = inputName();
     const inputPasswordVal = inputPassword();
     const valid = await userDataByInput.exist({
@@ -2509,7 +2488,7 @@ function login() {
     if (valid) {
       name(() => inputNameVal);
       password(() => inputPasswordVal);
-      const nid = nanoid();
+      const nid = nanoid__default["default"]();
       sessionStore(draft => {
         draft.push({
           name: inputNameVal,
@@ -2523,7 +2502,7 @@ function login() {
     }
   });
   login._hook && (login._hook.name = 'login');
-  const logout = inputComputeInServer(() => {
+  const logout = taratCore.inputComputeInServer(() => {
     name(() => null);
     password(() => null);
     const cid = cookieId();
@@ -2618,69 +2597,69 @@ var classnames$1 = {exports: {}};
 var classnames = classnames$1.exports;
 
 const LoginFrame = () => {
-  const loginHook = useTarat(login);
+  const loginHook = taratConnect.useTarat(login);
   const cls = classnames(s$1.row, {
     show: !!loginHook?.errorTip()
   });
   const alreadyLogin = loginHook.alreadyLogin();
   console.log('alreadyLogin: ', alreadyLogin);
-  return /*#__PURE__*/React$1.createElement("div", {
+  return /*#__PURE__*/React__default["default"].createElement("div", {
     className: s$1.login
-  }, /*#__PURE__*/React$1.createElement("div", {
+  }, /*#__PURE__*/React__default["default"].createElement("div", {
     className: s$1.title
-  }, "Welcome"), alreadyLogin ? /*#__PURE__*/React$1.createElement(React$1.Fragment, null, /*#__PURE__*/React$1.createElement("div", {
+  }, "Welcome"), alreadyLogin ? /*#__PURE__*/React__default["default"].createElement(React__default["default"].Fragment, null, /*#__PURE__*/React__default["default"].createElement("div", {
     className: s$1.row
-  }, "\u8D26\u53F7\uFF1A", loginHook.userData().name), /*#__PURE__*/React$1.createElement("div", {
+  }, "\u8D26\u53F7\uFF1A", loginHook.userData().name), /*#__PURE__*/React__default["default"].createElement("div", {
     className: s$1.row
-  }, "\u5BC6\u7801\uFF1A", loginHook.userData().password), /*#__PURE__*/React$1.createElement("div", {
+  }, "\u5BC6\u7801\uFF1A", loginHook.userData().password), /*#__PURE__*/React__default["default"].createElement("div", {
     className: s$1.footer
-  }, /*#__PURE__*/React$1.createElement("div", null, /*#__PURE__*/React$1.createElement("button", {
+  }, /*#__PURE__*/React__default["default"].createElement("div", null, /*#__PURE__*/React__default["default"].createElement("button", {
     onClick: () => loginHook.logout()
-  }, "Logout")), /*#__PURE__*/React$1.createElement("div", null))) : /*#__PURE__*/React$1.createElement(React$1.Fragment, null, /*#__PURE__*/React$1.createElement("div", {
+  }, "Logout")), /*#__PURE__*/React__default["default"].createElement("div", null))) : /*#__PURE__*/React__default["default"].createElement(React__default["default"].Fragment, null, /*#__PURE__*/React__default["default"].createElement("div", {
     className: s$1.row
-  }, /*#__PURE__*/React$1.createElement("input", {
+  }, /*#__PURE__*/React__default["default"].createElement("input", {
     placeholder: "username",
     onInput: e => {
       loginHook.inputName(() => e.target.value);
     }
-  })), /*#__PURE__*/React$1.createElement("div", {
+  })), /*#__PURE__*/React__default["default"].createElement("div", {
     className: s$1.row
-  }, /*#__PURE__*/React$1.createElement("input", {
+  }, /*#__PURE__*/React__default["default"].createElement("input", {
     placeholder: "password",
     onInput: e => {
       loginHook.inputPassword(() => e.target.value);
     }
-  })), loginHook?.errorTip() ? /*#__PURE__*/React$1.createElement("div", {
+  })), loginHook?.errorTip() ? /*#__PURE__*/React__default["default"].createElement("div", {
     className: cls
-  }, loginHook?.errorTip()) : '', /*#__PURE__*/React$1.createElement("div", {
+  }, loginHook?.errorTip()) : '', /*#__PURE__*/React__default["default"].createElement("div", {
     className: s$1.footer
-  }, /*#__PURE__*/React$1.createElement("div", null, /*#__PURE__*/React$1.createElement("button", {
+  }, /*#__PURE__*/React__default["default"].createElement("div", null, /*#__PURE__*/React__default["default"].createElement("button", {
     onClick: () => loginHook.sign()
-  }, "Sign"), "sign and auto login ", /*#__PURE__*/React$1.createElement("input", {
+  }, "Sign"), "sign and auto login ", /*#__PURE__*/React__default["default"].createElement("input", {
     type: "checkbox",
     checked: loginHook.signAndAutoLogin(),
     onChange: e => {
       loginHook.signAndAutoLogin(() => e.target.checked);
     }
-  })), /*#__PURE__*/React$1.createElement("div", null, /*#__PURE__*/React$1.createElement("button", {
+  })), /*#__PURE__*/React__default["default"].createElement("div", null, /*#__PURE__*/React__default["default"].createElement("button", {
     onClick: () => loginHook.login()
-  }, "Login")))), /*#__PURE__*/React$1.createElement("pre", null, /*#__PURE__*/React$1.createElement("code", null, "alreadyLogin(): ", String(loginHook.alreadyLogin()), " ", /*#__PURE__*/React$1.createElement("br", null), "signAndAutoLogin(): ", String(loginHook.signAndAutoLogin()), " ", /*#__PURE__*/React$1.createElement("br", null), "errorTip: ", String(loginHook.errorTip()), " ", /*#__PURE__*/React$1.createElement("br", null))));
+  }, "Login")))), /*#__PURE__*/React__default["default"].createElement("pre", null, /*#__PURE__*/React__default["default"].createElement("code", null, "alreadyLogin(): ", String(loginHook.alreadyLogin()), " ", /*#__PURE__*/React__default["default"].createElement("br", null), "signAndAutoLogin(): ", String(loginHook.signAndAutoLogin()), " ", /*#__PURE__*/React__default["default"].createElement("br", null), "errorTip: ", String(loginHook.errorTip()), " ", /*#__PURE__*/React__default["default"].createElement("br", null))));
 };
 
 var Index = (() => {
-  return /*#__PURE__*/React$1.createElement(LoginFrame, null);
+  return /*#__PURE__*/React__default["default"].createElement(LoginFrame, null);
 });
 
 var s = {"user":"user-module_user__5GACE","setting":"user-module_setting__AErD-"};
 
 function User() {
-  return /*#__PURE__*/React$1.createElement("div", {
+  return /*#__PURE__*/React__default["default"].createElement("div", {
     className: s.user
-  }, "user", /*#__PURE__*/React$1.createElement(Outlet, null));
+  }, "user", /*#__PURE__*/React__default["default"].createElement(Outlet, null));
 }
 
 function Setting() {
-  return /*#__PURE__*/React$1.createElement("div", {
+  return /*#__PURE__*/React__default["default"].createElement("div", {
     className: s.setting
   }, "setting");
 }
@@ -2691,24 +2670,24 @@ function Setting() {
 function App({
   location
 }) {
-  return /*#__PURE__*/React$1.createElement(StaticRouter_1, null, /*#__PURE__*/React$1.createElement(Routes, {
+  return /*#__PURE__*/React__default["default"].createElement(StaticRouter_1, null, /*#__PURE__*/React__default["default"].createElement(Routes, {
     location: location
-  }, /*#__PURE__*/React$1.createElement(Route, {
+  }, /*#__PURE__*/React__default["default"].createElement(Route, {
     path: "/",
-    element: /*#__PURE__*/React$1.createElement(Index, null)
-  }), /*#__PURE__*/React$1.createElement(Route, {
+    element: /*#__PURE__*/React__default["default"].createElement(Index, null)
+  }), /*#__PURE__*/React__default["default"].createElement(Route, {
     path: "index",
-    element: /*#__PURE__*/React$1.createElement(Index, null)
-  }), /*#__PURE__*/React$1.createElement(Route, {
+    element: /*#__PURE__*/React__default["default"].createElement(Index, null)
+  }), /*#__PURE__*/React__default["default"].createElement(Route, {
     path: "user",
-    element: /*#__PURE__*/React$1.createElement(User, null)
-  }, /*#__PURE__*/React$1.createElement(Route, {
+    element: /*#__PURE__*/React__default["default"].createElement(User, null)
+  }, /*#__PURE__*/React__default["default"].createElement(Route, {
     path: "index",
-    element: /*#__PURE__*/React$1.createElement(User, null)
-  }), /*#__PURE__*/React$1.createElement(Route, {
+    element: /*#__PURE__*/React__default["default"].createElement(User, null)
+  }), /*#__PURE__*/React__default["default"].createElement(Route, {
     path: "setting",
-    element: /*#__PURE__*/React$1.createElement(Setting, null)
+    element: /*#__PURE__*/React__default["default"].createElement(Setting, null)
   }))));
 }
 
-export { App as default };
+module.exports = App;

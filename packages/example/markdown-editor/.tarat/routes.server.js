@@ -1,12 +1,41 @@
-import * as React$1 from 'react';
-import React__default, { createContext, Children, isValidElement, Fragment, useContext, useMemo, useRef, useEffect, useCallback, createElement, useState, useLayoutEffect, forwardRef } from 'react';
-import require$$1$1 from 'uc.micro/categories/P/regex';
-import require$$2$1 from 'mdurl';
-import require$$3 from 'uc.micro';
-import require$$6 from 'linkify-it';
-import require$$8 from 'punycode';
-import { state, model, computed, combineLatest, inputComputeInServer, after } from 'tarat-core';
-import { useTarat } from 'tarat-connect';
+'use strict';
+
+var React$1 = require('react');
+var require$$1$1 = require('uc.micro/categories/P/regex');
+var require$$2$1 = require('mdurl');
+var require$$3 = require('uc.micro');
+var require$$6 = require('linkify-it');
+var require$$8 = require('punycode');
+var taratCore = require('tarat-core');
+var taratConnect = require('tarat-connect');
+
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+function _interopNamespace(e) {
+  if (e && e.__esModule) return e;
+  var n = Object.create(null);
+  if (e) {
+    Object.keys(e).forEach(function (k) {
+      if (k !== 'default') {
+        var d = Object.getOwnPropertyDescriptor(e, k);
+        Object.defineProperty(n, k, d.get ? d : {
+          enumerable: true,
+          get: function () { return e[k]; }
+        });
+      }
+    });
+  }
+  n["default"] = e;
+  return Object.freeze(n);
+}
+
+var React__default = /*#__PURE__*/_interopDefaultLegacy(React$1);
+var React__namespace = /*#__PURE__*/_interopNamespace(React$1);
+var require$$1__default = /*#__PURE__*/_interopDefaultLegacy(require$$1$1);
+var require$$2__default = /*#__PURE__*/_interopDefaultLegacy(require$$2$1);
+var require$$3__default = /*#__PURE__*/_interopDefaultLegacy(require$$3);
+var require$$6__default = /*#__PURE__*/_interopDefaultLegacy(require$$6);
+var require$$8__default = /*#__PURE__*/_interopDefaultLegacy(require$$8);
 
 function _extends$1() {
   _extends$1 = Object.assign ? Object.assign.bind() : function (target) {
@@ -843,19 +872,19 @@ var history$1 = /*#__PURE__*/Object.freeze({
  *
  * @license MIT
  */
-const NavigationContext = /*#__PURE__*/createContext(null);
+const NavigationContext = /*#__PURE__*/React$1.createContext(null);
 
 if (process.env.NODE_ENV !== "production") {
   NavigationContext.displayName = "Navigation";
 }
 
-const LocationContext = /*#__PURE__*/createContext(null);
+const LocationContext = /*#__PURE__*/React$1.createContext(null);
 
 if (process.env.NODE_ENV !== "production") {
   LocationContext.displayName = "Location";
 }
 
-const RouteContext = /*#__PURE__*/createContext({
+const RouteContext = /*#__PURE__*/React$1.createContext({
   outlet: null,
   matches: []
 });
@@ -1287,7 +1316,7 @@ function useHref(to) {
   let {
     basename,
     navigator
-  } = useContext(NavigationContext);
+  } = React$1.useContext(NavigationContext);
   let {
     hash,
     pathname,
@@ -1315,7 +1344,7 @@ function useHref(to) {
 
 
 function useInRouterContext() {
-  return useContext(LocationContext) != null;
+  return React$1.useContext(LocationContext) != null;
 }
 /**
  * Returns the current location object, which represents the current URL in web
@@ -1333,7 +1362,7 @@ function useLocation() {
   !useInRouterContext() ? process.env.NODE_ENV !== "production" ? invariant(false, // TODO: This error is probably because they somehow have 2 versions of the
   // router loaded. We can help them understand how to avoid that.
   "useLocation() may be used only in the context of a <Router> component.") : invariant(false) : void 0;
-  return useContext(LocationContext).location;
+  return React$1.useContext(LocationContext).location;
 }
 /**
  * Returns the current navigation action which describes how the router came to
@@ -1344,7 +1373,7 @@ function useLocation() {
 
 
 function useNavigationType() {
-  return useContext(LocationContext).navigationType;
+  return React$1.useContext(LocationContext).navigationType;
 }
 /**
  * Returns true if the URL for the given "to" value matches the current URL.
@@ -1362,7 +1391,7 @@ function useMatch(pattern) {
   let {
     pathname
   } = useLocation();
-  return useMemo(() => matchPath(pattern, pathname), [pathname, pattern]);
+  return React$1.useMemo(() => matchPath(pattern, pathname), [pathname, pattern]);
 }
 /**
  * The interface for the navigate() function returned from useNavigate().
@@ -1383,19 +1412,19 @@ function useNavigate() {
   let {
     basename,
     navigator
-  } = useContext(NavigationContext);
+  } = React$1.useContext(NavigationContext);
   let {
     matches
-  } = useContext(RouteContext);
+  } = React$1.useContext(RouteContext);
   let {
     pathname: locationPathname
   } = useLocation();
   let routePathnamesJson = JSON.stringify(matches.map(match => match.pathnameBase));
-  let activeRef = useRef(false);
-  useEffect(() => {
+  let activeRef = React$1.useRef(false);
+  React$1.useEffect(() => {
     activeRef.current = true;
   });
-  let navigate = useCallback(function (to, options) {
+  let navigate = React$1.useCallback(function (to, options) {
     if (options === void 0) {
       options = {};
     }
@@ -1419,7 +1448,7 @@ function useNavigate() {
   return navigate;
 }
 
-const OutletContext = /*#__PURE__*/createContext(null);
+const OutletContext = /*#__PURE__*/React$1.createContext(null);
 /**
  * Returns the context (if provided) for the child route at this level of the route
  * hierarchy.
@@ -1427,7 +1456,7 @@ const OutletContext = /*#__PURE__*/createContext(null);
  */
 
 function useOutletContext() {
-  return useContext(OutletContext);
+  return React$1.useContext(OutletContext);
 }
 /**
  * Returns the element for the child route at this level of the route
@@ -1438,10 +1467,10 @@ function useOutletContext() {
 
 
 function useOutlet(context) {
-  let outlet = useContext(RouteContext).outlet;
+  let outlet = React$1.useContext(RouteContext).outlet;
 
   if (outlet) {
-    return /*#__PURE__*/createElement(OutletContext.Provider, {
+    return /*#__PURE__*/React$1.createElement(OutletContext.Provider, {
       value: context
     }, outlet);
   }
@@ -1459,7 +1488,7 @@ function useOutlet(context) {
 function useParams() {
   let {
     matches
-  } = useContext(RouteContext);
+  } = React$1.useContext(RouteContext);
   let routeMatch = matches[matches.length - 1];
   return routeMatch ? routeMatch.params : {};
 }
@@ -1473,12 +1502,12 @@ function useParams() {
 function useResolvedPath(to) {
   let {
     matches
-  } = useContext(RouteContext);
+  } = React$1.useContext(RouteContext);
   let {
     pathname: locationPathname
   } = useLocation();
   let routePathnamesJson = JSON.stringify(matches.map(match => match.pathnameBase));
-  return useMemo(() => resolveTo(to, JSON.parse(routePathnamesJson), locationPathname), [to, routePathnamesJson, locationPathname]);
+  return React$1.useMemo(() => resolveTo(to, JSON.parse(routePathnamesJson), locationPathname), [to, routePathnamesJson, locationPathname]);
 }
 /**
  * Returns the element of the route that matched the current location, prepared
@@ -1496,7 +1525,7 @@ function useRoutes(routes, locationArg) {
   "useRoutes() may be used only in the context of a <Router> component.") : invariant(false) : void 0;
   let {
     matches: parentMatches
-  } = useContext(RouteContext);
+  } = React$1.useContext(RouteContext);
   let routeMatch = parentMatches[parentMatches.length - 1];
   let parentParams = routeMatch ? routeMatch.params : {};
   let parentPathname = routeMatch ? routeMatch.pathname : "/";
@@ -1566,7 +1595,7 @@ function _renderMatches(matches, parentMatches) {
 
   if (matches == null) return null;
   return matches.reduceRight((outlet, match, index) => {
-    return /*#__PURE__*/createElement(RouteContext.Provider, {
+    return /*#__PURE__*/React$1.createElement(RouteContext.Provider, {
       children: match.route.element !== undefined ? match.route.element : outlet,
       value: {
         outlet,
@@ -1589,7 +1618,7 @@ function MemoryRouter(_ref) {
     initialEntries,
     initialIndex
   } = _ref;
-  let historyRef = useRef();
+  let historyRef = React$1.useRef();
 
   if (historyRef.current == null) {
     historyRef.current = createMemoryHistory({
@@ -1599,12 +1628,12 @@ function MemoryRouter(_ref) {
   }
 
   let history = historyRef.current;
-  let [state, setState] = useState({
+  let [state, setState] = React$1.useState({
     action: history.action,
     location: history.location
   });
-  useLayoutEffect(() => history.listen(setState), [history]);
-  return /*#__PURE__*/createElement(Router, {
+  React$1.useLayoutEffect(() => history.listen(setState), [history]);
+  return /*#__PURE__*/React$1.createElement(Router, {
     basename: basename,
     children: children,
     location: state.location,
@@ -1632,9 +1661,9 @@ function Navigate(_ref2) {
   !useInRouterContext() ? process.env.NODE_ENV !== "production" ? invariant(false, // TODO: This error is probably because they somehow have 2 versions of
   // the router loaded. We can help them understand how to avoid that.
   "<Navigate> may be used only in the context of a <Router> component.") : invariant(false) : void 0;
-  process.env.NODE_ENV !== "production" ? warning$1(!useContext(NavigationContext).static, "<Navigate> must not be used on the initial render in a <StaticRouter>. " + "This is a no-op, but you should modify your code so the <Navigate> is " + "only ever rendered in response to some user interaction or state change.") : void 0;
+  process.env.NODE_ENV !== "production" ? warning$1(!React$1.useContext(NavigationContext).static, "<Navigate> must not be used on the initial render in a <StaticRouter>. " + "This is a no-op, but you should modify your code so the <Navigate> is " + "only ever rendered in response to some user interaction or state change.") : void 0;
   let navigate = useNavigate();
-  useEffect(() => {
+  React$1.useEffect(() => {
     navigate(to, {
       replace,
       state
@@ -1684,7 +1713,7 @@ function Router(_ref3) {
   } = _ref3;
   !!useInRouterContext() ? process.env.NODE_ENV !== "production" ? invariant(false, "You cannot render a <Router> inside another <Router>." + " You should never have more than one in your app.") : invariant(false) : void 0;
   let basename = normalizePathname(basenameProp);
-  let navigationContext = useMemo(() => ({
+  let navigationContext = React$1.useMemo(() => ({
     basename,
     navigator,
     static: staticProp
@@ -1701,7 +1730,7 @@ function Router(_ref3) {
     state = null,
     key = "default"
   } = locationProp;
-  let location = useMemo(() => {
+  let location = React$1.useMemo(() => {
     let trailingPathname = stripBasename(pathname, basename);
 
     if (trailingPathname == null) {
@@ -1722,9 +1751,9 @@ function Router(_ref3) {
     return null;
   }
 
-  return /*#__PURE__*/createElement(NavigationContext.Provider, {
+  return /*#__PURE__*/React$1.createElement(NavigationContext.Provider, {
     value: navigationContext
-  }, /*#__PURE__*/createElement(LocationContext.Provider, {
+  }, /*#__PURE__*/React$1.createElement(LocationContext.Provider, {
     children: children,
     value: {
       location,
@@ -1761,14 +1790,14 @@ function Routes(_ref4) {
 
 function createRoutesFromChildren(children) {
   let routes = [];
-  Children.forEach(children, element => {
-    if (! /*#__PURE__*/isValidElement(element)) {
+  React$1.Children.forEach(children, element => {
+    if (! /*#__PURE__*/React$1.isValidElement(element)) {
       // Ignore non-elements. This allows people to more easily inline
       // conditionals in their route config.
       return;
     }
 
-    if (element.type === Fragment) {
+    if (element.type === React$1.Fragment) {
       // Transparently support React.Fragment and its children.
       routes.push.apply(routes, createRoutesFromChildren(element.props.children));
       return;
@@ -1875,7 +1904,7 @@ function BrowserRouter(_ref) {
     children,
     window
   } = _ref;
-  let historyRef = useRef();
+  let historyRef = React$1.useRef();
 
   if (historyRef.current == null) {
     historyRef.current = createBrowserHistory({
@@ -1884,12 +1913,12 @@ function BrowserRouter(_ref) {
   }
 
   let history = historyRef.current;
-  let [state, setState] = useState({
+  let [state, setState] = React$1.useState({
     action: history.action,
     location: history.location
   });
-  useLayoutEffect(() => history.listen(setState), [history]);
-  return /*#__PURE__*/createElement(Router, {
+  React$1.useLayoutEffect(() => history.listen(setState), [history]);
+  return /*#__PURE__*/React$1.createElement(Router, {
     basename: basename,
     children: children,
     location: state.location,
@@ -1909,7 +1938,7 @@ function HashRouter(_ref2) {
     children,
     window
   } = _ref2;
-  let historyRef = useRef();
+  let historyRef = React$1.useRef();
 
   if (historyRef.current == null) {
     historyRef.current = createHashHistory({
@@ -1918,12 +1947,12 @@ function HashRouter(_ref2) {
   }
 
   let history = historyRef.current;
-  let [state, setState] = useState({
+  let [state, setState] = React$1.useState({
     action: history.action,
     location: history.location
   });
-  useLayoutEffect(() => history.listen(setState), [history]);
-  return /*#__PURE__*/createElement(Router, {
+  React$1.useLayoutEffect(() => history.listen(setState), [history]);
+  return /*#__PURE__*/React$1.createElement(Router, {
     basename: basename,
     children: children,
     location: state.location,
@@ -1945,12 +1974,12 @@ function HistoryRouter(_ref3) {
     children,
     history
   } = _ref3;
-  const [state, setState] = useState({
+  const [state, setState] = React$1.useState({
     action: history.action,
     location: history.location
   });
-  useLayoutEffect(() => history.listen(setState), [history]);
-  return /*#__PURE__*/createElement(Router, {
+  React$1.useLayoutEffect(() => history.listen(setState), [history]);
+  return /*#__PURE__*/React$1.createElement(Router, {
     basename: basename,
     children: children,
     location: state.location,
@@ -1971,7 +2000,7 @@ function isModifiedEvent(event) {
  */
 
 
-const Link$1 = /*#__PURE__*/forwardRef(function LinkWithRef(_ref4, ref) {
+const Link$1 = /*#__PURE__*/React$1.forwardRef(function LinkWithRef(_ref4, ref) {
   let {
     onClick,
     reloadDocument,
@@ -2000,7 +2029,7 @@ const Link$1 = /*#__PURE__*/forwardRef(function LinkWithRef(_ref4, ref) {
   return (
     /*#__PURE__*/
     // eslint-disable-next-line jsx-a11y/anchor-has-content
-    createElement("a", _extends({}, rest, {
+    React$1.createElement("a", _extends({}, rest, {
       href: href,
       onClick: handleClick,
       ref: ref,
@@ -2017,7 +2046,7 @@ if (process.env.NODE_ENV !== "production") {
  */
 
 
-const NavLink = /*#__PURE__*/forwardRef(function NavLinkWithRef(_ref5, ref) {
+const NavLink = /*#__PURE__*/React$1.forwardRef(function NavLinkWithRef(_ref5, ref) {
   let {
     "aria-current": ariaCurrentProp = "page",
     caseSensitive = false,
@@ -2059,7 +2088,7 @@ const NavLink = /*#__PURE__*/forwardRef(function NavLinkWithRef(_ref5, ref) {
   let style = typeof styleProp === "function" ? styleProp({
     isActive
   }) : styleProp;
-  return /*#__PURE__*/createElement(Link$1, _extends({}, rest, {
+  return /*#__PURE__*/React$1.createElement(Link$1, _extends({}, rest, {
     "aria-current": ariaCurrent,
     className: className,
     ref: ref,
@@ -2092,7 +2121,7 @@ function useLinkClickHandler(to, _temp) {
   let navigate = useNavigate();
   let location = useLocation();
   let path = useResolvedPath(to);
-  return useCallback(event => {
+  return React$1.useCallback(event => {
     if (event.button === 0 && ( // Ignore everything but left clicks
     !target || target === "_self") && // Let browser handle "target=_blank" etc.
     !isModifiedEvent(event) // Ignore clicks with modifier keys
@@ -2116,9 +2145,9 @@ function useLinkClickHandler(to, _temp) {
 
 function useSearchParams(defaultInit) {
   process.env.NODE_ENV !== "production" ? warning(typeof URLSearchParams !== "undefined", "You cannot use the `useSearchParams` hook in a browser that does not " + "support the URLSearchParams API. If you need to support Internet " + "Explorer 11, we recommend you load a polyfill such as " + "https://github.com/ungap/url-search-params\n\n" + "If you're unsure how to load polyfills, we recommend you check out " + "https://polyfill.io/v3/ which provides some recommendations about how " + "to load polyfills only for users that need them, instead of for every " + "user.") : void 0;
-  let defaultSearchParamsRef = useRef(createSearchParams(defaultInit));
+  let defaultSearchParamsRef = React$1.useRef(createSearchParams(defaultInit));
   let location = useLocation();
-  let searchParams = useMemo(() => {
+  let searchParams = React$1.useMemo(() => {
     let searchParams = createSearchParams(location.search);
 
     for (let key of defaultSearchParamsRef.current.keys()) {
@@ -2132,7 +2161,7 @@ function useSearchParams(defaultInit) {
     return searchParams;
   }, [location.search]);
   let navigate = useNavigate();
-  let setSearchParams = useCallback((nextInit, navigateOptions) => {
+  let setSearchParams = React$1.useCallback((nextInit, navigateOptions) => {
     navigate("?" + createSearchParams(nextInit), navigateOptions);
   }, [navigate]);
   return [searchParams, setSearchParams];
@@ -2246,7 +2275,7 @@ var require$$2 = /*@__PURE__*/getAugmentedNamespace(reactRouterDom$1);
 Object.defineProperty(server, '__esModule', {
   value: true
 });
-var React = React__default;
+var React = React__default["default"];
 var history = require$$1;
 var reactRouterDom = require$$2;
 /**
@@ -2337,27 +2366,27 @@ function _inheritsLoose(subClass, superClass) {
 
 // Icon
 function Icon(props) {
-  return /*#__PURE__*/React$1.createElement("i", {
+  return /*#__PURE__*/React__namespace.createElement("i", {
     className: "rmel-iconfont rmel-icon-" + props.type
   });
 }
 
 function NavigationBar(props) {
-  return /*#__PURE__*/React$1.createElement("div", {
+  return /*#__PURE__*/React__namespace.createElement("div", {
     className: "rc-md-navigation " + (props.visible ? 'visible' : 'in-visible')
-  }, /*#__PURE__*/React$1.createElement("div", {
+  }, /*#__PURE__*/React__namespace.createElement("div", {
     className: "navigation-nav left"
-  }, /*#__PURE__*/React$1.createElement("div", {
+  }, /*#__PURE__*/React__namespace.createElement("div", {
     className: "button-wrap"
-  }, props.left)), /*#__PURE__*/React$1.createElement("div", {
+  }, props.left)), /*#__PURE__*/React__namespace.createElement("div", {
     className: "navigation-nav right"
-  }, /*#__PURE__*/React$1.createElement("div", {
+  }, /*#__PURE__*/React__namespace.createElement("div", {
     className: "button-wrap"
   }, props.right)));
 }
 
 function ToolBar(props) {
-  return /*#__PURE__*/React$1.createElement("div", {
+  return /*#__PURE__*/React__namespace.createElement("div", {
     className: "tool-bar",
     style: props.style
   }, props.children);
@@ -2932,7 +2961,7 @@ var PluginComponent = /*#__PURE__*/function (_React$Component) {
   }]);
 
   return PluginComponent;
-}(React$1.Component);
+}(React__namespace.Component);
 PluginComponent.pluginName = '';
 PluginComponent.align = 'left';
 PluginComponent.defaultConfig = {};
@@ -2947,7 +2976,7 @@ var Divider = /*#__PURE__*/function (_PluginComponent) {
   var _proto = Divider.prototype;
 
   _proto.render = function render() {
-    return /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement("span", {
       className: "rc-md-divider"
     });
   };
@@ -3810,7 +3839,7 @@ var Preview = /*#__PURE__*/function (_React$Component) {
     var _this;
 
     _this = _React$Component.call(this, props) || this;
-    _this.el = /*#__PURE__*/React$1.createRef();
+    _this.el = /*#__PURE__*/React__namespace.createRef();
     return _this;
   }
 
@@ -3825,7 +3854,7 @@ var Preview = /*#__PURE__*/function (_React$Component) {
   };
 
   return Preview;
-}(React$1.Component);
+}(React__namespace.Component);
 var HtmlRender = /*#__PURE__*/function (_Preview) {
   _inheritsLoose(HtmlRender, _Preview);
 
@@ -3848,13 +3877,13 @@ var HtmlRender = /*#__PURE__*/function (_Preview) {
   };
 
   _proto2.render = function render() {
-    return typeof this.props.html === 'string' ? /*#__PURE__*/React$1.createElement('div', {
+    return typeof this.props.html === 'string' ? /*#__PURE__*/React__namespace.createElement('div', {
       ref: this.el,
       dangerouslySetInnerHTML: {
         __html: this.props.html
       },
       className: this.props.className || 'custom-html-style'
-    }) : /*#__PURE__*/React$1.createElement('div', {
+    }) : /*#__PURE__*/React__namespace.createElement('div', {
       ref: this.el,
       className: this.props.className || 'custom-html-style'
     }, this.props.html);
@@ -3965,9 +3994,9 @@ var Editor$1 = /*#__PURE__*/function (_React$Component) {
     var _this;
 
     _this = _React$Component.call(this, props) || this;
-    _this.nodeMdText = /*#__PURE__*/React$1.createRef();
-    _this.nodeMdPreview = /*#__PURE__*/React$1.createRef();
-    _this.nodeMdPreviewWrapper = /*#__PURE__*/React$1.createRef();
+    _this.nodeMdText = /*#__PURE__*/React__namespace.createRef();
+    _this.nodeMdPreview = /*#__PURE__*/React__namespace.createRef();
+    _this.nodeMdPreviewWrapper = /*#__PURE__*/React__namespace.createRef();
     _this.hasContentChanged = true;
     _this.composing = false;
     _this.scrollScale = 1;
@@ -3988,8 +4017,8 @@ var Editor$1 = /*#__PURE__*/function (_React$Component) {
       _this.state.view.menu = false;
     }
 
-    _this.nodeMdText = /*#__PURE__*/React$1.createRef();
-    _this.nodeMdPreviewWrapper = /*#__PURE__*/React$1.createRef();
+    _this.nodeMdText = /*#__PURE__*/React__namespace.createRef();
+    _this.nodeMdPreviewWrapper = /*#__PURE__*/React__namespace.createRef();
     _this.handleChange = _this.handleChange.bind(_assertThisInitialized(_this));
     _this.handlePaste = _this.handlePaste.bind(_assertThisInitialized(_this));
     _this.handleDrop = _this.handleDrop.bind(_assertThisInitialized(_this));
@@ -4098,7 +4127,7 @@ var Editor$1 = /*#__PURE__*/function (_React$Component) {
         result[it.comp.align] = [];
       }
 
-      result[it.comp.align].push( /*#__PURE__*/React$1.createElement(it.comp, {
+      result[it.comp.align].push( /*#__PURE__*/React__namespace.createElement(it.comp, {
         editor: _this2,
         editorConfig: _this2.config,
         config: _extends$1({}, it.comp.defaultConfig || {}, it.config || {}),
@@ -4830,27 +4859,27 @@ var Editor$1 = /*#__PURE__*/function (_React$Component) {
     var isShowMenu = !!view.menu;
     var editorId = id ? id + "_md" : undefined;
     var previewerId = id ? id + "_html" : undefined;
-    return /*#__PURE__*/React$1.createElement("div", {
+    return /*#__PURE__*/React__namespace.createElement("div", {
       id: id,
       className: "rc-md-editor " + (fullScreen ? 'full' : '') + " " + className,
       style: style,
       onKeyDown: this.handleKeyDown,
       onDrop: this.handleDrop
-    }, /*#__PURE__*/React$1.createElement(NavigationBar, {
+    }, /*#__PURE__*/React__namespace.createElement(NavigationBar, {
       visible: isShowMenu,
       left: getPluginAt('left'),
       right: getPluginAt('right')
-    }), /*#__PURE__*/React$1.createElement("div", {
+    }), /*#__PURE__*/React__namespace.createElement("div", {
       className: "editor-container"
-    }, showHideMenu && /*#__PURE__*/React$1.createElement(ToolBar, null, /*#__PURE__*/React$1.createElement("span", {
+    }, showHideMenu && /*#__PURE__*/React__namespace.createElement(ToolBar, null, /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-menu",
       title: isShowMenu ? 'hidden menu' : 'show menu',
       onClick: this.handleToggleMenu
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "expand-" + (isShowMenu ? 'less' : 'more')
-    }))), /*#__PURE__*/React$1.createElement("section", {
+    }))), /*#__PURE__*/React__namespace.createElement("section", {
       className: "section sec-md " + (view.md ? 'visible' : 'in-visible')
-    }, /*#__PURE__*/React$1.createElement("textarea", {
+    }, /*#__PURE__*/React__namespace.createElement("textarea", {
       id: editorId,
       ref: this.nodeMdText,
       name: name,
@@ -4875,9 +4904,9 @@ var Editor$1 = /*#__PURE__*/function (_React$Component) {
       onPaste: this.handlePaste,
       onFocus: this.handleFocus,
       onBlur: this.handleBlur
-    })), /*#__PURE__*/React$1.createElement("section", {
+    })), /*#__PURE__*/React__namespace.createElement("section", {
       className: "section sec-html " + (view.html ? 'visible' : 'in-visible')
-    }, /*#__PURE__*/React$1.createElement("div", {
+    }, /*#__PURE__*/React__namespace.createElement("div", {
       id: previewerId,
       className: "section-container html-wrap",
       ref: this.nodeMdPreviewWrapper,
@@ -4885,7 +4914,7 @@ var Editor$1 = /*#__PURE__*/function (_React$Component) {
         return _this14.shouldSyncScroll = 'html';
       },
       onScroll: this.handlePreviewScroll
-    }, /*#__PURE__*/React$1.createElement(HtmlRender, {
+    }, /*#__PURE__*/React__namespace.createElement(HtmlRender, {
       html: html,
       className: this.config.htmlClass,
       ref: this.nodeMdPreview
@@ -4893,7 +4922,7 @@ var Editor$1 = /*#__PURE__*/function (_React$Component) {
   };
 
   return Editor;
-}(React$1.Component);
+}(React__namespace.Component);
 
 Editor$1.plugins = [];
 Editor$1.addLocale = i18n.add.bind(i18n);
@@ -4912,13 +4941,13 @@ var BlockCodeBlock = /*#__PURE__*/function (_PluginComponent) {
   _proto.render = function render() {
     var _this = this;
 
-    return /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-code-block",
       title: i18n.get('btnCode'),
       onClick: function onClick() {
         return _this.editor.insertMarkdown('code');
       }
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "code-block"
     }));
   };
@@ -4940,13 +4969,13 @@ var BlockCodeInline = /*#__PURE__*/function (_PluginComponent) {
   _proto.render = function render() {
     var _this = this;
 
-    return /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-code-inline",
       title: i18n.get('btnInlineCode'),
       onClick: function onClick() {
         return _this.editor.insertMarkdown('inlinecode');
       }
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "code"
     }));
   };
@@ -4968,13 +4997,13 @@ var BlockQuote = /*#__PURE__*/function (_PluginComponent) {
   _proto.render = function render() {
     var _this = this;
 
-    return /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-quote",
       title: i18n.get('btnQuote'),
       onClick: function onClick() {
         return _this.editor.insertMarkdown('quote');
       }
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "quote"
     }));
   };
@@ -4996,13 +5025,13 @@ var BlockWrap = /*#__PURE__*/function (_PluginComponent) {
   _proto.render = function render() {
     var _this = this;
 
-    return /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-wrap",
       title: i18n.get('btnLineBreak'),
       onClick: function onClick() {
         return _this.editor.insertMarkdown('hr');
       }
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "wrap"
     }));
   };
@@ -5040,11 +5069,11 @@ var Clear = /*#__PURE__*/function (_PluginComponent) {
   };
 
   _proto.render = function render() {
-    return /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-clear",
       title: i18n.get('btnClear'),
       onClick: this.handleClick
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "delete"
     }));
   };
@@ -5088,13 +5117,13 @@ var FontBold = /*#__PURE__*/function (_PluginComponent) {
   _proto.render = function render() {
     var _this2 = this;
 
-    return /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-bold",
       title: i18n.get('btnBold'),
       onClick: function onClick() {
         return _this2.editor.insertMarkdown('bold');
       }
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "bold"
     }));
   };
@@ -5138,13 +5167,13 @@ var FontItalic = /*#__PURE__*/function (_PluginComponent) {
   _proto.render = function render() {
     var _this2 = this;
 
-    return /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-italic",
       title: i18n.get('btnItalic'),
       onClick: function onClick() {
         return _this2.editor.insertMarkdown('italic');
       }
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "italic"
     }));
   };
@@ -5188,13 +5217,13 @@ var FontStrikethrough = /*#__PURE__*/function (_PluginComponent) {
   _proto.render = function render() {
     var _this2 = this;
 
-    return /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-strikethrough",
       title: i18n.get('btnStrikethrough'),
       onClick: function onClick() {
         return _this2.editor.insertMarkdown('strikethrough');
       }
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "strikethrough"
     }));
   };
@@ -5237,13 +5266,13 @@ var FontUnderline = /*#__PURE__*/function (_PluginComponent) {
   _proto.render = function render() {
     var _this2 = this;
 
-    return /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-underline",
       title: i18n.get('btnUnderline'),
       onClick: function onClick() {
         return _this2.editor.insertMarkdown('underline');
       }
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "underline"
     }));
   };
@@ -5291,11 +5320,11 @@ var FullScreen = /*#__PURE__*/function (_PluginComponent) {
   _proto.render = function render() {
     if (this.editorConfig.canView && this.editorConfig.canView.fullScreen) {
       var enable = this.state.enable;
-      return /*#__PURE__*/React$1.createElement("span", {
+      return /*#__PURE__*/React__namespace.createElement("span", {
         className: "button button-type-fullscreen",
         title: i18n.get(enable ? 'btnExitFullScreen' : 'btnFullScreen'),
         onClick: this.handleClick
-      }, /*#__PURE__*/React$1.createElement(Icon, {
+      }, /*#__PURE__*/React__namespace.createElement(Icon, {
         type: enable ? 'fullscreen-exit' : 'fullscreen'
       }));
     }
@@ -5332,14 +5361,14 @@ var DropList = /*#__PURE__*/function (_React$Component) {
   };
 
   _proto.render = function render() {
-    return /*#__PURE__*/React$1.createElement("div", {
+    return /*#__PURE__*/React__namespace.createElement("div", {
       className: "drop-wrap " + (this.props.show ? 'show' : 'hidden'),
       onClick: this.handleClose
     }, this.props.children);
   };
 
   return DropList;
-}(React$1.Component);
+}(React__namespace.Component);
 
 var HeaderList = /*#__PURE__*/function (_React$Component) {
   _inheritsLoose(HeaderList, _React$Component);
@@ -5359,37 +5388,37 @@ var HeaderList = /*#__PURE__*/function (_React$Component) {
   };
 
   _proto.render = function render() {
-    return /*#__PURE__*/React$1.createElement("ul", {
+    return /*#__PURE__*/React__namespace.createElement("ul", {
       className: "header-list"
-    }, /*#__PURE__*/React$1.createElement("li", {
+    }, /*#__PURE__*/React__namespace.createElement("li", {
       className: "list-item"
-    }, /*#__PURE__*/React$1.createElement("h1", {
+    }, /*#__PURE__*/React__namespace.createElement("h1", {
       onClick: this.handleHeader.bind(this, 'h1')
-    }, "H1")), /*#__PURE__*/React$1.createElement("li", {
+    }, "H1")), /*#__PURE__*/React__namespace.createElement("li", {
       className: "list-item"
-    }, /*#__PURE__*/React$1.createElement("h2", {
+    }, /*#__PURE__*/React__namespace.createElement("h2", {
       onClick: this.handleHeader.bind(this, 'h2')
-    }, "H2")), /*#__PURE__*/React$1.createElement("li", {
+    }, "H2")), /*#__PURE__*/React__namespace.createElement("li", {
       className: "list-item"
-    }, /*#__PURE__*/React$1.createElement("h3", {
+    }, /*#__PURE__*/React__namespace.createElement("h3", {
       onClick: this.handleHeader.bind(this, 'h3')
-    }, "H3")), /*#__PURE__*/React$1.createElement("li", {
+    }, "H3")), /*#__PURE__*/React__namespace.createElement("li", {
       className: "list-item"
-    }, /*#__PURE__*/React$1.createElement("h4", {
+    }, /*#__PURE__*/React__namespace.createElement("h4", {
       onClick: this.handleHeader.bind(this, 'h4')
-    }, "H4")), /*#__PURE__*/React$1.createElement("li", {
+    }, "H4")), /*#__PURE__*/React__namespace.createElement("li", {
       className: "list-item"
-    }, /*#__PURE__*/React$1.createElement("h5", {
+    }, /*#__PURE__*/React__namespace.createElement("h5", {
       onClick: this.handleHeader.bind(this, 'h5')
-    }, "H5")), /*#__PURE__*/React$1.createElement("li", {
+    }, "H5")), /*#__PURE__*/React__namespace.createElement("li", {
       className: "list-item"
-    }, /*#__PURE__*/React$1.createElement("h6", {
+    }, /*#__PURE__*/React__namespace.createElement("h6", {
       onClick: this.handleHeader.bind(this, 'h6')
     }, "H6")));
   };
 
   return HeaderList;
-}(React$1.Component);
+}(React__namespace.Component);
 
 var Header = /*#__PURE__*/function (_PluginComponent) {
   _inheritsLoose(Header, _PluginComponent);
@@ -5423,17 +5452,17 @@ var Header = /*#__PURE__*/function (_PluginComponent) {
   _proto.render = function render() {
     var _this2 = this;
 
-    return /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-header",
       title: i18n.get('btnHeader'),
       onMouseEnter: this.show,
       onMouseLeave: this.hide
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "font-size"
-    }), /*#__PURE__*/React$1.createElement(DropList, {
+    }), /*#__PURE__*/React__namespace.createElement(DropList, {
       show: this.state.show,
       onClose: this.hide
-    }, /*#__PURE__*/React$1.createElement(HeaderList, {
+    }, /*#__PURE__*/React__namespace.createElement(HeaderList, {
       onSelectHeader: function onSelectHeader(header) {
         return _this2.editor.insertMarkdown(header);
       }
@@ -5454,7 +5483,7 @@ var InputFile = /*#__PURE__*/function (_React$Component) {
     _this = _React$Component.call(this, props) || this;
     _this.timerId = undefined;
     _this.locked = false;
-    _this.input = /*#__PURE__*/React$1.createRef();
+    _this.input = /*#__PURE__*/React__namespace.createRef();
     return _this;
   }
 
@@ -5489,7 +5518,7 @@ var InputFile = /*#__PURE__*/function (_React$Component) {
   };
 
   _proto.render = function render() {
-    return /*#__PURE__*/React$1.createElement("input", {
+    return /*#__PURE__*/React__namespace.createElement("input", {
       type: "file",
       ref: this.input,
       accept: this.props.accept,
@@ -5507,7 +5536,7 @@ var InputFile = /*#__PURE__*/function (_React$Component) {
   };
 
   return InputFile;
-}(React$1.Component);
+}(React__namespace.Component);
 
 var Image = /*#__PURE__*/function (_PluginComponent) {
   _inheritsLoose(Image, _PluginComponent);
@@ -5516,7 +5545,7 @@ var Image = /*#__PURE__*/function (_PluginComponent) {
     var _this;
 
     _this = _PluginComponent.call(this, props) || this;
-    _this.inputFile = /*#__PURE__*/React$1.createRef();
+    _this.inputFile = /*#__PURE__*/React__namespace.createRef();
     _this.onImageChanged = _this.onImageChanged.bind(_assertThisInitialized(_this));
     _this.handleCustomImageUpload = _this.handleCustomImageUpload.bind(_assertThisInitialized(_this));
     _this.handleImageUpload = _this.handleImageUpload.bind(_assertThisInitialized(_this));
@@ -5574,22 +5603,22 @@ var Image = /*#__PURE__*/function (_PluginComponent) {
     var _this3 = this;
 
     var isCustom = !!this.editorConfig.onCustomImageUpload;
-    return isCustom ? /*#__PURE__*/React$1.createElement("span", {
+    return isCustom ? /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-image",
       title: i18n.get('btnImage'),
       onClick: this.handleCustomImageUpload
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "image"
-    })) : /*#__PURE__*/React$1.createElement("span", {
+    })) : /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-image",
       title: i18n.get('btnImage'),
       onClick: this.handleImageUpload,
       style: {
         position: 'relative'
       }
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "image"
-    }), /*#__PURE__*/React$1.createElement(InputFile, {
+    }), /*#__PURE__*/React__namespace.createElement(InputFile, {
       accept: this.editorConfig.imageAccept || '',
       ref: this.inputFile,
       onChange: function onChange(e) {
@@ -5641,13 +5670,13 @@ var Link = /*#__PURE__*/function (_PluginComponent) {
   _proto.render = function render() {
     var _this2 = this;
 
-    return /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-link",
       title: i18n.get('btnLink'),
       onClick: function onClick() {
         return _this2.editor.insertMarkdown('link');
       }
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "link"
     }));
   };
@@ -5691,13 +5720,13 @@ var ListOrdered = /*#__PURE__*/function (_PluginComponent) {
   _proto.render = function render() {
     var _this2 = this;
 
-    return /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-ordered",
       title: i18n.get('btnOrdered'),
       onClick: function onClick() {
         return _this2.editor.insertMarkdown('order');
       }
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "list-ordered"
     }));
   };
@@ -5741,13 +5770,13 @@ var ListUnordered = /*#__PURE__*/function (_PluginComponent) {
   _proto.render = function render() {
     var _this2 = this;
 
-    return /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-unordered",
       title: i18n.get('btnUnordered'),
       onClick: function onClick() {
         return _this2.editor.insertMarkdown('unordered');
       }
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "list-unordered"
     }));
   };
@@ -5974,17 +6003,17 @@ var Logger = /*#__PURE__*/function (_PluginComponent) {
   _proto.render = function render() {
     var hasUndo = this.logger.getUndoCount() > 1 || this.logger.initValue !== this.editor.getMdValue();
     var hasRedo = this.logger.getRedoCount() > 0;
-    return /*#__PURE__*/React$1.createElement(React$1.Fragment, null, /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement(React__namespace.Fragment, null, /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-undo " + (hasUndo ? '' : 'disabled'),
       title: i18n.get('btnUndo'),
       onClick: this.handleUndo
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "undo"
-    })), /*#__PURE__*/React$1.createElement("span", {
+    })), /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-redo " + (hasRedo ? '' : 'disabled'),
       title: i18n.get('btnRedo'),
       onClick: this.handleRedo
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "redo"
     })));
   };
@@ -6085,11 +6114,11 @@ var ModeToggle = /*#__PURE__*/function (_PluginComponent) {
   _proto.render = function render() {
     if (this.isDisplay) {
       var display = this.getDisplayInfo();
-      return /*#__PURE__*/React$1.createElement("span", {
+      return /*#__PURE__*/React__namespace.createElement("span", {
         className: "button button-type-mode",
         title: i18n.get("btnMode" + display.title),
         onClick: this.handleClick
-      }, /*#__PURE__*/React$1.createElement(Icon, {
+      }, /*#__PURE__*/React__namespace.createElement(Icon, {
         type: display.icon
       }));
     }
@@ -6279,12 +6308,12 @@ var TableList = /*#__PURE__*/function (_React$Component) {
   _proto.render = function render() {
     var _this2 = this;
 
-    return /*#__PURE__*/React$1.createElement("ul", {
+    return /*#__PURE__*/React__namespace.createElement("ul", {
       className: "table-list wrap",
       style: this.calcWrapStyle()
     }, this.state.list.map(function (row, i) {
       return row.map(function (col, j) {
-        return /*#__PURE__*/React$1.createElement("li", {
+        return /*#__PURE__*/React__namespace.createElement("li", {
           className: "list-item " + (col === 1 ? 'active' : ''),
           key: i + "-" + j,
           style: _this2.calcItemStyle(i, j),
@@ -6296,7 +6325,7 @@ var TableList = /*#__PURE__*/function (_React$Component) {
   };
 
   return TableList;
-}(React$1.Component);
+}(React__namespace.Component);
 
 var Table = /*#__PURE__*/function (_PluginComponent) {
   _inheritsLoose(Table, _PluginComponent);
@@ -6331,17 +6360,17 @@ var Table = /*#__PURE__*/function (_PluginComponent) {
     var _this2 = this;
 
     var config = this.editorConfig.table || this.props.config;
-    return /*#__PURE__*/React$1.createElement("span", {
+    return /*#__PURE__*/React__namespace.createElement("span", {
       className: "button button-type-table",
       title: i18n.get('btnTable'),
       onMouseEnter: this.show,
       onMouseLeave: this.hide
-    }, /*#__PURE__*/React$1.createElement(Icon, {
+    }, /*#__PURE__*/React__namespace.createElement(Icon, {
       type: "grid"
-    }), /*#__PURE__*/React$1.createElement(DropList, {
+    }), /*#__PURE__*/React__namespace.createElement(DropList, {
       show: this.state.show,
       onClose: this.hide
-    }, /*#__PURE__*/React$1.createElement(TableList, {
+    }, /*#__PURE__*/React__namespace.createElement(TableList, {
       visibility: this.state.show,
       maxRow: config.maxRow,
       maxCol: config.maxCol,
@@ -10922,7 +10951,7 @@ var require$$0 = {
   /*eslint-disable max-len*/
 
 
-  var UNICODE_PUNCT_RE = require$$1$1; // Currently without astral characters support.
+  var UNICODE_PUNCT_RE = require$$1__default["default"]; // Currently without astral characters support.
 
   function isPunctChar(ch) {
     return UNICODE_PUNCT_RE.test(ch);
@@ -11097,8 +11126,8 @@ var require$$0 = {
 
 
   exports.lib = {};
-  exports.lib.mdurl = require$$2$1;
-  exports.lib.ucmicro = require$$3;
+  exports.lib.mdurl = require$$2__default["default"];
+  exports.lib.ucmicro = require$$3__default["default"];
   exports.assign = assign;
   exports.isString = isString;
   exports.has = has;
@@ -16721,9 +16750,9 @@ var Renderer = renderer;
 var ParserCore = parser_core;
 var ParserBlock = parser_block;
 var ParserInline = parser_inline;
-var LinkifyIt = require$$6;
-var mdurl = require$$2$1;
-var punycode = require$$8;
+var LinkifyIt = require$$6__default["default"];
+var mdurl = require$$2__default["default"];
+var punycode = require$$8__default["default"];
 var config = {
   default: _default,
   zero: zero,
@@ -17307,16 +17336,16 @@ var lib = MarkdownIt$1;
 var MarkdownIt = /*@__PURE__*/getDefaultExportFromCjs(markdownIt.exports);
 
 var deps = {
-  mdEditor: [["h", 2, [0]], ["h", 3, [2]], ["h", 4, [0, 1], [2, 0]]]
+  mdEditor: [["h", 2, [0]], ["h", 3, [2]], ["h", 4, [0, 2, 1], [2, 0]]]
 };
 
 Object.assign(mdEditor, {
   __deps__: deps.mdEditor
 });
 function mdEditor(q = {}) {
-  const currentId = state(q.id);
-  const inputMD = state('');
-  const posts = model('markdown', () => {
+  const currentId = taratCore.state(q.id);
+  const inputMD = taratCore.state('');
+  const posts = taratCore.model('markdown', () => {
     const cid = currentId();
 
     if (cid) {
@@ -17327,15 +17356,15 @@ function mdEditor(q = {}) {
       };
     }
   });
-  const postedMD = computed(() => {
+  const postedMD = taratCore.computed(() => {
     return posts()[0]?.content;
   });
-  const displayMD = combineLatest([inputMD, postedMD]);
-  const save = inputComputeInServer(async () => {
+  const displayMD = taratCore.combineLatest([inputMD, postedMD]);
+  const save = taratCore.inputComputeInServer(async () => {
     const cid = currentId();
 
     if (cid) {
-      const i = posts.findIndex(p => p.id === cid);
+      const i = posts().findIndex(p => p.id === cid);
 
       if (i > -1) {
         posts(arr => {
@@ -17349,7 +17378,7 @@ function mdEditor(q = {}) {
       currentId(() => r.id);
     }
   });
-  after(() => {}, [posts]);
+  taratCore.after(() => {}, [posts]);
   return {
     displayMD,
     postedMD,
@@ -17371,17 +17400,17 @@ function Editor(props) {
   //   })).reduce((p, n) => Object.assign(p, n), {})
   // }
 
-  const mdEditorHook = useTarat(mdEditor, query);
-  return /*#__PURE__*/React__default.createElement("div", {
+  const mdEditorHook = taratConnect.useTarat(mdEditor, query);
+  return /*#__PURE__*/React__default["default"].createElement("div", {
     className: s.editor
-  }, /*#__PURE__*/React__default.createElement("header", {
+  }, /*#__PURE__*/React__default["default"].createElement("header", {
     className: s.header
-  }, /*#__PURE__*/React__default.createElement("button", {
+  }, /*#__PURE__*/React__default["default"].createElement("button", {
     className: s.saveBtn,
     onClick: () => {
       mdEditorHook.save();
     }
-  }, "Save")), /*#__PURE__*/React__default.createElement(Editor$1, {
+  }, "Save")), /*#__PURE__*/React__default["default"].createElement(Editor$1, {
     defaultValue: mdEditorHook.displayMD() || '',
     style: {
       height: `${height}px`
@@ -17398,9 +17427,9 @@ function Editor(props) {
 }
 
 function Main() {
-  return /*#__PURE__*/React__default.createElement("div", {
+  return /*#__PURE__*/React__default["default"].createElement("div", {
     className: s$1.index
-  }, /*#__PURE__*/React__default.createElement(Editor, null));
+  }, /*#__PURE__*/React__default["default"].createElement(Editor, null));
 }
 
 /**
@@ -17409,12 +17438,12 @@ function Main() {
 function App({
   location
 }) {
-  return /*#__PURE__*/React__default.createElement(StaticRouter_1, null, /*#__PURE__*/React__default.createElement(Routes, {
+  return /*#__PURE__*/React__default["default"].createElement(StaticRouter_1, null, /*#__PURE__*/React__default["default"].createElement(Routes, {
     location: location
-  }, /*#__PURE__*/React__default.createElement(Route, {
+  }, /*#__PURE__*/React__default["default"].createElement(Route, {
     path: "main",
-    element: /*#__PURE__*/React__default.createElement(Main, null)
+    element: /*#__PURE__*/React__default["default"].createElement(Main, null)
   })));
 }
 
-export { App as default };
+module.exports = App;
