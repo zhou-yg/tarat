@@ -14,6 +14,20 @@ export default [
     input: 'src/index.ts',
     output: {
       file: 'dist/index.js',
+      name: 'taratConnect',
+      format: 'umd'
+    },
+  },
+  {
+    plugins: [
+      tsPlugin({
+        clean: true,
+        tsconfig: './tsconfig.json',
+      }),
+    ],
+    input: 'src/index.ts',
+    output: {
+      file: 'dist/index.mjs',
       format: 'esm'
     },
   },
@@ -25,27 +39,5 @@ export default [
     plugins: [
       dts(),
     ],
-  },
-  // {
-  //   input: "src/driver.ts",
-  //   output: [
-  //     { file: "dist/driver.d.ts", format: "es" }
-  //   ],
-  //   plugins: [
-  //     dts(),
-  //   ],
-  // },
-  // {
-  //   plugins: [
-  //     tsPlugin({
-  //       clean: true,
-  //       tsconfig: './tsconfig.json',
-  //     }),
-  //   ],
-  //   input: 'src/driver.ts',
-  //   output: {
-  //     file: 'dist/driver.js',
-  //     format: 'esm'
-  //   },
-  // },
+  }
 ]
