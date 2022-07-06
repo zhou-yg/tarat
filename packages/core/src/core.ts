@@ -314,6 +314,12 @@ export class Model<T extends any[]> extends State<T[]> {
     const result: T = await getPlugin('Model').find(this.entity, { where: obj })
     return result.length > 0
   }
+  async create(obj: { [k: string]: any }) {
+    const result: T = await getPlugin('Model').create(this.entity, {
+      data: obj
+    })
+    return result
+  }
   override async applyInputComputePatches(
     ic: InputCompute,
     reactiveChain?: ReactiveChain
@@ -370,7 +376,7 @@ class ClientModel<T extends any[]> extends Model<T> {
     // @TODO: ignoreClientEnable will useless
     if (valid || this.options.ignoreClientEnable) {
       const context = this.scope.createInputComputeContext(this)
-      log('[ClientModel.executeQuery] before post : ')
+      log('[ClientModel.executeQuery] before post')
       const result: IHookContext = await getPlugin('Context').postQueryToServer(
         context
       )
@@ -886,7 +892,6 @@ export class CurrentRunnerScope {
   setInitialContextData(context: IHookContext) {
     this.intialContextData = context['data']
     if (context.index !== undefined && typeof context.index === 'number') {
-
       if (this.intialContextDeps?.length && context.index !== undefined) {
         const s = this.getRelatedHookIndexes(context.index)
         if (s.size !== 0) {
@@ -1098,19 +1103,19 @@ export class CurrentRunnerScope {
         }
         // means: server -> client
         if (hook instanceof Model) {
-          return ['model', hook.value]
+          return ['model', hook.value, hook.modifiedTimstamp]
         }
         if (hook instanceof Computed) {
-          return ['computed', hook.value]
+          return ['computed', hook.value, hook.modifiedTimstamp]
         }
         if (hook instanceof Cache) {
-          return ['cache', hook.value]
+          return ['cache', hook.value, hook.modifiedTimstamp]
         }
         if (hook instanceof InputCompute) {
           return ['inputCompute', null]
         }
         if (hook instanceof State) {
-          return ['state', hook.value]
+          return ['state', hook.value, hook.modifiedTimstamp]
         }
       }
       return ['unserialized']
@@ -1127,7 +1132,7 @@ export class CurrentRunnerScope {
   applyContextFromServer(c: IHookContext) {
     const contextData = c.data
     const { hooks } = this
-    contextData.forEach(([type, value], index) => {
+    contextData.forEach(([type, value, timestamp], index) => {
       if (isDef(value)) {
         const state = hooks[index] as State
         switch (type) {
@@ -1138,6 +1143,9 @@ export class CurrentRunnerScope {
              * default to keep silent because of deliver total context now
              */
             state.update?.(value, [], true)
+            if (value && timestamp) {
+              state.modifiedTimstamp = timestamp
+            }
             break
         }
       }
@@ -1424,7 +1432,8 @@ function createUnaccessGetter2<T extends any[]>(index: number) {
   }
   const newF: (() => any) & { _hook: any; exist: any } = Object.assign(f, {
     _hook: null,
-    exist: () => true
+    exist: () => true,
+    create: () => {}
   })
   return newF
 }
@@ -1440,7 +1449,11 @@ function updateState<T>(initialValue: T) {
     currentRunnerScope!.addHook(undefined)
     return createUnaccessGetter<T>(currentIndex)
   }
+  const timestamp = currentRunnerScope!.intialContextData![currentIndex]?.[2]
   const internalState = new State(initialValue)
+  if (timestamp) {
+    internalState.modifiedTimstamp = timestamp
+  }
 
   const setterGetter = createStateSetterGetterFunc(internalState)
   currentRunnerScope!.addHook(internalState)
@@ -1473,14 +1486,10 @@ function updateModel<T extends any[]>(
   const currentIndex = hooks.length
   const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
 
-  const initialValue: T =
-    currentRunnerScope!.intialContextData![currentIndex]?.[1]
-
   if (!valid) {
     currentRunnerScope!.addHook(undefined)
     return createUnaccessGetter2<T>(currentIndex)
   }
-
   const inServer = process.env.TARGET === 'server'
 
   op = Object.assign({}, op, {
@@ -1492,14 +1501,22 @@ function updateModel<T extends any[]>(
     : new ClientModel<T>(e, q, op, currentRunnerScope!)
 
   if (!inServer) {
+    const initialValue: T =
+      currentRunnerScope!.intialContextData![currentIndex]?.[1]
+    const timestamp =
+      currentRunnerScope!.intialContextData![currentIndex]?.[2]
     internalModel.init = inServer
     internalModel._internalValue = initialValue || []
+    if (timestamp) {
+      internalModel.modifiedTimstamp = timestamp
+    }
   }
 
   const setterGetter = createModelSetterGetterFunc<T>(internalModel)
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: internalModel,
-    exist: internalModel.exist.bind(internalModel)
+    exist: internalModel.exist.bind(internalModel),
+    create: internalModel.create.bind(internalModel)
   })
 
   return newSetterGetter
@@ -1533,10 +1550,21 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
     return createUnaccessGetter<T>(currentIndex)
   }
 
+  /** @TODO cache maybe should has initial value */
   const hook = new Cache(key, options, currentRunnerScope!)
-  const reactiveChain: ReactiveChain<T> | undefined =
-    currentReactiveChain?.add(hook)
-  hook.executeQuery(reactiveChain)
+
+  const initialValue: T =
+    currentRunnerScope!.intialContextData![currentIndex]?.[1]
+  const timestamp =
+    currentRunnerScope!.intialContextData![currentIndex]?.[2]
+
+  if (initialValue !== undefined) {
+    hook._internalValue = initialValue
+    if (timestamp) {
+      hook.modifiedTimstamp = timestamp
+    }
+  }
+
 
   const setterGetter = createCacheSetterGetterFunc(hook)
   const newSetterGetter = Object.assign(setterGetter, {
@@ -1567,16 +1595,22 @@ function updateComputed<T>(fn: any): any {
   const currentIndex = hooks.length
   const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
 
-  const initialValue: T =
-    currentRunnerScope!.intialContextData![currentIndex]?.[1]
   if (!valid) {
     currentRunnerScope!.addHook(undefined)
     return createUnaccessGetter<T>(currentIndex)
   }
+  const initialValue: T =
+    currentRunnerScope!.intialContextData![currentIndex]?.[1]
+  const timestamp =
+    currentRunnerScope!.intialContextData![currentIndex]?.[2]
+
   const hook = new Computed<T>(fn)
   currentRunnerScope!.addHook(hook)
   // @TODO: update computed won't trigger
   hook._internalValue = initialValue
+  if (timestamp) {
+    hook.modifiedTimstamp = timestamp
+  }
 
   // const reactiveChain: ReactiveChain<T> | undefined =
   //   currentReactiveChain?.add(hook)
@@ -1723,22 +1757,23 @@ export function before(callback: () => void, targets: { _hook?: Hook }[]) {
   })
 }
 
-export function combineLatest<T>(arr: Array<{ _hook: State<T> }>): () => T {
+export function combineLatest<T>(arr: Array<Function & { _hook: State<T> }>): () => T {
   return () => {
-    const latestState = arr.slice(1).reduce((latest, { _hook }) => {
+    const latestState = arr.slice(1).reduce((latest, hook) => {
+      const { _hook } = hook
       if (!_hook) {
         return latest
       }
-      if (!latest) {
-        return _hook
+      if (!latest._hook) {
+        return hook
       }
-      if (_hook.modifiedTimstamp > latest.modifiedTimstamp) {
-        return _hook
+      if (_hook.modifiedTimstamp > latest._hook.modifiedTimstamp) {
+        return hook
       }
       return latest
-    }, arr[0]._hook)
+    }, arr[0])
 
-    return latestState?.value
+    return latestState?.()
   }
 }
 

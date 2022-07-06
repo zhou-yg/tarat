@@ -41,8 +41,8 @@ describe('state', () => {
         10
       ]
       const cd: IHookContext['data'] = [
-        ['data', { num1: 1 }],
-        ['data', 12]
+        ['data', { num1: 1 }, Date.now()],
+        ['data', 12, Date.now()]
       ]
       const context = mockBM.initContext({
         index: undefined,

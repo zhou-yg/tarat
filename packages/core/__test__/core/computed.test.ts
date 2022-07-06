@@ -121,8 +121,8 @@ describe('computed', () => {
       const runner = new Runner(mockBM.onePrimitiveStateComputed)
 
       const cd: IHookContext['data'] = [
-        ['data', 2],
-        ['data', 10]
+        ['data', 2, Date.now()],
+        ['data', 10, Date.now()]
       ]
       const context = mockBM.initContext({
         index: undefined,
@@ -151,8 +151,8 @@ describe('computed', () => {
       const num2 = 2
       const runner = new Runner(mockBM.onePrimitiveStateComputed)
       const cd: IHookContext['data'] = [
-        ['data', 2],
-        ['data', 10]  
+        ['data', 2, Date.now()],
+        ['data', 10, Date.now()]  
       ]
       const context = mockBM.initContext({
         index: undefined,

@@ -43,4 +43,38 @@ describe('inputCompute', () => {
 
     expect(onRunnerUpdate).toHaveBeenCalledTimes(1)  
   })
+  it('post with timestamp', async () => {
+    mockBM.initModelConfig({
+      async postComputeToServer (c: IHookContext) {
+        process.env.TARGET = 'server'
+        const runner = new Runner(mockBM.changeStateInputComputeServer3)
+        runner.init([], c)
+        if (c.index) {
+          await runner.callHook(c.index, c.args)
+        }
+        process.env.TARGET = ''
+        return runner.scope.createInputComputeContext()
+      }  
+    })
+    
+    const runner = new Runner(mockBM.changeStateInputComputeServer3)
+    const result = runner.init()
+    
+    let mt1 = result.s1._hook.modifiedTimstamp
+    const mt2 = result.s2._hook.modifiedTimstamp
+
+    await result.changeS2(10)
+
+    expect(mt1).toBe(result.s1._hook.modifiedTimstamp)
+    expect(mt2).toBe(result.s2._hook.modifiedTimstamp)
+
+    result.s1(() => true)
+    expect(result.s1._hook.modifiedTimstamp).toBeGreaterThan(mt1)
+
+    mt1 = result.s1._hook.modifiedTimstamp
+
+    await result.changeS2(10)
+    expect(result.s1._hook.modifiedTimstamp).toBe(mt1)
+    expect(result.s2._hook.modifiedTimstamp).toBeGreaterThan(mt2)
+  })
 })

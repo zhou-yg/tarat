@@ -13,7 +13,7 @@ describe('initContext', () => {
       initialArgList: [],
       args: [],
       data: [
-        ['state', { numStr: 'from context' }],
+        ['state', { numStr: 'from context' }, Date.now()],
         ['state', null]
       ]
     }
@@ -33,7 +33,7 @@ describe('initContext', () => {
       initialArgList: [],
       args: [],
       data: [
-        ['state', { numStr: 'from context' }],
+        ['state', { numStr: 'from context' }, Date.now()],
         ['state']
       ]
     }
@@ -114,10 +114,10 @@ describe('initContext', () => {
       const context = mockBM.initContext({
         index: 4,
         data: [
-          ['state', { num: 1 }],
-          ['state', 2],
-          ['computed', 3],
-          ['computed', 4],
+          ['state', { num: 1 }, Date.now()],
+          ['state', 2, Date.now()],
+          ['computed', 3, Date.now()],
+          ['computed', 4, Date.now()],
         ]
       })
       const r = clientRunner.init([], context)
