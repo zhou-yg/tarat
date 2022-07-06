@@ -19,7 +19,9 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
       ssrContext = driver.getContext(hook.name) || []
     } else {
       ssrContext =
-        typeof window !== 'undefined' ? window.hookContextMap?.[hook.name] : []
+        typeof window !== 'undefined'
+          ? window.hookContextMap?.[hook.name] || []
+          : []
     }
 
     const runner = new Runner(hook)
