@@ -47,7 +47,7 @@ export default function taratRuntimeRollupPlugin (c: IConfig): any {
       if (id?.endsWith(taratRuntimeEntryFlag)) {
         const originalId = id.slice(0, -taratRuntimeEntryFlag.length)
 
-        const autoGenerateRoutesClientFile = path.join(c.cwd, c.appDirectory, `${c.routes}${c.ext}`)
+        const autoGenerateRoutesClientFile = path.join(c.cwd, c.devCacheDirectory, `${c.routes}${c.ext}`)
         const routesEntry = fs.readFileSync(autoGenerateRoutesClientFile).toString()
 
         const viewCode = routesEntry // fs.readFileSync(originalId).toString()

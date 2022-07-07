@@ -165,8 +165,8 @@ function generateRoutesImports (routes: IRouteChild[], parentNmae = '') {
 export async function buildRoutes(c: IConfig) {
   const ext = c.ext
 
-  const autoGenerateRoutesFile = path.join(c.cwd, c.appDirectory, `${c.routesServer}${ext}`)
-  const autoGenerateRoutesClientFile = path.join(c.cwd, c.appDirectory, `${c.routes}${ext}`)
+  const autoGenerateRoutesFile = path.join(c.cwd, c.devCacheDirectory, `${c.routesServer}${ext}`)
+  const autoGenerateRoutesClientFile = path.join(c.cwd, c.devCacheDirectory, `${c.routes}${ext}`)
   const distRoutesFile = path.join(c.cwd, c.devCacheDirectory, `${c.routesServer}.js`)
   const distRoutesFileCss = path.join(c.devCacheDirectory, `${c.routesServer}.css`)
 
@@ -174,8 +174,11 @@ export async function buildRoutes(c: IConfig) {
   const routesTreeArr = defineRoutesTree(c.pages)
 
   const imports = generateRoutesImports(routesTreeArr)
-  const importsWithAbsolutePath = imports.map(([n, f]) => {
+  const importsWithAbsolutePathClient = imports.map(([n, f]) => {
     return `import ${n} from '${path.join(c.cwd, f)}?noRouter'`
+  }).join('\n')
+  const importsWithAbsolutePathServer = imports.map(([n, f]) => {
+    return `import ${n} from '${path.join(c.cwd, f)}'`
   }).join('\n')
 
   const r = generateRoutesContent(routesTreeArr)
@@ -184,14 +187,14 @@ export async function buildRoutes(c: IConfig) {
   const index = routeIndex ? `<Route path="/" element={<Index />} />` : ''
 
   const routesStr = routesTemplate({
-    imports: importsWithAbsolutePath,
+    imports: importsWithAbsolutePathServer,
     index,
     routes: r
   })
   fs.writeFileSync(autoGenerateRoutesFile, prettier.format(routesStr))
 
   const routesStr2 = routesClientTemplate({
-    imports: importsWithAbsolutePath,
+    imports: importsWithAbsolutePathClient,
     index,
     routes: r
   })
