@@ -38,10 +38,9 @@ export default function mdEditor (q = {}) {
   const save = inputComputeInServer(async () => {
     const cid = currentId()
     if (cid) {
-      const i = posts().findIndex(p => p.id === cid)
-      if (i > -1) {
+      if (posts()[0]) {
         posts(arr => {
-          arr[i].content = inputMD()
+          arr[0].content = inputMD()
         })
       }
     } else {
