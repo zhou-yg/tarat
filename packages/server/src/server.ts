@@ -36,7 +36,7 @@ export async function createDevServer (c: IConfig) {
     server:{ middlewareMode: 'ssr' },
     plugins: [
       {
-        ...rollupPlugintaratRuntime(),
+        ...rollupPlugintaratRuntime(c),
         enforce: 'pre',
       } 
     ],

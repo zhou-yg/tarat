@@ -136,7 +136,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
 
       let html = template({
         hookContextMap: JSON.stringify(context),
-        src: viewConfig.file,
+        src: `/${viewConfig.file}`,
         css: r?.css,
         ssrHTML,
         configJSON: JSON.stringify({

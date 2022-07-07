@@ -16,9 +16,15 @@ const { cp } = shelljs;
 
   cp('src/adaptors/runtime-helper/defaultRenderReact.ejs', 'dist/cli/')
   cp('src/adaptors/runtime-helper/defaultRenderReact.ejs', 'dist/')
+  
+  cp('src/adaptors/runtime-helper/routesRenderEntry.ejs', 'dist/cli/')
+  cp('src/adaptors/runtime-helper/routesRenderEntry.ejs', 'dist/')
 
   cp('src/compiler/routesTemplate.ejs', 'dist/cli/')
   cp('src/compiler/routesTemplate.ejs', 'dist/')
+  
+  cp('src/compiler/routesClientTemplate.ejs', 'dist/cli/')
+  cp('src/compiler/routesClientTemplate.ejs', 'dist/')
 
   console.log('build end')
 

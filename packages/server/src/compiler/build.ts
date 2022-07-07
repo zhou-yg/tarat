@@ -15,7 +15,11 @@ import * as esbuild from 'esbuild';
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
 
+const templateClientFile = './routesClientTemplate.ejs'
+const templateClientFilePath = path.join(__dirname, templateClientFile)
+
 const routesTemplate = compile(fs.readFileSync(templateFilePath).toString())
+const routesClientTemplate = compile(fs.readFileSync(templateClientFilePath).toString())
 
 
 interface IBuildOption {
@@ -159,17 +163,19 @@ function generateRoutesImports (routes: IRouteChild[], parentNmae = '') {
 }
 
 export async function buildRoutes(c: IConfig) {
-  const autoGenerateRoutesFile = path.join(c.cwd, c.appDirectory, c.routes)
+  const ext = c.ext
+
+  const autoGenerateRoutesFile = path.join(c.cwd, c.appDirectory, `${c.routesServer}${ext}`)
+  const autoGenerateRoutesClientFile = path.join(c.cwd, c.appDirectory, `${c.routes}${ext}`)
   const distRoutesFile = path.join(c.cwd, c.devCacheDirectory, `${c.routesServer}.js`)
   const distRoutesFileCss = path.join(c.devCacheDirectory, `${c.routesServer}.css`)
 
-  const ext = '.jsx'
 
   const routesTreeArr = defineRoutesTree(c.pages)
 
   const imports = generateRoutesImports(routesTreeArr)
   const importsWithAbsolutePath = imports.map(([n, f]) => {
-    return `import ${n} from '${path.join(c.cwd, f)}'`
+    return `import ${n} from '${path.join(c.cwd, f)}?noRouter'`
   }).join('\n')
 
   const r = generateRoutesContent(routesTreeArr)
@@ -182,14 +188,21 @@ export async function buildRoutes(c: IConfig) {
     index,
     routes: r
   })
+  fs.writeFileSync(autoGenerateRoutesFile, prettier.format(routesStr))
 
-  const autoRoutesFile = `${autoGenerateRoutesFile}${ext}`
-  fs.writeFileSync(autoRoutesFile, prettier.format(routesStr))
+  const routesStr2 = routesClientTemplate({
+    imports: importsWithAbsolutePath,
+    index,
+    routes: r
+  })
+  // generate for vite.js
+  fs.writeFileSync(autoGenerateRoutesClientFile, prettier.format(routesStr2))
 
+  // compilet to js
   const inputOptions: IBuildOption = {
     input: {
       external: ['react', 'tarat-core', 'tarat-connect'],
-      input: autoRoutesFile,
+      input: autoGenerateRoutesFile,
       plugins: plugins([
         postcss({
           extract: true,
