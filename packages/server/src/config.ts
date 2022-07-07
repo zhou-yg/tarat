@@ -14,6 +14,7 @@ export const defaultConfig = () => ({
   entryServer: 'entry.server', // .(j|t)sx in app
   routesServer: 'routes.server', // serve for tarat self
   routes: 'routes', // serve for tarat self
+  ext: '.jsx',
 
   devCacheDirectory: '.tarat', // in cwd
 

@@ -1,0 +1,19 @@
+<%- viewCode %>
+
+import { clientRuntime } from 'tarat-connect'
+import * as _runtimeReactDOM from 'react-dom/client'
+
+clientRuntime({
+  framework: React,
+  name: 'react'
+})
+
+function render (f) {
+
+  console.log('render App')
+
+  const ele = React.createElement(f)
+
+  const app = _runtimeReactDOM.createRoot(document.getElementById('<%= mountedAppId %>'))
+  app.render(ele)
+}
