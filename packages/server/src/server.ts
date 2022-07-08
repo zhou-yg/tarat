@@ -11,6 +11,7 @@ import { createServer } from "vite";
 import { IConfig } from "./config";
 
 import rollupPlugintaratRuntime from './adaptors/runtime-helper/rollup-plugin-tarat-runtime'
+import { composeSchema } from "./compiler/composeSchema";
 
 export function setupBasicServer (app: Application) {
 
@@ -26,6 +27,8 @@ export function setupBasicServer (app: Application) {
 export async function createDevServer (c: IConfig) {  
   const app = new Koa()
   setupBasicServer(app)
+
+  composeSchema(c)
 
   app.use(taratRunner({
     config: c

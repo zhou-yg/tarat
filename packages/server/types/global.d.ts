@@ -6,5 +6,3 @@ interface Require {
   cache: any;
 }
 
-
-declare module 'rollup-plugin-postcss'
