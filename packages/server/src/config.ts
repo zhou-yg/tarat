@@ -7,7 +7,7 @@ export const defaultConfig = () => ({
   // client about
   viewsDirectory: 'views', // in tarat the display unit maybe page or component, they should belong to "views"
   hooksDirectory: 'hooks',
-  
+  modelsDirectory: 'models',
   appDirectory: 'app',
   pageDirectory: 'pages',
 
@@ -17,6 +17,10 @@ export const defaultConfig = () => ({
   ext: '.jsx',
 
   devCacheDirectory: '.tarat', // in cwd
+
+  modelEnhance: 'model.enhance.json',
+  prismaModelPart: 'part.prisma', // postfix
+  targetSchemaPrisma: 'schema.prisma',
 
   // server side
   apiPre: '_hook',

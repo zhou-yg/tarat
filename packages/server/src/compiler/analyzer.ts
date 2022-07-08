@@ -234,7 +234,6 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
           break
         // scene: "xxx.callee()" or "otherComposeHookResult.xxxCallee()"
         case 'MemberExpression':
-          console.log('callee: ', callee);
           const calleeKeys = getMemberExpressionKeys(callee)
           existSourceInScope = get(scope, calleeKeys.slice(0, -1))?.sourceHook as CallExpression
           lastCalleeName = calleeKeys[calleeKeys.length - 1]
