@@ -1,0 +1,15 @@
+{
+  "extraRelation": [
+    {
+      "from": {
+        "model": "User",
+        "field": "markdowns"
+      },
+      "type":"1:n",
+      "to": {
+        "model": "Markdown",
+        "field": "author"
+      }
+    }
+  ]
+}
