@@ -32,5 +32,5 @@ jobs:
       run: |
         git config --global user.name 'zhou-yg'
         git config --global user.email 'zhou.y.g890@gmail.com'
-        git commit -a -m 'action:update doc'
+        git commit -a -m '🤖 github action: update index.html'
         git push
