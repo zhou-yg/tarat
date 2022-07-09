@@ -28,8 +28,5 @@ jobs:
         node-version: 16.x
         cache: 'npm'
     - run: npm run build:doc --if-present
-    - name: Deploy to GitHub Pages
-      uses: JamesIves/github-pages-deploy-action@v4.2.5
-      with:
-        branch: master
-        folder: .
+    - run: git commit -a -m 'action:update doc'
+    - run: git push
