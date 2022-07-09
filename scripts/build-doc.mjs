@@ -80,21 +80,41 @@ fs.readdirSync(enDocDir).forEach((file) => {
   const p = path.join(enDocDir, file)
   if (fs.lstatSync(p).isDirectory()) {
     const directoryObj = {
-      file: file,
+      title: file,
       children: []
     }
     fileTree.push(directoryObj)
     fs.readdirSync(p).forEach(f2 => {
       const r = generateFile(p, f2)
-      directoryObj.children.push(r)
+      if (f2 === 'index.md') {
+        Object.assign(directoryObj, { order: r.order })
+      } else {
+        directoryObj.children.push(r)
+      }
     })
-  } else {
+  } else {  
     const r = generateFile(enDocDir, file)
     fileTree.push(r)
   }
 })
 
-const htmls = fileTree.map(file => {
+function sortByOrder (arr) {
+  const newArr = arr.slice().sort((p, n) => {
+    if (!Reflect.has(p, 'order')) {
+      return 1
+    }
+    if (!Reflect.has(n, 'order')) {
+      return -1
+    }
+    return parseInt(p.order) - parseInt(n.order)
+  })
+
+  return newArr
+}
+
+const sortedFileTree = sortByOrder(fileTree)
+
+const htmls = sortedFileTree.map(file => {
   if (file.children?.length) {
     return file.children.map(c => c.html)
   } else {
@@ -102,10 +122,10 @@ const htmls = fileTree.map(file => {
   }
 }).flat().join('\n')
 
-const aside = fileTree.map(file => {
+const aside = sortedFileTree.map(file => {
   if (file.children?.length > 0) {
     return [
-      `<div class="group-title" >${file.file}</div>`,
+      `<div class="group-title" >${file.title}</div>`,
       ...file.children.map(child => {
         return `<div class="child-title" ><a href="#${child.title}" >${child.title}</a></div>`
       }),
