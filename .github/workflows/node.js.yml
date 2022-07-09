@@ -28,5 +28,8 @@ jobs:
         node-version: 16.x
         cache: 'npm'
     - run: npm run build:doc --if-present
-    - run: git commit -a -m 'action:update doc'
-    - run: git push
+    - run: |
+      git config --global user.name 'zhou-yg'
+      git config --global user.email 'zhou.y.g890@gmail.com'
+      git commit -a -m 'action:update doc'
+      git push
