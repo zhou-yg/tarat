@@ -115,3 +115,5 @@ packages/core/**/*.sql
 packages/core/**/*.db-journal
 
 dist/
+
+.tarat
