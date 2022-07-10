@@ -1438,7 +1438,7 @@ function createUnaccessGetter2<T extends any[]>(index: number) {
   return newF
 }
 
-function updateState<T>(initialValue: T) {
+function updateState<T>(initialValue?: T) {
   const { hooks, initialHooksSet } = currentRunnerScope!
   const currentIndex = hooks.length
   const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
@@ -1464,7 +1464,7 @@ function updateState<T>(initialValue: T) {
 
   return newSetterGetter
 }
-function mountState<T>(initialValue: T) {
+function mountState<T>(initialValue?: T) {
   const internalState = new State(initialValue)
 
   const setterGetter = createStateSetterGetterFunc(internalState)
@@ -1503,8 +1503,7 @@ function updateModel<T extends any[]>(
   if (!inServer) {
     const initialValue: T =
       currentRunnerScope!.intialContextData![currentIndex]?.[1]
-    const timestamp =
-      currentRunnerScope!.intialContextData![currentIndex]?.[2]
+    const timestamp = currentRunnerScope!.intialContextData![currentIndex]?.[2]
     internalModel.init = inServer
     internalModel._internalValue = initialValue || []
     if (timestamp) {
@@ -1555,8 +1554,7 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
 
   const initialValue: T =
     currentRunnerScope!.intialContextData![currentIndex]?.[1]
-  const timestamp =
-    currentRunnerScope!.intialContextData![currentIndex]?.[2]
+  const timestamp = currentRunnerScope!.intialContextData![currentIndex]?.[2]
 
   if (initialValue !== undefined) {
     hook._internalValue = initialValue
@@ -1564,7 +1562,6 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
       hook.modifiedTimstamp = timestamp
     }
   }
-
 
   const setterGetter = createCacheSetterGetterFunc(hook)
   const newSetterGetter = Object.assign(setterGetter, {
@@ -1601,8 +1598,7 @@ function updateComputed<T>(fn: any): any {
   }
   const initialValue: T =
     currentRunnerScope!.intialContextData![currentIndex]?.[1]
-  const timestamp =
-    currentRunnerScope!.intialContextData![currentIndex]?.[2]
+  const timestamp = currentRunnerScope!.intialContextData![currentIndex]?.[2]
 
   const hook = new Computed<T>(fn)
   currentRunnerScope!.addHook(hook)
@@ -1643,7 +1639,7 @@ function mountComputed<T>(fn: any): any {
   return newGetter
 }
 
-export function state<T>(initialValue: T) {
+export function state<T>(initialValue?: T) {
   if (!currentRunnerScope) {
     throw new Error('[state] must under a tarat runner')
   }
@@ -1757,7 +1753,9 @@ export function before(callback: () => void, targets: { _hook?: Hook }[]) {
   })
 }
 
-export function combineLatest<T>(arr: Array<Function & { _hook: State<T> }>): () => T {
+export function combineLatest<T>(
+  arr: Array<Function & { _hook: State<T> }>
+): () => T {
   return () => {
     const latestState = arr.slice(1).reduce((latest, hook) => {
       const { _hook } = hook

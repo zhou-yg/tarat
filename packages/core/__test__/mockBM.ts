@@ -304,7 +304,7 @@ export function changeStateInputComputeServer3() {
 
   const changeS2 = inputComputeInServer((v: number) => {
     if (s1()) {
-      s2(() => v)  
+      s2(() => v)
     }
   })
 
@@ -398,9 +398,7 @@ export function userModelClient() {
   }
 }
 Object.assign(userModelClient, {
-  __deps__: [
-    ['h', 1, [0]]
-  ]
+  __deps__: [['h', 1, [0]]]
 })
 
 export function userModelComputedQuery() {
