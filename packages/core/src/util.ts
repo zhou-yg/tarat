@@ -236,9 +236,9 @@ export type TContextData =
 export interface IHookContext {
   initialArgList: any[]
   data: Array<
-    [TContextData, any | IPatch[], number] |
-    [TContextData, null] |
-    [TContextData]
+    | [TContextData, any | IPatch[], number]
+    | [TContextData, null]
+    | [TContextData]
   >
   index?: number
   args: any[]
