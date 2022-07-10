@@ -1,4 +1,4 @@
-import { useHook } from 'tarat-core'
+import { useTarat } from 'tarat-connect'
 import React, { useState } from 'react'
 import todoHook from '../hooks/todo.js'
 import '../styles/todos.less'
@@ -22,18 +22,19 @@ const TodoItem = (props) => {
 
 const Todos = () => {
 
-  const todo = useHook(todoHook)
+  const todo = useTarat(todoHook)
   
   const [inputText, setInputText] = useState('')
 
   function keydownCreate (e) {
     if (e.keyCode === 13 || e.key === 'Enter') {
-      todo?.createTodoItem(e.target.value)
+      todo.createTodoItem(e.target.value)
       setInputText('')
     }
   }
+  
 
-  const undoneItemsNum = todo?.undoneItems()?.length
+  const undoneItemsNum = todo.undoneItems()?.length
 
   return (
     <div className="home">
@@ -44,7 +45,7 @@ const Todos = () => {
           value={inputText}
           placeholder="what needs to be done?" />
       </div>
-      {todo?.items()?.map((item, i) => {
+      {todo.items()?.map((item, i) => {
         return <TodoItem
           onStatus={(s) => {
             todo.items(d => {
@@ -70,7 +71,5 @@ const Todos = () => {
     </div>
   )
 }
-
-document.title = 'Todos'
 
 export default Todos

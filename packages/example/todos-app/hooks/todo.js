@@ -6,6 +6,12 @@ import {
   computed
 } from 'tarat-core'
 
+import deps from './todo.deps.js'
+
+Object.assign(todo, {
+  __deps__: deps.todo
+})
+
 function newTodoItem(description) {
   return {
     status: 'undone',
@@ -15,8 +21,7 @@ function newTodoItem(description) {
 
 export default function todo () {
 
-  const items = model(() => ({
-    entity: 'todoItem',
+  const items = model('todoItem', () => ({
     where: {
       status: 'undone'
     }
@@ -31,6 +36,7 @@ export default function todo () {
   })
 
   const createTodoItem = inputComputeInServer(async description => {
+    console.log('description: ', description);
     items(d => {
       d.push(newTodoItem(description))
     })
