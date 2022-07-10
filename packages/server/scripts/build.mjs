@@ -26,6 +26,12 @@ const { cp } = shelljs;
   cp('src/compiler/routesClientTemplate.ejs', 'dist/cli/')
   cp('src/compiler/routesClientTemplate.ejs', 'dist/')
 
+  cp('src/compiler/defaultTsconfig.json', 'dist/cli/')
+  cp('src/compiler/defaultTsconfig.json', 'dist/')
+
+  cp('src/compiler/defaultEntryServer.jsx', 'dist/cli/')
+  cp('src/compiler/defaultEntryServer.jsx', 'dist/')
+
   console.log('build end')
 
 })()

@@ -11,12 +11,17 @@ import commonjs from "@rollup/plugin-commonjs";
 import postcss from 'rollup-plugin-postcss'
 import * as prettier from 'prettier'
 import * as esbuild from 'esbuild';
+import { loadJSON } from "../util";
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
 
 const templateClientFile = './routesClientTemplate.ejs'
 const templateClientFilePath = path.join(__dirname, templateClientFile)
+
+const defaultTsconfigJSON = path.join(__dirname, './defaultTsconfig.json')
+
+const defaultEntryServer = path.join(__dirname, './defaultEntryServer.jsx')
 
 const routesTemplate = compile(fs.readFileSync(templateFilePath).toString())
 const routesClientTemplate = compile(fs.readFileSync(templateClientFilePath).toString())
@@ -62,7 +67,9 @@ async function generateOutput(c: IConfig, bundle: RollupBuild, o: IBuildOption['
 }
 
 
-function getEntryFile (f: string) {
+function getEntryFile (c: IConfig) {
+  let f = path.join(c.cwd, c.appDirectory, c.entryServer)
+
   const tsx = '.tsx'
   const jsx = '.jsx'
 
@@ -77,6 +84,11 @@ function getEntryFile (f: string) {
       file: `${f}${jsx}`,
       ext: jsx
     }
+  }
+
+  return {
+    file: defaultEntryServer,
+    ext: jsx
   }
 }
 
@@ -135,7 +147,7 @@ function generateRoutesContent (routes: IRouteChild[], depth = 0, parentNmae = '
     }
 
     return [
-      `<Route path="${r.name}" ${element} >`,
+      `<Route path="/${r.name}" ${element} >`,
       r.children.length > 0 ? generateRoutesContent(r.children, depth + 1, r.name) : '',
       `</Route>`
     ].map(s => `${new Array(depth * 2).fill(' ').join('')}${s}`).join('\n');
@@ -175,7 +187,7 @@ export async function buildRoutes(c: IConfig) {
 
   const imports = generateRoutesImports(routesTreeArr)
   const importsWithAbsolutePathClient = imports.map(([n, f]) => {
-    return `import ${n} from '${path.join(c.cwd, f)}?noRouter'`
+    return `import ${n} from '${path.join(c.cwd, f)}'`
   }).join('\n')
   const importsWithAbsolutePathServer = imports.map(([n, f]) => {
     return `import ${n} from '${path.join(c.cwd, f)}'`
@@ -241,9 +253,8 @@ const plugins: (arr: Plugin[]) => Plugin[] = (arr: Plugin[]) => ([
 ])
 
 export async function buildEntryServer (c: IConfig) {
-  const entryServerFile = path.join(c.cwd, c.appDirectory, c.entryServer)
 
-  const r = getEntryFile(entryServerFile)
+  const r = getEntryFile(c)
   
   if (r?.file) {
     const outputFileDir = path.join(c.cwd, c.devCacheDirectory)
@@ -278,29 +289,47 @@ export async function buildEntryServer (c: IConfig) {
   }
 }
 
-async function esbuildHooks (hooks: IConfig['hooks'], outputDir: string) {
-
+async function esbuildHooks (c: IConfig, outputDir: string) {
+  const { hooks } = c
+  let includingTs = false
   const points: string[] = []
   hooks.map(h => {
     const { filePath, name } = h
     if (/\.(m)?(j|t)s$/.test(filePath)) {
       points.push(filePath)
+
+      includingTs = /\.ts(x)?$/.test(filePath) || includingTs
     }
   })
-  await esbuild.build({
+
+  const buildOptions: esbuild.BuildOptions = {
     entryPoints: points,
     // outbase: dir,
     bundle: false,
     outdir: outputDir,
     platform: 'node',
-    format: 'cjs'
-  })
+    format: 'cjs',
+  }
+
+  // check tsconfig
+  if (includingTs) {
+    const tsconfigFile = path.join(c.cwd, 'tsconfig.json')
+    let json = {}
+    if (fs.existsSync(tsconfigFile)) {
+      buildOptions.tsconfig = tsconfigFile
+    } else {
+      console.log(`[esbuildHooks] using default tsconfig setting: ${defaultTsconfigJSON}`)
+      buildOptions.tsconfig = defaultTsconfigJSON
+    }
+  }
+
+  await esbuild.build(buildOptions)
 }
 
 export async function buildHooks (c: IConfig) {
   const esbuildOutputDir = path.join(c.cwd, c.devCacheDirectory, c.hooksDirectory)
 
-  await esbuildHooks(c.hooks, esbuildOutputDir)
+  await esbuildHooks(c, esbuildOutputDir)
 
   return {
     entryHooksDir: esbuildOutputDir
