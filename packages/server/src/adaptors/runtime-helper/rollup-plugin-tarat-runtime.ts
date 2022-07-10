@@ -30,7 +30,6 @@ export default function taratRuntimeRollupPlugin (c: IConfig): any {
   return {
     name: 'tarat-runtime',
     async resolveId (source: string, importer?: string, options?: any): Promise<any> {
-      console.log('source: ', source);
       if (source?.endsWith(taratRuntimeEntryFlag) || source?.endsWith(noRouterEntryFlag)) {
         return source
       }
