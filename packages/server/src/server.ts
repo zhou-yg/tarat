@@ -40,10 +40,10 @@ export async function createDevServer (c: IConfig) {
     root: process.cwd(),
     server:{ middlewareMode: 'ssr' },
     plugins: [
-      {
-        ...rollupPlugintaratRuntime(c),
-        enforce: 'pre',
-      } 
+      // {
+      //   ...rollupPlugintaratRuntime(c),
+      //   enforce: 'pre',
+      // } 
     ],
     resolve: {
       alias: {

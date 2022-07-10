@@ -117,11 +117,11 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
 
   buildRoutes(args.config)
 
+  const config = args.config
+
   return async (ctx, next) => {
     const pathname = ctx.request.path
     const viewConfig = args.pages.find(v => v.path === pathname || v.path === path.join(pathname, 'index'))
-    console.log('viewConfig: ', viewConfig);
-
     if (viewConfig) {
       let context: { [k: string]: IHookContext[] } = {}
       let ssrHTML = ''
@@ -134,9 +134,11 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
         ssrHTML = r.html2
       }
 
+      const autoGenerateRoutesClientFile = path.join(config.cwd, config.devCacheDirectory, `${config.routes}${config.ext}`)
+
       let html = template({
         hookContextMap: JSON.stringify(context),
-        src: `/${viewConfig.file}`,
+        src: autoGenerateRoutesClientFile,
         css: r?.css,
         ssrHTML,
         configJSON: JSON.stringify({
