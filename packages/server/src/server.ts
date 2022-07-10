@@ -1,14 +1,16 @@
 import Application from "koa";
 import koaBody from 'koa-body'
+import os from "os";
 import cors from '@koa/cors'
 import Koa from 'koa'
 import e2k from 'express-to-koa'
-
+import chalk from 'chalk'
 import taratRunner from "./middlewares/taratRunner";
 import page from "./middlewares/page";
 
 import { createServer } from "vite";
 import { IConfig } from "./config";
+import getPort, { makeRange as portNumbers } from "get-port";
 
 import rollupPlugintaratRuntime from './adaptors/runtime-helper/rollup-plugin-tarat-runtime'
 import { composeSchema } from "./compiler/composeSchema";
@@ -58,9 +60,30 @@ export async function createDevServer (c: IConfig) {
     vite,
   }))
 
-  app.listen(c.port)
+  const port = await getPort({
+    port: c.port ? c.port : process.env.PORT ? Number(process.env.PORT) : portNumbers(9000, 9100)
+  })
+
+  app.listen(port)
 
   const defaultView = c.pages[0]?.name || ''
 
-  console.log(`start listen on http://localhost:${c.port}/${defaultView}`)
+
+  let address =
+  process.env.HOST ||
+  Object.values(os.networkInterfaces())
+    .flat()
+    .find((ip) => ip?.family === "IPv4" && !ip.internal)?.address;
+
+  
+  if (address) {
+    address = `ip: ${chalk.green(`http://${address}:${port}/${defaultView}`)}`
+  }
+  console.log(
+    `------------
+  Tarat App Server started at:
+    localhost: ${chalk.green(`http://localhost:${port}/${defaultView}`)}
+    ${address || ''}
+------------`
+  );
 }
