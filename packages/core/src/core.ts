@@ -1364,8 +1364,8 @@ function createStateSetterGetterFunc<SV>(s: State<SV>): {
 function createModelSetterGetterFunc<T extends any[]>(
   m: Model<T>
 ): {
-  (): T | undefined
-  (paramter: IModifyFunction<T | undefined>): Promise<[T | undefined, IPatch[]]>
+  (): T
+  (paramter: IModifyFunction<T>): Promise<[T, IPatch[]]>
 } {
   return (paramter?: any): any => {
     if (paramter && isFunc(paramter)) {
