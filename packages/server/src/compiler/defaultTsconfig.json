@@ -9,14 +9,12 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "allowJs": true,
-    "strict": true,
     "experimentalDecorators": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "removeComments": false,
-    "jsx": "preserve",
+    "jsx": "react",
     "lib": ["esnext", "dom"],
-    "types": ["jest", "node"],
-    "rootDir": "."
+    "types": ["node"]
   }
 }

@@ -31,78 +31,75 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
   //   entry: '/Users/yunge/Documents/tarat/packages/example/user-login-system/.tarat/entry.server.js',
   // }
 
+  const distRoutesFile = path.join(config.cwd, config.devCacheDirectory, `${config.routesServer}.js`)
 
-  if (r?.entry && r2?.routesEntry) {
-    const [
-      entryFunctionModule,
-      routesEntryModule,
-    ] = await Promise.all([
-      import(r.entry),
-      import(r2.routesEntry),
-    ])
+  let entryFunctionModule = { default: (doc: React.ReactElement) => doc }
+  if (r?.entry) {
+    entryFunctionModule = await import(r.entry)
+  }
+  const routesEntryModule = await import(distRoutesFile)
 
-    const driver = new RenderDriver()
-    driver.mode = 'collect'
+  const driver = new RenderDriver()
+  driver.mode = 'collect'
 
-    let cancelGlobalRunning = () => {}
+  let cancelGlobalRunning = () => {}
 
-    driver.onPush(runner => {
-      getPlugin('GlobalRunning').setCurrent(runner.scope, wrapCtx(ctx))
-      cancelGlobalRunning = () => {
-        getPlugin('GlobalRunning').setCurrent(runner.scope, null) 
-      }
-    })
-
-    const appEntry = renderWithDriverContext(
-      entryFunctionModule.default(
-        routesEntryModule.default({
-          location: ctx.request.path
-        })
-      ),
-      driver,
-    )
-    // console.log('entryFunctionModule.default: ', viewConfig.name, entryFunctionModule.default.toString());
-
-    // const html = renderToString(entryFunctionModule.default(viewConfig.name))
-    const html = renderToString(appEntry.root)
-
-    appEntry.cancelAdaptor()
-    driver.pushListener = undefined
-    cancelGlobalRunning()
-
-    const allRunedHook = []
-    for (const BMArr of driver.BMValuesMap.values()) {
-      allRunedHook.push(...BMArr)
+  driver.onPush(runner => {
+    getPlugin('GlobalRunning').setCurrent(runner.scope, wrapCtx(ctx))
+    cancelGlobalRunning = () => {
+      getPlugin('GlobalRunning').setCurrent(runner.scope, null) 
     }
-    await Promise.all(allRunedHook.map((runner: Runner<any>) => runner.ready()))
+  })
 
-    driver.mode = 'consume'
-    const appEntryUpdate = renderWithDriverContext(
-      entryFunctionModule.default(
-        routesEntryModule.default({
-          location: ctx.request.path
-        })
-      ),
-      driver,
-    )
-    const html2 = renderToString(appEntryUpdate.root)
+  const appEntry = renderWithDriverContext(
+    entryFunctionModule.default(
+      routesEntryModule.default({
+        location: ctx.request.path
+      })
+    ),
+    driver,
+  )
+  // console.log('entryFunctionModule.default: ', viewConfig.name, entryFunctionModule.default.toString());
 
-    // console.log('entryFunctionModule.default: ', viewConfig.name, entryFunctionModule.default.toString());
-    // const html = renderToString(entryFunctionModule.default(viewConfig.name))
+  // const html = renderToString(entryFunctionModule.default(viewConfig.name))
+  const html = renderToString(appEntry.root)
 
-    // console.log('driver: ', driver);
-    // console.log('html: ', html);
-    // console.log('html2: ', html2);
+  appEntry.cancelAdaptor()
+  driver.pushListener = undefined
+  cancelGlobalRunning()
 
-    const entryServerCss = fs.existsSync(r.css) ? fs.readFileSync(r.css).toString() : ''
-    const css = fs.existsSync(r2.css) ? fs.readFileSync(r2.css).toString() : ''
+  const allRunedHook = []
+  for (const BMArr of driver.BMValuesMap.values()) {
+    allRunedHook.push(...BMArr)
+  }
+  await Promise.all(allRunedHook.map((runner: Runner<any>) => runner.ready()))
 
-    return {
-      driver,
-      html,
-      html2,
-      css: css + entryServerCss,
-    }
+  driver.mode = 'consume'
+  const appEntryUpdate = renderWithDriverContext(
+    entryFunctionModule.default(
+      routesEntryModule.default({
+        location: ctx.request.path
+      })
+    ),
+    driver,
+  )
+  const html2 = renderToString(appEntryUpdate.root)
+
+  // console.log('entryFunctionModule.default: ', viewConfig.name, entryFunctionModule.default.toString());
+  // const html = renderToString(entryFunctionModule.default(viewConfig.name))
+
+  // console.log('driver: ', driver);
+  // console.log('html: ', html);
+  // console.log('html2: ', html2);
+
+  const entryServerCss = r?.css && fs.existsSync(r.css) ? fs.readFileSync(r.css).toString() : ''
+  const css = fs.existsSync(r2.css) ? fs.readFileSync(r2.css).toString() : ''
+
+  return {
+    driver,
+    html,
+    html2,
+    css: css + entryServerCss,
   }
 }
 
@@ -134,7 +131,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
         ssrHTML = r.html2
       }
 
-      const autoGenerateRoutesClientFile = path.join(config.cwd, config.devCacheDirectory, `${config.routes}${config.ext}`)
+      const autoGenerateRoutesClientFile = path.join(config.cwd, config.devCacheDirectory, `${config.routes}${config.ts ? '.tsx' : '.jsx'}`)
 
       let html = template({
         hookContextMap: JSON.stringify(context),

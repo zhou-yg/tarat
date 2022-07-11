@@ -8,7 +8,7 @@ import {
 } from "react-router-dom"
 import {
   StaticRouter,
-} from "react-router-dom/server.js"
+} from "react-router-dom/server"
 
 <%- imports %>
 
@@ -16,8 +16,8 @@ export default function App({
   location
 }) {
   return (
-    <StaticRouter>
-      <Routes location={location}>
+    <StaticRouter location={location}>
+      <Routes>
         <%- index %>
         <%- routes %>
       </Routes>  
