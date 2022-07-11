@@ -14,6 +14,8 @@ import getPort, { makeRange as portNumbers } from "get-port";
 
 import rollupPlugintaratRuntime from './adaptors/runtime-helper/rollup-plugin-tarat-runtime'
 import { composeSchema } from "./compiler/composeSchema";
+import pureDevCache from "./middlewares/pureDevCache";
+import { config } from "shelljs";
 
 export function setupBasicServer (app: Application) {
 
@@ -54,6 +56,10 @@ export async function createDevServer (c: IConfig) {
 
   app.use(e2k(vite.middlewares))
   
+  app.use(pureDevCache({
+    config: c
+  }))
+
   app.use(page({
     config: c,
     pages: c.pages,

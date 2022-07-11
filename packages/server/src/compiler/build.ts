@@ -238,7 +238,6 @@ export async function buildRoutes(c: IConfig) {
     }),
     c.ts ? tsPlugin({ clean: true, tsconfig: getTsconfig(c) }) : undefined,
   ])
-  console.log('myPlugins: ', myPlugins)
   // compilet to js
   const inputOptions: IBuildOption = {
     input: {
