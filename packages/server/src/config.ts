@@ -184,8 +184,29 @@ export async function readConfig (arg: {
 
   const hooks = readHooks(hooksDirectory)
 
+  const outputDevDir = path.join(cwd, config.devCacheDirectory)
+  
+  const pointFiles = {
+    outputDevDir,
+    // routes
+    autoGenerateRoutesFile: path.join(outputDevDir, `${config.routesServer}${config.ts ? '.tsx' : '.jsx'}`),    
+    distRoutesFile: path.join(outputDevDir, `${config.routesServer}.js`),
+    distRoutesFileCSS: path.join(outputDevDir, `${config.routesServer}.css`),
+    /**
+     * client side route doesnt need compiled, it will be auto compiled in vite
+     */
+    autoGenerateRoutesClientFile: path.join(outputDevDir, `${config.routes}${config.ts ? '.tsx' : '.jsx'}`),
+
+    // entry
+    distEntryJS: path.join(outputDevDir, `${config.entryServer}.js`),
+    distEntryCSS: path.join(outputDevDir, `${config.entryServer}.css`),
+    serverEntyTSX: path.join(cwd, config.appDirectory, `${config.entryServer}.tsx`),
+    serverEntyJSX: path.join(cwd, config.appDirectory, `${config.entryServer}.jsx`)
+  }
+
   return {
     ...config,
+    pointFiles,
     cwd,
     hooks,
     views,

@@ -190,12 +190,12 @@ function implicitImportPath (path: string, ts: boolean) {
 }
 
 export async function buildRoutes(c: IConfig) {
-  const ext = c.ts ? '.tsx' : '.jsx'
 
-  const autoGenerateRoutesFile = path.join(c.cwd, c.devCacheDirectory, `${c.routesServer}${ext}`)
-  const autoGenerateRoutesClientFile = path.join(c.cwd, c.devCacheDirectory, `${c.routes}${ext}`)
-  const distRoutesFile = path.join(c.cwd, c.devCacheDirectory, `${c.routesServer}.js`)
-  const distRoutesFileCss = path.join(c.devCacheDirectory, `${c.routesServer}.css`)
+  const {
+    autoGenerateRoutesFile,
+    autoGenerateRoutesClientFile,
+    distRoutesFile,
+    distRoutesFileCSS } = c.pointFiles
 
   const routesTreeArr = defineRoutesTree(c.pages)
 
@@ -247,7 +247,6 @@ export async function buildRoutes(c: IConfig) {
       plugins: myPlugins
     },
     output: [{
-      // dir: path.join(c.cwd, c.devCacheDirectory), used when generating multiple chunks
       file: distRoutesFile,
       format: 'commonjs',
       plugins: myPlugins
@@ -258,7 +257,7 @@ export async function buildRoutes(c: IConfig) {
 
   return {
     routesEntry: distRoutesFile,
-    css: path.join(c.cwd, distRoutesFileCss)
+    css: distRoutesFileCSS
   }
 }
 
@@ -280,10 +279,7 @@ export async function buildEntryServer (c: IConfig) {
   const r = getEntryFile(c)
   
   if (r?.file) {
-    const outputFileDir = path.join(c.cwd, c.devCacheDirectory)
-
-    const distEntry = path.join(outputFileDir, `${c.entryServer}.js`)
-    const distEntryCss = path.join(outputFileDir, `${c.entryServer}.css`)
+    const { distEntryJS: distEntry, distEntryCSS: distEntryCss }  = c.pointFiles
 
     const inputOptions: IBuildOption = {
       input: {
@@ -355,3 +351,4 @@ export async function buildHooks (c: IConfig) {
     entryHooksDir: esbuildOutputDir
   }
 }
+

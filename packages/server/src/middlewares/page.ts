@@ -17,25 +17,13 @@ const templateFilePath = path.join(__dirname, templateFile)
 
 const template = compile(fs.readFileSync(templateFilePath).toString())
 
-
-async function matchRoutes(c: IConfig) {
-}
-
 async function renderPage (ctx: Application.ParameterizedContext, config: IConfig) {
-  const [r, r2] = await Promise.all([
-    buildEntryServer(config),
-    buildRoutes(config),
-  ])
 
-  // const r = {
-  //   entry: '/Users/yunge/Documents/tarat/packages/example/user-login-system/.tarat/entry.server.js',
-  // }
-
-  const distRoutesFile = path.join(config.cwd, config.devCacheDirectory, `${config.routesServer}.js`)
+  const { distRoutesFile, distEntryJS, distEntryCSS, distRoutesFileCSS } = config.pointFiles
 
   let entryFunctionModule = { default: (doc: React.ReactElement) => doc }
-  if (r?.entry) {
-    entryFunctionModule = await import(r.entry)
+  if (fs.existsSync(distEntryJS)) {
+    entryFunctionModule = await import(distEntryJS)
   }
   const routesEntryModule = await import(distRoutesFile)
 
@@ -92,8 +80,8 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
   // console.log('html: ', html);
   // console.log('html2: ', html2);
 
-  const entryServerCss = r?.css && fs.existsSync(r.css) ? fs.readFileSync(r.css).toString() : ''
-  const css = fs.existsSync(r2.css) ? fs.readFileSync(r2.css).toString() : ''
+  const entryServerCss = fs.existsSync(distEntryCSS) ? fs.readFileSync(distEntryCSS).toString() : ''
+  const css = fs.existsSync(distRoutesFileCSS) ? fs.readFileSync(distRoutesFileCSS).toString() : ''
 
   return {
     driver,
@@ -106,13 +94,11 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
 /**
  * @TODO should provide by default
  */
- export default function view (args: {
+ export default function page (args: {
    config: IConfig
    pages: IViewConfig[]
    vite: ViteDevServer
 }) : Application.Middleware {
-
-  buildRoutes(args.config)
 
   const config = args.config
 
@@ -131,7 +117,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
         ssrHTML = r.html2
       }
 
-      const autoGenerateRoutesClientFile = path.join(config.cwd, config.devCacheDirectory, `${config.routes}${config.ts ? '.tsx' : '.jsx'}`)
+      const { autoGenerateRoutesClientFile } = config.pointFiles
 
       let html = template({
         hookContextMap: JSON.stringify(context),
