@@ -201,7 +201,11 @@ export async function readConfig (arg: {
     distEntryJS: path.join(outputDevDir, `${config.entryServer}.js`),
     distEntryCSS: path.join(outputDevDir, `${config.entryServer}.css`),
     serverEntyTSX: path.join(cwd, config.appDirectory, `${config.entryServer}.tsx`),
-    serverEntyJSX: path.join(cwd, config.appDirectory, `${config.entryServer}.jsx`)
+    serverEntyJSX: path.join(cwd, config.appDirectory, `${config.entryServer}.jsx`),
+
+    // prisma
+    modelEnhanceFile: path.join(cwd, config.modelsDirectory, `${config.modelEnhance}`),
+    modelTargetFile: path.join(cwd, config.modelsDirectory, `${config.targetSchemaPrisma}`),
   }
 
   return {

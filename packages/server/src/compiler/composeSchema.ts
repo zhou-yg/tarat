@@ -4,6 +4,7 @@ import * as path from 'path'
 import { loadJSON } from "../util";
 import * as prismaInternals from '@prisma/internals'
 import os from 'os'
+import { cp } from "shelljs";
 
 interface IEnhancement {
   extraRelation: {
@@ -211,32 +212,41 @@ async function generateSchemaFile (file: string, str: string[]) {
 }
 
 export async function composeSchema (c: IConfig) {
-  const enhanceFile = path.join(c.cwd, c.modelsDirectory, `${c.modelEnhance}`)
-  const targetFile = path.join(c.cwd, c.modelsDirectory, `${c.targetSchemaPrisma}`)
+  const { modelEnhanceFile: enhanceFile, modelTargetFile: targetFile } = c.pointFiles
   
   let enhanceJSON: IEnhancement | undefined
   if (fs.existsSync(enhanceFile)) {
     enhanceJSON = loadJSON(enhanceFile)
   }
   if (c.model.engine === 'prisma') {
-    const existPrismaPart = readExsitPrismaPart(c)
-
     const taratPrismas = findDependentPrisma(c)
 
-    const newSchemaContent = await generateNewSchema(
-      c,
-      existPrismaPart.concat(taratPrismas),
-      enhanceJSON
-    )
+    const partSchema = path.join(c.cwd, c.modelsDirectory, `schema.${c.prismaModelPart}`)
+    if (!fs.existsSync(partSchema) && taratPrismas.length > 0) {
+      cp(targetFile, partSchema)
+    }
 
-    const existPrismaPartWithoutModels = pickExpectModel(existPrismaPart)
-    
-    await generateSchemaFile(
-      targetFile,
-      [
-        ...existPrismaPartWithoutModels,
-        newSchemaContent,
-      ]
-    )
+    const existPrismaPart = readExsitPrismaPart(c)
+
+    /**
+     * if detect the dependent prisma, must backup orignal schema.prisma
+     */
+    if (taratPrismas.length > 0) {
+      const newSchemaContent = await generateNewSchema(
+        c,
+        existPrismaPart.concat(taratPrismas),
+        enhanceJSON
+      )
+  
+      const existPrismaPartWithoutModels = pickExpectModel(existPrismaPart)
+      
+      await generateSchemaFile(
+        targetFile,
+        [
+          ...existPrismaPartWithoutModels,
+          newSchemaContent,
+        ]
+      )
+    }
   }
 }
