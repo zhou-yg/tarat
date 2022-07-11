@@ -86,4 +86,6 @@ export async function createDevServer (c: IConfig) {
     ${address || ''}
 ------------`
   );
+
+  return app
 }

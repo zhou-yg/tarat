@@ -3,8 +3,11 @@ import { createDevServer } from "../src/server";
 import * as fs from 'fs'
 import * as path from 'path'
 import { parseDeps } from "../src/compiler/analyzer";
+import exitHook from 'exit-hook'
+import rimraf from 'rimraf'
 
 import * as prettier from 'prettier'
+import { buildEntryServer, buildRoutes } from "../src/compiler/build";
 
 function generateHookDeps (c: IConfig) {
   const hooksDir = path.join(c.cwd, c.hooksDirectory)
@@ -24,15 +27,27 @@ function generateHookDeps (c: IConfig) {
   })
 }
 
+async function startCompile (c: IConfig) {
+  rimraf.sync(c.pointFiles.outputDevDir)
+
+  !fs.existsSync(c.pointFiles.outputDevDir) && fs.mkdirSync(c.pointFiles.outputDevDir)
+  await buildRoutes(c)
+  await buildEntryServer(c)
+}
+
 export default async (cwd: string) => {
   const config = await readConfig({
     cwd,
   })
-  
+    
+  await startCompile(config)
+
+  /** @TODO integrated to the vite.plugin */
   generateHookDeps(config)
 
-  // const fs = require('fs')
-  // console.log('fs: ', fs);
+  exitHook(() => {
+    console.log('[exitHook] process.exit')
+  })
 
-  createDevServer(config)
+  await createDevServer(config)
 }
