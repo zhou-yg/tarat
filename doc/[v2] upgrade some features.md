@@ -119,9 +119,8 @@ sort by priority
     - access hook in "views" component
       - react
   - part3: server
-    - compose: support staticly importing other hook to current project
-      - extra Model relation description
-    - export config of view mount container
+    - compose: support staticly importing other hook to current project √
+      - extra Model relation description √
     - "context synchronism" only pass dependent hooks √
       - depends AST √
     - BM drives view √
