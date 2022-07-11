@@ -43,7 +43,7 @@ const Todos = () => {
           onKeyDown={keydownCreate}
           onChange={e => setInputText(e.target.value)}
           value={inputText}
-          placeholder="what needs to be done?" />
+          placeholder="Enter a new task" />
       </div>
       {todo.items()?.map((item, i) => {
         return <TodoItem
