@@ -21,11 +21,11 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
 
   const { distRoutesFile, distEntryJS, distEntryCSS, distRoutesFileCSS } = config.pointFiles
 
-  let entryFunctionModule = { default: (doc: React.ReactElement) => doc }
+  let entryFunctionModule = (doc: React.ReactElement) => doc
   if (fs.existsSync(distEntryJS)) {
-    entryFunctionModule = await import(distEntryJS)
+    entryFunctionModule = require(distEntryJS)
   }
-  const routesEntryModule = await import(distRoutesFile)
+  const routesEntryModule = require(distRoutesFile)
 
   const driver = new RenderDriver()
   driver.mode = 'collect'
@@ -40,8 +40,8 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
   })
 
   const appEntry = renderWithDriverContext(
-    entryFunctionModule.default(
-      routesEntryModule.default({
+    entryFunctionModule(
+      routesEntryModule({
         location: ctx.request.path
       })
     ),
@@ -64,8 +64,8 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
 
   driver.mode = 'consume'
   const appEntryUpdate = renderWithDriverContext(
-    entryFunctionModule.default(
-      routesEntryModule.default({
+    entryFunctionModule(
+      routesEntryModule({
         location: ctx.request.path
       })
     ),
