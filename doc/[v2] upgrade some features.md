@@ -136,3 +136,4 @@ sort by priority
   - server part
     - support hook writen by ts, need a compiler to differentiate client/server √
     - support hot-reload √
+  - quick start cli: create-tarat
