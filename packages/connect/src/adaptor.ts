@@ -14,15 +14,13 @@ export function setHookAdaptor(runtime: any, type: 'react' | 'axii') {
   }
 }
 
-export function useHook<T extends BM>(
-  bm: T,
-  args?: any[]
-): ReturnType<T> | undefined {
+export function useHook<T extends BM>(bm: T, args?: any[]): ReturnType<T> {
   switch (hookAdaptorType) {
     case 'react':
       return useReactHook(hookAdaptorRuntime, bm, args)
     case 'axii':
       return useAxiiHook(hookAdaptorRuntime, bm, args)
   }
+  throw new Error('[useTarat] must specific a UI framework like react')
 }
 export const useTarat = useHook

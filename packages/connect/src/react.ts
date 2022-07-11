@@ -36,5 +36,5 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
     typeof window !== 'undefined' && (window.runner = runner)
   }
   const [hookResult, setHookResult] = react.useState(init.current)
-  return hookResult as ReturnType<T> | undefined
+  return hookResult as ReturnType<T>
 }
