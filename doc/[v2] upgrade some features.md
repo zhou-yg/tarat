@@ -126,12 +126,14 @@ sort by priority
       - depends AST √
     - BM drives view √
     - migrate from esm to cjs
-- 2.upgrade performance
+- 2.upgrade performance / features
   - "model" global referrence
 - 3.upgrade development experience
   - cleint data mode
+  - more huamable API calling style
   - run production
-  - page router / view router
+  - page router / view router √
   - runner with typescript types snippets √
   - server part
-    - support hook writen by ts, need a compiler to differentiate client/server
+    - support hook writen by ts, need a compiler to differentiate client/server √
+    - support hot-reload √
