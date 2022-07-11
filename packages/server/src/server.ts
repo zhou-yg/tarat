@@ -13,7 +13,6 @@ import { IConfig } from "./config";
 import getPort, { makeRange as portNumbers } from "get-port";
 
 import rollupPlugintaratRuntime from './adaptors/runtime-helper/rollup-plugin-tarat-runtime'
-import { composeSchema } from "./compiler/composeSchema";
 import pureDevCache from "./middlewares/pureDevCache";
 import { config } from "shelljs";
 
@@ -31,8 +30,6 @@ export function setupBasicServer (app: Application) {
 export async function createDevServer (c: IConfig) {  
   const app = new Koa()
   setupBasicServer(app)
-
-  composeSchema(c)
 
   app.use(taratRunner({
     config: c

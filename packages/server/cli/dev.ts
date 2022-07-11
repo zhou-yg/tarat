@@ -3,6 +3,7 @@ import { createDevServer } from "../src/server";
 import * as fs from 'fs'
 import * as path from 'path'
 import { parseDeps } from "../src/compiler/analyzer";
+import { composeSchema } from "../src/compiler/composeSchema";
 import exitHook from 'exit-hook'
 import rimraf from 'rimraf'
 import chokidar from 'chokidar'
@@ -21,9 +22,13 @@ function generateHookDeps (c: IConfig) {
 
       const deps = parseDeps(code)
 
-      fs.writeFileSync(path.join(hooksDir, `${name}.deps.js`), prettier.format(
+      fs.writeFile(path.join(hooksDir, `${name}.deps.js`), prettier.format(
         `export default ${JSON.stringify(deps, null, 2)}`
-      ))
+      ), (err) => {
+        if (err) {
+          throw new Error(`[generateHookDeps] generate ${name}.deps.js fail`)
+        }
+      })
     }
   })
 }
@@ -86,6 +91,7 @@ export default async (cwd: string) => {
 
   /** @TODO integrated to the vite.plugin */
   generateHookDeps(config)
+  composeSchema(config)
 
   await createDevServer(config)
 }
