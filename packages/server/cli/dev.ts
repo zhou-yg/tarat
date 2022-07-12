@@ -47,15 +47,19 @@ function generateHookDeps (c: IConfig) {
   })
 }
 
-async function startCompile (c: IConfig) {
-
-  emptyDirectory(c.pointFiles.outputDevDir)
-  
-  await Promise.all([
+function buildEverything (c: IConfig) {
+  return Promise.all([
     buildRoutes(c),
     buildEntryServer(c),
     buildHooks(c)
   ])
+}
+
+async function startCompile (c: IConfig) {
+
+  emptyDirectory(c.pointFiles.outputDevDir)
+  
+  await buildEverything(c)
 
   const watchTarget = [
     path.join(c.cwd, c.appDirectory),
@@ -78,18 +82,15 @@ async function startCompile (c: IConfig) {
     .on('error', console.error)
     .on('change', () => {
       log('[change] re-run compiling')
-      buildRoutes(c)
-      buildEntryServer(c)
+      buildEverything(c)
     })
     .on('add', () => {
       log('[add] re-run compiling')
-      buildRoutes(c)
-      buildEntryServer(c)
+      buildEverything(c)
     })
     .on('unlink', () => {
       log('[unlink] re-run compiling')
-      buildRoutes(c)
-      buildEntryServer(c)
+      buildEverything(c)
     })
 
   

@@ -197,6 +197,7 @@ export async function readConfig (arg: {
     autoGenerateRoutesFile: path.join(outputDevDir, `${config.routesServer}${config.ts ? '.tsx' : '.jsx'}`),    
     distRoutesFile: path.join(outputDevDir, `${config.routesServer}.js`),
     distRoutesFileCSS: path.join(outputDevDir, `${config.routesServer}.css`),
+    coreClientDistRoutesFile: path.join(outputDevDir, `core.client.${config.routesServer}.js`),
     /**
      * client side route doesnt need compiled, it will be auto compiled in vite
      */
