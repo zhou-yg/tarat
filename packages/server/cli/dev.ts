@@ -12,12 +12,12 @@ import { buildEntryServer, buildHooks, buildRoutes } from "../src/compiler/build
 import { emptyDirectory } from "../src/util";
 
 function generateHookDeps (c: IConfig) {
-  const hooksDir = path.join(c.cwd, c.hooksDirectory)
+  const hooksDir = c.pointFiles.devHooksESMDir
  
   fs.readdirSync(hooksDir).forEach(f => {
     const file = path.join(hooksDir, f)
     const name = f.replace(/\.js$/, '')
-    if (/\.(j|t)s$/.test(f) && !/\.deps\.js$/.test(f) && fs.lstatSync(file).isFile()) {
+    if (/\.js$/.test(f)) {
       const code = fs.readFileSync(file).toString()
 
       const deps = parseDeps(code)      
@@ -28,14 +28,14 @@ function generateHookDeps (c: IConfig) {
       }
 
       // js output
-      fs.writeFile(path.join(c.pointFiles.outputDevDir, c.hooksDirectory, `${name}.deps.js`), prettier.format(
-        `export default ${JSON.stringify(deps, null, 2)}`
-      ), (err) => {
-        if (err) {
-          console.error(`[generateHookDeps] generate ${name}.deps.js fail`)
-          throw err
-        }
-      })
+      // fs.writeFile(path.join(c.pointFiles.outputDevDir, c.hooksDirectory, `${name}.deps.js`), prettier.format(
+      //   `export default ${JSON.stringify(deps, null, 2)}`
+      // ), (err) => {
+      //   if (err) {
+      //     console.error(`[generateHookDeps] generate ${name}.deps.js fail`)
+      //     throw err
+      //   }
+      // })
       // json in tarat
       fs.writeFile(path.join(c.pointFiles.outputDevDir, c.hooksDirectory, `${name}.deps.json`), (JSON.stringify(deps)), (err) => {
         if (err) {
@@ -106,8 +106,9 @@ export default async (cwd: string) => {
     
   await startCompile(config)
 
-  /** @TODO integrated to the vite.plugin */
+  /** @TODO 1.integrated to the vite.plugin 2.upgrade to typescript */
   generateHookDeps(config)
+
   composeSchema(config)
 
   await createDevServer(config)

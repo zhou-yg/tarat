@@ -2,7 +2,7 @@ import * as mockUtil from '../mockUtil'
 import { parseDeps as parse } from '../../src/compiler/analyzer'
 
 describe('parser', () => {
-  it ('parse single BM', () => {
+  it('parse single BM', () => {
     const BM = 'singleBM.js'
     const code = mockUtil.readMock(BM)
 
