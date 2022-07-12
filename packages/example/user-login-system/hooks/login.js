@@ -7,12 +7,7 @@ import {
   inputCompute,
   inputComputeInServer,
 } from 'tarat-core'
-import loginDeps from './login.deps.js'
 import nanoid from 'nanoid'
-
-Object.assign(login, {
-  __deps__: loginDeps.login
-})
 
 export default function login () {
   const name = state()
