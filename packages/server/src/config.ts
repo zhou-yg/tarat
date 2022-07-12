@@ -66,6 +66,8 @@ export interface IViewConfig {
   index?: boolean
   // file absolute path in system
   file: string
+
+  dir: boolean
 }
 
 const isIndexFlagn = (f: string) => /^index.(j|t)sx$/.test(f) || /\/index.(j|t)sx$/.test(f)
@@ -82,14 +84,14 @@ function defineView (viewDir: string, file: string, name: string, parent?: IView
     path: file.replace(/\.\w+/, ''),
     file,
     name: name.replace(/\.\w+/, ''),
-    index: isIndexFlagn(file)
+    index: isIndexFlagn(file),
+    dir: fs.lstatSync(currentFileOrDirPath).isDirectory()
   }
-  if (fs.lstatSync(currentFileOrDirPath).isDirectory()) {
+  if (current.dir) {
     const childConfigs = readViews(viewDir, file, current)
     configs.push(...childConfigs)
-  } else {
-    configs.push(current)
   }
+  configs.push(current)
 
   return configs
 }

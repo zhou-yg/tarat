@@ -16,6 +16,7 @@ import rollupPlugintaratRuntime from './adaptors/runtime-helper/rollup-plugin-ta
 import rollupPluginBMDeps from './adaptors/runtime-helper/rollup-plugin-BM-deps'
 import pureDevCache from "./middlewares/pureDevCache";
 import { config } from "shelljs";
+import { getDefeaultRoute } from "./util";
 
 export function setupBasicServer (app: Application) {
 
@@ -74,7 +75,7 @@ export async function createDevServer (c: IConfig) {
 
   app.listen(port)
 
-  const defaultView = c.pages[0]?.name || ''
+  const defaultView = getDefeaultRoute(c.pages)
 
 
   let address =
