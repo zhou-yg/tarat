@@ -306,7 +306,7 @@ export async function buildEntryServer (c: IConfig) {
   }
 }
 
-async function esbuildHooks (c: IConfig, outputDir: string) {
+async function esbuildHooks (c: IConfig, outputDir: string, format?: esbuild.Format) {
   const { hooks } = c
   let includingTs = false
   const points: string[] = []
@@ -325,11 +325,10 @@ async function esbuildHooks (c: IConfig, outputDir: string) {
 
   const buildOptions: esbuild.BuildOptions = {
     entryPoints: points,
-    // outbase: dir,
     bundle: false,
     outdir: outputDir,
     platform: 'node',
-    format: 'cjs',
+    format,
   }
 
   // check tsconfig
@@ -344,14 +343,11 @@ async function esbuildHooks (c: IConfig, outputDir: string) {
  * for server side running
  */
 export async function buildHooks (c: IConfig) {
-  const esbuildOutputDir = path.join(c.cwd, c.devCacheDirectory, c.hooksDirectory)
+  const { devHooksESMDir, devHooksDir  } = c.pointFiles
 
-  await esbuildHooks(c, esbuildOutputDir)
-
-  
-
-  return {
-    entryHooksDir: esbuildOutputDir
-  }
+  await Promise.all([
+    esbuildHooks(c, devHooksDir, 'cjs'),
+    esbuildHooks(c, devHooksESMDir, 'esm'),
+  ])
 }
 

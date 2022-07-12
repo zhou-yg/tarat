@@ -189,7 +189,10 @@ export async function readConfig (arg: {
   const pointFiles = {
     outputDevDir,
 
+    // place compiled hooks "cjs" file
     devHooksDir: path.join(outputDevDir, config.hooksDirectory),
+    // place compiled hooks "esm" file
+    devHooksESMDir: path.join(outputDevDir, config.hooksDirectory, 'esm'),
     // routes
     autoGenerateRoutesFile: path.join(outputDevDir, `${config.routesServer}${config.ts ? '.tsx' : '.jsx'}`),    
     distRoutesFile: path.join(outputDevDir, `${config.routesServer}.js`),

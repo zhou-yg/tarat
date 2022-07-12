@@ -370,6 +370,9 @@ function matchBMFunction (ast:acorn.Node) {
 
 export function parseDeps (hookCode: string) {
   
+  // const ast: any = babelParse(hookCode, {
+  //   sourceType: 'module'
+  // });
   const ast = acornParse(hookCode, {
     ecmaVersion: 'latest',
     sourceType: 'module'
