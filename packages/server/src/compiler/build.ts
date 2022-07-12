@@ -115,16 +115,6 @@ function defineRoutesTree (pages: IConfig['pages']) {
 
   pages.forEach(p => {
     if (p.parentId) {
-      if (!routesMap[p.parentId]) {
-        routesMap[p.parentId] = {
-          path: p.parentId,
-          file: '',
-          name: p.parentId.replace(/^\//, ''),
-          parentId: '',
-          id: p.parentId,
-          children: []
-        }
-      }
       const child = routesMap[p.id]
       routesMap[p.parentId].children.push(child)
     }
@@ -134,28 +124,55 @@ function defineRoutesTree (pages: IConfig['pages']) {
 }
 
 function upperFirst (s: string) {
+  s = s.replace(/\:/g, '_')
   return s ? (s[0].toUpperCase() + s.substring(1)) : ''
 }
 
 function generateRoutesContent (routes: IRouteChild[], depth = 0, parentNmae = ''): string {
-  const routeArr = routes.map((r, i) => {
-    let Cpt = ''
-    if (r.file) {
-      Cpt = `${upperFirst(parentNmae)}${upperFirst(r.name)}`
+  const pathObj: { [p: string]: IRouteChild } = {}
+  routes.forEach(r => {
+    if (pathObj[r.path]) {
+      const exist = pathObj[r.path]
+      if (exist.dir) {
+        Object.assign(exist, {
+          dir: false,
+          file: r.file,
+          id: r.id
+        })
+      } else {
+        Object.assign(exist, {
+          dir: false,
+          children: r.children
+        })
+      }
     } else {
-      const childIndex = r.children.find(c => c.index)
-      Cpt = childIndex ? `${upperFirst(parentNmae)}${upperFirst(r.name) || '/'}${upperFirst(childIndex.name)}` : ''
+      pathObj[r.path] = Object.assign({}, r)
     }
+  })
+
+
+  const routeArr = Object.values(pathObj).map((r, i) => {
+    let Cpt = ''
     let element = ''
-    if (Cpt) {
-      element = `element={<${Cpt} />}`
+
+    if (r.dir) {
+    } else {
+      if (r.file) {
+        Cpt = `${upperFirst(parentNmae)}${upperFirst(r.name)}`
+      } else {
+        const childIndex = r.children.find(c => c.index)
+        Cpt = childIndex ? `${upperFirst(parentNmae)}${upperFirst(r.name) || '/'}${upperFirst(childIndex.name)}` : ''
+      }
+      if (Cpt) {
+        element = `element={<${Cpt} />}`
+      }
     }
 
     return [
-      `<Route path="${r.name}" ${element} >`,
+      r.index ? `<Route index ${element} >` : `<Route path="${r.name}" ${element} >`,
       r.children.length > 0 ? generateRoutesContent(r.children, depth + 1, r.name) : '',
       `</Route>`
-    ].map(s => `${new Array(depth * 2).fill(' ').join('')}${s}`).join('\n');
+    ].join('\n');
   })
 
   return routeArr.join('\n')
@@ -164,7 +181,7 @@ function generateRoutesContent (routes: IRouteChild[], depth = 0, parentNmae = '
 function generateRoutesImports (routes: IRouteChild[], parentNmae = '') {
   let importsArr: [string, string][] = []
   routes.forEach(r => {
-    if (r.file) {
+    if (!r.dir && r.file) {
       importsArr.push([
         `${upperFirst(parentNmae)}${upperFirst(r.name)}`,
         r.file,
@@ -212,8 +229,9 @@ export async function buildRoutes(c: IConfig) {
 
   const r = generateRoutesContent(routesTreeArr)
 
-  const routeIndex = routesTreeArr.find(r => r.index)
-  const index = routeIndex ? `<Route path="/" element={<Index />} />` : ''
+  // const routeIndex = routesTreeArr.find(r => r.index)
+  // const index = routeIndex ? `<Route path="/" element={<Index />} />` : ''
+  const index = ''
 
   const routesStr = routesTemplate({
     imports: importsWithAbsolutePathServer,
