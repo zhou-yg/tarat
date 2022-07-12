@@ -1,4 +1,4 @@
-import { BM, ReactiveChain, Runner } from 'tarat-core'
+import { BM, IHookContext, ReactiveChain, Runner } from 'tarat-core'
 import React, { createElement, createContext } from 'react'
 
 import { setHookAdaptor } from './adaptor'
@@ -19,9 +19,18 @@ export function renderWithDriverContext(
 export class RenderDriver {
   mode?: 'collect' | 'consume'
 
+  beleiveContext = false
+
   BMValuesMap: Map<string, Runner<any>[]> = new Map()
 
   pushListener?: (runner: Runner<any>) => void
+
+  consumeCache: Map<string, IHookContext[] | undefined> = new Map()
+
+  switiToConsumeMode() {
+    this.mode = 'consume'
+    this.beleiveContext = true
+  }
 
   pop(name: string) {
     return this.BMValuesMap.get(name)?.pop()
@@ -31,9 +40,15 @@ export class RenderDriver {
     if (this.mode !== 'consume') {
       return
     }
-    return this.BMValuesMap.get(name)?.map(r =>
-      r.scope.createInputComputeContext()
-    )
+    let r = this.consumeCache.get(name)
+    if (!r) {
+      r = this.BMValuesMap.get(name)?.map(r =>
+        r.scope.createInputComputeContext()
+      )
+      this.consumeCache.set(name, r)
+    }
+
+    return r
   }
 
   onPush(f: (runner: Runner<any>) => void) {
