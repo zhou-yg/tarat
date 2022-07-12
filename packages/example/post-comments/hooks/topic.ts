@@ -4,7 +4,7 @@ import {
   state
 } from 'tarat-core'
 
-interface ITopic {
+export interface ITopic {
   id?: number
   title: string
 }
