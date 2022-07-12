@@ -207,7 +207,7 @@ export class State<T = any> extends Hook {
 
 export class Model<T extends any[]> extends State<T[]> {
   getterPromise: Promise<T> | null = null
-  queryWhereComputed: Computed<IModelQuery['query']> | null = null
+  queryWhereComputed: Computed<IModelQuery['query'] | void> | null = null
   watcher: Watcher = new Watcher(this)
   init = true
   // just update latest query
@@ -215,15 +215,17 @@ export class Model<T extends any[]> extends State<T[]> {
 
   constructor(
     public entity: string,
-    getQueryWhere: () => IModelQuery['query'],
+    getQueryWhere: (() => (IModelQuery['query'] | void)) | void = undefined,
     public options: IModelOption = {},
     public scope: CurrentRunnerScope
   ) {
     super([])
     scope.addHook(this)
 
-    this.queryWhereComputed = new Computed(getQueryWhere)
-    this.watcher.addDep(this.queryWhereComputed)
+    if (getQueryWhere) {
+      this.queryWhereComputed = new Computed(getQueryWhere)
+      this.watcher.addDep(this.queryWhereComputed)
+    }
 
     // default to immediate
     if (options.immediate || options.immediate === undefined) {
@@ -1464,6 +1466,7 @@ function updateState<T>(initialValue?: T) {
 
   return newSetterGetter
 }
+
 function mountState<T>(initialValue?: T) {
   const internalState = new State(initialValue)
 
@@ -1479,7 +1482,7 @@ function mountState<T>(initialValue?: T) {
 
 function updateModel<T extends any[]>(
   e: string,
-  q: () => IModelQuery['query'],
+  q?: () => IModelQuery['query'] | void,
   op?: IModelOption
 ) {
   const { hooks, initialHooksSet } = currentRunnerScope!
@@ -1522,7 +1525,7 @@ function updateModel<T extends any[]>(
 }
 function mountModel<T extends any[]>(
   e: string,
-  q: () => IModelQuery['query'],
+  q?: () => (IModelQuery['query'] | void),
   op?: IModelOption
 ) {
   const internalModel =
@@ -1639,16 +1642,26 @@ function mountComputed<T>(fn: any): any {
   return newGetter
 }
 
-export function state<T>(initialValue?: T) {
+
+
+export function state<T>(initialValue: T): {
+  (): T
+  (paramter: IModifyFunction<T>): [any, IPatch[]];
+} & { _hook: State<T> }
+export function state<T = undefined>(): {
+  (): T
+  (paramter: IModifyFunction<T | undefined>): [any, IPatch[]];
+} & { _hook: State<T | undefined> }
+export function state(initialValue?: any) {
   if (!currentRunnerScope) {
     throw new Error('[state] must under a tarat runner')
   }
-  return currentHookFactory.state<T>(initialValue)
+  return currentHookFactory.state(initialValue)
 }
 
 export function model<T extends any[]>(
   e: string,
-  q: () => IModelQuery['query'],
+  q?: (() => IModelQuery['query'] | void),
   op?: IModelOption
 ) {
   if (!currentRunnerScope) {
