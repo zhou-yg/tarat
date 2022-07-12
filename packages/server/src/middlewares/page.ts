@@ -47,9 +47,6 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
     ),
     driver,
   )
-  // console.log('entryFunctionModule.default: ', viewConfig.name, entryFunctionModule.default.toString());
-
-  // const html = renderToString(entryFunctionModule.default(viewConfig.name))
   const html = renderToString(appEntry.root)
 
   appEntry.cancelAdaptor()
@@ -62,7 +59,10 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
   }
   await Promise.all(allRunedHook.map((runner: Runner<any>) => runner.ready()))
 
-  driver.mode = 'consume'
+  driver.switiToConsumeMode()
+
+  const chain1 = startdReactiveChain()
+
   const appEntryUpdate = renderWithDriverContext(
     entryFunctionModule(
       routesEntryModule({
@@ -71,14 +71,11 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
     ),
     driver,
   )
+
   const html2 = renderToString(appEntryUpdate.root)
 
-  // console.log('entryFunctionModule.default: ', viewConfig.name, entryFunctionModule.default.toString());
-  // const html = renderToString(entryFunctionModule.default(viewConfig.name))
-
-  // console.log('driver: ', driver);
-  // console.log('html: ', html);
-  // console.log('html2: ', html2);
+  stopReactiveChain()
+  chain1.print()
 
   const entryServerCss = fs.existsSync(distEntryCSS) ? fs.readFileSync(distEntryCSS).toString() : ''
   const css = fs.existsSync(distRoutesFileCSS) ? fs.readFileSync(distRoutesFileCSS).toString() : ''

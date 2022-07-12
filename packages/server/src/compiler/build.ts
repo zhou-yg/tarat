@@ -2,7 +2,6 @@ import { IConfig, IViewConfig } from "../config";
 import * as fs from 'fs'
 import * as path from 'path'
 import { compile } from 'ejs'
-import { fileURLToPath } from 'url'
 import { InputOptions, ModuleFormat, OutputOptions, Plugin, rollup, RollupBuild } from 'rollup' 
 import resolve from '@rollup/plugin-node-resolve';
 import { babel  } from '@rollup/plugin-babel';
@@ -12,7 +11,6 @@ import postcss from 'rollup-plugin-postcss'
 import tsPlugin from 'rollup-plugin-typescript2'
 import * as prettier from 'prettier'
 import * as esbuild from 'esbuild';
-import { loadJSON } from "../util";
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -194,8 +192,8 @@ export async function buildRoutes(c: IConfig) {
   const {
     autoGenerateRoutesFile,
     autoGenerateRoutesClientFile,
-    distRoutesFile,
-    distRoutesFileCSS } = c.pointFiles
+    distRoutesFile
+  } = c.pointFiles
 
   const routesTreeArr = defineRoutesTree(c.pages)
 
@@ -251,12 +249,7 @@ export async function buildRoutes(c: IConfig) {
     }]
   }
 
-  await build(c, inputOptions)
-
-  return {
-    routesEntry: distRoutesFile,
-    css: distRoutesFileCSS
-  }
+  await build(c, inputOptions)  
 }
 
 const plugins: (arr: (Plugin | undefined)[]) => Plugin[] = (arr: (Plugin | undefined)[]) => ([
