@@ -24,7 +24,7 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
           : []
     }
 
-    const runner = new Runner(hook)
+    const runner = new Runner(hook, driver?.beleiveContext)
     driver?.push(runner, hook.name)
 
     const r = runner.init(args, ssrContext.pop())
