@@ -215,7 +215,7 @@ export class Model<T extends any[]> extends State<T[]> {
 
   constructor(
     public entity: string,
-    getQueryWhere: (() => (IModelQuery['query'] | void)) | void = undefined,
+    getQueryWhere: (() => IModelQuery['query'] | void) | void = undefined,
     public options: IModelOption = {},
     public scope: CurrentRunnerScope
   ) {
@@ -251,7 +251,6 @@ export class Model<T extends any[]> extends State<T[]> {
     return super.value
   }
   async ready() {
-    console.log('this.getterPromise: ', this.getterPromise)
     if (this.getterPromise) {
       await this.getterPromise
     }
@@ -848,6 +847,7 @@ export class ReactiveChain<T = any> {
       return [...currentRows]
     }
     const logRows = dfi(this)
+    // console the chain log
     console.log(logRows.join('\n'))
   }
 }
@@ -870,6 +870,9 @@ export class CurrentRunnerScope {
   intialCallHookIndex?: number
 
   reactiveChainStack: ReactiveChain[] = []
+
+  // indicate can beleive the model data in context
+  beleiveContext = false
 
   onUpdate(f: Function) {
     this.outerListeners.push(f)
@@ -1192,7 +1195,10 @@ let currentRunnerScope: CurrentRunnerScope | null = null
 export class Runner<T extends BM> {
   scope = new CurrentRunnerScope()
   alreadyInit = false
-  constructor(public bm: T) {}
+  constructor(public bm: T, public beleiveContext: boolean = false) {
+    this.scope.beleiveContext = beleiveContext
+  }
+
   onUpdate(f: Function) {
     return this.scope?.onUpdate(() => {
       f()
@@ -1494,20 +1500,23 @@ function updateModel<T extends any[]>(
     return createUnaccessGetter2<T>(currentIndex)
   }
   const inServer = process.env.TARGET === 'server'
+  const { beleiveContext } = currentRunnerScope!
+  
+  const receiveDataFromContext = beleiveContext || !inServer
 
   op = Object.assign({}, op, {
-    immediate: inServer
+    immediate: !receiveDataFromContext
   })
 
   const internalModel = inServer
     ? new Model<T>(e, q, op, currentRunnerScope!)
     : new ClientModel<T>(e, q, op, currentRunnerScope!)
 
-  if (!inServer) {
+  if (receiveDataFromContext) {
     const initialValue: T =
       currentRunnerScope!.intialContextData![currentIndex]?.[1]
     const timestamp = currentRunnerScope!.intialContextData![currentIndex]?.[2]
-    internalModel.init = inServer
+    internalModel.init = false
     internalModel._internalValue = initialValue || []
     if (timestamp) {
       internalModel.modifiedTimstamp = timestamp
@@ -1525,7 +1534,7 @@ function updateModel<T extends any[]>(
 }
 function mountModel<T extends any[]>(
   e: string,
-  q?: () => (IModelQuery['query'] | void),
+  q?: () => IModelQuery['query'] | void,
   op?: IModelOption
 ) {
   const internalModel =
@@ -1642,15 +1651,13 @@ function mountComputed<T>(fn: any): any {
   return newGetter
 }
 
-
-
 export function state<T>(initialValue: T): {
   (): T
-  (paramter: IModifyFunction<T>): [any, IPatch[]];
+  (paramter: IModifyFunction<T>): [any, IPatch[]]
 } & { _hook: State<T> }
 export function state<T = undefined>(): {
   (): T
-  (paramter: IModifyFunction<T | undefined>): [any, IPatch[]];
+  (paramter: IModifyFunction<T | undefined>): [any, IPatch[]]
 } & { _hook: State<T | undefined> }
 export function state(initialValue?: any) {
   if (!currentRunnerScope) {
@@ -1661,7 +1668,7 @@ export function state(initialValue?: any) {
 
 export function model<T extends any[]>(
   e: string,
-  q?: (() => IModelQuery['query'] | void),
+  q?: () => IModelQuery['query'] | void,
   op?: IModelOption
 ) {
   if (!currentRunnerScope) {
