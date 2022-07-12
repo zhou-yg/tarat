@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { ReactElement, useState } from 'react'
 
 import s from './TopicList.module.less'
 import { useTarat } from 'tarat-connect'
-import topicHook from '../hooks/topic'
+import topicHook, { ITopic } from '../hooks/topic'
 import List from 'antd/lib/list/index'
 import Button from 'antd/lib/button/index'
 import Input from 'antd/lib/input/index'
@@ -10,7 +10,11 @@ import Input from 'antd/lib/input/index'
 
 import 'antd/dist/antd.css'
 
-export default function TopicList () {
+const TopicList: React.FC<{
+  renderItem?: (e: ITopic, i: number) => ReactElement
+}> = (props) => {
+  const { renderItem = (v, i) => `${i}.${v.title}` } = props
+
   const topic = useTarat(topicHook)
   
   function creatTopic () {
@@ -33,9 +37,7 @@ export default function TopicList () {
         renderItem={(item, i) => {
           return (
             <List.Item >
-              <div>
-                {i+1}.{item.title}
-              </div>
+              {renderItem(item, i)}
             </List.Item>
           )
         }}>
@@ -43,3 +45,5 @@ export default function TopicList () {
     </div>
   )
 }
+
+export default TopicList

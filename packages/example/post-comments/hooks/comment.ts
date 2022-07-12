@@ -20,13 +20,14 @@ interface IComment {
 interface ICommentProps {
   name: string
   authorId: number
+  topicId: number
 }
 
 export default function comment (props: ICommentProps) {
 
-  const { name, authorId } = props
+  const { name, authorId, topicId } = props
 
-  const currentTopic = state()
+  const currentTopic = state(topicId)
 
   const comments = model<IComment[]>('comment', () => {
     const tid = currentTopic()
