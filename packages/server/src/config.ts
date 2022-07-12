@@ -188,6 +188,8 @@ export async function readConfig (arg: {
   
   const pointFiles = {
     outputDevDir,
+
+    devHooksDir: path.join(outputDevDir, config.hooksDirectory),
     // routes
     autoGenerateRoutesFile: path.join(outputDevDir, `${config.routesServer}${config.ts ? '.tsx' : '.jsx'}`),    
     distRoutesFile: path.join(outputDevDir, `${config.routesServer}.js`),

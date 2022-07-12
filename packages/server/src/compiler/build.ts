@@ -154,7 +154,7 @@ function generateRoutesContent (routes: IRouteChild[], depth = 0, parentNmae = '
     }
 
     return [
-      `<Route path="/${r.name}" ${element} >`,
+      `<Route path="${r.name}" ${element} >`,
       r.children.length > 0 ? generateRoutesContent(r.children, depth + 1, r.name) : '',
       `</Route>`
     ].map(s => `${new Array(depth * 2).fill(' ').join('')}${s}`).join('\n');
@@ -248,7 +248,6 @@ export async function buildRoutes(c: IConfig) {
     output: [{
       file: distRoutesFile,
       format: 'commonjs',
-      plugins: myPlugins
     }]
   }
 
@@ -341,10 +340,15 @@ async function esbuildHooks (c: IConfig, outputDir: string) {
   await esbuild.build(buildOptions)
 }
 
+/**
+ * for server side running
+ */
 export async function buildHooks (c: IConfig) {
   const esbuildOutputDir = path.join(c.cwd, c.devCacheDirectory, c.hooksDirectory)
 
   await esbuildHooks(c, esbuildOutputDir)
+
+  
 
   return {
     entryHooksDir: esbuildOutputDir

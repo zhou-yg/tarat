@@ -5,11 +5,11 @@ import * as path from 'path'
 import { parseDeps } from "../src/compiler/analyzer";
 import { composeSchema } from "../src/compiler/composeSchema";
 import exitHook from 'exit-hook'
-import rimraf from 'rimraf'
 import chokidar from 'chokidar'
 
 import * as prettier from 'prettier'
-import { buildEntryServer, buildRoutes } from "../src/compiler/build";
+import { buildEntryServer, buildHooks, buildRoutes } from "../src/compiler/build";
+import { emptyDirectory } from "../src/util";
 
 function generateHookDeps (c: IConfig) {
   const hooksDir = path.join(c.cwd, c.hooksDirectory)
@@ -17,16 +17,30 @@ function generateHookDeps (c: IConfig) {
   fs.readdirSync(hooksDir).forEach(f => {
     const file = path.join(hooksDir, f)
     const name = f.replace(/\.js$/, '')
-    if (/\.js$/.test(f) && !/\.deps\.js$/.test(f) && fs.lstatSync(file).isFile()) {
+    if (/\.(j|t)s$/.test(f) && !/\.deps\.js$/.test(f) && fs.lstatSync(file).isFile()) {
       const code = fs.readFileSync(file).toString()
 
-      const deps = parseDeps(code)
+      const deps = parseDeps(code)      
 
-      fs.writeFile(path.join(hooksDir, `${name}.deps.js`), prettier.format(
+      const devHooksDir = path.join(c.pointFiles.outputDevDir, c.hooksDirectory)
+      if (!fs.existsSync(devHooksDir)) {
+        fs.mkdirSync(devHooksDir)
+      }
+
+      // js output
+      fs.writeFile(path.join(c.pointFiles.outputDevDir, c.hooksDirectory, `${name}.deps.js`), prettier.format(
         `export default ${JSON.stringify(deps, null, 2)}`
       ), (err) => {
         if (err) {
-          throw new Error(`[generateHookDeps] generate ${name}.deps.js fail`)
+          console.error(`[generateHookDeps] generate ${name}.deps.js fail`)
+          throw err
+        }
+      })
+      // json in tarat
+      fs.writeFile(path.join(c.pointFiles.outputDevDir, c.hooksDirectory, `${name}.deps.json`), (JSON.stringify(deps)), (err) => {
+        if (err) {
+          console.error(`[generateHookDeps] generate ${name}.deps.json fail`)
+          throw err
         }
       })
     }
@@ -34,11 +48,14 @@ function generateHookDeps (c: IConfig) {
 }
 
 async function startCompile (c: IConfig) {
-  rimraf.sync(c.pointFiles.outputDevDir)
 
-  !fs.existsSync(c.pointFiles.outputDevDir) && fs.mkdirSync(c.pointFiles.outputDevDir)
-  await buildRoutes(c)
-  await buildEntryServer(c)
+  emptyDirectory(c.pointFiles.outputDevDir)
+  
+  await Promise.all([
+    buildRoutes(c),
+    buildEntryServer(c),
+    buildHooks(c)
+  ])
 
   const watchTarget = [
     path.join(c.cwd, c.appDirectory),

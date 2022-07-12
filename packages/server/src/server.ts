@@ -13,6 +13,7 @@ import { IConfig } from "./config";
 import getPort, { makeRange as portNumbers } from "get-port";
 
 import rollupPlugintaratRuntime from './adaptors/runtime-helper/rollup-plugin-tarat-runtime'
+import rollupPluginBMDeps from './adaptors/runtime-helper/rollup-plugin-BM-deps'
 import pureDevCache from "./middlewares/pureDevCache";
 import { config } from "shelljs";
 
@@ -42,7 +43,11 @@ export async function createDevServer (c: IConfig) {
       // {
       //   ...rollupPlugintaratRuntime(c),
       //   enforce: 'pre',
-      // } 
+      // }      
+      {
+        ...rollupPluginBMDeps(c),
+        enforce: 'pre'
+      }
     ],
     resolve: {
       alias: {
