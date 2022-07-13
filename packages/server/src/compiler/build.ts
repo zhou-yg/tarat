@@ -229,7 +229,10 @@ export async function buildRoutes(c: IConfig) {
     }),
     c.ts ? tsPlugin({ clean: true, tsconfig: getTsconfig(c) }) : undefined,
   ])
-  // compilet to js
+  /**
+   * compile routes.server to js
+   * routes.client doesnt need becase of vite
+   */
   const inputOptions: IBuildOption = {
     input: {
       cache: false,
