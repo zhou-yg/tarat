@@ -1,4 +1,5 @@
 import {
+  computed,
   inputComputeInServer,
   model,
   state
@@ -7,6 +8,10 @@ import {
 export interface ITopic {
   id?: number
   title: string
+}
+
+export interface ITopicProps {
+  id?: number
 }
 
 export default function topic () {
