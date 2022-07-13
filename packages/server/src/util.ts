@@ -29,3 +29,25 @@ export function getDefeaultRoute (pages: IViewConfig[]) {
 
   return root.name === 'index' ? '' : root.name
 }
+
+
+export function last<T extends any[]>(arr: T) {
+  return arr[arr.length - 1]
+}
+
+export function logFrame (content: string, length = 60) {
+  const line = new Array(length).fill('-').join('')
+  const rows = content.split('\n').map(c => {
+    return c.trim().match(new RegExp(`.{1,${length - 4}}`, 'g'))
+  }).filter(Boolean).flat()
+  
+  const padLen = length - 4
+
+  return console.log(
+    [
+      line,
+      ...(rows?.map(s => `| ${s}`) || []),
+      line
+    ].join('\n')
+  )
+}

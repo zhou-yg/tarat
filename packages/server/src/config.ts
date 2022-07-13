@@ -1,6 +1,9 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import l from 'lodash'
+import { readViews } from './config/routes'
+import { logFrame } from './util'
+import chalk from 'chalk'
 const { merge } = l
 
 export const defaultConfig = () => ({
@@ -64,52 +67,13 @@ export interface IViewConfig {
   name: string
 
   index?: boolean
-  // file absolute path in system
+  // file absolute path relative to current project
   file: string
 
   dir: boolean
+
+  dynamic: boolean
 }
-
-const isIndexFlagn = (f: string) => /^index.(j|t)sx$/.test(f) || /\/index.(j|t)sx$/.test(f)
-
-const isPageFile = (f: string) => /\.(j|t)sx$/.test(f)
-
-function defineView (viewDir: string, file: string, name: string, parent?: IViewConfig): IViewConfig[] {
-
-  const configs: IViewConfig[] = []
-  const currentFileOrDirPath = path.join(viewDir, file)
-  const current: IViewConfig = {
-    id: file,
-    parentId: parent?.id || '',
-    path: file.replace(/\.\w+/, ''),
-    file,
-    name: name.replace(/\.\w+/, ''),
-    index: isIndexFlagn(file),
-    dir: fs.lstatSync(currentFileOrDirPath).isDirectory()
-  }
-  if (current.dir) {
-    const childConfigs = readViews(viewDir, file, current)
-    configs.push(...childConfigs)
-  }
-  configs.push(current)
-
-  return configs
-}
-
-function readViews (viewDir: string, dir: string, parent?: IViewConfig) {
-  const views = fs.readdirSync(path.join(viewDir, dir))
-
-  const viewConfigs = views.filter(f => {
-    const file = path.join(viewDir, dir, f)
-
-    return isPageFile(file) || fs.lstatSync(file).isDirectory()
-  }).map(f => {
-    const file = path.join(dir, f)
-    return defineView(viewDir, file, f, parent)
-  })
-
-  return viewConfigs.flat()
-} 
 
 function readPages (viewDir: string, dir: string) {
   const pages = readViews(viewDir, dir)
@@ -133,14 +97,31 @@ export function readHooks(dir: string) {
     }
   })
   
-  // @TODO add compiler here 
   const hookConfigs: IServerHookConfig[] = hooks.map(f => {
 
     const filePath = path.join(dir, f)
+    const name = f.replace(/\.\w+/, '')
+
+    const code = fs.readFileSync(filePath).toString()
+    const exportDefaultNames = code.match(/export default (function [A-Za-z0-9_]+;?|[A-Za-z0-9_]+);?/)
+    if (exportDefaultNames) {
+      if (exportDefaultNames[1] !== name && exportDefaultNames[1] !== `function ${name}`) {
+        logFrame(
+          `The default export must equal to it's file name.
+          export default name is ${chalk.red(exportDefaultNames[1])}
+          file name is ${chalk.green(name)}`
+        )
+        throw new Error('[readHooks] error 2')  
+      }
+    } else {
+      logFrame(`Must have a default export in ${filePath}`)
+      throw new Error('[readHooks] error 1')
+    }
+
     return {
       filePath,
       file: f,
-      name: f.replace(/\.\w+/, ''),
+      name,
     }
   })
 

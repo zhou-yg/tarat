@@ -11,6 +11,7 @@ import postcss from 'rollup-plugin-postcss'
 import tsPlugin from 'rollup-plugin-typescript2'
 import * as prettier from 'prettier'
 import * as esbuild from 'esbuild';
+import { defineRoutesTree, IRouteChild } from "../config/routes";
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -96,33 +97,6 @@ function getEntryFile (c: IConfig) {
     }
   }
 }
-
-interface IRouteChild extends IViewConfig {
-  children: IRouteChild[]
-}
-
-interface IRoutesTree {
-  [k: string]: IRouteChild
-}
-
-function defineRoutesTree (pages: IConfig['pages']) {
-  const routesMap: IRoutesTree = {}
-  pages.forEach(p => {
-    routesMap[p.id] = Object.assign({
-      children: []
-    }, p)
-  })
-
-  pages.forEach(p => {
-    if (p.parentId) {
-      const child = routesMap[p.id]
-      routesMap[p.parentId].children.push(child)
-    }
-  })
-
-  return Object.values(routesMap).filter(p => !p.parentId)
-}
-
 function upperFirst (s: string) {
   s = s.replace(/\:/g, '_')
   return s ? (s[0].toUpperCase() + s.substring(1)) : ''
@@ -215,6 +189,7 @@ export async function buildRoutes(c: IConfig) {
   const routesTreeArr = defineRoutesTree(c.pages)
 
   const imports = generateRoutesImports(routesTreeArr)
+
   const importsWithAbsolutePathClient = imports.map(([n, f]) => {
     return `import ${n} from '${implicitImportPath(path.join(c.cwd, f), c.ts)}'`
   }).join('\n')
@@ -257,6 +232,7 @@ export async function buildRoutes(c: IConfig) {
   // compilet to js
   const inputOptions: IBuildOption = {
     input: {
+      cache: false,
       external: ['react', 'tarat-core', 'tarat-connect', 'react-router-dom'],
       input: autoGenerateRoutesFile,
       plugins: myPlugins

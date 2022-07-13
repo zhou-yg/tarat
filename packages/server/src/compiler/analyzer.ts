@@ -55,7 +55,7 @@ function getMemberExpressionKeys (m: MemberExpression, keys: string[] = []): str
         return keys.concat(m.object.name).concat(cur)
         break
       default:
-        console.error((m as any).object)
+        console.error('[getMemberExpressionKeys] unexpect node type', (m as any))
         // throw new Error('[getMemberExpressionKeys] unexpect node type')
         break
     }

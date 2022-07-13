@@ -33,6 +33,11 @@ export async function createDevServer (c: IConfig) {
   const app = new Koa()
   setupBasicServer(app)
 
+    
+  app.use(pureDevCache({
+    config: c
+  }))
+
   app.use(taratRunner({
     config: c
   }))
@@ -58,10 +63,7 @@ export async function createDevServer (c: IConfig) {
   })
 
   app.use(e2k(vite.middlewares))
-  
-  app.use(pureDevCache({
-    config: c
-  }))
+
 
   app.use(page({
     config: c,

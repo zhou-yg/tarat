@@ -6,10 +6,10 @@ import { parseDeps } from "../src/compiler/analyzer";
 import { composeSchema } from "../src/compiler/composeSchema";
 import exitHook from 'exit-hook'
 import chokidar from 'chokidar'
-
-import * as prettier from 'prettier'
+import chalk from 'chalk'
 import { buildEntryServer, buildHooks, buildRoutes } from "../src/compiler/build";
-import { emptyDirectory } from "../src/util";
+import { emptyDirectory, logFrame } from "../src/util";
+import * as prettier from 'prettier'
 
 function generateHookDeps (c: IConfig) {
   const hooksDir = c.pointFiles.devHooksESMDir
@@ -28,14 +28,14 @@ function generateHookDeps (c: IConfig) {
       }
 
       // js output
-      // fs.writeFile(path.join(c.pointFiles.outputDevDir, c.hooksDirectory, `${name}.deps.js`), prettier.format(
-      //   `export default ${JSON.stringify(deps, null, 2)}`
-      // ), (err) => {
-      //   if (err) {
-      //     console.error(`[generateHookDeps] generate ${name}.deps.js fail`)
-      //     throw err
-      //   }
-      // })
+      fs.writeFile(path.join(c.pointFiles.outputDevDir, c.hooksDirectory, `${name}.deps.js`), prettier.format(
+        `export default ${JSON.stringify(deps, null, 2)}`
+      ), (err) => {
+        if (err) {
+          console.error(`[generateHookDeps] generate ${name}.deps.js fail`)
+          throw err
+        }
+      })
       // json in tarat
       fs.writeFile(path.join(c.pointFiles.outputDevDir, c.hooksDirectory, `${name}.deps.json`), (JSON.stringify(deps)), (err) => {
         if (err) {
@@ -81,15 +81,15 @@ async function startCompile (c: IConfig) {
   watcher
     .on('error', console.error)
     .on('change', () => {
-      log('[change] re-run compiling')
+      logFrame(`[change] ${chalk.green('re-run compiling')}`)
       buildEverything(c)
     })
     .on('add', () => {
-      log('[add] re-run compiling')
+      logFrame(`[add] ${chalk.green('re-run compiling')}`)
       buildEverything(c)
     })
     .on('unlink', () => {
-      log('[unlink] re-run compiling')
+      logFrame(`[unlink] ${chalk.green('re-run compiling')}`)
       buildEverything(c)
     })
 
