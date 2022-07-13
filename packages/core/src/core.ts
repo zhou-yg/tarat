@@ -321,6 +321,9 @@ export class Model<T extends any[]> extends State<T[]> {
     })
     return result
   }
+  async refresh () {
+    await this.executeQuery(currentReactiveChain?.add(this))
+  }
   override async applyInputComputePatches(
     ic: InputCompute,
     reactiveChain?: ReactiveChain
@@ -1274,7 +1277,11 @@ export function internalProxy<T>(
       const copyValue = shallowCopy(_internalValue)
       return new Proxy(copyValue as any, {
         get(target, p: string) {
-          return internalProxy(source, Reflect.get(target, p), path.concat(p))
+          let value = Reflect.get(target, p)
+          if (typeof value === 'function') {
+            value = value.bind(target)
+          }
+          return internalProxy(source, value, path.concat(p))
         }
       })
     }
@@ -1438,10 +1445,11 @@ function createUnaccessGetter2<T extends any[]>(index: number) {
   const f = (): any => {
     throw new Error(`[update getter] cant access un initialized hook(${index})`)
   }
-  const newF: (() => any) & { _hook: any; exist: any } = Object.assign(f, {
+  const newF: (() => any) & { _hook: any; exist: any; create: any; refresh: any } = Object.assign(f, {
     _hook: null,
     exist: () => true,
-    create: () => {}
+    create: () => {},
+    refresh: () => {}
   })
   return newF
 }
@@ -1508,7 +1516,7 @@ function updateModel<T extends any[]>(
     immediate: !receiveDataFromContext
   })
 
-  const internalModel = inServer
+  const hook = inServer
     ? new Model<T>(e, q, op, currentRunnerScope!)
     : new ClientModel<T>(e, q, op, currentRunnerScope!)
 
@@ -1516,18 +1524,19 @@ function updateModel<T extends any[]>(
     const initialValue: T =
       currentRunnerScope!.intialContextData![currentIndex]?.[1]
     const timestamp = currentRunnerScope!.intialContextData![currentIndex]?.[2]
-    internalModel.init = false
-    internalModel._internalValue = initialValue || []
+    hook.init = false
+    hook._internalValue = initialValue || []
     if (timestamp) {
-      internalModel.modifiedTimstamp = timestamp
+      hook.modifiedTimstamp = timestamp
     }
   }
 
-  const setterGetter = createModelSetterGetterFunc<T>(internalModel)
+  const setterGetter = createModelSetterGetterFunc<T>(hook)
   const newSetterGetter = Object.assign(setterGetter, {
-    _hook: internalModel,
-    exist: internalModel.exist.bind(internalModel),
-    create: internalModel.create.bind(internalModel)
+    _hook: hook,
+    exist: hook.exist.bind(hook),
+    create: hook.create.bind(hook),
+    refresh: hook.refresh.bind(hook)
   })
 
   return newSetterGetter
@@ -1537,15 +1546,17 @@ function mountModel<T extends any[]>(
   q?: () => IModelQuery['query'] | void,
   op?: IModelOption
 ) {
-  const internalModel =
+  const hook =
     process.env.TARGET === 'server'
       ? new Model<T>(e, q, op, currentRunnerScope!)
       : new ClientModel<T>(e, q, op, currentRunnerScope!)
 
-  const setterGetter = createModelSetterGetterFunc<T>(internalModel)
+  const setterGetter = createModelSetterGetterFunc<T>(hook)
   const newSetterGetter = Object.assign(setterGetter, {
-    _hook: internalModel,
-    exist: internalModel.exist.bind(internalModel)
+    _hook: hook,
+    exist: hook.exist.bind(hook),
+    create: hook.create.bind(hook),
+    refresh: hook.refresh.bind(hook)
   })
 
   return newSetterGetter
