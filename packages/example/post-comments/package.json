@@ -14,8 +14,10 @@
     "schema": "./models/schema.prisma"
   },
   "dependencies": {
+    "@ant-design/icons": "^4.7.0",
     "@prisma/client": "^3.15.1",
     "antd": "^4.21.6",
+    "date-fns": "^2.28.0",
     "lodash": "^4.17.21",
     "prisma": "^3.15.1",
     "rc-resize-observer": "^1.2.0",

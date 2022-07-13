@@ -1,3 +1,4 @@
+import { orderBy } from 'lodash'
 import {
   inputCompute,
   state,
@@ -5,6 +6,7 @@ import {
   inputComputeInServer,
   computed
 } from 'tarat-core'
+import { ITopic } from './topic'
 
 
 interface IComment {
@@ -15,6 +17,7 @@ interface IComment {
   likeCount?: number
   topicId: number
   replyCommentId?: number
+  createdAt?: string | Date
 }
 
 interface ICommentProps {
@@ -23,24 +26,71 @@ interface ICommentProps {
   topicId: number
 }
 
+export interface ICommentTree extends IComment {
+  children: ICommentTree[]
+  createdAt: Date
+}
+
 export default function comment (props: ICommentProps) {
 
-  const { name, authorId, topicId } = props
+  const { name, authorId } = props
 
-  const currentTopic = state(topicId)
+  const author = state({
+    name,
+    id: authorId
+  })
+
+  const topicId = state(props.topicId)
+
+  const commentReqTiming = state(Date.now())
 
   const comments = model<IComment[]>('comment', () => {
-    const tid = currentTopic()
+    // commentReqTiming()
+    const tid = topicId()
     if (tid) {
       return {
         where: {
           topicId: tid
         },
-        include: {
-          appendComments: true
-        }
       }
     }
+  })
+
+  const commentTree = computed(() => {
+    const allComments = comments()
+    const commentMap: { [k: string]: ICommentTree } = {}
+    allComments.forEach(c => {
+      commentMap[c.id!] = Object.assign({ children: [] }, {
+        ...c,
+        createdAt: !c.createdAt || typeof c.createdAt === 'string' ? new Date(c.createdAt) : c.createdAt
+      })
+    })
+
+    const markRemoved: number[] = []
+
+    Object.values(commentMap).forEach(c => {
+      if (c.replyCommentId) {
+        if (commentMap[c.replyCommentId]) {
+          commentMap[c.replyCommentId].children.push(c)
+          commentMap[c.replyCommentId].children.sort((p, n) => {
+            return (p.createdAt.getTime() - n.createdAt.getTime())
+          })
+          markRemoved.push(c.id)
+        }
+      }
+    })
+
+    markRemoved.forEach(id => {
+      delete commentMap[id]
+    })
+
+    const r = Object.values(commentMap)
+    
+    r.sort((p, n) => {
+      return p.createdAt.getTime() - n.createdAt.getTime()
+    })
+
+    return r
   })
 
   const like = inputComputeInServer((cid: number) => {
@@ -66,29 +116,50 @@ export default function comment (props: ICommentProps) {
   const replyCommentId = state<number>()
 
   const createComment = inputComputeInServer(() => {
-    const cid = currentTopic()
+    const cid = topicId()
     const content = inputComment()
     if (content && cid) {
       comments(arr => {
         arr.push({
           topicId: cid,
           content,
-          name,
-          authorId,
+          name: author().name,
+          authorId: author().id,
           replyCommentId: replyCommentId()
         })
       })
+      inputComment(() => '')
     }
   })
 
+  const replyTarget = computed(() => {
+    const rpid = replyCommentId()
+    if (rpid) {
+      return comments().find(v => v.id === rpid)
+    }
+  })
+
+  const refresh = inputComputeInServer(() => {
+    // commentReqTiming(() => Date.now())
+    comments.refresh()
+  })
+
   return {
+    topicId,
+ 
+    author,
     comments,
+    commentTree,
     
     like,
     dislike,
 
+    replyTarget,
+
     inputComment,
     replyCommentId,
-    createComment
+ 
+    createComment,
+    refresh,
   }
 }
