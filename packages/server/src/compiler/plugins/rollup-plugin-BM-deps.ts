@@ -1,4 +1,3 @@
-import { compile } from 'ejs'
 import * as fs from 'fs'
 import * as path from 'path'
 import { Plugin } from 'vite'
@@ -6,8 +5,7 @@ import { IConfig } from '../../config'
 import { loadJSON } from '../../util'
 
 function checkHook (cwd: string, hooksDirectory: string, id: string) {
-  const id2 = id.replace(cwd, '')
-  return /\.(j|t)s$/.test(id2) && (new RegExp(`^\/${hooksDirectory}\/`)).test(id2)
+  return /\.(j|t)s$/.test(id) && id.startsWith(path.join(cwd, hooksDirectory))
 }
 
 function template (
@@ -21,8 +19,6 @@ const deps = ${deps}
 ${assigns}
 `
 }
-
-const taratRuntimeEntryFlag = '?taratBMDeps'
 
 export default function taratBMRollupPlugin (c: IConfig): Plugin {
   const cwd = c.cwd
