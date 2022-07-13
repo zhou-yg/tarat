@@ -12,11 +12,9 @@ import { createServer } from "vite";
 import { IConfig } from "./config";
 import getPort, { makeRange as portNumbers } from "get-port";
 
-import rollupPlugintaratRuntime from './adaptors/runtime-helper/rollup-plugin-tarat-runtime'
-import rollupPluginBMDeps from './adaptors/runtime-helper/rollup-plugin-BM-deps'
+import rollupPluginBMDeps from './compiler/plugins/rollup-plugin-BM-deps'
 import pureDevCache from "./middlewares/pureDevCache";
-import { config } from "shelljs";
-import { getDefeaultRoute } from "./util";
+import { getDefeaultRoute, logFrame } from "./util";
 
 export function setupBasicServer (app: Application) {
 
@@ -90,13 +88,11 @@ export async function createDevServer (c: IConfig) {
   if (address) {
     address = `ip: ${chalk.green(`http://${address}:${port}/${defaultView}`)}`
   }
-  console.log(
-    `------------
-  Tarat App Server started at:
-    localhost: ${chalk.green(`http://localhost:${port}/${defaultView}`)}
-    ${address || ''}
-------------`
-  );
+  logFrame(`
+    Tarat App Server started at:
+      localhost: ${chalk.green(`http://localhost:${port}/${defaultView}`)}
+      ${address || ''}
+  `)
 
   return app
 }

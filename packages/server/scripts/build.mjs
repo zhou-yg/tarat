@@ -14,9 +14,6 @@ const { cp } = shelljs;
   cp('src/middlewares/pageTemplate.ejs', 'dist/cli/')
   cp('src/middlewares/pageTemplate.ejs', 'dist/')
 
-  cp('src/adaptors/runtime-helper/defaultRenderReact.ejs', 'dist/cli/')
-  cp('src/adaptors/runtime-helper/defaultRenderReact.ejs', 'dist/')
-  
   cp('src/adaptors/runtime-helper/routesRenderEntry.ejs', 'dist/cli/')
   cp('src/adaptors/runtime-helper/routesRenderEntry.ejs', 'dist/')
 
