@@ -1356,7 +1356,7 @@ function createStateSetterGetterFunc<SV>(s: State<SV>): {
           s.addInputComputePatches(result, patches)
         } else {
           const reactiveChain: ReactiveChain<SV> | undefined =
-            currentReactiveChain?.add(s)
+            currentReactiveChain?.addUpdate(s)
           s.update(result, patches, false, reactiveChain)
         }
         return [result, patches]
@@ -1391,7 +1391,7 @@ function createModelSetterGetterFunc<T extends any[]>(
         m.addInputComputePatches(result, patches)
       } else {
         const reactiveChain: ReactiveChain<T> | undefined =
-          currentReactiveChain?.add(m)
+          currentReactiveChain?.addUpdate(m)
         m.updateWithPatches(result, patches, reactiveChain)
       }
       return [result, patches]
@@ -1412,7 +1412,7 @@ function createCacheSetterGetterFunc<SV>(c: Cache<SV>): {
           c.addInputComputePatches(result, patches)
         } else {
           const reactiveChain: ReactiveChain<SV> | undefined =
-            currentReactiveChain?.add(c)
+            currentReactiveChain?.addUpdate(c)
           c.update(result, patches, false, reactiveChain)
         }
         return [result, patches]
