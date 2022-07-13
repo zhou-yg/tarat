@@ -10,7 +10,8 @@ export default function pureDevCache (args: {
   for (const k in require.cache) {
     if (
       k.startsWith(config.pointFiles.distEntryJS) ||
-      k.startsWith(config.pointFiles.distRoutesFile)
+      k.startsWith(config.pointFiles.distRoutesFile) || 
+      k.startsWith(config.pointFiles.devHooksDir)
     ) {
       delete require.cache[k]
     }

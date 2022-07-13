@@ -90,9 +90,9 @@ export default function taratMiddleware (args: {
           await runner.callHook(c.index, c.args)
         }
 
-        stopReactiveChain()
-
         await runner.ready()
+
+        stopReactiveChain()
 
         chain2.print()
 

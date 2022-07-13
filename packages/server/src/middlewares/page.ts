@@ -11,6 +11,7 @@ import { buildEntryServer, buildRoutes } from "../compiler/build";
 import { renderToString } from 'react-dom/server'
 import { RenderDriver, renderWithDriverContext, DriverContext } from 'tarat-connect'
 import React, { createElement } from "react";
+import { matchRoute } from "../config/routes";
 
 const templateFile = './pageTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -101,7 +102,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
 
   return async (ctx, next) => {
     const pathname = ctx.request.path
-    const viewConfig = args.pages.find(v => v.path === pathname || v.path === path.join(pathname, 'index'))
+    const viewConfig = matchRoute(args.pages, pathname)
     if (viewConfig) {
       let context: { [k: string]: IHookContext[] } = {}
       let ssrHTML = ''
