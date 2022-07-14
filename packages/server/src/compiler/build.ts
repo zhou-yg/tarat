@@ -27,7 +27,7 @@ const routesClientTemplate = compile(fs.readFileSync(templateClientFilePath).toS
 
 interface IBuildOption {
   input: InputOptions
-  output: OutputOptions[]
+  output: OutputOptions
 }
 
 /**
@@ -56,22 +56,20 @@ async function build (c: IConfig, op: IBuildOption) {
   }
 }
 
-async function generateOutput(c: IConfig, bundle: RollupBuild, o: IBuildOption['output']) {
-  for (const op of o) {
-    const { output } = await bundle.generate(op)
-    for (const chunkOrAsset of output) {
-      if (chunkOrAsset.type === 'asset') {
-        const target = path.join(c.cwd, c.devCacheDirectory, chunkOrAsset.fileName)
-        fs.writeFileSync(target, chunkOrAsset.source)
+async function generateOutput(c: IConfig, bundle: RollupBuild, op: IBuildOption['output']) {
+  const { output } = await bundle.generate(op)
+  for (const chunkOrAsset of output) {
+    if (chunkOrAsset.type === 'asset') {
+      const target = path.join(c.pointFiles.outputDir, chunkOrAsset.fileName)
+      fs.writeFileSync(target, chunkOrAsset.source)
 
-      } else if (chunkOrAsset.type === 'chunk') {
-        const dir = op.file?.replace(chunkOrAsset.fileName, '')
-        if (dir && !fs.existsSync(dir)) {
-          fs.mkdirSync(dir)
-        }
-        if (op.file) {
-          fs.writeFileSync(op.file, chunkOrAsset.code)
-        }
+    } else if (chunkOrAsset.type === 'chunk') {
+      const dir = op.file?.replace(chunkOrAsset.fileName, '')
+      if (dir && !fs.existsSync(dir)) {
+        fs.mkdirSync(dir)
+      }
+      if (op.file) {
+        fs.writeFileSync(op.file, chunkOrAsset.code)
       }
     }
   }
@@ -181,9 +179,12 @@ function implicitImportPath (path: string, ts: boolean) {
 export async function buildRoutes(c: IConfig) {
 
   const {
-    autoGenerateRoutesFile,
-    autoGenerateRoutesClientFile,
-    distRoutesFile
+    outputDir,
+    autoGenerateServerRoutes,
+    distServerRoutes,
+    autoGenerateClientRoutes,
+    outputAppServerDir,
+    distServerRoutesCSS
   } = c.pointFiles
 
   const routesTreeArr = defineRoutesTree(c.pages)
@@ -213,7 +214,7 @@ export async function buildRoutes(c: IConfig) {
     index,
     routes: r
   })
-  fs.writeFileSync(autoGenerateRoutesFile, prettier.format(routesStr))
+  fs.writeFileSync(autoGenerateServerRoutes, prettier.format(routesStr))
 
   const routesStr2 = routesClientTemplate({
     imports: importsWithAbsolutePathClient,
@@ -221,11 +222,11 @@ export async function buildRoutes(c: IConfig) {
     routes: r
   })
   // generate for vite.js
-  fs.writeFileSync(autoGenerateRoutesClientFile, prettier.format(routesStr2))
+  fs.writeFileSync(autoGenerateClientRoutes, prettier.format(routesStr2))
 
   const myPlugins = plugins([
     postcss({
-      extract: true,
+      extract: distServerRoutesCSS.replace(outputDir, '').replace(/^\//, ''), // only support relative path
     }),
     c.ts ? tsPlugin({ clean: true, tsconfig: getTsconfig(c) }) : undefined,
   ])
@@ -237,13 +238,13 @@ export async function buildRoutes(c: IConfig) {
     input: {
       cache: false,
       external: ['react', 'tarat-core', 'tarat-connect', 'react-router-dom'],
-      input: autoGenerateRoutesFile,
+      input: autoGenerateServerRoutes,
       plugins: myPlugins
     },
-    output: [{
-      file: distRoutesFile,
+    output: {
+      file: distServerRoutes,
       format: 'commonjs',
-    }]
+    }
   }
 
   await build(c, inputOptions)  
@@ -279,12 +280,11 @@ export async function buildEntryServer (c: IConfig) {
           }),  
         ]),
       },
-      output: [{
-        // dir: outputFileDir,
+      output: {
         file: distEntry,
         format: 'commonjs',
 
-      }],
+      },
     }
 
     await build(c, inputOptions)
@@ -333,11 +333,11 @@ async function esbuildHooks (c: IConfig, outputDir: string, format?: esbuild.For
  * for server side running
  */
 export async function buildHooks (c: IConfig) {
-  const { devHooksESMDir, devHooksDir  } = c.pointFiles
+  const { outputHooksESMDir, outputHooksDir  } = c.pointFiles
 
   await Promise.all([
-    esbuildHooks(c, devHooksDir, 'cjs'),
-    esbuildHooks(c, devHooksESMDir, 'esm'),
+    esbuildHooks(c, outputHooksDir, 'cjs'),
+    esbuildHooks(c, outputHooksESMDir, 'esm'),
   ])
 }
 

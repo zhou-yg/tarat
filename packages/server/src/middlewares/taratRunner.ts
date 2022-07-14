@@ -53,8 +53,8 @@ export default function taratMiddleware (args: {
     if (pre === apiPre && ctx.request.method === 'POST') {      
       const hookConfig = hooks.find(h => h.name === hookName)
       if (hookConfig) {
-        const BM = require(path.join(pointFiles.devHooksDir, `${hookName}.js`))
-        const BMDeps = loadJSON(path.join(pointFiles.devHooksDir, `${hookName}.deps.json`))
+        const BM = require(path.join(pointFiles.outputHooksDir, `${hookName}.js`))
+        const BMDeps = loadJSON(path.join(pointFiles.outputHooksDir, `${hookName}.deps.json`))
 
         // complete BM deps
         Object.keys(BM).forEach(exportName => {

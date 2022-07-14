@@ -21,6 +21,11 @@ export const defaultConfig = () => ({
   ts: false,
 
   devCacheDirectory: '.tarat', // in cwd
+  buildDirectory: '.taratBuild', // in cwd
+  appServer: 'server',
+  appClient: 'client',
+  appClientChunk: 'chunks',
+
 
   modelEnhance: 'model.enhance.json',
   prismaModelPart: 'part.prisma', // postfix
@@ -138,6 +143,49 @@ export interface IConfig extends IReadConfigResult{
   }
 }
 
+function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) {
+
+  const outputAppDir = path.join(outputDir, config.appDirectory)
+
+  const outputAppServerDir = path.join(outputAppDir, config.appServer)
+  const outputAppClientDir = path.join(outputAppDir, config.appClient)
+
+  return {
+    outputDir, // includings 3 types: normal, app/server, app/client
+    /** normal */
+    // place compiled hooks/views "cjs" file
+    outputHooksDir: path.join(outputDir, config.hooksDirectory),
+    outputViewsDir: path.join(outputDir, config.viewsDirectory),
+    // place compiled hooks "esm" file
+    outputHooksESMDir: path.join(outputDir, config.hooksDirectory, 'esm'),
+    // prisma
+    outputModelsDir: path.join(outputDir, config.modelsDirectory),
+    outputModelSchema: path.join(outputDir, config.modelsDirectory, config.targetSchemaPrisma),
+    modelEnhanceFile: path.join(cwd, config.modelsDirectory, config.modelEnhance),
+    modelTargetFile: path.join(cwd, config.modelsDirectory, config.targetSchemaPrisma),
+    
+    outputAppDir,
+    outputAppServerDir,
+    outputAppClientDir,
+    /** app/server */
+    // router
+    autoGenerateServerRoutes: path.join(outputAppServerDir, `${config.routesServer}${config.ts ? '.tsx' : '.jsx'}`),    
+    distServerRoutes: path.join(outputAppServerDir, `${config.routesServer}.js`),
+    distServerRoutesCSS: path.join(outputAppServerDir, `${config.routesServer}.css`),
+    // entry
+    distEntryJS: path.join(outputAppServerDir, `${config.entryServer}.js`),
+    distEntryCSS: path.join(outputAppServerDir, `${config.entryServer}.css`),
+    serverEntyTSX: path.join(outputAppServerDir, `${config.entryServer}.tsx`),
+    serverEntyJSX: path.join(outputAppServerDir, `${config.entryServer}.jsx`),
+
+
+    /** app/client */
+    // client side route doesnt need compiled, it will be auto compiled in vite
+    autoGenerateClientRoutes: path.join(outputAppClientDir, `${config.routes}${config.ts ? '.tsx' : '.jsx'}`),
+    clientChunksDir: path.join(outputAppClientDir, config.appClientChunk, `${config.routes}${config.ts ? '.tsx' : '.jsx'}`),
+  }
+}
+
 export async function readConfig (arg: {
   cwd: string
 }) {
@@ -167,39 +215,16 @@ export async function readConfig (arg: {
 
   const hooks = readHooks(hooksDirectory)
 
-  const outputDevDir = path.join(cwd, config.devCacheDirectory)
-  
-  const pointFiles = {
-    outputDevDir,
-
-    // place compiled hooks "cjs" file
-    devHooksDir: path.join(outputDevDir, config.hooksDirectory),
-    // place compiled hooks "esm" file
-    devHooksESMDir: path.join(outputDevDir, config.hooksDirectory, 'esm'),
-    // routes
-    autoGenerateRoutesFile: path.join(outputDevDir, `${config.routesServer}${config.ts ? '.tsx' : '.jsx'}`),    
-    distRoutesFile: path.join(outputDevDir, `${config.routesServer}.js`),
-    distRoutesFileCSS: path.join(outputDevDir, `${config.routesServer}.css`),
-    coreClientDistRoutesFile: path.join(outputDevDir, `core.client.${config.routesServer}.js`),
-    /**
-     * client side route doesnt need compiled, it will be auto compiled in vite
-     */
-    autoGenerateRoutesClientFile: path.join(outputDevDir, `${config.routes}${config.ts ? '.tsx' : '.jsx'}`),
-
-    // entry
-    distEntryJS: path.join(outputDevDir, `${config.entryServer}.js`),
-    distEntryCSS: path.join(outputDevDir, `${config.entryServer}.css`),
-    serverEntyTSX: path.join(cwd, config.appDirectory, `${config.entryServer}.tsx`),
-    serverEntyJSX: path.join(cwd, config.appDirectory, `${config.entryServer}.jsx`),
-
-    // prisma
-    modelEnhanceFile: path.join(cwd, config.modelsDirectory, `${config.modelEnhance}`),
-    modelTargetFile: path.join(cwd, config.modelsDirectory, `${config.targetSchemaPrisma}`),
-  }
+  const devPointFiles = getOutputFiles(config, cwd, path.join(cwd, config.devCacheDirectory))
+  const buildPointFiles = getOutputFiles(config, cwd, path.join(cwd, config.buildDirectory))
+  // default to "dev"
+  const pointFiles = devPointFiles
 
   return {
     ...config,
     pointFiles,
+    devPointFiles,
+    buildPointFiles,
     cwd,
     hooks,
     views,

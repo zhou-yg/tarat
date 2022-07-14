@@ -28,7 +28,7 @@ export default function taratBMRollupPlugin (c: IConfig): Plugin {
       const isHook  = checkHook(cwd, c.hooksDirectory, id)
       if (isHook) {
         const parsed = path.parse(id)
-        const depsJSONPath = path.join(c.pointFiles.outputDevDir, c.hooksDirectory, `${parsed.name}.deps.json`)
+        const depsJSONPath = path.join(c.pointFiles.outputHooksDir, `${parsed.name}.deps.json`)
         if (fs.existsSync(depsJSONPath)) {
           const depsJSON = loadJSON(depsJSONPath)
 

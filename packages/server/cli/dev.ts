@@ -8,11 +8,11 @@ import exitHook from 'exit-hook'
 import chokidar from 'chokidar'
 import chalk from 'chalk'
 import { buildEntryServer, buildHooks, buildRoutes } from "../src/compiler/build";
-import { emptyDirectory, logFrame } from "../src/util";
+import { emptyDirectory, logFrame, tryMkdir } from "../src/util";
 import * as prettier from 'prettier'
 
 function generateHookDeps (c: IConfig) {
-  const hooksDir = c.pointFiles.devHooksESMDir
+  const hooksDir = c.pointFiles.outputHooksESMDir
  
   fs.readdirSync(hooksDir).forEach(f => {
     const file = path.join(hooksDir, f)
@@ -22,13 +22,13 @@ function generateHookDeps (c: IConfig) {
 
       const deps = parseDeps(code)      
 
-      const devHooksDir = path.join(c.pointFiles.outputDevDir, c.hooksDirectory)
+      const devHooksDir = path.join(c.pointFiles.outputHooksDir)
       if (!fs.existsSync(devHooksDir)) {
-        fs.mkdirSync(devHooksDir)
+        tryMkdir(devHooksDir)
       }
 
       // js output
-      fs.writeFile(path.join(c.pointFiles.outputDevDir, c.hooksDirectory, `${name}.deps.js`), prettier.format(
+      fs.writeFile(path.join(c.pointFiles.outputHooksDir, `${name}.deps.js`), prettier.format(
         `export default ${JSON.stringify(deps, null, 2)}`
       ), (err) => {
         if (err) {
@@ -37,7 +37,7 @@ function generateHookDeps (c: IConfig) {
         }
       })
       // json in tarat
-      fs.writeFile(path.join(c.pointFiles.outputDevDir, c.hooksDirectory, `${name}.deps.json`), (JSON.stringify(deps)), (err) => {
+      fs.writeFile(path.join(c.pointFiles.outputHooksDir, `${name}.deps.json`), (JSON.stringify(deps)), (err) => {
         if (err) {
           console.error(`[generateHookDeps] generate ${name}.deps.json fail`)
           throw err
@@ -55,10 +55,27 @@ function buildEverything (c: IConfig) {
   ])
 }
 
+function prepareDir (c: IConfig) {
+  emptyDirectory(c.pointFiles.outputDir)
+
+  // normal
+  tryMkdir(c.pointFiles.outputHooksDir)
+  tryMkdir(c.pointFiles.outputHooksESMDir)
+  tryMkdir(c.pointFiles.outputViewsDir)
+  tryMkdir(c.pointFiles.outputModelsDir)
+  tryMkdir(c.pointFiles.outputViewsDir)
+  
+  // app
+  tryMkdir(c.pointFiles.outputAppDir)
+  tryMkdir(c.pointFiles.outputAppServerDir)
+  tryMkdir(c.pointFiles.outputAppClientDir)
+}
+
+
 async function startCompile (c: IConfig) {
 
-  emptyDirectory(c.pointFiles.outputDevDir)
-  
+  prepareDir(c)
+
   await buildEverything(c)
 
   const watchTarget = [
