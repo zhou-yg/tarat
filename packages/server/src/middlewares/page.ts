@@ -20,13 +20,13 @@ const template = compile(fs.readFileSync(templateFilePath).toString())
 
 async function renderPage (ctx: Application.ParameterizedContext, config: IConfig) {
 
-  const { distRoutesFile, distEntryJS, distEntryCSS, distRoutesFileCSS } = config.pointFiles
+  const { distServerRoutes, distEntryJS, distEntryCSS, distServerRoutesCSS } = config.pointFiles
 
   let entryFunctionModule = (doc: React.ReactElement) => doc
   if (fs.existsSync(distEntryJS)) {
     entryFunctionModule = require(distEntryJS)
   }
-  const routesEntryModule = require(distRoutesFile)
+  const routesEntryModule = require(distServerRoutes)
 
   const driver = new RenderDriver()
   driver.mode = 'collect'
@@ -79,7 +79,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
   chain1.print()
 
   const entryServerCss = fs.existsSync(distEntryCSS) ? fs.readFileSync(distEntryCSS).toString() : ''
-  const css = fs.existsSync(distRoutesFileCSS) ? fs.readFileSync(distRoutesFileCSS).toString() : ''
+  const css = fs.existsSync(distServerRoutesCSS) ? fs.readFileSync(distServerRoutesCSS).toString() : ''
 
   return {
     driver,
@@ -115,11 +115,11 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
         ssrHTML = r.html2
       }
 
-      const { autoGenerateRoutesClientFile } = config.pointFiles
+      const { autoGenerateClientRoutes } = config.pointFiles
 
       let html = template({
         hookContextMap: JSON.stringify(context),
-        src: autoGenerateRoutesClientFile,
+        src: autoGenerateClientRoutes,
         css: r?.css,
         ssrHTML,
         configJSON: JSON.stringify({

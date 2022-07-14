@@ -13,6 +13,10 @@ export function emptyDirectory (dir: string) {
   fs.mkdirSync(dir)
 }
 
+export function tryMkdir(dir: string) {
+  !fs.existsSync(dir) && fs.mkdirSync(dir)
+}
+
 export function getDefeaultRoute (pages: IViewConfig[]) {
   let root: IViewConfig = pages[0]
   pages.forEach(p => {
