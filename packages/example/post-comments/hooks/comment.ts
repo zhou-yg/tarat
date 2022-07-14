@@ -129,6 +129,7 @@ export default function comment (props: ICommentProps) {
         })
       })
       inputComment(() => '')
+      replyCommentId(() => null)
     }
   })
 
