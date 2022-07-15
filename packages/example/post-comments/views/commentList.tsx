@@ -7,7 +7,6 @@ import Button from 'antd/lib/button/index'
 import Input from 'antd/lib/input/index'
 import Comment from 'antd/lib/comment/index'
 
-import 'antd/dist/antd.css'
 import commentHook, { ICommentTree } from '../hooks/comment'
 import topicOneHook from '../hooks/topicOne'
 
