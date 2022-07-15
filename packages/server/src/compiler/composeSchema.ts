@@ -243,7 +243,9 @@ export async function composeSchema (c: IConfig) {
       await generateSchemaFile(
         targetFile,
         [
+          '// original writing schema',
           ...existPrismaPartWithoutModels,
+          '// auto composing schema ',
           newSchemaContent,
         ]
       )
