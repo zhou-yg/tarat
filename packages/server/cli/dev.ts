@@ -1,15 +1,18 @@
-import { IConfig, readConfig } from "../src/config";
-import { createDevServer } from "../src/server";
 import * as path from 'path'
-import { composeSchema } from "../src/compiler/composeSchema";
 import exitHook from 'exit-hook'
 import chokidar from 'chokidar'
 import chalk from 'chalk'
-import { buildEntryServer, buildHooks, buildRoutes } from "../src/compiler/build";
-import { generateHookDeps } from '../src/compiler/hookDeps'
-import { emptyDirectory, logFrame, tryMkdir } from "../src/util";
+import {
+  IConfig,
+  readConfig,
+  createDevServer,
+  composeSchema,
+  buildEntryServer, buildHooks, buildRoutes,
+  generateHookDeps,
+  emptyDirectory, logFrame, tryMkdir
+} from "../src/";
 
-function buildEverything (c: IConfig) {
+export function buildEverything (c: IConfig) {
   return Promise.all([
     buildRoutes(c),
     buildEntryServer(c),
@@ -17,7 +20,7 @@ function buildEverything (c: IConfig) {
   ])
 }
 
-function prepareDir (c: IConfig) {
+export function prepareDir (c: IConfig) {
   emptyDirectory(c.pointFiles.outputDir)
 
   // normal
@@ -54,8 +57,6 @@ async function startCompile (c: IConfig) {
       pollInterval: 100,
     },
   })
-
-  const { log } = console
 
   watcher
     .on('error', console.error)

@@ -8,13 +8,13 @@ import chalk from 'chalk'
 import taratRunner from "./middlewares/taratRunner";
 import page from "./middlewares/page";
 
-import { createServer } from "vite";
+import { createServer as createViteServer } from "vite";
 import { IConfig } from "./config";
 import getPort, { makeRange as portNumbers } from "get-port";
 
 import rollupPluginBMDeps from './compiler/plugins/rollup-plugin-BM-deps'
 import pureDevCache from "./middlewares/pureDevCache";
-import { getDefeaultRoute, logFrame } from "./util";
+import { getAddress, getDefeaultRoute, logFrame } from "./util";
 
 export function setupBasicServer (app: Application) {
 
@@ -25,6 +25,29 @@ export function setupBasicServer (app: Application) {
   app.use(cors())
 
   return app
+}
+
+async function startApp(app: Application, c: IConfig) {
+
+  const port = await getPort({
+    port: c.port ? c.port : process.env.PORT ? Number(process.env.PORT) : portNumbers(9000, 9100)
+  })
+
+  app.listen(port)
+
+  const defaultView = getDefeaultRoute(c.pages)
+
+
+  let address = getAddress()
+  
+  if (address) {
+    address = `ip: ${chalk.green(`http://${address}:${port}/${defaultView}`)}`
+  }
+  logFrame(`
+    Tarat App Server started at:
+      localhost: ${chalk.green(`http://localhost:${port}/${defaultView}`)}
+      ${address || ''}
+  `)
 }
 
 export async function createDevServer (c: IConfig) {  
@@ -40,8 +63,8 @@ export async function createDevServer (c: IConfig) {
     config: c
   }))
 
-  const vite = await createServer({
-    root: process.cwd(),
+  const vite = await createViteServer({
+    root: c.cwd,
     server:{ middlewareMode: 'ssr' },
     plugins: [
       // {
@@ -69,30 +92,22 @@ export async function createDevServer (c: IConfig) {
     vite,
   }))
 
-  const port = await getPort({
-    port: c.port ? c.port : process.env.PORT ? Number(process.env.PORT) : portNumbers(9000, 9100)
-  })
-
-  app.listen(port)
-
-  const defaultView = getDefeaultRoute(c.pages)
+  startApp(app, c)
+}
 
 
-  let address =
-  process.env.HOST ||
-  Object.values(os.networkInterfaces())
-    .flat()
-    .find((ip) => ip?.family === "IPv4" && !ip.internal)?.address;
+export async function createServer(c: IConfig) {
+  const app = new Koa()
+  setupBasicServer(app)
+ 
+  app.use(taratRunner({
+    config: c
+  }))
 
-  
-  if (address) {
-    address = `ip: ${chalk.green(`http://${address}:${port}/${defaultView}`)}`
-  }
-  logFrame(`
-    Tarat App Server started at:
-      localhost: ${chalk.green(`http://localhost:${port}/${defaultView}`)}
-      ${address || ''}
-  `)
+  app.use(page({
+    config: c,
+    pages: c.pages,
+  })) 
 
-  return app
+  startApp(app, c)
 }
