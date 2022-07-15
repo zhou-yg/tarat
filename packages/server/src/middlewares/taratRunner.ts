@@ -7,7 +7,7 @@ import * as path from 'path'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'
 import { setCookies, setPrisma, setRunning, setER  } from '../plugins/'
-import { buildHooks } from '../compiler/build'
+import { buildHooks } from '../compiler/prebuild'
 import { loadJSON } from '../util'
 
 function matchHookName (path: string) {

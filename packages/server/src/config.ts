@@ -182,6 +182,8 @@ function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) 
     /** app/client */
     // client side route doesnt need compiled, it will be auto compiled in vite
     autoGenerateClientRoutes: path.join(outputAppClientDir, `${config.routes}${config.ts ? '.tsx' : '.jsx'}`),
+    clientRoutes: path.join(outputAppClientDir, 'index.js'),
+    clientRoutesCSS: path.join(outputAppClientDir, 'index.css'),
     clientChunksDir: path.join(outputAppClientDir, config.appClientChunk, `${config.routes}${config.ts ? '.tsx' : '.jsx'}`),
   }
 }

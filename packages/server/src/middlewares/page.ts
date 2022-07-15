@@ -7,7 +7,7 @@ import { ViteDevServer } from "vite";
 import { fileURLToPath } from 'url'
 import { debuggerLog, getPlugin, IHookContext, Runner, startdReactiveChain, stopReactiveChain } from "tarat-core";
 import { wrapCtx } from "./taratRunner";
-import { buildEntryServer, buildRoutes } from "../compiler/build";
+import { buildEntryServer, buildRoutes } from "../compiler/prebuild";
 import { renderToString } from 'react-dom/server'
 import { RenderDriver, renderWithDriverContext, DriverContext } from 'tarat-connect'
 import React, { createElement } from "react";
@@ -95,7 +95,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
  export default function page (args: {
    config: IConfig
    pages: IViewConfig[]
-   vite: ViteDevServer
+   vite?: ViteDevServer
 }) : Application.Middleware {
 
   const config = args.config
@@ -127,7 +127,11 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
           diffPath: args.config.diffPath,
         })
       })
-      html = await args.vite.transformIndexHtml(pathname, html)
+
+      // use on dev
+      if (args.vite) {
+        html = await args.vite.transformIndexHtml(pathname, html)
+      }
 
       ctx.body = html
 
