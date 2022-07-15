@@ -60,17 +60,23 @@ export async function build (c: IConfig, op: IBuildOption) {
 async function generateOutput(c: IConfig, bundle: RollupBuild, op: IBuildOption['output']) {
   const { output } = await bundle.generate(op)
   for (const chunkOrAsset of output) {
+
     if (chunkOrAsset.type === 'asset') {
-      const target = path.join(c.pointFiles.outputDir, chunkOrAsset.fileName)
+      const target = path.join(op.dir || c.pointFiles.outputDir, chunkOrAsset.fileName)
       fs.writeFileSync(target, chunkOrAsset.source)
 
     } else if (chunkOrAsset.type === 'chunk') {
-      const dir = op.file?.replace(chunkOrAsset.fileName, '')
+      let dir = op.dir
+      if (!op.dir) {
+        dir = op.file?.replace(chunkOrAsset.fileName, '')
+      }
       if (dir && !fs.existsSync(dir)) {
         fs.mkdirSync(dir)
       }
       if (op.file) {
         fs.writeFileSync(op.file, chunkOrAsset.code)
+      } else {
+        fs.writeFileSync(path.join(dir!, chunkOrAsset.fileName), chunkOrAsset.code)
       }
     }
   }
@@ -79,7 +85,7 @@ async function generateOutput(c: IConfig, bundle: RollupBuild, op: IBuildOption[
 
 
 export function getPlugins (input: {
-  css: string,
+  css: string | boolean,
   mode: 'dev' | 'build'
 }, c: IConfig) {
   const { css, mode } = input
@@ -95,7 +101,7 @@ export function getPlugins (input: {
       presets: ['@babel/preset-react']
     }),
     postcss({
-      extract: css.replace(c.pointFiles.outputDir, '').replace(/^\//, ''), // only support relative path
+      extract: typeof css === 'string'  ? css.replace(c.pointFiles.outputDir, '').replace(/^\//, '') : css, // only support relative path
     }),
     autoExternal({
       peerDependencies: true,

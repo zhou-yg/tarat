@@ -1,6 +1,7 @@
 import {
   readConfig,
-  buildClient
+  buildClient,
+  buildViews
 } from "../src/"
 import { buildEverything, prepareDir } from "./dev"
 
@@ -16,5 +17,10 @@ export default async (cwd: string) => {
 
   await buildEverything(config)
 
-  await buildClient(config)
+  await Promise.all([
+    buildClient(config),
+    buildViews(config),
+  ])
+
+  
 }
