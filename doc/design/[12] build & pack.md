@@ -52,7 +52,28 @@ Application include BM，额外多出的app/下的编译产物
 
 externals配置：知名库，tarat相关的，其余的也可以用户配置
 
-如果包含多层文件夹结构的，都维持原本的文件夹结构
+如果包含多层文件夹结构的，都维持原本的文件夹结构（默认只读第一层结构
+
+## code splitting
+
+基于React.lazy和Rollup chunks，参考：https://ui.dev/react-router-code-splitting
+
+## external
+
+依赖的基础库：如react, react-router，core， antd应该是要external的，这些大库通常是稳定且遵守变更规范
+
+但这些基础的“大”库又没法穷举，如何才能尽可能避免打包大库，大库不一定是体积最大，比如redux就很小
+
+其次是npm上引用的一些小工具库，这些库很小，往往变更随意，为了导出单元的稳定性，小库应该被打包进来
+
+思路方法是通过pkg.json的dependencies约定，让用户自己决定
+- dependencies 会打包
+- peerDependencies 不打包
+
+dev和build的区别：
+- dev 开发时本地肯定是有对应包的，所以可以全部external，
+- build，需要对外发布了，采用上述的约定策略
+
 
 ## dev产物
 
@@ -137,3 +158,6 @@ Application的编译产物组成，在dev产物的基础上进行增强：
 
 server run start时需要依赖原本的工程信息：hooks结构，pages路由结构
 
+### App编译产物
+
+由于前面已经产出了 client/routes.tsx，这个文件就可以作为client的编译入口
