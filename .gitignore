@@ -117,3 +117,4 @@ packages/core/**/*.db-journal
 dist/
 
 .tarat
+.taratBuild
