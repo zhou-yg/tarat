@@ -21,7 +21,7 @@ export const defaultConfig = () => ({
   ts: false,
 
   devCacheDirectory: '.tarat', // in cwd
-  buildDirectory: '.taratBuild', // in cwd
+  buildDirectory: 'dist', // in cwd
   appServer: 'server',
   appClient: 'client',
   appClientChunk: 'chunks',
