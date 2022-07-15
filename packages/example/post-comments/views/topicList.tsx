@@ -1,14 +1,11 @@
 import React, { ReactElement, useState } from 'react'
 
-import s from './TopicList.module.less'
+import s from './topicList.module.less'
 import { useTarat } from 'tarat-connect'
 import topicHook, { ITopic } from '../hooks/topic'
 import List from 'antd/lib/list/index'
 import Button from 'antd/lib/button/index'
 import Input from 'antd/lib/input/index'
-
-
-import 'antd/dist/antd.css'
 
 const TopicList: React.FC<{
   renderItem?: (e: ITopic, i: number) => ReactElement
