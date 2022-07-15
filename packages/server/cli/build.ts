@@ -1,3 +1,5 @@
+import * as path from 'path'
+import { cp } from "shelljs"
 import {
   readConfig,
   buildClient,
@@ -22,5 +24,8 @@ export default async (cwd: string) => {
     buildViews(config),
   ])
 
-  
+  cp(
+    path.join(cwd, config.modelsDirectory, config.targetSchemaPrisma),
+    path.join(config.pointFiles.outputModelsDir, config.targetSchemaPrisma)
+  )
 }

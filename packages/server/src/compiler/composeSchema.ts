@@ -43,10 +43,12 @@ function findDependentPrisma (c: IConfig) {
   pkgModules.filter(moduleName => {
     const dir = path.join(c.cwd, 'node_modules', moduleName)
     const r1 = !!loadJSON(path.join(dir, 'package.json')).tarat
-    const r2 = fs.existsSync(path.join(dir, c.modelsDirectory, 'schema.prisma'))
+
+    const depSchemaPath = path.join(dir, c.buildDirectory, c.modelsDirectory, 'schema.prisma')
+    const r2 = fs.existsSync(depSchemaPath)
 
     if (r1 && r2) {
-      schemaFiles.push(path.join(dir, c.modelsDirectory, 'schema.prisma'))
+      schemaFiles.push(depSchemaPath)
     }
   })
 
