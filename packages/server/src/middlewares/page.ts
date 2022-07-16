@@ -18,6 +18,13 @@ const templateFilePath = path.join(__dirname, templateFile)
 
 const template = compile(fs.readFileSync(templateFilePath).toString())
 
+function transformIndexHtml (html: string, c: IConfig) {
+  return html.replace(
+    new RegExp(`${c.pointFiles.outputDir}`, 'g'),
+    ''
+  )
+}
+
 async function renderPage (ctx: Application.ParameterizedContext, config: IConfig) {
 
   const { distServerRoutes, distEntryJS, distEntryCSS, distServerRoutesCSS } = config.pointFiles
@@ -78,14 +85,16 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
   stopReactiveChain()
   chain1.print()
 
-  const entryServerCss = fs.existsSync(distEntryCSS) ? fs.readFileSync(distEntryCSS).toString() : ''
-  const css = fs.existsSync(distServerRoutesCSS) ? fs.readFileSync(distServerRoutesCSS).toString() : ''
+  const css = []
+  fs.existsSync(distEntryCSS) && css.push(distEntryCSS)
+  fs.existsSync(distServerRoutesCSS) && css.push(distServerRoutesCSS)
 
   return {
     driver,
     html,
     html2,
-    css: css + entryServerCss,
+    // css: css + entryServerCss,
+    css,
   }
 }
 
@@ -115,11 +124,14 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
         ssrHTML = r.html2
       }
 
-      const { autoGenerateClientRoutes } = config.pointFiles
+      const { autoGenerateClientRoutes, clientRoutes } = config.pointFiles
+
+      const src = config.isProd ? clientRoutes : autoGenerateClientRoutes
 
       let html = template({
+        title: viewConfig.name,
         hookContextMap: JSON.stringify(context),
-        src: autoGenerateClientRoutes,
+        src,
         css: r?.css,
         ssrHTML,
         configJSON: JSON.stringify({
@@ -129,8 +141,10 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
       })
 
       // use on dev
-      if (args.vite) {
+      if (args.vite && !config.isProd) {
         html = await args.vite.transformIndexHtml(pathname, html)
+      } else {
+        html = transformIndexHtml(html, config)
       }
 
       ctx.body = html

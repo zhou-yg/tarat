@@ -1,7 +1,8 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { IConfig } from "../config";
-import { build, externals, getTsconfig, IBuildOption, getPlugins } from "./prebuild";
+import { loadJSON } from '../util';
+import { build, getTsconfig, IBuildOption, getPlugins } from "./prebuild";
 
 
 export async function buildClient (c: IConfig) {
@@ -9,24 +10,39 @@ export async function buildClient (c: IConfig) {
     outputDir,
     autoGenerateClientRoutes,
     clientRoutes,
+    outputAppClientDir,
     clientRoutesCSS
   } = c.pointFiles
 
 
   const myPlugins = getPlugins({
     css: clientRoutesCSS,
-    mode: 'build'
+    mode: 'build',
+    target: 'browser',
+    alias: {
+      'tarat-core': 'tarat-core/dist/index.client.js'
+    }
   }, c)
+
+  const pkg = loadJSON(path.join(c.cwd, 'package.json'))
 
   const op: IBuildOption = {
     input: {
       input: autoGenerateClientRoutes,
       plugins: myPlugins,
-      external: externals,
     },
     output: {
       file: clientRoutes,
-      format: 'esm'
+      name: `${pkg.name}TaratApp`,
+      format: 'umd',
+      // manualChunks: {
+      //   dll: [
+      //     'react',
+      //     'react-dom',
+      //     'tarat-core',
+      //     'tarat-connect'
+      //   ]
+      // }
     }
   }
   
@@ -57,7 +73,6 @@ export async function buildViews (c: IConfig) {
             css: outputCSS,
             mode: 'build'
           }, c),
-          external: externals,
         },
         output: {
           file: outputJS,

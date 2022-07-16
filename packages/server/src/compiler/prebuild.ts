@@ -13,7 +13,10 @@ import * as prettier from 'prettier'
 import * as esbuild from 'esbuild';
 import { defineRoutesTree, IRouteChild } from "../config/routes";
 import autoExternal from 'rollup-plugin-auto-external';
- 
+import replace from '@rollup/plugin-replace';
+import rollupAlias from '@rollup/plugin-alias'
+import alias from "@rollup/plugin-alias";
+
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
 
@@ -86,15 +89,24 @@ async function generateOutput(c: IConfig, bundle: RollupBuild, op: IBuildOption[
 
 export function getPlugins (input: {
   css: string | boolean,
-  mode: 'dev' | 'build'
+  mode: 'dev' | 'build',
+  target?: 'browser' | 'node',
+  alias?: { [k: string]: string }
 }, c: IConfig) {
-  const { css, mode } = input
+  const { alias, css, mode, target = 'node' } = input
 
   const plugins = [
+    replace({
+      'process.env.NODE_ENV': mode === 'build' ? '"production"' : '"development"'
+    }),
+    alias ? rollupAlias({
+      entries: alias
+    }): undefined,
     json(),
     commonjs(),
     resolve({
-      extensions: ['.jsx', '.tsx']
+      browser: target === 'browser',
+      // extensions: ['.jsx', '.tsx']
     }),
     babel({
       exclude: 'node_modules/**',
@@ -104,8 +116,8 @@ export function getPlugins (input: {
       extract: typeof css === 'string'  ? css.replace(c.pointFiles.outputDir, '').replace(/^\//, '') : css, // only support relative path
     }),
     autoExternal({
-      peerDependencies: true,
-      dependencies: mode === 'dev'
+      peerDependencies: target === 'node',
+      dependencies: mode === 'dev' && target === 'node'
     }),
     c.ts ? tsPlugin({
       clean: true,
@@ -140,8 +152,6 @@ function upperFirst (s: string) {
   s = s.replace(/\:/g, '_')
   return s ? (s[0].toUpperCase() + s.substring(1)) : ''
 }
-
-export const externals = ['react', 'react-dom', 'tarat-core', 'tarat-connect', 'react-router-dom', 'antd']
 
 function generateRoutesContent (routes: IRouteChild[], depth = 0, parentNmae = ''): string {
   const pathObj: { [p: string]: IRouteChild } = {}
