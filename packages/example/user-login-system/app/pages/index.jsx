@@ -1,5 +1,5 @@
 import React from 'react'
-import Login from '../../views/login/index.jsx'
+import Login from '../../views/login.jsx'
 
 export const meta = () => ({
   title: '测试登录页面'

@@ -1,9 +1,0 @@
-{
-  "id": 1235,
-  "hooks": [
-    {
-      "name": "forget",
-      "exports": []
-    }
-  ]
-}
