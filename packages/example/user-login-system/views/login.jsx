@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTarat } from 'tarat-connect'
-import login from '../../hooks/login'
-import s from './index.module.less'
+import login from '../hooks/login'
+import s from './login.module.less'
 import classnames from 'classnames'
 
 const LoginFrame = () => {
