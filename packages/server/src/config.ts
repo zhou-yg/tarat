@@ -14,6 +14,8 @@ export const defaultConfig = () => ({
   appDirectory: 'app',
   pageDirectory: 'pages',
 
+  publicDirectory: 'public',
+
   entryServer: 'entry.server', // .(j|t)sx in app
   routesServer: 'routes.server', // serve for tarat self
   routes: 'routes', // serve for tarat self
@@ -189,9 +191,10 @@ function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) 
 }
 
 export async function readConfig (arg: {
-  cwd: string
+  cwd: string,
+  isProd?: boolean
 }) {
-  const { cwd } = arg
+  const { cwd, isProd } = arg
   const configFileInPath = path.join(cwd, configFile)
 
   let config = defaultConfig() as IDefaultConfig
@@ -220,10 +223,11 @@ export async function readConfig (arg: {
   const devPointFiles = getOutputFiles(config, cwd, path.join(cwd, config.devCacheDirectory))
   const buildPointFiles = getOutputFiles(config, cwd, path.join(cwd, config.buildDirectory))
   // default to "dev"
-  const pointFiles = devPointFiles
+  const pointFiles = isProd ? buildPointFiles : devPointFiles
 
   return {
     ...config,
+    isProd,
     pointFiles,
     devPointFiles,
     buildPointFiles,

@@ -3,7 +3,8 @@ import { cp } from "shelljs"
 import {
   readConfig,
   buildClient,
-  buildViews
+  buildViews,
+  generateHookDeps,
 } from "../src/"
 import { buildEverything, prepareDir } from "./dev"
 
@@ -11,9 +12,8 @@ export default async (cwd: string) => {
 
   const config = await readConfig({
     cwd,
+    isProd: true,
   })
-
-  config.pointFiles = config.buildPointFiles
 
   prepareDir(config)
 
@@ -23,6 +23,8 @@ export default async (cwd: string) => {
     buildClient(config),
     buildViews(config),
   ])
+
+  generateHookDeps(config)
 
   cp(
     path.join(cwd, config.modelsDirectory, config.targetSchemaPrisma),
