@@ -16,10 +16,20 @@
     "schema": "./models/schema.prisma"
   },
   "dependencies": {
+    "@prisma/client": "^3.15.1",
+    "post-comments": "workspace:*",
+    "prisma": "^3.15.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.3.0",
+    "tarat-connect": "workspace:^0.0.9",
+    "tarat-core": "workspace:^0.0.9",
+    "tarat-server": "workspace:^0.0.8",
+    "user-login-system": "workspace:*"
   },
   "devDependencies": {
-    "@types/react-dom": "^18.0.5",
     "@types/lodash": "^4.14.182",
+    "@types/react-dom": "^18.0.5",
     "less": "^4.1.2"
   },
   "peerDependencies": {
@@ -29,8 +39,8 @@
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-router-dom": "^6.3.0",
-    "tarat-connect": "*",
-    "tarat-core": "*",
-    "tarat-server": "*"
+    "tarat-connect": "workspace:*",
+    "tarat-core": "workspace:*",
+    "tarat-server": "workspace:*"
   }
 }
