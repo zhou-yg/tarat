@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { IConfig } from "../config";
 import { loadJSON } from '../util';
-import { build, getTsconfig, IBuildOption, getPlugins } from "./prebuild";
+import { build, IBuildOption, getPlugins } from "./prebuild";
 
 
 export async function buildClient (c: IConfig) {
