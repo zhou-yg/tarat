@@ -13,6 +13,7 @@ import {
 } from "../src/";
 
 export function buildEverything (c: IConfig) {
+  
   return Promise.all([
     buildRoutes(c),
     buildEntryServer(c),
@@ -62,15 +63,21 @@ async function startCompile (c: IConfig) {
     .on('error', console.error)
     .on('change', () => {
       logFrame(`[change] ${chalk.green('re-run compiling')}`)
-      buildEverything(c)
+      readConfig({ cwd: c.cwd }).then(newConfig => {
+        buildEverything(newConfig)
+      })
     })
     .on('add', () => {
       logFrame(`[add] ${chalk.green('re-run compiling')}`)
-      buildEverything(c)
+      readConfig({ cwd: c.cwd }).then(newConfig => {
+        buildEverything(newConfig)
+      })
     })
     .on('unlink', () => {
       logFrame(`[unlink] ${chalk.green('re-run compiling')}`)
-      buildEverything(c)
+      readConfig({ cwd: c.cwd }).then(newConfig => {
+        buildEverything(newConfig)
+      })
     })
 
   
@@ -89,7 +96,6 @@ export default async (cwd: string) => {
 
   /** @TODO 1.integrated to the vite.plugin 2.upgrade to typescript */
   generateHookDeps(config)
-  
 
   composeSchema(config)
 

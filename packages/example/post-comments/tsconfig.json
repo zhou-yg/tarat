@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "outDir": "dist",
     "sourceMap": true,
     "target": "es2016",
@@ -15,6 +14,10 @@
     "removeComments": false,
     "jsx": "react",
     "lib": ["esnext", "dom"],
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "immer": ["node_modules/immer"]
+    }
   }
 }

@@ -37,6 +37,8 @@ export function injectDeps (c: IConfig, targetFile: string) {
     )
 
     fs.writeFileSync(targetFile, codeIncludingDeps)
+  } else {
+    throw new Error(`[injectDeps] not found deps.json with path "${depsJSONPath}"`)
   }
 }
 
@@ -60,10 +62,13 @@ export function generateHookDeps (c: IConfig) {
       fs.writeFileSync(path.join(c.pointFiles.outputHooksDir, `${name}.deps.js`), prettier.format(
         `export default ${JSON.stringify(deps, null, 2)}`
       ))
+
       // json in tarat
       fs.writeFileSync(path.join(c.pointFiles.outputHooksDir, `${name}.deps.json`), (JSON.stringify(deps)))
+      fs.writeFileSync(path.join(hooksDir, `${name}.deps.json`), (JSON.stringify(deps)))
     
       injectDeps(c, path.join(c.pointFiles.outputHooksDir, f))
+      injectDeps(c, path.join(hooksDir, f))
     }
   })
 }
