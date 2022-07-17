@@ -25,7 +25,6 @@ export default function topic () {
   const inputName = state('')
   
   const add = inputComputeInServer(() => {
-    console.log('test inputName(): ', inputName());
     if (inputName()) {
       topics(arr => {
         arr.push({

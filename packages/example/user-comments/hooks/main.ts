@@ -2,12 +2,11 @@ import {
   compose,
   state,
 } from 'tarat-core'
-import login from 'user-login-system/dist/hooks/login'
-console.log('login: ', login);
+import login from 'user-login-system/dist/hooks/esm/login'
 
 export default function main () {
 
-  const loginHook = compose(login.default || login)
+  const loginHook = compose(login)
 
   const s = state(0)
 

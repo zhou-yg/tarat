@@ -161,3 +161,17 @@ server run start时需要依赖原本的工程信息：hooks结构，pages路由
 ### App编译产物
 
 由于前面已经产出了 client/routes.tsx，这个文件就可以作为client的编译入口
+
+
+## different module system
+
+现在的确定性的模块系统有：
+- tarat-server node运行端：必须是cjs
+  - 说明：因为node esm没法删除import缓存，这个在tarat dev的时候是刚需，所以只能用cjs的require.cache来删除缓存
+  - 衍生出的：
+    - dist(或.tarat)/hooks/*.js 是 cjs
+    - dist(或.tarat)/app/server/*.js 是cjs
+
+因为其他模块的client会引用 dist(或.tarat)/hooks/*.js，而在client的开发过程，默认则是esm为主
+
+这就导致了dist(或.tarat)/hooks/*.js 必须同时支持cjs和esm，冲突产生了
