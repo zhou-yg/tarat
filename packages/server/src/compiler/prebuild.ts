@@ -15,7 +15,8 @@ import { defineRoutesTree, IRouteChild } from "../config/routes";
 import autoExternal from 'rollup-plugin-auto-external';
 import replace from '@rollup/plugin-replace';
 import rollupAlias from '@rollup/plugin-alias'
-import alias from "@rollup/plugin-alias";
+import dts from "rollup-plugin-dts"
+import { loadJSON } from "../util";
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -38,7 +39,7 @@ export interface IBuildOption {
  * searches for tsconfig.json file starting in the current directory, if not found
  * use the default tsconfig.json provide by tarat
  */
-export function getTsconfig (c: IConfig) {
+export function getTSConfigPath (c: IConfig) {
   const tsconfigFile = path.join(c.cwd, 'tsconfig.json')
   if (fs.existsSync(tsconfigFile)) {
     return tsconfigFile
@@ -97,6 +98,7 @@ export function getPlugins (input: {
 
   const plugins = [
     replace({
+      preventAssignment: true,
       'process.env.NODE_ENV': mode === 'build' ? '"production"' : '"development"'
     }),
     alias ? rollupAlias({
@@ -121,7 +123,7 @@ export function getPlugins (input: {
     }),
     c.ts ? tsPlugin({
       clean: true,
-      tsconfig: getTsconfig(c)
+      tsconfig: getTSConfigPath(c)
     }) : undefined,
   ].filter(Boolean)
 
@@ -358,10 +360,45 @@ async function esbuildHooks (c: IConfig, outputDir: string, format?: esbuild.For
 
   // check tsconfig
   if (includingTs) {
-    buildOptions.tsconfig = getTsconfig(c)
+    buildOptions.tsconfig = getTSConfigPath(c)
   }
 
   await esbuild.build(buildOptions)
+}
+
+function buildDTS (c: IConfig, filePath: string, outputFile: string) {
+  const tsconfigPath = getTSConfigPath(c)
+  const json = loadJSON(tsconfigPath)
+
+  const options: IBuildOption = {
+    input: {
+      input: filePath,
+      plugins: [
+        dts({
+          compilerOptions: {
+            paths: {
+              immer: ['node_modules/immer']
+            }
+          } as any
+        })
+      ]
+    },
+    output: {
+      file: outputFile,
+      format: 'esm'
+    }
+  }
+
+  return build(c, options)
+}
+
+async function hooksType(c: IConfig, outputDir: string) {
+  const { hooks } = c
+  await Promise.all(hooks.filter(({ filePath }) => /\.ts$/.test(filePath)).map(async h => {
+    const { filePath, name } = h
+    
+    await buildDTS(c, filePath, path.join(c.pointFiles.outputHooksDir, `${name}.d.ts`))
+  }))
 }
 
 /**
@@ -374,5 +411,9 @@ export async function buildHooks (c: IConfig) {
     esbuildHooks(c, outputHooksDir, 'cjs'),
     esbuildHooks(c, outputHooksESMDir, 'esm'),
   ])
+
+  if (c.ts) {
+    // await hooksType(c, outputHooksDir)
+  }
 }
 
