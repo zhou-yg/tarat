@@ -92,6 +92,39 @@ describe('computed', () => {
       expect(result.c1()).toBe(2 + 1)
       expect(result.c2()).toBe(3 + 1)
     })
+    it('bad case: async/await getter',async () => {
+      const num1 = 1
+      const num2 = 2
+      const runner = new Runner(mockBM.asyncComputed2)
+      const result = runner.init([num1, num2])
+  
+      const c1 = result.c()
+      expect(c1).toBe(undefined)
+  
+      await runner.ready()
+  
+      expect(result.c()).toBe(num1 + num2)
+      // after await the state caller is lost Computed context
+      expect(result.s._hook.watchers.size).toBe(1)
+      expect(result.s._hook.watchers.has(runner.scope.watcher)).toBe(true)
+      expect(result.s._hook.watchers.has(result.c._hook.watcher)).toBe(false)
+    })
+    it('good case: generator getter',async () => {
+      const num1 = 1
+      const num2 = 2
+      const runner = new Runner(mockBM.generatorComputed)
+      const result = runner.init([num1, num2])
+  
+      const c1 = result.c()
+      expect(c1).toBe(undefined)
+  
+      await runner.ready()
+  
+      expect(result.c()).toBe(num1 + num2)
+      expect(result.s._hook.watchers.size).toBe(2)
+      expect(result.s._hook.watchers.has(runner.scope.watcher)).toBe(true)
+      expect(result.s._hook.watchers.has(result.c._hook.watcher)).toBe(true)
+    })
   })
   describe('update computed', () => {
     // it ('use primitive state, getter still run again', () => {
