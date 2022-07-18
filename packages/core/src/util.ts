@@ -1,6 +1,6 @@
 import { applyPatches } from 'immer'
 import { IQueryWhere } from './plugin'
-
+import co from './co'
 export const isArray = Array.isArray
 /* copy from immer's common.ts  */
 export type AnyObject = { [key: string]: any }
@@ -216,6 +216,11 @@ export function isAsyncFunc(f?: any) {
 export function isPromise(p?: any) {
   return p && (p instanceof Promise || !!p.then)
 }
+
+export function isGenerator(g: any) {
+  return g && 'function' == typeof g.next && 'function' == typeof g.throw
+}
+
 
 export function nextTick(fn: () => void) {
   const st = setTimeout(fn, 0)
@@ -667,3 +672,10 @@ export interface BM extends Function {
 }
 
 // export type BM = (...prop: any) => any
+
+export function runGenerator (gen: Generator, onResume: () => void, onSuspend: () => void) {
+  return co(gen, {
+    onResume: onResume,
+    onSuspend: onSuspend
+  })
+}

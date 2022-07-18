@@ -19,7 +19,9 @@ import {
   last,
   getDeps,
   cloneDeep,
-  THookDeps
+  THookDeps,
+  isGenerator,
+  runGenerator
 } from './util'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
 import { getPlugin, IModelQuery, TCacheFrom } from './plugin'
@@ -239,7 +241,7 @@ export class Model<T extends any[]> extends State<T[]> {
     const newReactiveChain = reactiveChain?.add(this)
     this.executeQuery(newReactiveChain)
   }
-  async getQueryWhere(): Promise<IModelQuery['query']> {
+  async getQueryWhere(): Promise<IModelQuery['query'] | void> {
     await this.queryWhereComputed!.getterPromise
     return this.queryWhereComputed!.value!
   }
@@ -290,10 +292,9 @@ export class Model<T extends any[]> extends State<T[]> {
     try {
       // @TODO：要确保时序，得阻止旧的query数据更新
       const q = await this.getQueryWhere()
-      const valid = await this.enableQuery()
-      log('[Model.executeQuery] 1 q.entity, q.query: ', this.entity, q, valid)
+      log('[Model.executeQuery] 1 q.entity, q.query: ', this.entity, q)
       let result: T[] = []
-      if (valid) {
+      if (!!q) {
         if (this.queryTimeIndex <= currentQueryTimeIndex) {
           result = await getPlugin('Model').find(this.entity, q)
           log('[Model.executeQuery] 2 result: ', result)
@@ -541,7 +542,7 @@ export class Computed<T> extends State<T | undefined> {
   batchRunCancel: () => void = () => {}
   watcher: Watcher<State<any>> = new Watcher<State<any>>(this)
   // @TODO: maybe here need trigger async optional setting
-  constructor(public getter: FComputedFunc<T> | FComputedFuncAsync<T>) {
+  constructor(public getter: FComputedFunc<T> | FComputedFuncAsync<T> | FComputedFuncGenerator<T>) {
     super(undefined)
   }
   run(reactiveChain?: ReactiveChain) {
@@ -553,19 +554,30 @@ export class Computed<T> extends State<T | undefined> {
       currentReactiveChain = reactiveChain
     }
     // making sure the hook called by computed can register thier chain
-    const r: any = this.getter(this._internalValue)
+    const r: T | Promise<T> | Generator<unknown, T> = this.getter(this._internalValue)
 
     currentReactiveChain = oldCurrentReactiveChain
 
     popComputed()
-    if (r && (r.then || r instanceof Promise)) {
-      this.getterPromise = r
-      r.then((asyncResult: T) => {
+    if (isPromise(r)) {
+      this.getterPromise = r as Promise<T>
+      this.getterPromise.then((asyncResult: T) => {
         this.update(asyncResult, [], false, reactiveChain)
         this.getterPromise = null
       })
+    } else if (isGenerator(r)) {
+      this.getterPromise = runGenerator(
+        r as Generator,
+        () => pushComputed(this),
+        () => popComputed()
+      ) as Promise<T>
+      this.getterPromise.then((asyncResult: T) => {
+        this.update(asyncResult, [], false, reactiveChain)
+        this.getterPromise = null
+      })
+
     } else {
-      this.update(r, [], false, reactiveChain)
+      this.update(r as T, [], false, reactiveChain)
     }
   }
   notify(h?: Hook, p?: IPatch[], reactiveChain?: ReactiveChain) {
@@ -581,10 +593,11 @@ export class Computed<T> extends State<T | undefined> {
     // })
   }
 }
+let currentInputeCompute: InputCompute | null = null
 
 export class InputCompute<P extends any[] = any> extends Hook {
   constructor(
-    public getter: InputComputeFn<P>,
+    public getter: InputComputeFn<P> | AsyncInputComputeFn<P> | GeneratorInputComputeFn<P>,
     public scope: CurrentRunnerScope
   ) {
     super()
@@ -592,7 +605,9 @@ export class InputCompute<P extends any[] = any> extends Hook {
   }
   inputFuncStart() {}
   async inputFuncEnd(reactiveChain?: ReactiveChain<P>) {
-    currentInputeCompute = null
+    if (currentInputeCompute === this) {
+      currentInputeCompute = null
+    }
 
     const updateReactiveChain: ReactiveChain | undefined =
       reactiveChain?.addUpdate(this)
@@ -602,7 +617,10 @@ export class InputCompute<P extends any[] = any> extends Hook {
     this.triggerEvent('after')
   }
   async run(...args: any): Promise<void> {
-    currentInputeCompute = this
+    // confirm：the composed inputCompute still running under the parent inputCompute
+    if (!currentInputeCompute) {
+      currentInputeCompute = this
+    }
     this.triggerEvent('before')
 
     let preservedCurrentReactiveChain: ReactiveChain | undefined =
@@ -618,8 +636,31 @@ export class InputCompute<P extends any[] = any> extends Hook {
       }
       currentReactiveChain = preservedCurrentReactiveChain
 
+      // use generator
+      if (isGenerator(funcResult)) {
+        await runGenerator(
+          (funcResult as Generator<void>),
+          () => {
+            if (!currentInputeCompute) {
+              currentInputeCompute = this
+            }
+          },
+          () => {
+            if (currentInputeCompute === this) {
+              currentInputeCompute = null
+            }    
+          }
+        )
+        return await this.inputFuncEnd(newReactiveChain)
+      }
       if (isPromise(funcResult)) {
-        await Promise.resolve(funcResult)
+        // end compute context in advance
+        
+        if (currentInputeCompute === this) {
+          currentInputeCompute = null
+        }
+        await funcResult
+
         return await this.inputFuncEnd(newReactiveChain)
       }
     }
@@ -1289,8 +1330,6 @@ export function internalProxy<T>(
   return _internalValue
 }
 
-let currentInputeCompute: InputCompute | null = null
-
 type IModifyFunction<T> = (draft: Draft<T>) => void
 
 interface IModelOption {
@@ -1605,8 +1644,11 @@ function mountCache<T>(key: string, options: ICacheOptions<T>) {
 }
 
 function updateComputed<T>(
+  fn: FComputedFuncGenerator<T>
+): (() => T) & { _hook: Computed<T> }
+function updateComputed<T>(
   fn: FComputedFuncAsync<T>
-): (() => Promise<T>) & { _hook: Computed<T> }
+): (() => T) & { _hook: Computed<T> }
 function updateComputed<T>(
   fn: FComputedFunc<T>
 ): (() => T) & { _hook: Computed<T> }
@@ -1642,8 +1684,11 @@ function updateComputed<T>(fn: any): any {
   return newGetter
 }
 function mountComputed<T>(
+  fn: FComputedFuncGenerator<T>
+): (() => T) & { _hook: Computed<T> }
+function mountComputed<T>(
   fn: FComputedFuncAsync<T>
-): (() => Promise<T>) & { _hook: Computed<T> }
+): (() => T) & { _hook: Computed<T> }
 function mountComputed<T>(
   fn: FComputedFunc<T>
 ): (() => T) & { _hook: Computed<T> }
@@ -1694,10 +1739,14 @@ export function cache<T>(key: string, options: ICacheOptions<T>) {
 
 type FComputedFuncAsync<T> = (prev?: T) => Promise<T>
 type FComputedFunc<T> = (prev?: T) => T
+type FComputedFuncGenerator<T> = (prev?: T) => Generator<unknown, T>
 
 export function computed<T>(
+  fn: FComputedFuncGenerator<T>
+): (() => T) & { _hook: Computed<T> }
+export function computed<T>(
   fn: FComputedFuncAsync<T>
-): (() => Promise<T>) & { _hook: Computed<T> }
+): (() => T) & { _hook: Computed<T> }
 export function computed<T>(
   fn: FComputedFunc<T>
 ): (() => T) & { _hook: Computed<T> }
@@ -1710,9 +1759,13 @@ export function computed<T>(fn: any): any {
 
 type InputComputeFn<T extends any[]> = (...arg: T) => void
 type AsyncInputComputeFn<T extends any[]> = (...arg: T) => Promise<void>
+type GeneratorInputComputeFn<T extends any[]> = (...arg: T) => Generator<unknown, void>
 
 export function inputCompute<T extends any[]>(
   func: AsyncInputComputeFn<T>
+): AsyncInputComputeFn<T> & { _hook: Hook }
+export function inputCompute<T extends any[]>(
+  func: GeneratorInputComputeFn<T>
 ): AsyncInputComputeFn<T> & { _hook: Hook }
 export function inputCompute<T extends any[]>(
   func: InputComputeFn<T>
