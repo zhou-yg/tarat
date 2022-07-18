@@ -493,6 +493,22 @@ export function asyncComputed(v1: number, v2: number) {
   })
   return { s, c }
 }
+export function asyncComputed2(v1: number, v2: number) {
+  const s = state(v1)
+  const c = computed(async () => {
+    await new Promise(resolve => setTimeout(resolve, 30))
+    return s() + v2
+  })
+  return { s, c }
+}
+export function generatorComputed(v1: number, v2: number) {
+  const s = state(v1)
+  const c = computed(function * () {
+    yield new Promise(resolve => setTimeout(resolve, 1))
+    return s() + v2
+  })
+  return { s, c }
+}
 
 export function computedWithArray() {
   const arr = state(new Array(5).fill('_').map((_, i) => ({ num: i })))
