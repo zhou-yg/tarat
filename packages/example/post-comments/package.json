@@ -2,6 +2,7 @@
   "name": "post-comments",
   "version": "0.0.1",
   "description": "a tarat unit",
+  "tarat": {},
   "scripts": {
     "init": "pnpm i && npm run p:dev",
     "dev": "tarat dev",

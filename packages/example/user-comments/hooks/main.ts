@@ -12,6 +12,7 @@ export default function main () {
 
   return {
     s,
-    alreadyLogin: loginHook.alreadyLogin
+    alreadyLogin: loginHook.alreadyLogin,
+    add: login.add,
   }
 }
