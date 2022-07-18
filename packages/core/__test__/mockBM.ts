@@ -344,6 +344,35 @@ export function changeStateAsyncInputCompute(
     changeS1
   }
 }
+export function changeStateGeneratorInputCompute(
+  obj1: { num1: number },
+  num2: number
+) {
+  const ps = plainObjectState(obj1, num2)
+
+  const { s1, s2 } = ps
+
+  const changeS1 = inputCompute(function * (v: number, v2?: number) {
+    s1((draft: any) => {
+      draft.num1 = Math.random()
+    })
+    yield new Promise(resolve => setTimeout(resolve, 100))
+
+    s1((draft: any) => {
+      draft.num1 = v
+    })
+    if (v2) {
+      s2((d: any) => {
+        return d + v2
+      })
+    }
+  })
+
+  return {
+    ...ps,
+    changeS1
+  }
+}
 
 export function userPessimisticModel() {
   const users = model('item', () => ({}), {

@@ -55,8 +55,43 @@ describe('inputCompute', () => {
 
     expect(s1().num).toBe(-10)
   })
-  it('async inputCompute', async () => {
+  it('bad case: async/await inputCompute', async () => {
     const runner = new Runner(mockBM.changeStateAsyncInputCompute)
+
+    const onRunnerUpdate = jest.fn(() => {
+    })
+    runner.onUpdate(onRunnerUpdate)
+
+    const args: [any, number] = [
+      { num1: 0 },
+      10
+    ]
+
+    const initResult = runner.init(args)
+
+    const newVal1 = 2
+
+    await initResult.changeS1(newVal1)
+    
+    await mockBM.wait()
+
+    // the draft in inputCompute will commit at the last in this case
+    expect(initResult.s1()).not.toEqual({ num1: newVal1 })
+    expect(onRunnerUpdate).toHaveBeenCalledTimes(1)
+
+    const newVal2 = 3
+    
+    await initResult.changeS1(newVal2, newVal2)
+
+    await mockBM.wait()
+
+    expect(initResult.s1()).not.toEqual({ num1: newVal2 })
+    expect(initResult.s2()).toEqual(args[1] + newVal2)
+    
+    expect(onRunnerUpdate).toHaveBeenCalledTimes(2)
+  })
+  it('good case: generator inputCompute', async () => {
+    const runner = new Runner(mockBM.changeStateGeneratorInputCompute)
 
     const onRunnerUpdate = jest.fn(() => {
     })
