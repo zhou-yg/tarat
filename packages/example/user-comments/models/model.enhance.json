@@ -1,0 +1,26 @@
+{
+  "extraRelation": [
+    {
+      "from": {
+        "model": "User",
+        "field": "topics"
+      },
+      "type":"1:n",
+      "to": {
+        "model": "Topic",
+        "field": "author"
+      }
+    },
+    {
+      "from": {
+        "model": "User",
+        "field": "comments"
+      },
+      "type":"1:n",
+      "to": {
+        "model": "Comment",
+        "field": "author"
+      }
+    }
+  ]
+}
