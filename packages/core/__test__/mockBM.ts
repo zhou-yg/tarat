@@ -13,7 +13,8 @@ import {
   CurrentRunnerScope,
   Runner,
   BM,
-  compose
+  compose,
+  connectCreate
 } from '../src/'
 import { loadPlugin } from '../src/plugin'
 
@@ -382,6 +383,31 @@ export function userPessimisticModel() {
 
   return {
     users
+  }
+}
+
+export function modelWithConnectCreate () {
+  const items = model<{ id: number, name: string }[]>('item', () => ({}))
+  const name = state('')
+  connectCreate(items, () => {
+    return {
+      name: name()
+    }
+  })
+
+
+  const createItem = inputCompute(async (name: string) => {
+    if (name) {
+      await items.create({ name })
+    } else {
+      await items.create()
+    }
+  })
+
+  return {
+    items,
+    name,
+    createItem,
   }
 }
 

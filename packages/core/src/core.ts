@@ -206,6 +206,11 @@ export class State<T = any> extends Hook {
     }
   }
 }
+type PartialGetter<T> = {
+  [K in keyof T]?: T[K]
+}
+
+type TGetterData<T> = () => PartialGetter<T>
 
 export class Model<T extends any[]> extends State<T[]> {
   getterPromise: Promise<T> | null = null
@@ -214,6 +219,8 @@ export class Model<T extends any[]> extends State<T[]> {
   init = true
   // just update latest query
   queryTimeIndex: number = 0
+
+  createGetters: TGetterData<T>[] = []
 
   constructor(
     public entity: string,
@@ -236,6 +243,7 @@ export class Model<T extends any[]> extends State<T[]> {
       this.query(reactiveChain)
     }
   }
+  
   notify(h?: Hook, p?: IPatch[], reactiveChain?: ReactiveChain) {
     log(`[${this.constructor.name}.executeQuery] withChain=${!!reactiveChain}`)
     const newReactiveChain = reactiveChain?.add(this)
@@ -312,15 +320,43 @@ export class Model<T extends any[]> extends State<T[]> {
       this.getterPromise = null
     }
   }
+
   async exist(obj: { [k: string]: any }) {
     const result: T = await getPlugin('Model').find(this.entity, { where: obj })
     return result.length > 0
   }
-  async create(obj: { [k: string]: any }) {
-    const result: T = await getPlugin('Model').create(this.entity, {
+  /**
+   * confirm the last getter could convert previous getter
+   */
+  addCreateGetter (g: TGetterData<T[0]>) {
+    this.createGetters.push(g)
+  }
+  async createRow(obj?: { [k: string]: any }) {
+    const defaults = this.createGetters.reduce((r, func) => {
+      return Object.assign(r, func())
+    }, {} as T[0])
+
+    await getPlugin('Model').create(this.entity, {
+      data: Object.assign(defaults, obj)
+    })
+    await this.refresh()
+  }
+  async updateRow(where: number[] | { id: number }[], obj?: { [k: string]: any }) {
+    const id = typeof where[0] === 'number' ? where[0] : where[0].id
+
+    await getPlugin('Model').update(this.entity, {
+      where: { id },
       data: obj
     })
-    return result
+    await this.refresh()
+  }
+  async removeRow(where: number[] | { id: number }[]) {
+    const id = typeof where[0] === 'number' ? where[0] : where[0].id
+
+    await getPlugin('Model').remove(this.entity, {
+      where: { id }
+    })
+    await this.refresh()
   }
   async refresh () {
     await this.executeQuery(currentReactiveChain?.add(this))
@@ -1484,10 +1520,12 @@ function createUnaccessGetter2<T extends any[]>(index: number) {
   const f = (): any => {
     throw new Error(`[update getter] cant access un initialized hook(${index})`)
   }
-  const newF: (() => any) & { _hook: any; exist: any; create: any; refresh: any } = Object.assign(f, {
+  const newF = Object.assign(f, {
     _hook: null,
     exist: () => true,
     create: () => {},
+    update: () => {},
+    remove: () => {},
     refresh: () => {}
   })
   return newF
@@ -1574,7 +1612,9 @@ function updateModel<T extends any[]>(
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: hook,
     exist: hook.exist.bind(hook),
-    create: hook.create.bind(hook),
+    create: hook.createRow.bind(hook),
+    update: hook.updateRow.bind(hook),
+    remove: hook.removeRow.bind(hook),
     refresh: hook.refresh.bind(hook)
   })
 
@@ -1594,7 +1634,9 @@ function mountModel<T extends any[]>(
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: hook,
     exist: hook.exist.bind(hook),
-    create: hook.create.bind(hook),
+    create: hook.createRow.bind(hook),
+    update: hook.updateRow.bind(hook),
+    remove: hook.removeRow.bind(hook),
     refresh: hook.refresh.bind(hook)
   })
 
@@ -1837,6 +1879,17 @@ export function before(callback: () => void, targets: { _hook?: Hook }[]) {
   })
 }
 
+/**
+ * 
+ * 
+ * 
+ * 
+ *  connect util methods
+ * 
+ * 
+ * 
+ *  
+ */
 export function combineLatest<T>(
   arr: Array<Function & { _hook: State<T> }>
 ): () => T {
@@ -1882,3 +1935,12 @@ export function compose<T extends BM>(f: T, args?: any[]) {
 
   return insideResult
 }
+
+/**
+ * inject input data to Model as initial value
+ */
+type TModelGetter<T> = ReturnType<typeof model>
+export function connectCreate<T> (modelGetter: TModelGetter<T>, dataGetter: TGetterData<T> ) {
+  modelGetter._hook.addCreateGetter(dataGetter)
+}
+
