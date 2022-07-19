@@ -5,7 +5,7 @@ import { loadJSON } from '../util';
 import { build, IBuildOption, getPlugins } from "./prebuild";
 
 
-export async function buildClient (c: IConfig) {
+export async function buildClientRoutes (c: IConfig) {
   const {
     outputDir,
     autoGenerateClientRoutes,
@@ -14,13 +14,12 @@ export async function buildClient (c: IConfig) {
     clientRoutesCSS
   } = c.pointFiles
 
-
   const myPlugins = getPlugins({
     css: clientRoutesCSS,
     mode: 'build',
     target: 'browser',
     alias: {
-      'tarat-core': 'tarat-core/dist/index.client.js'
+      'tarat-core': 'tarat-core/dist/index.client.js',
     }
   }, c)
 
@@ -71,7 +70,10 @@ export async function buildViews (c: IConfig) {
           input,
           plugins: getPlugins({
             css: outputCSS,
-            mode: 'build'
+            mode: 'build',
+            alias: {
+              'tarat-core': 'tarat-core/dist/index.client.js',
+            }
           }, c),
         },
         output: {
