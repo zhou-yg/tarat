@@ -36,6 +36,15 @@ describe('model', () => {
       async find (e: 'item', w: IQueryWhere) {
         return prisma[e].findMany(w as any)
       },
+      async create (e: 'item', w: IQueryWhere) {
+        return prisma[e].create(w as any)
+      },
+      async update (e: 'item', w: IQueryWhere) {
+        return prisma[e].update(w as any)
+      },
+      async remove (e: 'item', w: IQueryWhere) {
+        return prisma[e].delete(w as any)
+      },
       async executeDiff (entity: 'item', diff: IDiff) {
         await Promise.all(diff.create.map(async (obj) => {
           const r = await prisma[entity].create({
@@ -243,6 +252,24 @@ describe('model', () => {
         expect(result.users()).toEqual([
           { id: 2, name: 'b' },  
         ])
+      })
+    })
+
+    describe('with connect', () => {
+      it('connectCreate',async () => {
+        const runner = new Runner(mockBM.modelWithConnectCreate)
+        const result = runner.init()
+
+        await runner.ready()
+
+        result.name(() => 'c')
+        await result.createItem('')
+
+        expect(result.items()[2].name).toEqual('c')
+
+        await result.createItem('ddd')
+
+        expect(result.items()[3].name).toEqual('ddd')
       })
     })
   })
