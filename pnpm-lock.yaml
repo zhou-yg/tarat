@@ -255,6 +255,7 @@ importers:
       lodash: ^4.17.21
       markdown-editor: workspace:*
       nanoid: 2.1.11
+      shortid: ^2.2.16
       tarat-server: workspace:*
       vite: ^2.9.9
     dependencies:
@@ -262,6 +263,7 @@ importers:
       lodash: 4.17.21
       markdown-editor: link:../markdown-editor
       nanoid: 2.1.11
+      shortid: 2.2.16
     devDependencies:
       '@babel/core': 7.18.6
       '@babel/preset-react': 7.18.6_@babel+core@7.18.6
@@ -8105,6 +8107,12 @@ packages:
       glob: 7.2.3
       interpret: 1.4.0
       rechoir: 0.6.2
+    dev: false
+
+  /shortid/2.2.16:
+    resolution: {integrity: sha512-Ugt+GIZqvGXCIItnsL+lvFJOiN7RYqlGy7QE41O3YC1xbNSeDGIRO7xg2JJXIAj1cAGnOeC1r7/T9pgrtQbv4g==}
+    dependencies:
+      nanoid: 2.1.11
     dev: false
 
   /side-channel/1.0.4:
