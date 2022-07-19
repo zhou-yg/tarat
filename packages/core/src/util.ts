@@ -1,6 +1,6 @@
 import { applyPatches } from 'immer'
 import { IQueryWhere } from './plugin'
-import co from './co'
+import co from './lib/co'
 export const isArray = Array.isArray
 /* copy from immer's common.ts  */
 export type AnyObject = { [key: string]: any }
