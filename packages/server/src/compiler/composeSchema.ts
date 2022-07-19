@@ -28,26 +28,16 @@ interface IEnhancement {
   }[]
 }
 
-interface IPkg {
-  dependencies: {
-    [k: string]: string
-  }
-}
-
 function findDependentPrisma (c: IConfig) {
-  const pkgJSON: IPkg = loadJSON(path.join(c.cwd, 'package.json'))
-  const pkgModules = Object.keys(pkgJSON.dependencies)
-
   const schemaFiles: string[] = []
 
-  pkgModules.filter(moduleName => {
+  c.dependencyModules.forEach(moduleName => {
     const dir = path.join(c.cwd, 'node_modules', moduleName)
-    const r1 = !!loadJSON(path.join(dir, 'package.json')).tarat
 
     const depSchemaPath = path.join(dir, c.buildDirectory, c.modelsDirectory, 'schema.prisma')
     const r2 = fs.existsSync(depSchemaPath)
 
-    if (r1 && r2) {
+    if (r2) {
       schemaFiles.push(depSchemaPath)
     }
   })

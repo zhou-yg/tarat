@@ -27,7 +27,7 @@ export function injectDeps (c: IConfig, targetFile: string) {
     const depsJSON = loadJSON(depsJSONPath)
 
     const arr = Object.keys(depsJSON).map(funcName => {
-      return `Object.assign(${funcName}, { __deps__: deps.${funcName} })`
+      return `Object.assign(${funcName}, { __deps__: deps.${funcName}, __name__: "${funcName}" })`
     })
 
     const codeIncludingDeps = template(

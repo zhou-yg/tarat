@@ -14,11 +14,6 @@ import type {
 
 import type { THookDeps } from 'tarat-core'
 
-
-function isDef (v: any) {
-  return v === undefined
-}
-
 const hookGenerateNames = [
   'state',
   'model',

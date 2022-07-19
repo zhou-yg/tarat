@@ -4,8 +4,8 @@ import { Plugin } from 'vite'
 import { IConfig } from '../../config'
 import { loadJSON } from '../../util'
 
-function checkHook (cwd: string, hooksDirectory: string, id: string) {
-  return /\.(j|t)s$/.test(id) && id.startsWith(path.join(cwd, hooksDirectory))
+function checkHook (pre: string, id: string) {
+  return /\.(j|t)s$/.test(id) && id.startsWith(pre)
 }
 
 function template (
@@ -25,10 +25,22 @@ export default function taratBMRollupPlugin (c: IConfig): Plugin {
   return {
     name: 'tarat-BM-deps',
     transform(code, id, options?) {
-      const isHook  = checkHook(cwd, c.hooksDirectory, id)
+      const arr = [
+        path.join(cwd, c.hooksDirectory),
+        /**
+         * @TODO un support dependency module's hook compile
+         */
+        // ...c.dependencyModules.map(module => {
+        //   return path.join(cwd, 'node_modules', module, c.hooksDirectory)
+        // })
+      ]
+      const isHook = arr.some(p => checkHook(p, id))
       if (isHook) {
         const parsed = path.parse(id)
+        // in current project 
         const depsJSONPath = path.join(c.pointFiles.outputHooksDir, `${parsed.name}.deps.json`)
+        // in node_modules unit
+
         if (fs.existsSync(depsJSONPath)) {
           const depsJSON = loadJSON(depsJSONPath)
 

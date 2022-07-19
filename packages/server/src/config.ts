@@ -4,6 +4,7 @@ import l from 'lodash'
 import { readViews } from './config/routes'
 import { logFrame } from './util'
 import chalk from 'chalk'
+import { findDependencies } from './config/deps'
 const { merge } = l
 
 export const defaultConfig = () => ({
@@ -225,6 +226,8 @@ export async function readConfig (arg: {
   // default to "dev"
   const pointFiles = isProd ? buildPointFiles : devPointFiles
 
+  const dependencyModules = findDependencies(cwd)
+
   return {
     ...config,
     isProd,
@@ -235,5 +238,6 @@ export async function readConfig (arg: {
     hooks,
     views,
     pages,
+    dependencyModules,
   }
 }
