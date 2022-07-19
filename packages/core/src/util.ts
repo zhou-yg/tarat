@@ -669,6 +669,7 @@ export function getDeps(f: BM) {
 export interface BM extends Function {
   (...prop: any): any
   __deps__?: THookDeps
+  __name__?: string
 }
 
 // export type BM = (...prop: any) => any
