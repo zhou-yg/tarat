@@ -738,9 +738,9 @@ class Effect<T> extends Hook {
   batchRunCancel: () => void = () => {}
   watcher: Watcher<Hook> = new Watcher<Hook>(this)
   cancelNotify = () => {}
-  constructor(public callback: () => void, public scope: CurrentRunnerScope) {
+  constructor(public callback: () => void, public scope?: CurrentRunnerScope) {
     super()
-    scope.addHook(this)
+    scope?.addHook(this)
   }
   notify() {
     this.cancelNotify()
@@ -1289,7 +1289,7 @@ export class Runner<T extends BM> {
       throw new Error('can not init repeat')
     }
     currentRunnerScope = this.scope
-    currentRunnerScope.setIntialArgs(args || [], this.bm.name)
+    currentRunnerScope.setIntialArgs(args || [], this.bm.__name__ || this.bm.name)
 
     const deps = getDeps(this.bm)
     currentRunnerScope.setInitialContextDeps(deps)
@@ -1854,7 +1854,7 @@ export function inputComputeInServer(func: any) {
 }
 
 export function after(callback: () => void, targets: { _hook?: Hook }[]) {
-  const hook = new Effect(callback, currentRunnerScope!)
+  const hook = new Effect(callback, currentRunnerScope)
 
   targets.forEach(target => {
     if (target._hook) {
@@ -1868,7 +1868,7 @@ export function after(callback: () => void, targets: { _hook?: Hook }[]) {
 }
 
 export function before(callback: () => void, targets: { _hook?: Hook }[]) {
-  const hook = new Effect(callback, currentRunnerScope!)
+  const hook = new Effect(callback, currentRunnerScope)
 
   targets.forEach(target => {
     if (target._hook) {
