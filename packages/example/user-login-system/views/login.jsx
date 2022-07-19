@@ -1,18 +1,21 @@
-import React from 'react'
+import React, { forwardRef, useImperativeHandle } from 'react'
 import { useTarat } from 'tarat-connect'
-import login from '../hooks/login'
+import login from '../dist/hooks/esm/login'
 import s from './login.module.less'
 import classnames from 'classnames'
 
-const LoginFrame = () => {
+const LoginFrame = (props, ref) => {
   const loginHook = useTarat(login)
   
+  useImperativeHandle(ref, () => ({
+    hook: loginHook
+  }))
+
   const cls = classnames(s.row, {
     show: !!loginHook?.errorTip()
   })
 
   const alreadyLogin = loginHook.alreadyLogin()
-  console.log('alreadyLogin: ', alreadyLogin);
 
   return (
     <div className={s.login}>
@@ -76,4 +79,6 @@ const LoginFrame = () => {
   )
 }
 
-export default LoginFrame
+const L = forwardRef(LoginFrame)
+
+export default L
