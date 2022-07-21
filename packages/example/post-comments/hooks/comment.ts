@@ -164,3 +164,7 @@ export default function comment (props: ICommentProps) {
     refresh,
   }
 }
+/*--tarat deps start--*/
+const deps = {'comment':[['h',3,[1]],['h',4,[3]],['h',5,[3],[3]],['h',6,[3],[3]],['h',9,[1,7,0,8],[3,7,8]],['h',10,[8,3]],['h',11,[3]]]}
+Object.assign(comment, { __deps__: deps.comment, __name__: 'comment' })
+/*--tarat deps end--*/

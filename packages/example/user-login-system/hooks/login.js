@@ -10,11 +10,12 @@ import {
 import nanoid from 'nanoid'
 
 export default function login () {
-  const name = state()
-  name._hook && (name._hook.name = 'name')
 
   const password = state()
   password._hook && (password._hook.name = 'password')
+
+  const name = state()
+  name._hook && (name._hook.name = 'name')
 
   const inputName = state()
   inputName._hook && (inputName._hook.name = 'inputName')
@@ -217,3 +218,9 @@ export default function login () {
     logout
   }
 }
+
+
+/*--tarat deps start--*/
+const deps = {'login':[['h',7,[1,0]],['h',8,[6]],['h',9,[8]],['h',10,[9]],['h',11,[10,7]],['h',12,[11]],['h',13,[1,0,11,4]],['h',15,[2,3,5],[7,16,14]],['h',16,[2,3],[7,1,0,8,6,14]],['h',17,[6],[1,0,6,8]]]}
+Object.assign(login, { __deps__: deps.login, __name__: 'login' })
+/*--tarat deps end--*/
