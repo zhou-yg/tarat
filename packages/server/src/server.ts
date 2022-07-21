@@ -72,10 +72,10 @@ export async function createDevServer (c: IConfig) {
       //   ...rollupPlugintaratRuntime(c),
       //   enforce: 'pre',
       // }      
-      {
-        ...rollupPluginBMDeps(c),
-        enforce: 'pre'
-      }
+      // {
+      //   ...rollupPluginBMDeps(c),
+      //   enforce: 'pre'
+      // }
     ],
     resolve: {
       alias: {
