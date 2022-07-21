@@ -12,13 +12,15 @@ import {
   emptyDirectory, logFrame, tryMkdir
 } from "../src/";
 
-export function buildEverything (c: IConfig) {
+export async function buildEverything (c: IConfig) {
   
-  return Promise.all([
+  await Promise.all([
     buildRoutes(c),
     buildEntryServer(c),
     buildHooks(c)
   ])
+
+  generateHookDeps(c)
 }
 
 export function prepareDir (c: IConfig) {
@@ -93,9 +95,6 @@ export default async (cwd: string) => {
   })
     
   await startCompile(config)
-
-  /** @TODO 1.integrated to the vite.plugin 2.upgrade to typescript */
-  generateHookDeps(config)
 
   composeSchema(config)
 

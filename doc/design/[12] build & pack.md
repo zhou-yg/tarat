@@ -175,3 +175,34 @@ server run start时需要依赖原本的工程信息：hooks结构，pages路由
 因为其他模块的client会引用 dist(或.tarat)/hooks/*.js，而在client的开发过程，默认则是esm为主
 
 这就导致了dist(或.tarat)/hooks/*.js 必须同时支持cjs和esm，冲突产生了
+
+解决的方法是Unit在引用时，可以使用 dist(或.tarat)/hooks/esm/*.js
+
+## dist view/page
+
+在dev时，会先parse出hook的deps，然后通过vite插件的方式inject hook's deps
+
+但是在build阶段时，没有这个插件，就会导致 view/page编译的产物没有deps
+
+hook产物会自己再额外inject，所以没有这个问题
+
+解决这个问题有2个思路：
+- 编译 view/page，也通过插件inject hook's deps
+- [√]在dev阶段就自动transform源码，使其实一个完整的文件，一劳永逸 
+  - 一劳永逸的方法总是好的，而且在后续发展阶段里，也要考虑要交付的逻辑产物本应该就是要实时且完整，而不是依赖其它运行时进行补位
+
+## independent hook
+
+单一个Unit引用其他Unit的view或hook时，由于编译的关系，view的产物里会包含hook
+
+在引用后
+
+current unit hook -> unit's hook
+
+current unit view -> unit's view（跟上面的 unit's hook 是2个module）
+
+一劳永逸的解法：dist view不包含 hook代码，而是通过引用的方式来使用，确保只有一个module
+
+由于runner的存在，所以即时是同一个module，在运行后依然是存在2个closure，内存不共享，
+
+如果要共享内存，得考虑使用单例模式或Context，这里应该分情况，需要提供不同的数据模式，但前提必须先是只有一个module（sure？）
