@@ -36,3 +36,7 @@ function topicOne (props: ITopicProps) {
 }
 
 export default topicOne
+/*--tarat deps start--*/
+const deps = {'topicOne':[['h',1,[0]],['h',2,[1]]]}
+Object.assign(topicOne, { __deps__: deps.topicOne, __name__: 'topicOne' })
+/*--tarat deps end--*/

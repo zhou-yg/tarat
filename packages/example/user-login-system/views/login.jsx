@@ -1,6 +1,6 @@
 import React, { forwardRef, useImperativeHandle } from 'react'
 import { useTarat } from 'tarat-connect'
-import login from '../dist/hooks/esm/login'
+import login from '../hooks/login'
 import s from './login.module.less'
 import classnames from 'classnames'
 
@@ -79,6 +79,4 @@ const LoginFrame = (props, ref) => {
   )
 }
 
-const L = forwardRef(LoginFrame)
-
-export default L
+export default forwardRef(LoginFrame)
