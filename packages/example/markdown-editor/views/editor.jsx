@@ -1,7 +1,6 @@
 import React from 'react'
 import s from './editor.module.less'
 import MDEditor from 'react-markdown-editor-lite'
-import { useLocation } from 'react-router-dom';
 
 import MarkdownIt from 'markdown-it';
 // import style manually

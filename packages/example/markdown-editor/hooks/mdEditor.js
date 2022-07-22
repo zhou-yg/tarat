@@ -8,12 +8,6 @@ import {
   state
 } from 'tarat-core'
 
-import deps from './mdEditor.deps.js'
-
-Object.assign(mdEditor, {
-  __deps__: deps.mdEditor
-})
-
 export default function mdEditor (q = {}) {
   const currentId = state(q.id)
   const inputMD = state('')
@@ -61,3 +55,8 @@ export default function mdEditor (q = {}) {
     save,
   }
 }
+
+/*--tarat deps start--*/
+const deps = {'mdEditor':[['h',2,[0]],['h',3,[2]],['h',4,[0,2,1],[2,0]]]}
+Object.assign(mdEditor, { __deps__: deps.mdEditor, __name__: 'mdEditor' })
+/*--tarat deps end--*/
