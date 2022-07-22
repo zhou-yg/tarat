@@ -7,9 +7,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "init": "pnpm install && npm run prisma:dev",
-    "dev2": "node --experimental-specifier-resolution=node node_modules/tarat-server/dist/cli/index.mjs dev",
+    "init": "pnpm i && npm run p:dev",
     "dev": "tarat dev",
+    "build": "tarat build",
+    "start": "tarat start",
     "p:dev": "prisma migrate dev && prisma generate",
     "p:gen": "prisma generate",
     "p:deploy": "prisma migrate deploy",
