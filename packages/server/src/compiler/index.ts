@@ -1,5 +1,5 @@
 export * from './analyzer'
-export * from './composeSchema'
+export * from './compose'
 export * from './build'
 export * from './prebuild'
 export * from './hookDeps'

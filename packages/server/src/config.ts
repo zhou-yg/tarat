@@ -112,6 +112,7 @@ export function readHooks(dir: string) {
 
     const code = fs.readFileSync(filePath).toString()
     const exportDefaultNames = code.match(/export default (function [A-Za-z0-9_]+;?|[A-Za-z0-9_]+);?/)
+    const exportDefaultAuto = code.match(/export { default }/)
     if (exportDefaultNames) {
       if (exportDefaultNames[1] !== name && exportDefaultNames[1] !== `function ${name}`) {
         logFrame(
@@ -121,7 +122,8 @@ export function readHooks(dir: string) {
         )
         throw new Error('[readHooks] error 2')  
       }
-    } else {
+    } else if (!exportDefaultAuto) {
+
       logFrame(`Must have a default export in ${filePath}`)
       throw new Error('[readHooks] error 1')
     }

@@ -108,7 +108,7 @@ export function getPlugins (input: {
     commonjs(),
     resolve({
       browser: target === 'browser',
-      // extensions: ['.jsx', '.tsx']
+      extensions: ['.jsx', '.tsx', '.js', '.cjs', '.mjs', '.ts', '.json']
     }),
     babel({
       exclude: 'node_modules/**',

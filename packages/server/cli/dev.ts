@@ -9,7 +9,7 @@ import {
   composeSchema,
   buildEntryServer, buildHooks, buildRoutes,
   generateHookDeps,
-  emptyDirectory, logFrame, tryMkdir
+  emptyDirectory, logFrame, tryMkdir, composeHook
 } from "../src/";
 
 export async function buildEverything (c: IConfig) {
@@ -97,6 +97,7 @@ export default async (cwd: string) => {
   await startCompile(config)
 
   composeSchema(config)
+  composeHook(config)
 
   await createDevServer(config)
 }

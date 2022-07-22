@@ -3,6 +3,7 @@ import * as path from 'path'
 import rimraf from 'rimraf'
 import { IViewConfig } from './config'
 import os from "os";
+import { isEqual } from "tarat-core";
 
 export function loadJSON (f: string) {
   return JSON.parse(fs.readFileSync(f).toString())
@@ -65,4 +66,11 @@ export function getAddress() {
       .find((ip) => ip?.family === "IPv4" && !ip.internal)?.address;
 
   return address
+}
+
+export function equalFileContent(c1: string, c2: string) {
+  return isEqual(
+    c1.split('\n').map(r => r.trim()).filter(Boolean),
+    c2.split('\n').map(r => r.trim()).filter(Boolean),
+  )
 }
