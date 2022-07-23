@@ -6,6 +6,7 @@
   "scripts": {
     "init": "pnpm i && npm run p:dev",
     "dev": "tarat dev",
+    "any": "tarat any",
     "build": "tarat build",
     "start": "tarat start",
     "p:dev": "prisma migrate dev && prisma generate",
