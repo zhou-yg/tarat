@@ -19,6 +19,13 @@ export default async (cwd: string) => {
 
   prepareDir(config)
 
+  cp(
+    path.join(cwd, config.modelsDirectory, config.targetSchemaPrisma),
+    path.join(config.pointFiles.outputModelsDir, config.targetSchemaPrisma)
+  )
+
+  logFrame(chalk.green('prepare dir and cp models end'))
+
   await buildEverything(config)
   
   generateHookDeps(config)
@@ -32,11 +39,6 @@ export default async (cwd: string) => {
   ])
 
   logFrame(chalk.green('build clientRoutes/views end'))
-
-  cp(
-    path.join(cwd, config.modelsDirectory, config.targetSchemaPrisma),
-    path.join(config.pointFiles.outputModelsDir, config.targetSchemaPrisma)
-  )
 
   logFrame(chalk.green('build end'))
 }
