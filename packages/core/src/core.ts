@@ -406,7 +406,7 @@ export class Model<T extends any[]> extends State<T[]> {
   }
 }
 
-class ClientModel<T extends any[]> extends Model<T> {
+export class ClientModel<T extends any[]> extends Model<T> {
   override async executeQuery() {
     this.init = false
 
