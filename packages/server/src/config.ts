@@ -2,7 +2,7 @@ import * as path from 'path'
 import * as fs from 'fs'
 import l from 'lodash'
 import { readViews } from './config/routes'
-import { logFrame } from './util'
+import { isFileEmpty, logFrame } from './util'
 import chalk from 'chalk'
 import { findDependencies } from './config/deps'
 const { merge } = l
@@ -111,21 +111,24 @@ export function readHooks(dir: string) {
     const name = f.replace(/\.\w+/, '')
 
     const code = fs.readFileSync(filePath).toString()
-    const exportDefaultNames = code.match(/export default (function [A-Za-z0-9_]+;?|[A-Za-z0-9_]+);?/)
-    const exportDefaultAuto = code.match(/export { default }/)
-    if (exportDefaultNames) {
-      if (exportDefaultNames[1] !== name && exportDefaultNames[1] !== `function ${name}`) {
-        logFrame(
-          `The default export must equal to it's file name.
-          export default name is ${chalk.red(exportDefaultNames[1])}
-          file name is ${chalk.green(name)}`
-        )
-        throw new Error('[readHooks] error 2')  
+    const empty = isFileEmpty(code)
+    if (!empty) {
+      const exportDefaultNames = code.match(/export default (function [A-Za-z0-9_]+;?|[A-Za-z0-9_]+);?/)
+      const exportDefaultAuto = code.match(/export { default }/)
+      if (exportDefaultNames) {
+        if (exportDefaultNames[1] !== name && exportDefaultNames[1] !== `function ${name}`) {
+          logFrame(
+            `The default export must equal to it's file name.
+            export default name is ${chalk.red(exportDefaultNames[1])}
+            file name is ${chalk.green(name)}`
+          )
+          throw new Error('[readHooks] error 2')  
+        }
+      } else if (!exportDefaultAuto) {
+  
+        logFrame(`Must have a default export in ${filePath}`)
+        throw new Error('[readHooks] error 1')
       }
-    } else if (!exportDefaultAuto) {
-
-      logFrame(`Must have a default export in ${filePath}`)
-      throw new Error('[readHooks] error 1')
     }
 
     return {
@@ -163,6 +166,7 @@ function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) 
     outputViewsDir: path.join(outputDir, config.viewsDirectory),
     // place compiled hooks "esm" file
     outputHooksESMDir: path.join(outputDir, config.hooksDirectory, 'esm'),
+    outputHooksCJSDir: path.join(outputDir, config.hooksDirectory, 'cjs'),
     // prisma
     outputModelsDir: path.join(outputDir, config.modelsDirectory),
     outputModelSchema: path.join(outputDir, config.modelsDirectory, config.targetSchemaPrisma),

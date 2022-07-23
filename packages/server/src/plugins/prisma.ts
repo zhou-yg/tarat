@@ -1,6 +1,7 @@
 import { loadPlugin } from 'tarat-core'
 import { join } from 'path'
 export async function setPrisma (cwd: string)  {
+  // make sure import the prisma from current development project
   // @ts-ignore
   const client: any = (await import(join(cwd, 'node_modules/@prisma/client/index.js')))
   if (!client.PrismaClient) {

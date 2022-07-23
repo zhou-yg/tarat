@@ -74,3 +74,7 @@ export function equalFileContent(c1: string, c2: string) {
     c2.split('\n').map(r => r.trim()).filter(Boolean),
   )
 }
+
+export function isFileEmpty (code: string) {
+  return code.replace(/\n/g, '').trim().length === 0
+}
