@@ -9,6 +9,7 @@ export default function pureDevCache (args: {
  return async (ctx, next) => {
   for (const k in require.cache) {
     if (
+      k.startsWith(config.pointFiles.outputDir) ||
       k.startsWith(config.pointFiles.distEntryJS) ||
       k.startsWith(config.pointFiles.distServerRoutes) || 
       k.startsWith(config.pointFiles.outputHooksDir)

@@ -333,7 +333,21 @@ export async function buildEntryServer (c: IConfig) {
   }
 }
 
-async function esbuildHooks (c: IConfig, outputDir: string, format?: esbuild.Format) {
+function esbuildHookPathAlias () {
+  const p: esbuild.Plugin = {
+    name: 'hookPathAlias',
+    setup (build) {
+      build.onResolve({
+        filter: /\/hooks\/\w+/,
+      }, args => {
+        return { path: args.path }
+      })
+    }
+  }
+  return p
+}
+
+async function esbuildHooks (c: IConfig, outputDir: string, format: esbuild.Format) {
   const { hooks } = c
   let includingTs = false
   const points: string[] = []
@@ -350,6 +364,7 @@ async function esbuildHooks (c: IConfig, outputDir: string, format?: esbuild.For
     throw new Error('[tarat] you are using ts file. please specific ts:true in tarat.config.js')
   }
 
+
   const buildOptions: esbuild.BuildOptions = {
     entryPoints: points,
     bundle: false,
@@ -364,6 +379,24 @@ async function esbuildHooks (c: IConfig, outputDir: string, format?: esbuild.For
   }
 
   await esbuild.build(buildOptions)
+
+  // make sure hook will import the same module type
+  fs.readdirSync(outputDir).forEach(f => {
+    const reg = /from (?:'|")([\w\/-]+)(?:'|")/
+    const reg2 = /require\((?:'|")([\w\/-]+)(?:'|")/
+    const sourceFile = path.join(outputDir, f)
+    if (fs.lstatSync(sourceFile).isFile()) {
+      const code = fs.readFileSync(sourceFile).toString()
+      const r = code.match(reg)
+      const r2 = code.match(reg2)
+      const importModule = r?.[1] || r2?.[1]
+      if (importModule && /\/hooks\/[\w-]+$/.test(importModule)) {
+        const importModuleWithFormat = importModule.replace(/(\/hooks)\/([\w-]+)$/, `$1/${format}/$2`)
+        const newCode = code.replace(importModule, importModuleWithFormat)
+        fs.writeFileSync(sourceFile, newCode)
+      }
+    }
+  })
 }
 
 function buildDTS (c: IConfig, filePath: string, outputFile: string) {

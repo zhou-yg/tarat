@@ -53,7 +53,8 @@ export default function taratMiddleware (args: {
     if (pre === apiPre && ctx.request.method === 'POST') {      
       const hookConfig = hooks.find(h => h.name === hookName)
       if (hookConfig) {
-        const BM = require(path.join(pointFiles.outputHooksDir, `${hookName}.js`))
+        const BMPath = path.join(pointFiles.outputHooksCJSDir, `${hookName}.js`)
+        const BM = require(BMPath)
 
         const c: IHookContext = parseWithUndef(ctx.request.body)
 
