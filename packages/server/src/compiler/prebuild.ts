@@ -405,11 +405,16 @@ async function hooksType(c: IConfig, outputDir: string) {
  * for server side running
  */
 export async function buildHooks (c: IConfig) {
-  const { outputHooksESMDir, outputHooksDir  } = c.pointFiles
+  const {
+    outputHooksESMDir,
+    outputHooksCJSDir,
+    outputHooksDir
+  } = c.pointFiles
 
   await Promise.all([
-    esbuildHooks(c, outputHooksDir, 'cjs'),
+    esbuildHooks(c, outputHooksCJSDir, 'cjs'),
     esbuildHooks(c, outputHooksESMDir, 'esm'),
+    esbuildHooks(c, outputHooksDir, 'esm'),
   ])
 
   if (c.ts) {

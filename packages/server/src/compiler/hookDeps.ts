@@ -85,18 +85,16 @@ export function generateHookDeps (c: IConfig) {
         tryMkdir(devHooksDir)
       }
 
-      // js output
+      // js output: generate deps.js
       fs.writeFileSync(path.join(c.pointFiles.outputHooksDir, `${name}.deps.js`), prettier.format(
         `export default ${JSON.stringify(deps, null, 2)}`
       ))
 
-      // json in tarat
+      // json in tarat: generate deps.json
       fs.writeFileSync(path.join(c.pointFiles.outputHooksDir, `${name}.deps.json`), (JSON.stringify(deps)))
-      fs.writeFileSync(path.join(hooksDir, `${name}.deps.json`), (JSON.stringify(deps)))
+      // fs.writeFileSync(path.join(hooksDir, `${name}.deps.json`), (JSON.stringify(deps)))
     
-      // injectDeps(c, path.join(c.pointFiles.outputHooksDir, f))
-      // injectDeps(c, path.join(hooksDir, f))
-
+      // modify original hook file
       const sourceFile = path.join(sourceCodeDir, `${name}${c.ts ? '.ts' : '.js'}`)
       injectDeps(c, sourceFile)
     }

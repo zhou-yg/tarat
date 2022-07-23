@@ -272,6 +272,7 @@ async function generateReferrenceHooks (c: IConfig, h: IDepencyHook[]) {
         res()
       }
     })
+    // fs.writeFileSync(f, code)
   })))
 }
 
@@ -285,7 +286,6 @@ export async function composeHook(c: IConfig) {
     fs.readdirSync(distHooksDir)
       .filter(f => /\.js$/.test(f) && !/deps\.js$/.test(f))
       .forEach(f => {
-        const fPath = path.join(distHooksDir, f)
         const { name } = path.parse(f)
         let hookName = name
         if (depencyHooks.find(v => v.name === hookName)) {
