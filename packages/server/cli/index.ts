@@ -3,6 +3,7 @@ import pkg from '../package.json'
 import dev from "./dev";
 import build from './build'
 import start from './start'
+import any from "./any";
 const cac = cacFactory('tarat-server')
 
 const cwd = process.cwd()
@@ -28,6 +29,11 @@ cac
     start(cwd)
   })
 
+cac
+  .command('any')
+  .action(async () => {
+    any(cwd)
+  })
 cac.help()
 cac.version(pkg.version)
 cac.parse()

@@ -407,13 +407,7 @@ function buildDTS (c: IConfig, filePath: string, outputFile: string) {
     input: {
       input: filePath,
       plugins: [
-        dts({
-          compilerOptions: {
-            paths: {
-              immer: ['node_modules/immer']
-            }
-          } as any
-        })
+        dts()
       ]
     },
     output: {
@@ -425,12 +419,12 @@ function buildDTS (c: IConfig, filePath: string, outputFile: string) {
   return build(c, options)
 }
 
-async function hooksType(c: IConfig, outputDir: string) {
+export async function hooksType(c: IConfig, outputDir: string) {
   const { hooks } = c
   await Promise.all(hooks.filter(({ filePath }) => /\.ts$/.test(filePath)).map(async h => {
     const { filePath, name } = h
     
-    await buildDTS(c, filePath, path.join(c.pointFiles.outputHooksDir, `${name}.d.ts`))
+    await buildDTS(c, filePath, path.join(outputDir, `${name}.d.ts`))
   }))
 }
 
