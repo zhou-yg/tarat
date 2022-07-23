@@ -22,7 +22,8 @@
   "dependencies": {
     "classnames": "^2.3.1",
     "lodash": "^4.17.21",
-    "markdown-editor": "workspace:*"
+    "markdown-editor": "workspace:*",
+    "nanoid": "3.x.x"
   },
   "devDependencies": {
     "@babel/core": "^7.18.6",

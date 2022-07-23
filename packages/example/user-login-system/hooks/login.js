@@ -7,7 +7,7 @@ import {
   inputCompute,
   inputComputeInServer,
 } from 'tarat-core'
-import nanoid from 'nanoid'
+import { nanoid } from 'nanoid'
 
 export default function login () {
 

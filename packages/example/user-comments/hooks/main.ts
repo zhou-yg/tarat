@@ -2,7 +2,7 @@ import {
   compose,
   state,
 } from 'tarat-core'
-import login from 'user-login-system/dist/hooks/esm/login'
+import login from 'user-login-system/dist/hooks/login'
 
 export default function main () {
 
@@ -16,3 +16,8 @@ export default function main () {
     add: login.add,
   }
 }
+
+/*--tarat deps start--*/
+const deps = {'main':[]}
+Object.assign(main, { __deps__: deps.main, __name__: 'main' })
+/*--tarat deps end--*/

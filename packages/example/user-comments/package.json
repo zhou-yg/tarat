@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@prisma/client": "^3.15.1",
+    "nanoid": "2.1.11",
     "post-comments": "workspace:*",
     "prisma": "^3.15.1",
     "react": "^18.2.0",
@@ -25,6 +26,7 @@
     "tarat-connect": "workspace:^0.0.9",
     "tarat-core": "workspace:^0.0.9",
     "tarat-server": "workspace:^0.0.8",
+    "tslib": "^2.4.0",
     "user-login-system": "workspace:*"
   },
   "devDependencies": {

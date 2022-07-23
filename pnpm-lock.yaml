@@ -219,6 +219,7 @@ importers:
       '@types/lodash': ^4.14.182
       '@types/react-dom': ^18.0.5
       less: ^4.1.2
+      nanoid: 2.1.11
       post-comments: workspace:*
       prisma: ^3.15.1
       react: ^18.2.0
@@ -227,9 +228,11 @@ importers:
       tarat-connect: workspace:^0.0.9
       tarat-core: workspace:^0.0.9
       tarat-server: workspace:^0.0.8
+      tslib: ^2.4.0
       user-login-system: workspace:*
     dependencies:
       '@prisma/client': 3.15.1_prisma@3.15.1
+      nanoid: 2.1.11
       post-comments: link:../post-comments
       prisma: 3.15.1
       react: 18.2.0
@@ -238,6 +241,7 @@ importers:
       tarat-connect: link:../../connect
       tarat-core: link:../../core
       tarat-server: link:../../server
+      tslib: 2.4.0
       user-login-system: link:../user-login-system
     devDependencies:
       '@types/lodash': 4.14.182
@@ -255,12 +259,14 @@ importers:
       less: ^4.1.2
       lodash: ^4.17.21
       markdown-editor: workspace:*
+      nanoid: 3.x.x
       tarat-server: workspace:*
       vite: ^2.9.9
     dependencies:
       classnames: 2.3.1
       lodash: 4.17.21
       markdown-editor: link:../markdown-editor
+      nanoid: 3.3.4
     devDependencies:
       '@babel/core': 7.18.6
       '@babel/preset-react': 7.18.6_@babel+core@7.18.6
@@ -6148,6 +6154,10 @@ packages:
 
   /mute-stream/0.0.8:
     resolution: {integrity: sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==}
+
+  /nanoid/2.1.11:
+    resolution: {integrity: sha512-s/snB+WGm6uwi0WjsZdaVcuf3KJXlfGl2LcxgwkEwJF0D/BWzVWAZW/XY4bFaiR7s0Jk3FPvlnepg1H1b1UwlA==}
+    dev: false
 
   /nanoid/3.3.4:
     resolution: {integrity: sha512-MqBkQh/OHTS2egovRtLk45wEyNXwF+cokD+1YPf9u5VfJiRdAiRwB2froX5Co9Rh20xs4siNPm8naNotSD6RBw==}
