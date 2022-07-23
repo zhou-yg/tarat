@@ -13,19 +13,20 @@ declare global {
 export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
   const init = react.useRef(null)
   const driver: RenderDriver = react.useContext(DriverContext)
+  const bmName: string = hook.__name__ || hook.name
   if (!init.current) {
     let ssrContext: IHookContext[] = []
     if (driver) {
-      ssrContext = driver.getContext(hook.name) || []
+      ssrContext = driver.getContext(bmName) || []
     } else {
       ssrContext =
         typeof window !== 'undefined'
-          ? window.hookContextMap?.[hook.name] || []
+          ? window.hookContextMap?.[bmName] || []
           : []
     }
 
     const runner = new Runner(hook, driver?.beleiveContext)
-    driver?.push(runner, hook.name)
+    driver?.push(runner, bmName)
 
     const r = runner.init(args, ssrContext.pop())
     init.current = r
