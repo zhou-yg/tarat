@@ -7,8 +7,8 @@ import Button from 'antd/lib/button/index'
 import Input from 'antd/lib/input/index'
 import Comment from 'antd/lib/comment/index'
 
-import commentHook, { ICommentTree } from '../hooks/comment'
-import topicOneHook from '../hooks/topicOne'
+import commentHook, { ICommentTree } from '../drivers/comment'
+import topicOneHook from '../drivers/topicOne'
 
 import LikeOutlined from '@ant-design/icons/LikeOutlined';
 import UndoOutlined from '@ant-design/icons/UndoOutlined'

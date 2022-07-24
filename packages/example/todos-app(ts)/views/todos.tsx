@@ -1,6 +1,6 @@
 import { useTarat } from 'tarat-connect'
 import React, { useState } from 'react'
-import todoHook from '../hooks/todo.js'
+import todoHook from '../drivers/todo.js'
 import '../styles/todos.less'
 
 const TodoItem = (props) => {

@@ -40,7 +40,7 @@ export function injectDeps (c: IConfig, targetFile: string) {
   const code = fs.readFileSync(targetFile).toString()
   const parsed = path.parse(targetFile)
 
-  const depsJSONPath = path.join(c.pointFiles.outputHooksDir, `${parsed.name}.deps.json`)
+  const depsJSONPath = path.join(c.pointFiles.outputDriversDir, `${parsed.name}.deps.json`)
 
   if (fs.existsSync(depsJSONPath)) {
     const depsJSON = loadJSON(depsJSONPath)
@@ -68,31 +68,31 @@ export function injectDeps (c: IConfig, targetFile: string) {
 
 /** @TODO 1.integrated to the vite.plugin 2.upgrade to typescript */
 export function generateHookDeps (c: IConfig) {
-  const hooksDir = c.pointFiles.outputHooksESMDir
+  const driversDir = c.pointFiles.outputDriversESMDir
  
-  const sourceCodeDir = path.join(c.cwd, c.hooksDirectory)
+  const sourceCodeDir = path.join(c.cwd, c.driversDirectory)
 
-  fs.readdirSync(hooksDir).forEach(f => {
-    const file = path.join(hooksDir, f)
+  fs.readdirSync(driversDir).forEach(f => {
+    const file = path.join(driversDir, f)
     const name = f.replace(/\.js$/, '')
     if (/\.js$/.test(f)) {
       const code = fs.readFileSync(file).toString()
 
       const deps = parseDeps(code)      
 
-      const devHooksDir = path.join(c.pointFiles.outputHooksDir)
-      if (!fs.existsSync(devHooksDir)) {
-        tryMkdir(devHooksDir)
+      const devDriversDir = path.join(c.pointFiles.outputDriversDir)
+      if (!fs.existsSync(devDriversDir)) {
+        tryMkdir(devDriversDir)
       }
 
       // js output: generate deps.js
-      fs.writeFileSync(path.join(c.pointFiles.outputHooksDir, `${name}.deps.js`), prettier.format(
+      fs.writeFileSync(path.join(c.pointFiles.outputDriversDir, `${name}.deps.js`), prettier.format(
         `export default ${JSON.stringify(deps, null, 2)}`
       ))
 
       // json in tarat: generate deps.json
-      fs.writeFileSync(path.join(c.pointFiles.outputHooksDir, `${name}.deps.json`), (JSON.stringify(deps)))
-      // fs.writeFileSync(path.join(hooksDir, `${name}.deps.json`), (JSON.stringify(deps)))
+      fs.writeFileSync(path.join(c.pointFiles.outputDriversDir, `${name}.deps.json`), (JSON.stringify(deps)))
+      // fs.writeFileSync(path.join(driversDir, `${name}.deps.json`), (JSON.stringify(deps)))
     
       // modify original hook file
       const sourceFile = path.join(sourceCodeDir, `${name}${c.ts ? '.ts' : '.js'}`)

@@ -7,7 +7,7 @@ import * as path from 'path'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'
 import { setCookies, setPrisma, setRunning, setER  } from '../plugins/'
-import { buildHooks } from '../compiler/prebuild'
+import { buildDrivers } from '../compiler/prebuild'
 import { loadJSON } from '../util'
 
 function matchHookName (path: string) {
@@ -38,7 +38,7 @@ export function wrapCtx (ctx: any) {
 export default function taratMiddleware (args: {
   config: IConfig
 }) : Application.Middleware{
-  const { hooks, apiPre, diffPath, cwd, model, pointFiles } = args.config
+  const { drivers, apiPre, diffPath, cwd, model, pointFiles } = args.config
 
   setRunning()
   setCookies()
@@ -51,9 +51,9 @@ export default function taratMiddleware (args: {
   return async (ctx, next) => {
     const { pre, hookName } = matchHookName(ctx.request.path)
     if (pre === apiPre && ctx.request.method === 'POST') {      
-      const hookConfig = hooks.find(h => h.name === hookName)
+      const hookConfig = drivers.find(h => h.name === hookName)
       if (hookConfig) {
-        const BMPath = path.join(pointFiles.outputHooksCJSDir, `${hookName}.js`)
+        const BMPath = path.join(pointFiles.outputDriversCJSDir, `${hookName}.js`)
         const BM = require(BMPath)
 
         const c: IHookContext = parseWithUndef(ctx.request.body)

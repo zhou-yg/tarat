@@ -30,7 +30,7 @@ export default async (cwd: string) => {
   
   generateHookDeps(config)
 
-  logFrame(chalk.green('build routes/entryServer/hooks end'))
+  logFrame(chalk.green('build routes/entryServer/drivers end'))
 
 
   await Promise.all([

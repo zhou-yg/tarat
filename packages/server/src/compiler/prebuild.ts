@@ -46,7 +46,7 @@ export function getTSConfigPath (c: IConfig) {
   if (fs.existsSync(tsconfigFile)) {
     return tsconfigFile
   }
-  console.log(`[esbuildHooks] using default tsconfig setting: ${defaultTsconfigJSON}`)
+  console.log(`[esbuildDrivers] using default tsconfig setting: ${defaultTsconfigJSON}`)
   return defaultTsconfigJSON
 }
 
@@ -340,7 +340,7 @@ function esbuildHookPathAlias () {
     name: 'hookPathAlias',
     setup (build) {
       build.onResolve({
-        filter: /\/hooks\/\w+/,
+        filter: /\/drivers\/\w+/,
       }, args => {
         return { path: args.path }
       })
@@ -349,11 +349,11 @@ function esbuildHookPathAlias () {
   return p
 }
 
-async function esbuildHooks (c: IConfig, outputDir: string, format: esbuild.Format) {
-  const { hooks } = c
+async function esbuildDrivers (c: IConfig, outputDir: string, format: esbuild.Format) {
+  const { drivers } = c
   let includingTs = false
   const points: string[] = []
-  hooks.map(h => {
+  drivers.map(h => {
     const { filePath, name } = h
     if (/\.(m)?(j|t)s$/.test(filePath)) {
       points.push(filePath)
@@ -392,8 +392,8 @@ async function esbuildHooks (c: IConfig, outputDir: string, format: esbuild.Form
       const r = code.match(reg)
       const r2 = code.match(reg2)
       const importModule = r?.[1] || r2?.[1]
-      if (importModule && /\/hooks\/[\w-]+$/.test(importModule)) {
-        const importModuleWithFormat = importModule.replace(/(\/hooks)\/([\w-]+)$/, `$1/${format}/$2`)
+      if (importModule && /\/drivers\/[\w-]+$/.test(importModule)) {
+        const importModuleWithFormat = importModule.replace(/(\/drivers)\/([\w-]+)$/, `$1/${format}/$2`)
         const newCode = code.replace(importModule, importModuleWithFormat)
         fs.writeFileSync(sourceFile, newCode)
       }
@@ -421,10 +421,10 @@ function buildDTS (c: IConfig, filePath: string, outputFile: string) {
   return build(c, options)
 }
 
-export async function hooksType(c: IConfig, outputDir: string) {
-  const { hooks } = c
+export async function driversType(c: IConfig, outputDir: string) {
+  const { drivers } = c
   const generateFiles: { name: string, destFile:string }[] = []
-  await Promise.all(hooks.filter(({ filePath }) => /\.ts$/.test(filePath)).map(async h => {
+  await Promise.all(drivers.filter(({ filePath }) => /\.ts$/.test(filePath)).map(async h => {
     const { filePath, name } = h
     const destFile = path.join(outputDir, `${name}.d.ts`)
     generateFiles.push({
@@ -440,25 +440,25 @@ export async function hooksType(c: IConfig, outputDir: string) {
 /**
  * for server side running
  */
-export async function buildHooks (c: IConfig) {
+export async function buildDrivers (c: IConfig) {
   const {
-    outputHooksESMDir,
-    outputHooksCJSDir,
-    outputHooksDir
+    outputDriversESMDir,
+    outputDriversCJSDir,
+    outputDriversDir
   } = c.pointFiles
 
   await Promise.all([
-    esbuildHooks(c, outputHooksCJSDir, 'cjs'),
-    esbuildHooks(c, outputHooksESMDir, 'esm'),
-    esbuildHooks(c, outputHooksDir, 'esm'),
+    esbuildDrivers(c, outputDriversCJSDir, 'cjs'),
+    esbuildDrivers(c, outputDriversESMDir, 'esm'),
+    esbuildDrivers(c, outputDriversDir, 'esm'),
   ])
 
   if (c.ts) {
     try {
-      const files = await hooksType(c, outputHooksDir)
+      const files = await driversType(c, outputDriversDir)
       files.forEach(({ name, destFile }) => {
-        cp(destFile, path.join(outputHooksDir, 'cjs/'))
-        cp(destFile, path.join(outputHooksDir, 'esm/'))
+        cp(destFile, path.join(outputDriversDir, 'cjs/'))
+        cp(destFile, path.join(outputDriversDir, 'esm/'))
       })
     } catch (e) {
       console.error(e)

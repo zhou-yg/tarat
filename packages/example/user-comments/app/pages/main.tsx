@@ -1,4 +1,4 @@
-import mainHook from '../../hooks/main'
+import mainHook from '../../drivers/main'
 import React, { useEffect } from 'react'
 import { useTarat } from 'tarat-connect'
 import Todos from '../../views/todos'

@@ -10,7 +10,7 @@ const { merge } = l
 export const defaultConfig = () => ({
   // client about
   viewsDirectory: 'views', // in tarat the display unit maybe page or component, they should belong to "views"
-  hooksDirectory: 'hooks',
+  driversDirectory: 'drivers',
   modelsDirectory: 'models',
   appDirectory: 'app',
   pageDirectory: 'pages',
@@ -96,16 +96,16 @@ export interface IServerHookConfig {
   // hookFunc: Promise<{ default: (...args: any[]) => any }>
 }
 
-export function readHooks(dir: string) {
-  const hooks = fs.readdirSync(dir)
-  // check hooks
-  hooks.forEach(f => {
+export function readDrivers(dir: string) {
+  const drivers = fs.readdirSync(dir)
+  // check drivers
+  drivers.forEach(f => {
     if (fs.lstatSync(path.join(dir, f)).isDirectory()) {
-      throw new Error('dont set directory in hooks')
+      throw new Error('dont set directory in drivers')
     }
   })
   
-  const hookConfigs: IServerHookConfig[] = hooks.map(f => {
+  const hookConfigs: IServerHookConfig[] = drivers.map(f => {
 
     const filePath = path.join(dir, f)
     const name = f.replace(/\.\w+/, '')
@@ -122,12 +122,12 @@ export function readHooks(dir: string) {
             export default name is ${chalk.red(exportDefaultNames[1])}
             file name is ${chalk.green(name)}`
           )
-          throw new Error('[readHooks] error 2')  
+          throw new Error('[readDrivers] error 2')  
         }
       } else if (!exportDefaultAuto) {
   
         logFrame(`Must have a default export in ${filePath}`)
-        throw new Error('[readHooks] error 1')
+        throw new Error('[readDrivers] error 1')
       }
     }
 
@@ -161,12 +161,12 @@ function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) 
   return {
     outputDir, // includings 3 types: normal, app/server, app/client
     /** normal */
-    // place compiled hooks/views "cjs" file
-    outputHooksDir: path.join(outputDir, config.hooksDirectory),
+    // place compiled drivers/views "cjs" file
+    outputDriversDir: path.join(outputDir, config.driversDirectory),
     outputViewsDir: path.join(outputDir, config.viewsDirectory),
-    // place compiled hooks "esm" file
-    outputHooksESMDir: path.join(outputDir, config.hooksDirectory, 'esm'),
-    outputHooksCJSDir: path.join(outputDir, config.hooksDirectory, 'cjs'),
+    // place compiled drivers "esm" file
+    outputDriversESMDir: path.join(outputDir, config.driversDirectory, 'esm'),
+    outputDriversCJSDir: path.join(outputDir, config.driversDirectory, 'cjs'),
     // prisma
     outputModelsDir: path.join(outputDir, config.modelsDirectory),
     outputModelSchema: path.join(outputDir, config.modelsDirectory, config.targetSchemaPrisma),
@@ -211,7 +211,7 @@ export async function readConfig (arg: {
   }
 
   const viewsDirectory = path.join(cwd, config.viewsDirectory)
-  const hooksDirectory = path.join(cwd, config.hooksDirectory)
+  const driversDirectory = path.join(cwd, config.driversDirectory)
   const appDirectory = path.join(cwd, config.appDirectory)
   const pagesDirectory = path.join(appDirectory, config.pageDirectory)
 
@@ -225,7 +225,7 @@ export async function readConfig (arg: {
     c.file = path.join('./', config.appDirectory, config.pageDirectory, c.file)
   })
 
-  const hooks = readHooks(hooksDirectory)
+  const drivers = readDrivers(driversDirectory)
 
   const devPointFiles = getOutputFiles(config, cwd, path.join(cwd, config.devCacheDirectory))
   const buildPointFiles = getOutputFiles(config, cwd, path.join(cwd, config.buildDirectory))
@@ -241,7 +241,7 @@ export async function readConfig (arg: {
     devPointFiles,
     buildPointFiles,
     cwd,
-    hooks,
+    drivers,
     views,
     pages,
     dependencyModules,

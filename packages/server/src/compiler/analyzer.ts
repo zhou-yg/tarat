@@ -80,7 +80,7 @@ interface IScopeMap {
   [key: string]: IScopeMap | IScopeValue | IScopeValue2
 }
 /**
- * all hooks must be called at top
+ * all drivers must be called at top
  */
 function collectHookVaraibles (BMNode: TBMNode) {
 

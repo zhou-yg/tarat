@@ -12,7 +12,7 @@ export default function pureDevCache (args: {
       k.startsWith(config.pointFiles.outputDir) ||
       k.startsWith(config.pointFiles.distEntryJS) ||
       k.startsWith(config.pointFiles.distServerRoutes) || 
-      k.startsWith(config.pointFiles.outputHooksDir)
+      k.startsWith(config.pointFiles.outputDriversDir)
     ) {
       delete require.cache[k]
     }

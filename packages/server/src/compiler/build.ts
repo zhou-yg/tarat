@@ -65,8 +65,8 @@ export async function buildViews (c: IConfig) {
       const outputJS = path.join(outputViewsDir, `${parsed.name}.js`)
       const outputCSS = path.join(outputViewsDir, `${parsed.name}.css`)
 
-      const externalHooks = fs.readdirSync(path.join(c.cwd, c.hooksDirectory)).map(f => {
-        return path.join(c.cwd, c.hooksDirectory, f)
+      const externalDrivers = fs.readdirSync(path.join(c.cwd, c.driversDirectory)).map(f => {
+        return path.join(c.cwd, c.driversDirectory, f)
       })
 
       const op: IBuildOption = {
@@ -79,7 +79,7 @@ export async function buildViews (c: IConfig) {
               'tarat-core': 'tarat-core/dist/index.client.js',
             }
           }, c),
-          external: externalHooks  // use other types will conflict with auto-external plugins
+          external: externalDrivers  // use other types will conflict with auto-external plugins
         },
         output: {
           file: outputJS,

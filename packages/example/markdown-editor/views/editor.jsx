@@ -6,7 +6,7 @@ import MarkdownIt from 'markdown-it';
 // import style manually
 import 'react-markdown-editor-lite/lib/index.css';
 
-import mdEditor from '../hooks/mdEditor'
+import mdEditor from '../drivers/mdEditor'
 
 import { useTarat } from 'tarat-connect'
 

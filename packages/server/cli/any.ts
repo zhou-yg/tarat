@@ -1,6 +1,6 @@
 import {
   readConfig,
-  hooksType,
+  driversType,
 } from "../src/"
 
 export default async (cwd: string) => {
@@ -9,5 +9,5 @@ export default async (cwd: string) => {
     cwd,
   })
 
-  await hooksType(config, config.pointFiles.outputHooksDir)
+  await driversType(config, config.pointFiles.outputDriversDir)
 }

@@ -7,7 +7,7 @@ import {
   readConfig,
   createDevServer,
   composeSchema,
-  buildEntryServer, buildHooks, buildRoutes,
+  buildEntryServer, buildDrivers, buildRoutes,
   generateHookDeps,
   emptyDirectory, logFrame, tryMkdir, composeHook
 } from "../src/";
@@ -17,7 +17,7 @@ export async function buildEverything (c: IConfig) {
   await Promise.all([
     buildRoutes(c),
     buildEntryServer(c),
-    buildHooks(c)
+    buildDrivers(c)
   ])
 
   generateHookDeps(c)
@@ -27,8 +27,8 @@ export function prepareDir (c: IConfig) {
   emptyDirectory(c.pointFiles.outputDir)
 
   // normal
-  tryMkdir(c.pointFiles.outputHooksDir)
-  tryMkdir(c.pointFiles.outputHooksESMDir)
+  tryMkdir(c.pointFiles.outputDriversDir)
+  tryMkdir(c.pointFiles.outputDriversESMDir)
   tryMkdir(c.pointFiles.outputViewsDir)
   tryMkdir(c.pointFiles.outputModelsDir)
   tryMkdir(c.pointFiles.outputViewsDir)
@@ -48,7 +48,7 @@ async function startCompile (c: IConfig) {
 
   const watchTarget = [
     path.join(c.cwd, c.appDirectory),
-    path.join(c.cwd, c.hooksDirectory),
+    path.join(c.cwd, c.driversDirectory),
     path.join(c.cwd, c.viewsDirectory),
   ]
 

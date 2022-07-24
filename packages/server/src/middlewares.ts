@@ -2,10 +2,10 @@
  * a middleware mode for existed Koa Server
  */
 import taratRunner from "./middlewares/taratRunner";
-import { defaultConfig, IDefaultConfig, readHooks } from "./config";
+import { defaultConfig, IDefaultConfig, readDrivers } from "./config";
 
 // type IMiddleConfig = {
-//   hooksDirectory: string,
+//   driversDirectory: string,
 //   apiPre?: string,
 //   diffPath?: string,
 //   model: {
@@ -15,13 +15,13 @@ import { defaultConfig, IDefaultConfig, readHooks } from "./config";
 
 // export function middlewares (c: IMiddleConfig) {
 
-//   const hooks = readHooks(c.hooksDirectory)
+//   const drivers = readDrivers(c.driversDirectory)
 
 //   const mergedConfig = Object.assign(defaultConfig(), c)
 
 //   return taratRunner({
 //     config: {
-//       hooks,
+//       drivers,
 //       apiPre: mergedConfig.apiPre,
 //       diffPath: mergedConfig.diffPath,
 //       cwd: process.cwd(),
