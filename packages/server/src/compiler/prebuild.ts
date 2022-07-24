@@ -16,7 +16,9 @@ import autoExternal from 'rollup-plugin-auto-external';
 import replace from '@rollup/plugin-replace';
 import rollupAlias from '@rollup/plugin-alias'
 import dts from "rollup-plugin-dts"
-import { loadJSON } from "../util";
+import { loadJSON, logFrame } from "../util";
+import chalk from "chalk";
+import { cp } from "shelljs";
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -421,11 +423,18 @@ function buildDTS (c: IConfig, filePath: string, outputFile: string) {
 
 export async function hooksType(c: IConfig, outputDir: string) {
   const { hooks } = c
+  const generateFiles: { name: string, destFile:string }[] = []
   await Promise.all(hooks.filter(({ filePath }) => /\.ts$/.test(filePath)).map(async h => {
     const { filePath, name } = h
-    
+    const destFile = path.join(outputDir, `${name}.d.ts`)
+    generateFiles.push({
+      name,
+      destFile,
+    })
     await buildDTS(c, filePath, path.join(outputDir, `${name}.d.ts`))
   }))
+
+  return generateFiles
 }
 
 /**
@@ -445,7 +454,16 @@ export async function buildHooks (c: IConfig) {
   ])
 
   if (c.ts) {
-    // await hooksType(c, outputHooksDir)
+    try {
+      const files = await hooksType(c, outputHooksDir)
+      files.forEach(({ name, destFile }) => {
+        cp(destFile, path.join(outputHooksDir, 'cjs/'))
+        cp(destFile, path.join(outputHooksDir, 'esm/'))
+      })
+    } catch (e) {
+      console.error(e)
+      logFrame(chalk.red('build hook dts fail'))
+    }
   }
 }
 
