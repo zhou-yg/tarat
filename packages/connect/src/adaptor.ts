@@ -30,6 +30,9 @@ export function useTarat(bm: any, args?: any): any {
       return useReactHook(hookAdaptorRuntime, bm, args)
     case 'axii':
       return useAxiiHook(hookAdaptorRuntime, bm, args)
+    default:
+      throw new Error('[useTarat] must specific a UI framework like react')
   }
-  throw new Error('[useTarat] must specific a UI framework like react')
 }
+// aliass
+export const useDriver = useTarat
