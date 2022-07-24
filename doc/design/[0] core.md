@@ -1,10 +1,8 @@
 # 世界观
 
-> 名字？
+> 名字 tarat (同tarot，中文名：塔罗)
 
-基于响应式的，纯粹的，描述的业务逻辑执行模型（不限语言，环境），write once run any where
-
-简称：BM
+基于依赖追踪的范式，纯粹的，描述的业务逻辑执行模型（不限语言，环境），write once run any where
 
 > 参考： remix, solid-js,qwik，nextjs，dva，redux，react hooks，axii，vue setup，Proxy, event sourcing, immer
 
@@ -12,6 +10,17 @@
 - 模型是一个计算整体，只有外界输入才能改变内部状态
 - 计算和内部状态会产生的副作用，但不能返过来
 
+基本概念
+- application: 一个完整应用，include below, serve it's busness at first. don't need to consider reuseable
+- module: 一个包含driver/view/model的完整业务单元，可在tarat内进行静态/动态 复用
+- driver: a centeral description，包含了多个reactivity api 以及他们的关系
+- model: 特指持久化层的数据存储，如DB
+  - cache：缓存系统，介于持久化层的中间层，用于解决特定场景下一些性能问题
+- reactivity api: 描述逻辑的基本单位，包含几类：
+  - state: 状态，可读写
+    - model: extends to state，是model层在reactivity api中的实现，包含CRUD
+    - computed: 计算属性，外部只读
+  - inputCompute: 批量修改state/model
 
 
 ```javascript

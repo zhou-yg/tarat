@@ -1,6 +1,6 @@
 # 视图
 
-在BM中可以自带视图组件，而不仅仅只输出数据+逻辑，
+在driver中可以自带视图组件，而不仅仅只输出数据+逻辑，
 
 视图组件足够“大”的时候，也可以当作页面使用
 
@@ -10,8 +10,8 @@
 ```javascript
 // defination
 export default function ViewComponent() {
-  const bm = useBM()
-  return <view>{bm.data}</view>
+  const driver = usedriver()
+  return <view>{driver.data}</view>
 }
 
 // usage
@@ -22,13 +22,13 @@ function Main () {
 
 ```
 
-不同于一般的组件库，BM的视图组件还需要考虑数据流情况，在使用组件要分成2种情况
+不同于一般的组件库，driver的视图组件还需要考虑数据流情况，在使用组件要分成2种情况
 - 组件内独立状态
 - 全局状态
 
 在多个地方使用了相同的视图组件，但内部状态会有差别
 
-但好处时，由于在写BM时，已经提前区分了state和model，就可以做到state不同，而model相同，确保model数据在视图层的一致性
+但好处时，由于在写driver时，已经提前区分了state和model，就可以做到state不同，而model相同，确保model数据在视图层的一致性
 
 默认的处理策略是：视图组件在初始render时，state会重新初始化，而model也会重新获取并刷新到全局，其它相同的视图的model也会同步更新
 
@@ -56,9 +56,9 @@ function Main () {
   - 其它如小程序/Android/iOS等
 
 
-## 组件内BM
+## 组件内driver
 
-当引入一个BM里的view时，也同步引入了view内部使用的hook
+当引入一个driver里的view时，也同步引入了view内部使用的hook
 
 有时候不仅仅是 import view就完事了，还需要关心到view内的状态情况
 

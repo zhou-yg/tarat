@@ -1,6 +1,6 @@
 # api 服务器  
 
-在思考BM的时候，会下意识的将这个模型 treat as state model
+在思考driver的时候，会下意识的将这个模型 treat as state model
 
 但问题是，如果将这个模型应用 api server 的场景里的时候就产生冲突
 
@@ -25,11 +25,11 @@
 
 这些框架都是围绕暴露的接口去设计，一个接口就是一条逻辑，独立性强，这也造成通过代码去理解原始需求的困难，因为经过拆分后，接口之间的调用顺序，逻辑关系都是隐式的。维护在前端，产品手册，个人经验里
 
-在BM中要做的则是全部接口汇总到一起，显示的关系。inputCompute作为 传统Server的外部接口提供
+在driver中要做的则是全部接口汇总到一起，显示的关系。inputCompute作为 传统Server的外部接口提供
 
 在逻辑设计上，实际代码实现有个差别：
-- 设计：先用BM，再有接口
-- 实现：根据入参path，加载指定的BM，并调用相应的方法
+- 设计：先用driver，再有接口
+- 实现：根据入参path，加载指定的driver，并调用相应的方法
 
 ```javascript
 function serverlessUnit () {
@@ -60,7 +60,7 @@ request('/api/serverlessUnit/computeState', Context, args)
 
 也种处理方式也增加了一些现在前端的开发负担，是不完全的分离
 
-但在BM里，这部分逻辑可以自动处理掉，因为作为一个整体的BM，逻辑始终只有一份，只是运行环境不同
+但在driver里，这部分逻辑可以自动处理掉，因为作为一个整体的driver，逻辑始终只有一份，只是运行环境不同
 
 - 对前端
   - 调用接口除了提供入参，还需要上传Context

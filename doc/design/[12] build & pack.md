@@ -30,7 +30,7 @@
 
 默认使用的是可以直接计算和改数据的 core.server，client端通过alias指向到 core.client
 
-这样就可以实现相同的BM代码在运行时的不同执行
+这样就可以实现相同的driver代码在运行时的不同执行
 
 - target
   - client
@@ -42,9 +42,9 @@
 
 # 打包
 
-涉及2种形态的导出设计：BM 和 Application
+涉及2种形态的导出设计：driver 和 Application
 
-Application include BM，额外多出的app/下的编译产物
+Application include driver，额外多出的app/下的编译产物
 
 统一基本原则：
 
@@ -91,7 +91,7 @@ dev产物由于借助vite，所以在client端的产物里就节省了很多编�
   - *.js 
   - *.css
 - models/ 
-  - schema.prisma  应该是整合了依赖BM的生成后的结果，同时也能解决自身工程里 schema.part问题
+  - schema.prisma  应该是整合了依赖driver的生成后的结果，同时也能解决自身工程里 schema.part问题
 - app/
   - client/
     - routes.tsx 根据pages生成的router文件，标准esm，在vite中使用，作为client的渲染入口。通过插件集成 hook.deps.json      
@@ -103,9 +103,9 @@ dev产物由于借助vite，所以在client端的产物里就节省了很多编�
 
 这样重新设计，build阶段就可以尽可能保持跟dev一样的结构
 
-## BM
+## driver
 
-BM的基本组成：
+driver的基本组成：
 - views
   - 源文件：包含 jsx 和 css文件，有文件树，互相之间可以互相引用
   - 导出：
@@ -118,7 +118,7 @@ BM的基本组成：
 - models
   - *.prisma 原结构导出，不需要编译
 
-在Tarat内使用自己的BM的编译产物时，理应不需要再二次处理了，如同 AST deps也自动集成了
+在Tarat内使用自己的driver的编译产物时，理应不需要再二次处理了，如同 AST deps也自动集成了
 
 
 ## Application
@@ -127,7 +127,7 @@ Application的编译产物主要是用于run start的生产模式执行
 
 理论上来说一个目标是Application的产品不会产生有复用价值的view or hook，因为里面都是胶水代码
 
-但考虑到实际可能会有设计得很好的，兼具Application和BM的工程，那它的BM编译产物依然有复用的价值
+但考虑到实际可能会有设计得很好的，兼具Application和driver的工程，那它的driver编译产物依然有复用的价值
 
 Application的由于侧重的是run start的生产执行，所以重点是考虑以下几个方面：
 - 完整性

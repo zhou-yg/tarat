@@ -10,7 +10,7 @@
 
 ## serliazation
 
-对应BM来说，为了尽可能提供性能，最好是在SSR里已经处理好的internalState也一并”记住“，
+对应driver来说，为了尽可能提供性能，最好是在SSR里已经处理好的internalState也一并”记住“，
 
 不需要再在Client端replay，达到resumable的特性
 

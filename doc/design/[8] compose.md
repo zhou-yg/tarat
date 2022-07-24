@@ -1,8 +1,8 @@
 # compose
 
-BM是一条纵线，在完善了自身功能逻辑的情况下，最重要的便是能被充分复用
+driver是一条纵线，在完善了自身功能逻辑的情况下，最重要的便是能被充分复用
 
-复用可以视作跟其他BM在 View/Hook/Model层（类似于传统的MVC架构）的两两连接，进行按需组合
+复用可以视作跟其他driver在 View/Hook/Model层（类似于传统的MVC架构）的两两连接，进行按需组合
 
 同时明确在组合的时候要明确组合的类型，时机方式：
 - 类型
@@ -21,11 +21,11 @@ BM是一条纵线，在完善了自身功能逻辑的情况下，最重要的便
 
 ## 协议
 
-当 BM compose another BM，当前BM的 server framework 需要知道哪些BM被引入了？
+当 driver compose another driver, 当前driver的 server framework 需要知道哪些driver被引入了？
 
 方式有：
 - 依赖检查
-  - 说明：根据特定的pkg名称规则（如：tarat-bm-xxx） 或 packageJSON.tarat 字段
+  - 说明：根据特定的pkg名称规则（如：tarat-driver-xxx） 或 packageJSON.tarat 字段
 - 手动声明
   - tarat.config.js#compose字段中加入被组合的npm pkg名称，较为繁琐，适用于特殊场景：开发阶段，
 
@@ -37,30 +37,28 @@ BM是一条纵线，在完善了自身功能逻辑的情况下，最重要的便
 
 比如
 ```javascript
-// BM2
-function hook1 () {
+function driver2 () {
   const s = state()
 }
-// BM1
-function hook1 () {
-  const h2 = useHook(hook2)
+function driver1 () {
+  const h2 = useDriver(driver2)
 }
 ```
 
-在编译BM1的时候，直接把 useHook(hook2)的部分作为静态代码整合进去，对于消费者，得到的就是一个完成的BM1产物，里面也包含了BM2.hook1代码
+在编译driver1的时候，直接把 useDriver(hook2)的部分作为静态代码整合进去，对于消费者，得到的就是一个完成的driver1产物，里面也包含了driver2.hook1代码
 
-如果涉及到了model，那么在初始化时，显示的提供指令，将依赖的静态BM的prisma.schema进行组合再拼装，生成到当前BM models中
+如果涉及到了model，那么在初始化时，显示的提供指令，将依赖的静态driver的prisma.schema进行组合再拼装，生成到当前driver models中
 
-这是编译时，也就对BM的代码层面的复用
+这是编译时，也就对driver的代码层面的复用
 
 比如 
 ```javascript
-// BM2
+// driver2
 function View2 () {
-  const hook = useHook(hook2)
+  const hook = useDriver(hook2)
   return <div></div>
 }
-// BM1
+// driver1
 function Page1() {
   return (<View2 server={{ server: 'https://127.0.0.1' }}>)
 }
@@ -194,7 +192,7 @@ Model x Model时，静态它们之间的表还是只是简单的线性增加，�
 - DB 连接池的问题
 
 ```javascript
-function BM () {
+function driver () {
 
   const m = model('items', query, {
     url: 'mysql://root:123456@localhost:3306/db'
@@ -260,7 +258,7 @@ view可以互相引用，他们是耦合的，view可以实现组合
 
 Page与Page是相互跳转，他们是松耦合，通过路由字符串的软连接，即Page之间不能实现组合
 
-Page可以引用本BM或其它BM的view
+Page可以引用本driver或其它driver的view
 
 Page和View需要进行概念上的隔离，如果不隔离他们的话，会产生冲突：
 

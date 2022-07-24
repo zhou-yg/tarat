@@ -14,12 +14,12 @@
 
 基于前面的原则，就需要识别出哪些数据是State，哪些是Model，这样才可以决定是不是要把这条draft提交到server端处理
 
-因为BM内的函数逻辑对于框架来说是不可知的，这里需要思考清楚2个问题：
-- 在client和server端执行，涉及BM的一些函数和各种监听回调
+因为driver内的函数逻辑对于框架来说是不可知的，这里需要思考清楚2个问题：
+- 在client和server端执行，涉及driver的一些函数和各种监听回调
 - client -> server端的过程中如何精简所需的context，做到最小化
   - 未来会碰到的衍生问题：对于超大的，以至于无法传输的context数据，能提供什么样的解法呢？
 
-BM内会涉及到的函数，监听回调：
+driver内会涉及到的函数，监听回调：
 - computed
 - inputCompute
 - effect
@@ -134,18 +134,18 @@ effect([clientInputCompute], () => {
 
 ## runner
 
-执行BM的驱动器，因为BM基于closure，只跑一次，不需要类似Fiber的实例对象来保存当前BM的数据
+执行driver的驱动器，因为driver基于closure，只跑一次，不需要类似Fiber的实例对象来保存当前driver的数据
 
-但未来能够及时销毁，BM需要Scope，用来管理内部和销毁
+但未来能够及时销毁，driver需要Scope，用来管理内部和销毁
 
-多层嵌套的BM使用同一个scope
+多层嵌套的driver使用同一个scope
 
 scope 包含release方法用以释放内存，off listener
 
 ```javascript
 CurrentRunnerScope = new Scope()
 
-run(myBMFunction)
+run(mydriverFunction)
 
 CurrentRunnerScope = null
 ```

@@ -2,7 +2,7 @@
 
 现在整个框架涉及编译逻辑的处理有2处：1.core的分环境编译  2.server的ssr编译
 
-未来加入一个杀手级编译：对BM的以 inputCompute的分功能模块编译
+未来加入一个杀手级编译：对driver的以 inputCompute的分功能模块编译
 
 剩下的都是常规前端编译ts -> js
 

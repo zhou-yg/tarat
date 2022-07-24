@@ -23,11 +23,11 @@
 
 后面去掉“响应式”的原因是
 
-响应式库本身就自成身一体的，，在BM里的响应式部分在于，state本身，而不在于它的value部分，所以这个意义将BM跟reactvity之类的响应式是并列关系，不是可以二次封装的关系
+响应式库本身就自成身一体的，，在driver里的响应式部分在于，state本身，而不在于它的value部分，所以这个意义将driver跟reactvity之类的响应式是并列关系，不是可以二次封装的关系
 
-BM内部本就需要通过immer来收集patches，再根据patches来前后判断，数据的修改情况，并手动调用update，所以响应式的意义就不大了
+driver内部本就需要通过immer来收集patches，再根据patches来前后判断，数据的修改情况，并手动调用update，所以响应式的意义就不大了
 
-即BM来说，是只有有限的响应式结构，即state,cache,model，等同于@vue/reactivity的 ref增强版，所以是并列关系
+即driver来说，是只有有限的响应式结构，即state,cache,model，等同于@vue/reactivity的 ref增强版，所以是并列关系
 
 所以后续的基于reactive的computed，也是同样需要基于State的机制再实现一层，不能使用现有的框架
 

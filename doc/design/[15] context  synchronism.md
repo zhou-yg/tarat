@@ -52,35 +52,35 @@ deps静态分析的存储位置
   - 问题：在开发时比较奇怪，得先进行跑命令行监听才行
 
 
-### BM 嵌套下
+### driver 嵌套下
 
 ```javascript 
 import {
-  BM2,
-} from './BM2'
+  driver2,
+} from './driver2'
 
-import BM2Deps from './BM2.deps.json
+import driver2Deps from './driver2.deps.json
 
 // deps = [0, ]
 
-function BM1 () {
+function driver1 () {
   const s1 = state()
 
-  const r2 = useOtherHook(BM2, [], BM2Deps) // 此时BM2的下标是从1开始
+  const r2 = useOtherHook(driver2, [], driver2Deps) // 此时driver2的下标是从1开始
 
   const s2 = state()
 }
 ```
 
-在BM组合下，由于deps是依据当前BM的hook下标进行唯一确定的，所以在组合BM的情况下，需要进行下标的平移计算，确保下标能对应到原本的hook
+在driver组合下，由于deps是依据当前driver的hook下标进行唯一确定的，所以在组合driver的情况下，需要进行下标的平移计算，确保下标能对应到原本的hook
 
 计算的时机：
 - 静态时
-  - 问题：难以分析出hook内部引用的其它BM的 所在位置顺序和层次，来源，需要介入到构建系统才行
+  - 问题：难以分析出hook内部引用的其它driver的 所在位置顺序和层次，来源，需要介入到构建系统才行
 - 运行时
   - 问题：需要显示的感知到deps的存在，
     - 优化：也许可以通过构建编译自动替换掉
-  - 问题2：使用了其它BM的数据时，会产生依赖，但因为这个数据时其它BM的是静态分析无法得出具体index
+  - 问题2：使用了其它driver的数据时，会产生依赖，但因为这个数据时其它driver的是静态分析无法得出具体index
 
 
 
@@ -93,7 +93,7 @@ function BM1 () {
 there are some top questions：
 - computed触发getter的时机，在client触发还是server触发
 - send context时， 要携带的hook的值的范围怎么确定，依据是什么
-- BM的初始化过程的流程该怎么抽象，初始化的数据源可以有哪些
+- driver的初始化过程的流程该怎么抽象，初始化的数据源可以有哪些
 - 确定hook的执行环境的默认原则，比如model在server端，如何通过尽可能少的配置化方式来修改它
 - lazy model如何从server端同步数据
 - 同步过程中如何避免触发hook中无关的model的重新get？
@@ -142,15 +142,15 @@ Context的注入和同步，参考React hooks的链表数据结构的实现细�
 
 client side路径
 
-> Client side <- BM(state, model, ic) <- Scope <- Context(client) <- (rpc) <- Server side 
+> Client side <- driver(state, model, ic) <- Scope <- Context(client) <- (rpc) <- Server side 
 
 Server side 路径
 
-> Server side <- BM(state, model, ic) <- Scope <- Context(server) <- Databse
+> Server side <- driver(state, model, ic) <- Scope <- Context(server) <- Databse
 
 中间的rpc方式有2种可选：
 - 同步context的方式（默认）
-- 传递{ entity, query } 直接query查询，这样就server不用重新初始化BM，提升性能，但是会牺牲了整体的响应性，只使用单一大数据的优化场景里
+- 传递{ entity, query } 直接query查询，这样就server不用重新初始化driver，提升性能，但是会牺牲了整体的响应性，只使用单一大数据的优化场景里
 
 注意点，由于rpc传输的context是局部的，意味着有些hook如果没有get到值就只保留一个null占位符，该hook在执行过程中不会被使用到，如果使用了没有被初始化的hook，说明epMaps分析错了 或者 使用了不正当的hook使用方式
 
@@ -159,15 +159,15 @@ Server side 路径
 
 client side路径
 
-> UI触发 -> BM.inputCompute -> Context(client).modify -> (rpc with dependent context ) -> Server side
+> UI触发 -> driver.inputCompute -> Context(client).modify -> (rpc with dependent context ) -> Server side
 
 server side handle request
 
-> Serve side -> BM(state, model, ic) with context（同上面）-> call Bm.inputCompute -> Scope.applyPatches -> Context(server).applyPatches -> Database
+> Serve side -> driver(state, model, ic) with context（同上面）-> call driver.inputCompute -> Scope.applyPatches -> Context(server).applyPatches -> Database
 
 server side response
 
-> Database更新完成后 -> Context(server) -> Bm.inputCompute end -> 返回 Context(server).data -> Context(client).update -> Scope.trigger listener -> UI更新
+> Database更新完成后 -> Context(server) -> driver.inputCompute end -> 返回 Context(server).data -> Context(client).update -> Scope.trigger listener -> UI更新
 
 ## proxy context
 
