@@ -221,7 +221,6 @@ export function isGenerator(g: any) {
   return g && 'function' == typeof g.next && 'function' == typeof g.throw
 }
 
-
 export function nextTick(fn: () => void) {
   const st = setTimeout(fn, 0)
   return () => clearTimeout(st)
@@ -674,14 +673,18 @@ export interface BM extends Function {
 
 // export type BM = (...prop: any) => any
 
-export function runGenerator (gen: Generator, onResume: () => void, onSuspend: () => void) {
+export function runGenerator(
+  gen: Generator,
+  onResume: () => void,
+  onSuspend: () => void
+) {
   return co(gen, {
     onResume: onResume,
     onSuspend: onSuspend
   })
 }
 
-export function makeBatchCallback<T extends (...prop: any[]) => any> (fn: T) {
+export function makeBatchCallback<T extends (...prop: any[]) => any>(fn: T) {
   let cancelNotify = () => {}
   return (...args: Parameters<T>) => {
     cancelNotify()

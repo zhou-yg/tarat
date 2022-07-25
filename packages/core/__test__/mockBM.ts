@@ -182,7 +182,6 @@ export function effectAfter(v: number) {
   }
 }
 
-
 export function plainObjectState(obj1: { [key: string]: any }, num2: number) {
   const s1 = state(obj1)
   const s2 = state(num2)
@@ -354,7 +353,7 @@ export function changeStateGeneratorInputCompute(
 
   const { s1, s2 } = ps
 
-  const changeS1 = inputCompute(function * (v: number, v2?: number) {
+  const changeS1 = inputCompute(function* (v: number, v2?: number) {
     s1((draft: any) => {
       draft.num1 = Math.random()
     })
@@ -387,15 +386,14 @@ export function userPessimisticModel() {
   }
 }
 
-export function modelWithConnectCreate () {
-  const items = model<{ id: number, name: string }[]>('item', () => ({}))
+export function modelWithConnectCreate() {
+  const items = model<{ id: number; name: string }[]>('item', () => ({}))
   const name = state('')
   connectCreate(items, () => {
     return {
       name: name()
     }
   })
-
 
   const createItem = inputCompute(async (name: string) => {
     if (name) {
@@ -408,7 +406,7 @@ export function modelWithConnectCreate () {
   return {
     items,
     name,
-    createItem,
+    createItem
   }
 }
 
@@ -530,7 +528,7 @@ export function asyncComputed2(v1: number, v2: number) {
 }
 export function generatorComputed(v1: number, v2: number) {
   const s = state(v1)
-  const c = computed(function * () {
+  const c = computed(function* () {
     yield new Promise(resolve => setTimeout(resolve, 1))
     return s() + v2
   })

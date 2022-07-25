@@ -1,4 +1,5 @@
-import {
+  import {
+    ComputedInitial,
   getDeps,
   IHookContext,
   Runner,
@@ -34,7 +35,7 @@ describe('computed', () => {
       const result = runner.init([num1, num2])
   
       const c1 = result.c()
-      expect(c1).toBe(undefined)
+      expect(c1).toBe(ComputedInitial)
   
       await runner.ready()
   
@@ -99,7 +100,7 @@ describe('computed', () => {
       const result = runner.init([num1, num2])
   
       const c1 = result.c()
-      expect(c1).toBe(undefined)
+      expect(c1).toBe(ComputedInitial)
   
       await runner.ready()
   
@@ -116,7 +117,7 @@ describe('computed', () => {
       const result = runner.init([num1, num2])
   
       const c1 = result.c()
-      expect(c1).toBe(undefined)
+      expect(c1).toBe(ComputedInitial)
   
       await runner.ready()
   

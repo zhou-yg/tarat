@@ -22,7 +22,8 @@ import {
   THookDeps,
   isGenerator,
   runGenerator,
-  makeBatchCallback
+  makeBatchCallback,
+  isUndef
 } from './util'
 import EventEmitter from 'eventemitter3'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
@@ -95,7 +96,7 @@ export class Watcher<T = Hook> {
   }
 }
 
-export class Hook extends EventEmitter{
+export class Hook extends EventEmitter {
   name?: string
   freezed?: boolean
   watchers = new Set<Watcher<typeof this>>()
@@ -253,7 +254,7 @@ export class Model<T extends any[]> extends State<T[]> {
       this.query(reactiveChain)
     }
   }
-  
+
   notify(h?: Hook, p?: IPatch[], reactiveChain?: ReactiveChain) {
     log(`[${this.constructor.name}.executeQuery] withChain=${!!reactiveChain}`)
     const newReactiveChain = reactiveChain?.add(this)
@@ -261,7 +262,10 @@ export class Model<T extends any[]> extends State<T[]> {
   }
   async getQueryWhere(): Promise<IModelQuery['query'] | void> {
     await this.queryWhereComputed!.getterPromise
-    return this.queryWhereComputed!.value!
+    const queryWhereValue = this.queryWhereComputed!.value
+    if (queryWhereValue && typeof queryWhereValue !== 'symbol') {
+      return queryWhereValue as IModelQuery['query']
+    }
   }
   override get value(): T[] {
     if (this.init) {
@@ -338,7 +342,7 @@ export class Model<T extends any[]> extends State<T[]> {
   /**
    * confirm the last getter could convert previous getter
    */
-  addCreateGetter (g: TGetterData<T[0]>) {
+  addCreateGetter(g: TGetterData<T[0]>) {
     this.createGetters.push(g)
   }
   async createRow(obj?: { [k: string]: any }) {
@@ -351,7 +355,10 @@ export class Model<T extends any[]> extends State<T[]> {
     })
     await this.refresh()
   }
-  async updateRow(where: number[] | { id: number }[], obj?: { [k: string]: any }) {
+  async updateRow(
+    where: number[] | { id: number }[],
+    obj?: { [k: string]: any }
+  ) {
     const id = typeof where[0] === 'number' ? where[0] : where[0].id
 
     await getPlugin('Model').update(this.entity, {
@@ -368,7 +375,7 @@ export class Model<T extends any[]> extends State<T[]> {
     })
     await this.refresh()
   }
-  async refresh () {
+  async refresh() {
     await this.executeQuery(currentReactiveChain?.add(this))
   }
   override async applyInputComputePatches(
@@ -424,6 +431,11 @@ export class ClientModel<T extends any[]> extends Model<T> {
     this.getterPromise = new Promise(r => (resolve = r))
 
     const valid = await this.enableQuery()
+
+    log(
+      `[ClientModel.executeQuery] valid=${valid} ignoreClientEnable=${this.options.ignoreClientEnable}`
+    )
+
     // @TODO: ignoreClientEnable will useless
     if (valid || this.options.ignoreClientEnable) {
       const context = this.scope.createInputComputeContext(this)
@@ -583,14 +595,33 @@ export function setCurrentComputed(c: Computed<any>[]) {
   currentComputedStack = c
 }
 
-export class Computed<T> extends State<T | undefined> {
+export const ComputedInitial = Symbol('ComputedInitial')
+export class Computed<T> extends State<T | Symbol> {
   getterPromise: Promise<T> | null = null
   batchRunCancel: () => void = () => {}
   watcher: Watcher<State<any>> = new Watcher<State<any>>(this)
+  firstRun = true
   // @TODO: maybe here need trigger async optional setting
-  constructor(public getter: FComputedFunc<T> | FComputedFuncAsync<T> | FComputedFuncGenerator<T>) {
-    super(undefined)
+  constructor(
+    public getter:
+      | FComputedFunc<T | Symbol>
+      | FComputedFuncAsync<T | Symbol>
+      | FComputedFuncGenerator<T | Symbol>
+  ) {
+    super(ComputedInitial)
   }
+  // override update (
+  //   v: T,
+  //   patches?: IPatch[],
+  //   silent?: boolean,
+  //   reactiveChain?: ReactiveChain<T>
+  // ) {
+  //   super.update(v, patches, silent, reactiveChain)
+  //   if (this.firstRun && isUndef(v)) {
+  //     this.trigger(undefined, undefined, reactiveChain)
+  //     this.firstRun = false
+  //   }
+  // }
   run(reactiveChain?: ReactiveChain) {
     pushComputed(this)
 
@@ -600,8 +631,9 @@ export class Computed<T> extends State<T | undefined> {
       currentReactiveChain = reactiveChain
     }
     // making sure the hook called by computed can register thier chain
-    const r: T | Promise<T> | Generator<unknown, T> = this.getter(this._internalValue)
-
+    const r: T | Promise<T> | Generator<unknown, T> = this.getter(
+      this._internalValue
+    )
     currentReactiveChain = oldCurrentReactiveChain
 
     popComputed()
@@ -621,7 +653,6 @@ export class Computed<T> extends State<T | undefined> {
         this.update(asyncResult, [], false, reactiveChain)
         this.getterPromise = null
       })
-
     } else {
       this.update(r as T, [], false, reactiveChain)
     }
@@ -643,7 +674,10 @@ let currentInputeCompute: InputCompute | null = null
 
 export class InputCompute<P extends any[] = any> extends Hook {
   constructor(
-    public getter: InputComputeFn<P> | AsyncInputComputeFn<P> | GeneratorInputComputeFn<P>,
+    public getter:
+      | InputComputeFn<P>
+      | AsyncInputComputeFn<P>
+      | GeneratorInputComputeFn<P>,
     public scope: CurrentRunnerScope
   ) {
     super()
@@ -685,7 +719,7 @@ export class InputCompute<P extends any[] = any> extends Hook {
       // use generator
       if (isGenerator(funcResult)) {
         await runGenerator(
-          (funcResult as Generator<void>),
+          funcResult as Generator<void>,
           () => {
             if (!currentInputeCompute) {
               currentInputeCompute = this
@@ -694,14 +728,14 @@ export class InputCompute<P extends any[] = any> extends Hook {
           () => {
             if (currentInputeCompute === this) {
               currentInputeCompute = null
-            }    
+            }
           }
         )
         return await this.inputFuncEnd(newReactiveChain)
       }
       if (isPromise(funcResult)) {
         // end compute context in advance
-        
+
         if (currentInputeCompute === this) {
           currentInputeCompute = null
         }
@@ -1278,7 +1312,10 @@ export class Runner<T extends BM> {
       throw new Error('can not init repeat')
     }
     currentRunnerScope = this.scope
-    currentRunnerScope.setIntialArgs(args || [], this.bm.__name__ || this.bm.name)
+    currentRunnerScope.setIntialArgs(
+      args || [],
+      this.bm.__name__ || this.bm.name
+    )
 
     const deps = getDeps(this.bm)
     currentRunnerScope.setInitialContextDeps(deps)
@@ -1575,7 +1612,7 @@ function updateModel<T extends any[]>(
   }
   const inServer = process.env.TARGET === 'server'
   const { beleiveContext } = currentRunnerScope!
-  
+
   const receiveDataFromContext = beleiveContext || !inServer
 
   op = Object.assign({}, op, {
@@ -1768,9 +1805,9 @@ export function cache<T>(key: string, options: ICacheOptions<T>) {
   return currentHookFactory.cache<T>(key, options)
 }
 
-type FComputedFuncAsync<T> = (prev?: T) => Promise<T>
-type FComputedFunc<T> = (prev?: T) => T
-type FComputedFuncGenerator<T> = (prev?: T) => Generator<unknown, T>
+type FComputedFuncAsync<T, S = T extends Symbol ? undefined : T> = (prev?: T) => Promise<S>
+type FComputedFunc<T, S = T extends Symbol ? undefined : T> = (prev?: T) => S
+type FComputedFuncGenerator<T, S = T extends Symbol ? undefined : T> = (prev?: T) => Generator<unknown, S>
 
 export function computed<T>(
   fn: FComputedFuncGenerator<T>
@@ -1790,7 +1827,9 @@ export function computed<T>(fn: any): any {
 
 type InputComputeFn<T extends any[]> = (...arg: T) => void
 type AsyncInputComputeFn<T extends any[]> = (...arg: T) => Promise<void>
-type GeneratorInputComputeFn<T extends any[]> = (...arg: T) => Generator<unknown, void>
+type GeneratorInputComputeFn<T extends any[]> = (
+  ...arg: T
+) => Generator<unknown, void>
 
 export function inputCompute<T extends any[]>(
   func: AsyncInputComputeFn<T>
@@ -1843,17 +1882,17 @@ export function inputComputeInServer(func: any) {
 }
 
 /**
- * 
- * 
- * 
- * 
+ *
+ *
+ *
+ *
  *  connect util methods
- * 
- * 
- * 
- *  
+ *
+ *
+ *
+ *
  */
- export function after(callback: () => void, targets: { _hook?: Hook }[]) {
+export function after(callback: () => void, targets: { _hook?: Hook }[]) {
   callback = makeBatchCallback(callback)
 
   targets.forEach(target => {
@@ -1929,7 +1968,9 @@ export function compose<T extends BM>(f: T, args?: any[]) {
  * inject input data to Model as initial value
  */
 type TModelGetter<T> = ReturnType<typeof model>
-export function connectCreate<T> (modelGetter: TModelGetter<T>, dataGetter: TGetterData<T> ) {
+export function connectCreate<T>(
+  modelGetter: TModelGetter<T>,
+  dataGetter: TGetterData<T>
+) {
   modelGetter._hook.addCreateGetter(dataGetter)
 }
-
