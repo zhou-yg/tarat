@@ -2,7 +2,7 @@ import {
   compose,
   state,
 } from 'tarat-core'
-import login from 'user-login-system/dist/drivers/login'
+import login from './login'
 
 export default function main () {
 

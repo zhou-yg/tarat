@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react'
-import { useLocation, Navigate } from 'react-router-dom'
+import React, { useEffect, useRef, useState } from 'react'
+import { useLocation, Navigate, Link } from 'react-router-dom'
 
 import LoginFrame from 'user-login-system/dist/views/login'
 import 'user-login-system/dist/views/login.css'
@@ -7,20 +7,25 @@ import 'user-login-system/dist/views/login.css'
 import { after } from 'tarat-core'
 
 export default function Login () {
-  
+  console.log('--- user-comments Login ---')
   const loginRef = useRef<{ hook: any }>()
+
+  const [isLogin, setIsLogin] = useState(loginRef.current?.hook.alreadyLogin())
 
   useEffect(() => {
     if (loginRef.current) {
-      after(() => {
-        console.log('loginRef.current.alreadyLogin', loginRef.current.hook.alreadyLogin());
-      }, [loginRef.current.hook.alreadyLogin])
+      const updateLogin = () => {
+        const r = loginRef.current.hook.alreadyLogin()
+        setIsLogin(r)
+      }
+      updateLogin()
+      after(updateLogin, [loginRef.current.hook.alreadyLogin])
     }
   }, [])
 
   return (
     <div>
-      you need login <br/>
+      {isLogin ? <Link to="/main">back to main</Link> : 'you need login'} <br/>
 
       <LoginFrame ref={loginRef} />
     </div>
