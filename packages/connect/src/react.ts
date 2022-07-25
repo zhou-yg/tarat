@@ -28,7 +28,8 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
     const runner = new Runner(hook, driver?.beleiveContext)
     driver?.push(runner, bmName)
 
-    const r = runner.init(args, ssrContext.pop())
+    const initialContext = ssrContext.pop()
+    const r = runner.init(args, initialContext)
     init.current = r
 
     runner.onUpdate(() => {
