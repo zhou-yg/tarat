@@ -21,8 +21,10 @@ import {
   cloneDeep,
   THookDeps,
   isGenerator,
-  runGenerator
+  runGenerator,
+  makeBatchCallback
 } from './util'
+import EventEmitter from 'eventemitter3'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
 import { getPlugin, IModelQuery, TCacheFrom } from './plugin'
 
@@ -93,7 +95,7 @@ export class Watcher<T = Hook> {
   }
 }
 
-export class Hook {
+export class Hook extends EventEmitter{
   name?: string
   freezed?: boolean
   watchers = new Set<Watcher<typeof this>>()
@@ -104,6 +106,13 @@ export class Hook {
 export function isState(h: { _hook?: State }) {
   return h && (h._hook ? h._hook instanceof State : h instanceof State)
 }
+
+enum EHookEvents {
+  change = 'change',
+  beforeCalling = 'beforeCalling',
+  afterCalling = 'afterCalling'
+}
+
 export class State<T = any> extends Hook {
   _internalValue: T
   freezed?: boolean
@@ -152,6 +161,7 @@ export class State<T = any> extends Hook {
     const shouldTrigger = oldValue !== v && !isEqual(oldValue, v)
     if (shouldTrigger) {
       this.modifiedTimstamp = Date.now()
+      this.emit(EHookEvents.change, this)
     }
     reactiveChain?.update()
 
@@ -650,14 +660,14 @@ export class InputCompute<P extends any[] = any> extends Hook {
 
     this.scope.applyComputePatches(this, updateReactiveChain)
     unFreeze({ _hook: this })
-    this.triggerEvent('after')
+    this.emit(EHookEvents.afterCalling, this)
   }
   async run(...args: any): Promise<void> {
     // confirm：the composed inputCompute still running under the parent inputCompute
     if (!currentInputeCompute) {
       currentInputeCompute = this
     }
-    this.triggerEvent('before')
+    this.emit(EHookEvents.beforeCalling, this)
 
     let preservedCurrentReactiveChain: ReactiveChain | undefined =
       currentReactiveChain
@@ -704,11 +714,6 @@ export class InputCompute<P extends any[] = any> extends Hook {
 
     return this.inputFuncEnd(newReactiveChain)
   }
-  triggerEvent(timing: 'before' | 'after') {
-    this.watchers.forEach(w => {
-      w.notify(this, [timing], [])
-    })
-  }
 }
 class InputComputeInServer<P extends any[]> extends InputCompute<P> {
   getterPromise: Promise<any> | null = null
@@ -716,7 +721,7 @@ class InputComputeInServer<P extends any[]> extends InputCompute<P> {
     let resolve: Function
     this.getterPromise = new Promise(r => (resolve = r))
 
-    this.triggerEvent('before')
+    this.emit(EHookEvents.beforeCalling, this)
     if (!checkFreeze({ _hook: this })) {
       const newReactiveChain = currentReactiveChain?.add(this)
       if (newReactiveChain) {
@@ -731,22 +736,6 @@ class InputComputeInServer<P extends any[]> extends InputCompute<P> {
 
     resolve!()
     this.getterPromise = null
-  }
-}
-class Effect<T> extends Hook {
-  getterPromise: Promise<T> | null = null
-  batchRunCancel: () => void = () => {}
-  watcher: Watcher<Hook> = new Watcher<Hook>(this)
-  cancelNotify = () => {}
-  constructor(public callback: () => void, public scope?: CurrentRunnerScope) {
-    super()
-    scope?.addHook(this)
-  }
-  notify() {
-    this.cancelNotify()
-    this.cancelNotify = nextTick(() => {
-      this.callback()
-    })
   }
 }
 
@@ -1853,32 +1842,6 @@ export function inputComputeInServer(func: any) {
   return wrapFunc
 }
 
-export function after(callback: () => void, targets: { _hook?: Hook }[]) {
-  const hook = new Effect(callback, currentRunnerScope)
-
-  targets.forEach(target => {
-    if (target._hook) {
-      if (target._hook instanceof InputCompute) {
-        hook.watcher.addDep(target._hook, ['after'])
-      } else {
-        hook.watcher.addDep(target._hook, [''])
-      }
-    }
-  })
-}
-
-export function before(callback: () => void, targets: { _hook?: Hook }[]) {
-  const hook = new Effect(callback, currentRunnerScope)
-
-  targets.forEach(target => {
-    if (target._hook) {
-      if (target._hook instanceof InputCompute) {
-        hook.watcher.addDep(target._hook, ['before'])
-      }
-    }
-  })
-}
-
 /**
  * 
  * 
@@ -1890,6 +1853,32 @@ export function before(callback: () => void, targets: { _hook?: Hook }[]) {
  * 
  *  
  */
+ export function after(callback: () => void, targets: { _hook?: Hook }[]) {
+  callback = makeBatchCallback(callback)
+
+  targets.forEach(target => {
+    if (target._hook) {
+      if (target._hook instanceof InputCompute) {
+        target._hook.on(EHookEvents.afterCalling, callback)
+      } else {
+        target._hook.on(EHookEvents.change, callback)
+      }
+    }
+  })
+}
+
+export function before(callback: () => void, targets: { _hook?: Hook }[]) {
+  callback = makeBatchCallback(callback)
+
+  targets.forEach(target => {
+    if (target._hook) {
+      if (target._hook instanceof InputCompute) {
+        target._hook.on(EHookEvents.beforeCalling, callback)
+      }
+    }
+  })
+}
+
 export function combineLatest<T>(
   arr: Array<Function & { _hook: State<T> }>
 ): () => T {

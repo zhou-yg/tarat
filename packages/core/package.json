@@ -34,6 +34,7 @@
   "dependencies": {
     "@types/cookies": "^0.7.7",
     "@vue/reactivity": "^3.2.36",
+    "eventemitter3": "^4.0.7",
     "immer": "^9.0.14",
     "rollup-plugin-dts": "^4.2.2",
     "tslib": "^2.4.0"

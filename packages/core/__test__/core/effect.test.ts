@@ -1,4 +1,5 @@
 import {
+  after,
   Runner,
 } from '../../src/'
 
@@ -16,7 +17,7 @@ describe('effect', () => {
 
     expect(result.num()).toBe(initNum)
     expect(result.markBefore).toEqual({ value: 0 })
-    expect(runner.scope.hooks.length).toBe(3)
+    expect(runner.scope.hooks.length).toBe(2)
 
     const plusValue = 2
     result.addNum(plusValue)
@@ -46,7 +47,7 @@ describe('effect', () => {
 
     expect(result.num()).toBe(initNum)
     expect(result.markBefore).toEqual({ value: 0 })
-    expect(runner.scope.hooks.length).toBe(3)
+    expect(runner.scope.hooks.length).toBe(2)
 
     const plusValue = 2
     result.addNum(plusValue)
@@ -56,5 +57,29 @@ describe('effect', () => {
     expect(result.num()).toBe(initNum + plusValue)
     expect(result.markBefore).toEqual({ value: 1 })
     expect(onRunnerUpdate).toHaveBeenCalledTimes(1)  
+  })
+
+  it('after state', async () => {
+    const runner = new Runner(mockBM.plainObjectState)
+    const result = runner.init([
+      { num: 0 },
+      1
+    ])
+
+    const s1ChangedCallback = jest.fn(() => {})
+
+    after(() => {
+      s1ChangedCallback()
+    }, [result.s1])
+
+
+    result.s1(d => {
+      d.num = 1
+    })
+
+    await mockBM.wait()
+
+    expect(s1ChangedCallback).toBeCalledTimes(1)
+    expect(result.s1()).toEqual({ num: 1 })
   })
 })

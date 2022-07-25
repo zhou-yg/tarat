@@ -182,6 +182,7 @@ export function effectAfter(v: number) {
   }
 }
 
+
 export function plainObjectState(obj1: { [key: string]: any }, num2: number) {
   const s1 = state(obj1)
   const s2 = state(num2)

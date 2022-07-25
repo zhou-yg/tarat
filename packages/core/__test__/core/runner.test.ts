@@ -115,7 +115,7 @@ describe('runner basic', () => {
     const initResult = runner.init([arg])
 
     expect(initResult.s1()).toBe(arg.a)
-    expect(runner.scope.hooks.length).toBe(2)
+    expect(runner.scope.hooks.length).toBe(1)
     
     expect(onRunnerUpdate).toHaveBeenCalledTimes(0)
 

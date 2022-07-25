@@ -680,3 +680,13 @@ export function runGenerator (gen: Generator, onResume: () => void, onSuspend: (
     onSuspend: onSuspend
   })
 }
+
+export function makeBatchCallback<T extends (...prop: any[]) => any> (fn: T) {
+  let cancelNotify = () => {}
+  return (...args: Parameters<T>) => {
+    cancelNotify()
+    cancelNotify = nextTick(() => {
+      fn(...args)
+    })
+  }
+}
