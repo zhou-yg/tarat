@@ -71,7 +71,11 @@ describe('model', () => {
       const runner = new Runner(mockBM.userPessimisticModel)
       const result = runner.init()
       
+      expect(runner.state()).toBe('pending')
+
       await runner.ready()
+
+      expect(runner.state()).toBe('idle')
 
       expect(result.users()).toEqual([
         { id: 1, name: 'a' },
@@ -125,9 +129,13 @@ describe('model', () => {
 
       const result = runner.init()
 
+      expect(runner.state()).toBe('pending')
+
       stopReactiveChain()
 
       await runner.ready()
+
+      expect(runner.state()).toBe('idle')
 
       const firstComputed = initChain.children[0]
       expect(firstComputed.hook).toBeInstanceOf(Computed)

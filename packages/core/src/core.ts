@@ -955,6 +955,11 @@ export class ReactiveChain<T = any> {
   }
 }
 
+export enum EScopeState {
+  idle = 'idle',
+  pending = 'pending'
+}
+
 export class CurrentRunnerScope {
   hooks: (Hook | undefined)[] = []
   composes: any[] = [] // store the compose execute resutl
@@ -1260,6 +1265,21 @@ export class CurrentRunnerScope {
     })
     this.notify()
   }
+
+  get state() {
+    const asyncHooks = this.hooks.filter(
+      h => h && Reflect.has(h, 'getterPromise')
+    ) as unknown as { getterPromise: Promise<any> | null }[]
+
+    let notReadyHooks = asyncHooks
+      .filter(h => {
+        return !!h.getterPromise
+      })
+      .map(h => h.getterPromise)
+
+    return notReadyHooks.length === 0 ? EScopeState.idle : EScopeState.pending
+  }
+
   ready(): Promise<void> {
     const asyncHooks = this.hooks.filter(
       h => h && Reflect.has(h, 'getterPromise')
@@ -1273,7 +1293,6 @@ export class CurrentRunnerScope {
     async function wait() {
       if (i++ > max) {
         throw new Error('[Scope.ready] unexpect loop for ready')
-        return readyResolve()
       }
       let notReadyHooks = asyncHooks
         .filter(h => {
@@ -1295,19 +1314,18 @@ export class CurrentRunnerScope {
 
 let currentRunnerScope: CurrentRunnerScope | null = null
 
-const driverRunnerMap = new Map<Driver, Runner<Driver>>()
-const contextDriverRunnerMap = new Map<Symbol, typeof driverRunnerMap>()
-
 export class Runner<T extends Driver> {
   scope = new CurrentRunnerScope()
   alreadyInit = false
-  options: { beleiveContext: boolean, runnerContext?: Symbol } = { beleiveContext: false }
+  options: { beleiveContext: boolean; runnerContext?: Symbol } = {
+    beleiveContext: false
+  }
   constructor(
     public driver: T,
-    options?: { beleiveContext: boolean, runnerContext?: Symbol }
+    options?: { beleiveContext: boolean; runnerContext?: Symbol }
   ) {
     Object.assign(this.options, options)
-    this.scope.beleiveContext = options.beleiveContext
+    this.scope.beleiveContext = options?.beleiveContext
   }
 
   onUpdate(f: Function) {
@@ -1316,7 +1334,6 @@ export class Runner<T extends Driver> {
     })
   }
   init(args?: Parameters<T>, initialContext?: IHookContext): ReturnType<T> {
-    
     if (this.alreadyInit) {
       throw new Error('can not init repeat')
     }
@@ -1363,6 +1380,9 @@ export class Runner<T extends Driver> {
         await (hook as InputCompute).run(...args)
       }
     }
+  }
+  state() {
+    return this.scope.state
   }
   ready() {
     return this.scope.ready()
@@ -1814,9 +1834,13 @@ export function cache<T>(key: string, options: ICacheOptions<T>) {
   return currentHookFactory.cache<T>(key, options)
 }
 
-type FComputedFuncAsync<T, S = T extends Symbol ? undefined : T> = (prev?: T) => Promise<S>
+type FComputedFuncAsync<T, S = T extends Symbol ? undefined : T> = (
+  prev?: T
+) => Promise<S>
 type FComputedFunc<T, S = T extends Symbol ? undefined : T> = (prev?: T) => S
-type FComputedFuncGenerator<T, S = T extends Symbol ? undefined : T> = (prev?: T) => Generator<unknown, S>
+type FComputedFuncGenerator<T, S = T extends Symbol ? undefined : T> = (
+  prev?: T
+) => Generator<unknown, S>
 
 export function computed<T>(
   fn: FComputedFuncGenerator<T>

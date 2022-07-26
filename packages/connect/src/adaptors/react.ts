@@ -1,4 +1,4 @@
-import { Runner, BM, Driver } from 'tarat-core'
+import { Runner, BM, Driver, EScopeState } from 'tarat-core'
 import type { IHookContext } from 'tarat-core'
 import { DriverContext, RenderDriver } from '../driver'
 import { unstable_serialize } from 'swr'
@@ -9,11 +9,34 @@ declare global {
   }
   var runner: Runner<any>
   var dc: any
+  var driverWeakMap: Map<Driver, ArgResultMap>
 }
 
 type ArgResultMap = Map<string, any>
+type ResultRunnerMap = Map<any, Runner<any>>
 
-const driverWeakMap = new WeakMap<Driver, ArgResultMap>()
+const resultRunnerWeakMap = new WeakMap<any, Runner<any>>()
+const driverWeakMap = new Map<Driver, ArgResultMap>()
+
+typeof window !== 'undefined' && (window.driverWeakMap = driverWeakMap)
+
+export interface IProgress {
+  state: EScopeState
+}
+
+export function useReactProgress<T extends Driver> (react: any, result: ReturnType<T>): IProgress | null {
+  const init = react.useRef(null)
+  if (!init.current) {
+    const runner = resultRunnerWeakMap.get(result)
+    if (runner) {
+      init.current = {
+        state: runner.state()
+      }
+    }
+  }
+
+  return init.current
+}
 
 export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
   const init = react.useRef(null)
@@ -29,9 +52,9 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
 
     // match the cache
     if (cachedDriverResult) {
-      init.current = cachedDriverResult
-      runner.onUpdate(() => {
-        setHookResult({ ...cachedDriverResult })
+      init.current = cachedDriverResult.result
+      cachedDriverResult.runner.onUpdate(() => {
+        setHookResult({ ...init.current })
       })  
   
     } else {
@@ -57,6 +80,17 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
         setHookResult({ ...init.current })
       })
       typeof window !== 'undefined' && (window.runner = runner)
+
+      let m = driverWeakMap.get(hook)
+      if (!m) {
+        m = new Map
+        driverWeakMap.set(hook, m)
+      }
+      resultRunnerWeakMap.set(r, runner)
+      m.set(serializedArgs, {
+        runner,
+        result: r,
+      })
     }
   }
   const [hookResult, setHookResult] = react.useState(init.current)

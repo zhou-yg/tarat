@@ -120,6 +120,7 @@ describe('runner basic', () => {
     expect(onRunnerUpdate).toHaveBeenCalledTimes(0)
 
     initResult.s1((draft: number) => draft + 1)
+    
     await mockBM.wait()
   
     expect(initResult.s1()).toBe(2)
