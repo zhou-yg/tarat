@@ -661,17 +661,16 @@ export function checkQueryWhere(where: IQueryWhere['where']): boolean {
     : true
 }
 
-export function getDeps(f: BM) {
+export function getDeps(f: Driver) {
   return f.__deps__
 }
 
-export interface BM extends Function {
+export interface Driver extends Function {
   (...prop: any): any
   __deps__?: THookDeps
   __name__?: string
 }
-
-// export type BM = (...prop: any) => any
+export type BM = Driver
 
 export function runGenerator(
   gen: Generator,

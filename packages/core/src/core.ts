@@ -13,7 +13,7 @@ import {
   TPath,
   shallowCopy,
   log,
-  BM,
+  Driver,
   checkQueryWhere,
   isPrimtive,
   last,
@@ -1295,10 +1295,10 @@ export class CurrentRunnerScope {
 
 let currentRunnerScope: CurrentRunnerScope | null = null
 
-export class Runner<T extends BM> {
+export class Runner<T extends Driver> {
   scope = new CurrentRunnerScope()
   alreadyInit = false
-  constructor(public bm: T, public beleiveContext: boolean = false) {
+  constructor(public driver: T, public beleiveContext: boolean = false) {
     this.scope.beleiveContext = beleiveContext
   }
 
@@ -1314,10 +1314,10 @@ export class Runner<T extends BM> {
     currentRunnerScope = this.scope
     currentRunnerScope.setIntialArgs(
       args || [],
-      this.bm.__name__ || this.bm.name
+      this.driver.__name__ || this.driver.name
     )
 
-    const deps = getDeps(this.bm)
+    const deps = getDeps(this.driver)
     currentRunnerScope.setInitialContextDeps(deps)
 
     if (initialContext) {
@@ -1327,7 +1327,7 @@ export class Runner<T extends BM> {
       currentHookFactory = mountHookFactory
     }
 
-    const result: ReturnType<T> = executeBM(this.bm, args)
+    const result: ReturnType<T> = executeDriver(this.driver, args)
 
     // becase of some hook won't run at intitial time with initialContext
     if (initialContext) {
@@ -1360,13 +1360,13 @@ export class Runner<T extends BM> {
   }
 }
 
-function executeBM(f: BM, args: any = []) {
-  const bmResult = f(...args)
+function executeDriver(f: Driver, args: any = []) {
+  const driverResult = f(...args)
 
-  if (bmResult) {
+  if (driverResult) {
   }
 
-  return bmResult
+  return driverResult
 }
 
 export function internalProxy<T>(
@@ -1941,17 +1941,17 @@ export function combineLatest<T>(
 }
 
 /**
- * using another BM inside of BM
+ * using another Driver inside of Driver
  * the important thing is that should consider how to compose their depsMap
  */
-export function compose<T extends BM>(f: T, args?: any[]) {
+export function compose<T extends Driver>(f: T, args?: any[]) {
   if (!currentRunnerScope) {
-    throw new Error('[useBM] must run side of BM')
+    throw new Error('[compose] must run side of Driver')
   }
 
   const startIndex = currentRunnerScope.hooks.length
 
-  const insideResult: ReturnType<T> = executeBM(f, args)
+  const insideResult: ReturnType<T> = executeDriver(f, args)
 
   currentRunnerScope.composes.push(insideResult)
 
