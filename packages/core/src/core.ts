@@ -1295,11 +1295,19 @@ export class CurrentRunnerScope {
 
 let currentRunnerScope: CurrentRunnerScope | null = null
 
+const driverRunnerMap = new Map<Driver, Runner<Driver>>()
+const contextDriverRunnerMap = new Map<Symbol, typeof driverRunnerMap>()
+
 export class Runner<T extends Driver> {
   scope = new CurrentRunnerScope()
   alreadyInit = false
-  constructor(public driver: T, public beleiveContext: boolean = false) {
-    this.scope.beleiveContext = beleiveContext
+  options: { beleiveContext: boolean, runnerContext?: Symbol } = { beleiveContext: false }
+  constructor(
+    public driver: T,
+    options?: { beleiveContext: boolean, runnerContext?: Symbol }
+  ) {
+    Object.assign(this.options, options)
+    this.scope.beleiveContext = options.beleiveContext
   }
 
   onUpdate(f: Function) {
@@ -1308,6 +1316,7 @@ export class Runner<T extends Driver> {
     })
   }
   init(args?: Parameters<T>, initialContext?: IHookContext): ReturnType<T> {
+    
     if (this.alreadyInit) {
       throw new Error('can not init repeat')
     }

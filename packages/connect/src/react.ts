@@ -25,7 +25,7 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
           : []
     }
 
-    const runner = new Runner(hook, driver?.beleiveContext)
+    const runner = new Runner(hook, { beleiveContext: driver?.beleiveContext })
     driver?.push(runner, bmName)
 
     const initialContext = ssrContext.pop()
