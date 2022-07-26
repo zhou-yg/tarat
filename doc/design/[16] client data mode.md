@@ -16,7 +16,6 @@ UI framework在使用driver时的诉求主要是2种：
   - Designator 直接指定的
     - 数据源为指定的相同driver里的值
 
-
 所以在使用driver的时候，需要提供1个复用开关：
 
 - mode
@@ -24,12 +23,28 @@ UI framework在使用driver时的诉求主要是2种：
   - context 上下文模式
   - <designator> 已经声明为此key的driver
 
+其他Unit可以通过复用View从而复用于driver，也要考虑在渲染View时，View内部的driver的数据模式
+
+最后最重要的是，由于存在了多种可选的数据模式，一定会对开发者造成负担，这需要考虑通过提供一种默认模式，解决通用场景的问题
+
+然后特定场景下再针对性的，按需求使用不同的数据模式
+
+参考useSwr，是否有机会只提供一种模式，再提供另外的手动模式解决边界问题
+
+比如问题是：同样的global，但参数不同，是否强行global，会不会因为经常的参数，导致global模式只能用于无参数的driver
+
+示例中的是通过参数的方式来指定，但在实际中，由于driver可能自带参数，所以这样的代码写起了会很丑陋，而且会跟driver的参数有问题
+
 ```javascript
 function Component () {
-  const hook = useDriver(driver, {
+  const hook = useDriver(driver, 1, 2, {
     mode: 'global'
   })
 }
+
+<DriverContext mode="global">
+  <ViewWithAnyDriver />
+</DriverContext>
 ```
 
 ## 声明
