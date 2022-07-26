@@ -1,7 +1,7 @@
 import { BM } from 'tarat-core'
 export { BM } from 'tarat-core'
-import { useAxiiHook } from './axii'
-import { useReactHook } from './react'
+import { useAxiiHook } from './adaptors/axii'
+import { useReactHook } from './adaptors/react'
 
 let hookAdaptorRuntime: any = null
 let hookAdaptorType: 'react' | 'axii' | null = null

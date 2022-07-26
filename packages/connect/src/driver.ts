@@ -19,6 +19,8 @@ export function renderWithDriverContext(
 export class RenderDriver {
   mode?: 'collect' | 'consume'
 
+  eanbleCache = true
+
   beleiveContext = false
 
   BMValuesMap: Map<string, Runner<any>[]> = new Map()
