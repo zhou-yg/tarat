@@ -2007,3 +2007,14 @@ export function connectCreate<T>(
 ) {
   modelGetter._hook.addCreateGetter(dataGetter)
 }
+
+
+interface IGetterPromise<T> {
+  getterPromise: Promise<T>
+}
+
+export function progress<T> (getter: { _hook: IGetterPromise<T> }) {
+  return () => ({
+    state: getter._hook.getterPromise ? EScopeState.pending : EScopeState.idle
+  })
+}

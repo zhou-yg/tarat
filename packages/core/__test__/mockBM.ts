@@ -14,7 +14,8 @@ import {
   Runner,
   BM,
   compose,
-  connectCreate
+  connectCreate,
+  progress
 } from '../src/'
 import { loadPlugin } from '../src/plugin'
 
@@ -487,7 +488,10 @@ export function modelInComputed() {
     return users()?.map(obj => obj.name) || []
   })
 
+  const usersProgress = progress(users)
+
   return {
+    usersProgress,
     users,
     userNames,
     targetName

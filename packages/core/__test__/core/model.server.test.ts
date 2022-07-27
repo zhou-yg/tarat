@@ -131,11 +131,14 @@ describe('model', () => {
 
       expect(runner.state()).toBe('pending')
 
+      expect(result.usersProgress().state).toBe('pending')
+
       stopReactiveChain()
 
       await runner.ready()
 
       expect(runner.state()).toBe('idle')
+      expect(result.usersProgress().state).toBe('idle')
 
       const firstComputed = initChain.children[0]
       expect(firstComputed.hook).toBeInstanceOf(Computed)
