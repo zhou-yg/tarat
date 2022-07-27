@@ -2031,8 +2031,9 @@ interface IGetterPromise<T> {
   getterPromise: Promise<T>
 }
 
-export function progress<T> (getter: { _hook: IGetterPromise<T> }) {
+export function progress<T = any> (getter: { _hook: AsyncState<T> | AsyncInputCompute<T[]> }) {
+  const hook = getter._hook
   return () => ({
-    state: getter._hook.getterPromise ? EScopeState.pending : EScopeState.idle
+    state: hook.init ? EScopeState.init : hook.getterPromise ? EScopeState.pending : EScopeState.idle
   })
 }
