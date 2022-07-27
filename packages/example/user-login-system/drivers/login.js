@@ -60,7 +60,6 @@ export default function login () {
   /* 9 */
   const userIdInSession = computed(() => {
     const ss = sessionStore()
-    console.log('ss: ', ss);
     if (ss && ss.length > 0) {
       return {
         name: ss[0].name,
@@ -86,12 +85,10 @@ export default function login () {
   /* 11 */
   const userData = computed(() => {
     const u1 = userDataByCookie()
-    console.log('u1: ', u1);
     if (u1?.length > 0) {
       return u1[0]
     }
     const u2 = userDataByInput()
-    console.log('u2: ', u2);
     if (u2?.length > 0) {
       return u2[0]
     }
@@ -101,7 +98,6 @@ export default function login () {
   /* 12 */
   const alreadyLogin = computed(() => {
     const ud = userData()
-    console.log('userData: ', ud);
     return !!ud
   })
   alreadyLogin._hook && (alreadyLogin._hook.name = 'alreadyLogin')

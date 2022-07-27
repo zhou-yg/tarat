@@ -1,13 +1,13 @@
 import { useTarat } from 'tarat-connect'
 import React, { useState } from 'react'
 
-const Todos = () => {
+const Login = () => {
 
   return (
     <div>
-      todos
+      Login
     </div>
   )
 }
 
-export default Todos
+export default Login

@@ -1,32 +1,24 @@
 import mainHook from '../../drivers/main'
 import React, { useEffect } from 'react'
 import { useProgress, useTarat } from 'tarat-connect'
-import Todos from '../../views/todos'
 import { useLocation, Navigate } from 'react-router-dom'
+import s from './main.module.less'
+import Comments from '../../views/comments'
 
 export default function Main () {
   const location = useLocation()
-  console.log('location: ', location);
   const main = useTarat(mainHook)
   const mainProgress = useProgress(main)
 
-  console.log('main.alreadyLogin(): ', mainProgress?.state, main.alreadyLogin());
+  console.log('main.notLogin(): ', mainProgress?.state, main.notLogin());
 
-  const isLogin = main.alreadyLogin()
-
-  useEffect(() => {
-
-  }, [isLogin])
+  const notLogin = main.notLogin()
 
   return (
-    <div>
-      {!isLogin && mainProgress?.state === 'idle' ? <Navigate to="/login" replace={true} /> : ''}
+    <div className={s.mainBox}>
+      {notLogin ? <Navigate to="/login" replace={true} /> : ''}
 
-      <p>
-        alreadyLogin: {String(isLogin)}
-      </p>
-
-      <Todos />
+      <Comments />
     </div>
   )
 }
