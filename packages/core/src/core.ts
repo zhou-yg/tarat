@@ -223,11 +223,27 @@ type PartialGetter<T> = {
 
 type TGetterData<T> = () => PartialGetter<T>
 
-export class Model<T extends any[]> extends State<T[]> {
-  getterPromise: Promise<T> | null = null
+class AsyncState<T> extends State<T> {
+  init = true
+  getterPromise: Promise<T> | null = null  
+  startAsyncGetter () {
+    this.init = false
+    let resolve: Function
+    this.getterPromise = new Promise(
+      r =>
+        (resolve = r)
+    )
+
+    return () => {
+      resolve()
+      this.getterPromise = null
+    }
+  }
+}
+
+export class Model<T extends any[]> extends AsyncState<T[]> {
   queryWhereComputed: Computed<IModelQuery['query'] | void> | null = null
   watcher: Watcher = new Watcher(this)
-  init = true
   // just update latest query
   queryTimeIndex: number = 0
 
@@ -300,17 +316,7 @@ export class Model<T extends any[]> extends State<T[]> {
     this.queryTimeIndex++
     let currentQueryTimeIndex = this.queryTimeIndex
 
-    this.init = false
-    let resolve: Function
-
-    this.getterPromise = new Promise(
-      r =>
-        (resolve = () => {
-          log('[Model.executeQuery] promise resolve')
-          // @ts-ignore
-          r()
-        })
-    )
+    const end = this.startAsyncGetter()
     try {
       // @TODO：要确保时序，得阻止旧的query数据更新
       const q = await this.getQueryWhere()
@@ -330,8 +336,7 @@ export class Model<T extends any[]> extends State<T[]> {
       console.error(e)
     } finally {
       log('[Model.executeQuery] end')
-      resolve!()
-      this.getterPromise = null
+      end()
     }
   }
 
@@ -401,8 +406,7 @@ export class Model<T extends any[]> extends State<T[]> {
       this.update(v, patches, false, reactiveChain)
     }
 
-    let resolve: Function
-    this.getterPromise = new Promise(r => (resolve = r))
+    const end = this.startAsyncGetter()
 
     const { entity } = this
     try {
@@ -416,8 +420,7 @@ export class Model<T extends any[]> extends State<T[]> {
       //   this.update(oldValue, [], true)
       // }
     } finally {
-      resolve!()
-      this.getterPromise = null
+      end()
     }
     await this.executeQuery(reactiveChain)
   }
@@ -427,8 +430,7 @@ export class ClientModel<T extends any[]> extends Model<T> {
   override async executeQuery() {
     this.init = false
 
-    let resolve: Function
-    this.getterPromise = new Promise(r => (resolve = r))
+    const end = this.startAsyncGetter()
 
     const valid = await this.enableQuery()
 
@@ -443,7 +445,6 @@ export class ClientModel<T extends any[]> extends Model<T> {
       const result: IHookContext = await getPlugin('Context').postQueryToServer(
         context
       )
-      this.getterPromise = null
 
       const index = this.scope.hooks.indexOf(this)
       const d = result.data[index]
@@ -452,8 +453,7 @@ export class ClientModel<T extends any[]> extends Model<T> {
       }
     }
 
-    resolve!()
-    this.getterPromise = null
+    end()
   }
   override async updateWithPatches(v: T, patches: IPatch[]) {
     throw new Error('cant update in client')
@@ -465,7 +465,7 @@ export interface ICacheOptions<T> {
   defaultValue?: T
   from: TCacheFrom
 }
-export class Cache<T> extends State<T | undefined> {
+export class Cache<T> extends AsyncState<T | undefined> {
   getterKey: string
   watcher: Watcher = new Watcher(this)
   source: State<T> | undefined
@@ -526,8 +526,8 @@ export class Cache<T> extends State<T | undefined> {
     const { from } = this.options
     const { source } = this
 
-    let resolve: Function
-    this.getterPromise = new Promise(r => (resolve = r))
+    
+    const end = this.startAsyncGetter()
 
     try {
       const valueInCache = await getPlugin('Cache').getValue<T>(
@@ -558,8 +558,7 @@ export class Cache<T> extends State<T | undefined> {
       console.error(e)
     } finally {
       log(`[Cache.executeQuery] end ${currentQueryTimeIndex}`)
-      resolve!()
-      this.getterPromise = null
+      end()
     }
   }
   // call by outer
@@ -596,8 +595,7 @@ export function setCurrentComputed(c: Computed<any>[]) {
 }
 
 export const ComputedInitial = Symbol('ComputedInitial')
-export class Computed<T> extends State<T | Symbol> {
-  getterPromise: Promise<T> | null = null
+export class Computed<T> extends AsyncState<T | Symbol> {
   batchRunCancel: () => void = () => {}
   watcher: Watcher<State<any>> = new Watcher<State<any>>(this)
   firstRun = true
@@ -638,20 +636,20 @@ export class Computed<T> extends State<T | Symbol> {
 
     popComputed()
     if (isPromise(r)) {
-      this.getterPromise = r as Promise<T>
-      this.getterPromise.then((asyncResult: T) => {
+      const end = this.startAsyncGetter();
+      (r as Promise<T>).then((asyncResult: T) => {
         this.update(asyncResult, [], false, reactiveChain)
-        this.getterPromise = null
+        end()
       })
     } else if (isGenerator(r)) {
-      this.getterPromise = runGenerator(
+      const end = this.startAsyncGetter();
+      (runGenerator(
         r as Generator,
         () => pushComputed(this),
         () => popComputed()
-      ) as Promise<T>
-      this.getterPromise.then((asyncResult: T) => {
+      ) as Promise<T>).then((asyncResult: T) => {
         this.update(asyncResult, [], false, reactiveChain)
-        this.getterPromise = null
+        end()
       })
     } else {
       this.update(r as T, [], false, reactiveChain)
@@ -749,11 +747,28 @@ export class InputCompute<P extends any[] = any> extends Hook {
     return this.inputFuncEnd(newReactiveChain)
   }
 }
-class InputComputeInServer<P extends any[]> extends InputCompute<P> {
-  getterPromise: Promise<any> | null = null
-  async run(...args: any[]) {
+
+class AsyncInputCompute<T extends any[]> extends InputCompute<T> {
+  init = true
+  getterPromise: Promise<T> | null = null
+  startAsyncGetter () {
+    this.init = false
     let resolve: Function
-    this.getterPromise = new Promise(r => (resolve = r))
+    this.getterPromise = new Promise(
+      r =>
+        (resolve = r)
+    )
+
+    return () => {
+      resolve()
+      this.getterPromise = null
+    }
+  }
+}
+
+class InputComputeInServer<P extends any[]> extends AsyncInputCompute<P> {
+  async run(...args: any[]) {
+    const end = this.startAsyncGetter()
 
     this.emit(EHookEvents.beforeCalling, this)
     if (!checkFreeze({ _hook: this })) {
@@ -768,8 +783,7 @@ class InputComputeInServer<P extends any[]> extends InputCompute<P> {
     }
     this.inputFuncEnd()
 
-    resolve!()
-    this.getterPromise = null
+    end()
   }
 }
 
@@ -956,6 +970,7 @@ export class ReactiveChain<T = any> {
 }
 
 export enum EScopeState {
+  init = 'init',
   idle = 'idle',
   pending = 'pending'
 }
@@ -1282,8 +1297,11 @@ export class CurrentRunnerScope {
 
   ready(): Promise<void> {
     const asyncHooks = this.hooks.filter(
-      h => h && Reflect.has(h, 'getterPromise')
-    ) as unknown as { getterPromise: Promise<any> | null }[]
+      h => 
+        h && Reflect.has(h, 'getterPromise') || 
+        h instanceof AsyncInputCompute || 
+        h instanceof AsyncState
+    ) as unknown as (AsyncInputCompute<any> | AsyncState<any>)[]
 
     let readyResolve: () => void
     let readyPromise = new Promise<void>(resolve => (readyResolve = resolve))
