@@ -2,7 +2,7 @@ import React, { createContext, useState } from 'react'
 import s from './main.module.less'
 import TopicList from '../../views/topicList'
 import { Link, Outlet } from 'react-router-dom'
-import Radio, { RadioChangeEvent } from 'antd/lib/radio/index'
+import Radio, { RadioChangeEvent } from 'antd/lib/radio'
 import 'antd/dist/antd.css'
 
 const roles = {

@@ -4,7 +4,7 @@ import {
   progress,
   state,
 } from 'tarat-core'
-import login from './login'
+import login from './compose/login'
 
 export default function main () {
 
