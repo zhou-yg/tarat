@@ -58,8 +58,9 @@ export async function buildViews (c: IConfig) {
 
   const queue: Promise<void>[] = []
 
+  const originDirverDir = path.join(c.cwd, c.driversDirectory)
+
   traverseDir(originalViewsDir, f => {
-    console.log('f: ', f);
     const wholePath = path.join(originalViewsDir, f.file)
     if (f.isDir) {
       if (!fs.existsSync(wholePath)) {
@@ -76,9 +77,9 @@ export async function buildViews (c: IConfig) {
         const outputJS = path.join(outputViewsDir, relativePath, `${parsed.name}.js`)
         const outputCSS = path.join(outputViewsDir, relativePath, `${parsed.name}.css`)
   
-        const externalDrivers = fs.readdirSync(path.join(c.cwd, c.driversDirectory)).map(f => {
+        const externalDrivers = fs.existsSync(originDirverDir) ? fs.readdirSync(originDirverDir).map(f => {
           return path.join(c.cwd, c.driversDirectory, f)
-        })
+        }) : []
   
         const op: IBuildOption = {
           input: {

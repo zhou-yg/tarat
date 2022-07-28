@@ -382,23 +382,25 @@ async function esbuildDrivers (c: IConfig, outputDir: string, format: esbuild.Fo
 
   await esbuild.build(buildOptions)
 
-  // make sure hook will import the same module type
-  fs.readdirSync(outputDir).forEach(f => {
-    const reg = /from (?:'|")([\w\/-]+)(?:'|")/
-    const reg2 = /require\((?:'|")([\w\/-]+)(?:'|")/
-    const sourceFile = path.join(outputDir, f)
-    if (fs.lstatSync(sourceFile).isFile()) {
-      const code = fs.readFileSync(sourceFile).toString()
-      const r = code.match(reg)
-      const r2 = code.match(reg2)
-      const importModule = r?.[1] || r2?.[1]
-      if (importModule && /\/drivers\/[\w-]+$/.test(importModule)) {
-        const importModuleWithFormat = importModule.replace(/(\/drivers)\/([\w-]+)$/, `$1/${format}/$2`)
-        const newCode = code.replace(importModule, importModuleWithFormat)
-        fs.writeFileSync(sourceFile, newCode)
+  if (fs.existsSync(outputDir)) {
+    // make sure hook will import the same module type
+    fs.readdirSync(outputDir).forEach(f => {
+      const reg = /from (?:'|")([\w\/-]+)(?:'|")/
+      const reg2 = /require\((?:'|")([\w\/-]+)(?:'|")/
+      const sourceFile = path.join(outputDir, f)
+      if (fs.lstatSync(sourceFile).isFile()) {
+        const code = fs.readFileSync(sourceFile).toString()
+        const r = code.match(reg)
+        const r2 = code.match(reg2)
+        const importModule = r?.[1] || r2?.[1]
+        if (importModule && /\/drivers\/[\w-]+$/.test(importModule)) {
+          const importModuleWithFormat = importModule.replace(/(\/drivers)\/([\w-]+)$/, `$1/${format}/$2`)
+          const newCode = code.replace(importModule, importModuleWithFormat)
+          fs.writeFileSync(sourceFile, newCode)
+        }
       }
-    }
-  })
+    })
+  }
 }
 
 function buildDTS (c: IConfig, filePath: string, outputFile: string) {

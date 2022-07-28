@@ -56,7 +56,11 @@ function defineView (viewDir: string, file: string, name: string, parent?: IView
 }
 
 export function readViews (viewDir: string, dir: string, parent?: IViewConfig) {
-  const views = fs.readdirSync(path.join(viewDir, dir))
+  const d = path.join(viewDir, dir)
+  if (!fs.existsSync(d)) {
+    return []
+  }
+  const views = fs.readdirSync(d)
 
   const viewConfigs = views.filter(f => {
     const file = path.join(viewDir, dir, f)

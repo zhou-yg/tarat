@@ -98,6 +98,9 @@ export interface IServerHookConfig {
 }
 
 export function readDrivers(dir: string) {
+  if (!fs.existsSync(dir)) {
+    return []
+  }
   const drivers = fs.readdirSync(dir)
 
   const hookConfigs: IServerHookConfig[] = []
