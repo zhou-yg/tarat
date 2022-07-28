@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { IConfig } from "../config";
-import { loadJSON } from '../util';
+import { loadJSON, traverseDir } from '../util';
 import { build, IBuildOption, getPlugins } from "./prebuild";
 
 
@@ -56,37 +56,52 @@ export async function buildViews (c: IConfig) {
 
   const originalViewsDir = path.join(c.cwd, c.viewsDirectory)
 
-  await Promise.all(fs.readdirSync(originalViewsDir)
-    .filter(file => /\.(j|t)sx$/.test(file))
-    .map(async file => {
-      const parsed = path.parse(file)
+  const queue: Promise<void>[] = []
 
-      const input = path.join(originalViewsDir, file)
-      const outputJS = path.join(outputViewsDir, `${parsed.name}.js`)
-      const outputCSS = path.join(outputViewsDir, `${parsed.name}.css`)
-
-      const externalDrivers = fs.readdirSync(path.join(c.cwd, c.driversDirectory)).map(f => {
-        return path.join(c.cwd, c.driversDirectory, f)
-      })
-
-      const op: IBuildOption = {
-        input: {
-          input,
-          plugins: getPlugins({
-            css: outputCSS,
-            mode: 'build',
-            alias: {
-              'tarat-core': 'tarat-core/dist/index.client.js',
-            }
-          }, c),
-          external: externalDrivers  // use other types will conflict with auto-external plugins
-        },
-        output: {
-          file: outputJS,
-          format: 'esm'
-        }
+  traverseDir(originalViewsDir, f => {
+    console.log('f: ', f);
+    const wholePath = path.join(originalViewsDir, f.file)
+    if (f.isDir) {
+      if (!fs.existsSync(wholePath)) {
+        fs.mkdirSync(wholePath)
       }
-      await build(c, op)
-    })
-  )
+    } else if (/\.(j|t)sx$/.test(f.file)) {
+      queue.push(new Promise<void>(async resolve => {
+        const file = f.file
+        const parsed = path.parse(file)
+
+        const relativePath = path.relative(originalViewsDir, f.dir)
+
+        const input = path.join(originalViewsDir, relativePath, file)
+        const outputJS = path.join(outputViewsDir, relativePath, `${parsed.name}.js`)
+        const outputCSS = path.join(outputViewsDir, relativePath, `${parsed.name}.css`)
+  
+        const externalDrivers = fs.readdirSync(path.join(c.cwd, c.driversDirectory)).map(f => {
+          return path.join(c.cwd, c.driversDirectory, f)
+        })
+  
+        const op: IBuildOption = {
+          input: {
+            input,
+            plugins: getPlugins({
+              css: outputCSS,
+              mode: 'build',
+              alias: {
+                'tarat-core': 'tarat-core/dist/index.client.js',
+              }
+            }, c),
+            external: externalDrivers  // use other types will conflict with auto-external plugins
+          },
+          output: {
+            file: outputJS,
+            format: 'esm'
+          }
+        }
+        await build(c, op)
+
+        resolve()
+      }))
+    }
+  })
+  await Promise.all(queue)
 }

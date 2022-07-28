@@ -78,3 +78,26 @@ export function equalFileContent(c1: string, c2: string) {
 export function isFileEmpty (code: string) {
   return code.replace(/\n/g, '').trim().length === 0
 }
+
+interface IFile {
+  isDir: boolean
+  path: string
+  file: string
+  dir: string
+}
+export function traverseDir (dir: string, callback: (f: IFile) => void) {
+  const files = fs.readdirSync(dir)
+  files.forEach(f => {
+    const p = path.join(dir, f)
+    const isDir = fs.lstatSync(p).isDirectory()
+    callback({
+      isDir,
+      dir,
+      file: f,
+      path: p
+    })
+    if (isDir) {
+      traverseDir(p, callback)
+    }
+  })
+}

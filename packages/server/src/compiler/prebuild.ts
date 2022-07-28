@@ -422,16 +422,27 @@ function buildDTS (c: IConfig, filePath: string, outputFile: string) {
 }
 
 export async function driversType(c: IConfig, outputDir: string) {
-  const { drivers } = c
-  const generateFiles: { name: string, destFile:string }[] = []
+  const { drivers, driversDirectory } = c
+  const cwdDirversDir = path.join(c.cwd, driversDirectory)
+  const generateFiles: {
+    name: string,
+    destFile:string,
+    destDir: string
+    relativePath: string
+  }[] = []
+
   await Promise.all(drivers.filter(({ filePath }) => /\.ts$/.test(filePath)).map(async h => {
-    const { filePath, name } = h
-    const destFile = path.join(outputDir, `${name}.d.ts`)
+    const { filePath, name , dir } = h
+    const relativePath = path.relative(cwdDirversDir, dir)
+    const destDir = path.join(outputDir, relativePath)
+    const destFile = path.join(destDir, `${name}.d.ts`)
     generateFiles.push({
       name,
+      destDir,
+      relativePath,
       destFile,
     })
-    await buildDTS(c, filePath, path.join(outputDir, `${name}.d.ts`))
+    await buildDTS(c, filePath, destFile)
   }))
 
   return generateFiles
@@ -456,9 +467,14 @@ export async function buildDrivers (c: IConfig) {
   if (c.ts) {
     try {
       const files = await driversType(c, outputDriversDir)
-      files.forEach(({ name, destFile }) => {
-        cp(destFile, path.join(outputDriversDir, 'cjs/'))
-        cp(destFile, path.join(outputDriversDir, 'esm/'))
+      files.forEach(({ name, destFile, relativePath }) => {
+        ['cjs', 'esm'].forEach(format => {
+          const dir = path.join(outputDriversDir, format, relativePath)
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir)
+          }
+          cp(destFile, dir)
+        })
       })
     } catch (e) {
       console.error(e)

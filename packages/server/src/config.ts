@@ -11,6 +11,7 @@ export const defaultConfig = () => ({
   // client about
   viewsDirectory: 'views', // in tarat the display unit maybe page or component, they should belong to "views"
   driversDirectory: 'drivers',
+  composeDriversDirectory: 'compose',
   modelsDirectory: 'models',
   appDirectory: 'app',
   pageDirectory: 'pages',
@@ -93,19 +94,26 @@ export interface IServerHookConfig {
   filePath: string
   file: string
   name: string
-  // hookFunc: Promise<{ default: (...args: any[]) => any }>
+  dir: string
 }
 
 export function readDrivers(dir: string) {
   const drivers = fs.readdirSync(dir)
+
+  const hookConfigs: IServerHookConfig[] = []
   // check drivers
   drivers.forEach(f => {
-    if (fs.lstatSync(path.join(dir, f)).isDirectory()) {
-      throw new Error('dont set directory in drivers')
+    const p = path.join(dir, f)
+    if (fs.lstatSync(p).isDirectory()) {
+      const children = readDrivers(p)
+      hookConfigs.push(...children)
     }
   })
   
-  const hookConfigs: IServerHookConfig[] = drivers.map(f => {
+  const hookConfigs2 = drivers.filter(f => {
+    const filePath = path.join(dir, f)
+    return fs.lstatSync(filePath).isFile()
+  }).map(f => {
 
     const filePath = path.join(dir, f)
     const name = f.replace(/\.\w+/, '')
@@ -132,11 +140,14 @@ export function readDrivers(dir: string) {
     }
 
     return {
+      dir,
       filePath,
       file: f,
       name,
     }
   })
+
+  hookConfigs.push(...hookConfigs2)
 
   return hookConfigs
 }
