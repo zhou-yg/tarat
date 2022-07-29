@@ -2,17 +2,19 @@ import React, { ReactElement, useEffect, useState } from 'react'
 
 import s from './commentList.module.less'
 import { useTarat } from 'tarat-connect'
-import List from 'antd/lib/list/index'
-import Button from 'antd/lib/button/index'
-import Input from 'antd/lib/input/index'
-import Comment from 'antd/lib/comment/index'
+// import List from 'antd/lib/list/index'
+// import Button from 'antd/lib/button/index'
+// import Input from 'antd/lib/input/index'
+// import Comment from 'antd/lib/comment/index'
+import { Comment, Input, Button, List } from 'antd'
 
 import commentHook, { ICommentTree } from '../drivers/comment'
 import topicOneHook from '../drivers/topicOne'
 
-import LikeOutlined from '@ant-design/icons/LikeOutlined';
-import UndoOutlined from '@ant-design/icons/UndoOutlined'
-import CommentOutlined from '@ant-design/icons/CommentOutlined'
+// import LikeOutlined from '@ant-design/icons/LikeOutlined';
+// import UndoOutlined from '@ant-design/icons/UndoOutlined'
+// import CommentOutlined from '@ant-design/icons/CommentOutlined'
+import { CommentOutlined, UndoOutlined, LikeOutlined } from '@ant-design/icons'
 
 import * as dateFns from 'date-fns'
 
