@@ -14,7 +14,7 @@ function matchHookName (path: string) {
   const arr = path.split('/').filter(Boolean)
   return {
     pre: arr[0],
-    hookName: arr[1]
+    driverName: arr[1]
   }
 }
 
@@ -38,7 +38,8 @@ export function wrapCtx (ctx: any) {
 export default function taratMiddleware (args: {
   config: IConfig
 }) : Application.Middleware{
-  const { drivers, apiPre, diffPath, cwd, model, pointFiles } = args.config
+  const { config } = args
+  const { drivers, apiPre, diffPath, cwd, model, pointFiles } = config
 
   setRunning()
   setCookies()
@@ -49,11 +50,15 @@ export default function taratMiddleware (args: {
   }
 
   return async (ctx, next) => {
-    const { pre, hookName } = matchHookName(ctx.request.path)
+    const { pre, driverName } = matchHookName(ctx.request.path)
     if (pre === apiPre && ctx.request.method === 'POST') {      
-      const hookConfig = drivers.find(h => h.name === hookName)
+      const hookConfig = drivers.find(h => h.name === driverName)
       if (hookConfig) {
-        const BMPath = path.join(pointFiles.outputDriversCJSDir, `${hookName}.js`)
+
+        const driver = config.drivers.find(d => d.name === driverName)
+
+        // driver has double nested output structure
+        const BMPath = path.join(pointFiles.outputDriversDir, config.cjsDirectory, driver.relativeDir, `${driverName}.js`)
         const BM = require(BMPath)
 
         const c: IHookContext = parseWithUndef(ctx.request.body)
@@ -95,7 +100,7 @@ export default function taratMiddleware (args: {
 
         (runner as any) = null
 
-        console.log(`[${hookName}] is end`)
+        console.log(`[${driverName}] is end`)
       } else {
         await next()        
       }

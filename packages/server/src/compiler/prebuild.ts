@@ -16,7 +16,7 @@ import autoExternal from 'rollup-plugin-auto-external';
 import replace from '@rollup/plugin-replace';
 import rollupAlias from '@rollup/plugin-alias'
 import dts from "rollup-plugin-dts"
-import { loadJSON, logFrame } from "../util";
+import { emptyDirectory, loadJSON, logFrame, traverseDir } from "../util";
 import chalk from "chalk";
 import { cp } from "shelljs";
 import analyze from 'rollup-plugin-analyzer'
@@ -382,15 +382,18 @@ async function esbuildDrivers (c: IConfig, outputDir: string, format: esbuild.Fo
     buildOptions.tsconfig = getTSConfigPath(c)
   }
 
+  emptyDirectory(outputDir)
+
   await esbuild.build(buildOptions)
 
   if (fs.existsSync(outputDir)) {
-    // make sure hook will import the same module type
-    fs.readdirSync(outputDir).forEach(f => {
-      const reg = /from (?:'|")([\w\/-]+)(?:'|")/
-      const reg2 = /require\((?:'|")([\w\/-]+)(?:'|")/
-      const sourceFile = path.join(outputDir, f)
-      if (fs.lstatSync(sourceFile).isFile()) {
+    traverseDir(outputDir, (obj) => {
+      if (!obj.isDir) {
+        // make sure hook will import the same module type
+        const reg = /from (?:'|")([\w\/-]+)(?:'|")/
+        const reg2 = /require\((?:'|")([\w\/-]+)(?:'|")/
+        const sourceFile = obj.path
+
         const code = fs.readFileSync(sourceFile).toString()
         const r = code.match(reg)
         const r2 = code.match(reg2)
@@ -462,10 +465,13 @@ export async function buildDrivers (c: IConfig) {
     outputDriversDir
   } = c.pointFiles
 
+
+  // 1.must build source dir first prevent to traverse below children dir 
+  await esbuildDrivers(c, outputDriversDir, c.esmDirectory)
+  // 2.run after source building
   await Promise.all([
-    esbuildDrivers(c, outputDriversCJSDir, 'cjs'),
-    esbuildDrivers(c, outputDriversESMDir, 'esm'),
-    esbuildDrivers(c, outputDriversDir, 'esm'),
+    esbuildDrivers(c, outputDriversCJSDir, c.cjsDirectory),
+    esbuildDrivers(c, outputDriversESMDir, c.esmDirectory),
   ])
 
   if (c.ts) {

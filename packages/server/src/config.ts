@@ -29,7 +29,8 @@ export const defaultConfig = () => ({
   appServer: 'server',
   appClient: 'client',
   appClientChunk: 'chunks',
-
+  cjsDirectory: 'cjs',
+  esmDirectory: 'esm',
 
   modelEnhance: 'model.enhance.json',
   prismaModelPart: 'part.prisma', // postfix
@@ -50,6 +51,8 @@ export const defaultConfig = () => ({
 })
 
 export type IDefaultConfig = ReturnType<typeof defaultConfig> & {
+  cjsDirectory: 'cjs',
+  esmDirectory: 'esm',
   model?: {
     engine: 'prisma' | 'er'
   }
@@ -179,8 +182,8 @@ function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) 
     outputDriversDir: path.join(outputDir, config.driversDirectory),
     outputViewsDir: path.join(outputDir, config.viewsDirectory),
     // place compiled drivers "esm" file
-    outputDriversESMDir: path.join(outputDir, config.driversDirectory, 'esm'),
-    outputDriversCJSDir: path.join(outputDir, config.driversDirectory, 'cjs'),
+    outputDriversESMDir: path.join(outputDir, config.driversDirectory, config.esmDirectory),
+    outputDriversCJSDir: path.join(outputDir, config.driversDirectory, config.cjsDirectory),
     // prisma
     outputModelsDir: path.join(outputDir, config.modelsDirectory),
     outputModelSchema: path.join(outputDir, config.modelsDirectory, config.targetSchemaPrisma),
@@ -239,7 +242,13 @@ export async function readConfig (arg: {
     c.file = path.join('./', config.appDirectory, config.pageDirectory, c.file)
   })
 
-  const drivers = readDrivers(driversDirectory)
+  const drivers = readDrivers(driversDirectory).map(d => {
+    return {
+      ...d,
+      relativeDir: path.relative(driversDirectory, d.dir)
+    }
+  })
+
 
   const devPointFiles = getOutputFiles(config, cwd, path.join(cwd, config.devCacheDirectory))
   const buildPointFiles = getOutputFiles(config, cwd, path.join(cwd, config.buildDirectory))

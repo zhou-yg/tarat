@@ -9,7 +9,7 @@ import {
   composeSchema,
   buildEntryServer, buildDrivers, buildRoutes,
   generateHookDeps,
-  emptyDirectory, logFrame, tryMkdir, composeHook
+  emptyDirectory, logFrame, tryMkdir, composeDriver, time
 } from "../src/";
 
 export async function buildEverything (c: IConfig) {
@@ -64,9 +64,12 @@ async function startCompile (c: IConfig) {
   watcher
     .on('error', console.error)
     .on('change', () => {
-      logFrame(`[change] ${chalk.green('re-run compiling')}`)
+      const cost = time()
+      logFrame(`[change] re-run compiling`)
       readConfig({ cwd: c.cwd }).then(newConfig => {
-        buildEverything(newConfig)
+        return buildEverything(newConfig)
+      }).then(() => {
+        logFrame(`[change] comipling ${chalk.green(cost())} sec`)
       })
     })
     .on('add', () => {
@@ -76,7 +79,7 @@ async function startCompile (c: IConfig) {
       })
     })
     .on('unlink', () => {
-      logFrame(`[unlink] ${chalk.green('re-run compiling')}`)
+      logFrame(`[unlink] ${chalk.red('re-run compiling')}`)
       readConfig({ cwd: c.cwd }).then(newConfig => {
         buildEverything(newConfig)
       })
@@ -97,7 +100,7 @@ export default async (cwd: string) => {
   await startCompile(config)
 
   composeSchema(config)
-  composeHook(config)
+  composeDriver(config)
 
   await createDevServer(config)
 }

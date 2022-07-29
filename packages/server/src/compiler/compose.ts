@@ -280,7 +280,7 @@ async function generateReferrenceDrivers (c: IConfig, h: IDependencyHook[]) {
   })))
 }
 
-export async function composeHook(c: IConfig) {
+export async function composeDriver(c: IConfig) {
   const dependencyDrivers: IDependencyHook[] = []
   
   c.dependencyModules.forEach(moduleName => {
@@ -291,15 +291,15 @@ export async function composeHook(c: IConfig) {
       .filter(f => /\.js$/.test(f) && !/deps\.js$/.test(f))
       .forEach(f => {
         const { name } = path.parse(f)
-        let hookName = name
-        if (dependencyDrivers.find(v => v.name === hookName)) {
-          hookName = camelCase(`${moduleName}.${name}`)
-          if (dependencyDrivers.find(v => v.name === hookName)) {
+        let driverName = name
+        if (dependencyDrivers.find(v => v.name === driverName)) {
+          driverName = camelCase(`${moduleName}.${name}`)
+          if (dependencyDrivers.find(v => v.name === driverName)) {
             throw new Error('[tarat] can not handle hook name confict betwwen all dependency modules')
           }
         }
         dependencyDrivers.push({
-          name: hookName,
+          name: driverName,
           modulePath: `${moduleName}/${c.buildDirectory}/${c.driversDirectory}/${name}`
         })
       })
