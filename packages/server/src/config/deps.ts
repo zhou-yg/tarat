@@ -1,5 +1,7 @@
-import { loadJSON } from "../util"
+import { loadJSON, logFrame } from "../util"
 import * as path from 'path'
+import { existsSync } from "fs"
+import chalk from 'chalk'
 
 interface IPkg {
   dependencies: {
@@ -12,9 +14,13 @@ export function findDependencies (cwd: string) {
 
   const modules: string[] = pkgModules.filter(moduleName => {
     const dir = path.join(cwd, 'node_modules', moduleName)
-    const r1 = !!loadJSON(path.join(dir, 'package.json')).tarat
-
-    return r1
+    const pkg = path.join(dir, 'package.json')
+    if (existsSync(pkg)) {
+      const r1 = !!loadJSON(pkg).tarat
+      return r1
+    } else {
+      logFrame(chalk.red(`dependency module "${moduleName}" hasnt installed`))
+    }
   })
 
   return modules
