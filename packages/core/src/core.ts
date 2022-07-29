@@ -340,17 +340,17 @@ export class Model<T extends any[]> extends AsyncState<T[]> {
     }
   }
 
-  async exist(obj: { [k: string]: any }) {
-    const result: T = await getPlugin('Model').find(this.entity, { where: obj })
-    return result.length > 0
-  }
   /**
    * confirm the last getter could convert previous getter
    */
   addCreateGetter(g: TGetterData<T[0]>) {
     this.createGetters.push(g)
   }
-  async createRow(obj?: { [k: string]: any }) {
+  async exist(obj: Partial<T[0]>) {
+    const result: T = await getPlugin('Model').find(this.entity, { where: obj })
+    return result.length > 0
+  }
+  async createRow(obj?: Partial<T[0]>) {
     const defaults = this.createGetters.reduce((r, func) => {
       return Object.assign(r, func())
     }, {} as T[0])
@@ -1593,7 +1593,7 @@ function createUnaccessGetter2<T extends any[]>(index: number) {
   const f = (): any => {
     throw new Error(`[update getter] cant access un initialized hook(${index})`)
   }
-  const newF = Object.assign(f, {
+  const newF: any = Object.assign(f, {
     _hook: null,
     exist: () => true,
     create: () => {},
@@ -1684,11 +1684,11 @@ function updateModel<T extends any[]>(
   const setterGetter = createModelSetterGetterFunc<T>(hook)
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: hook,
-    exist: hook.exist.bind(hook),
-    create: hook.createRow.bind(hook),
-    update: hook.updateRow.bind(hook),
-    remove: hook.removeRow.bind(hook),
-    refresh: hook.refresh.bind(hook)
+    exist: hook.exist.bind(hook) as typeof hook.exist,
+    create: hook.createRow.bind(hook) as typeof hook.createRow,
+    update: hook.updateRow.bind(hook) as typeof hook.updateRow,
+    remove: hook.removeRow.bind(hook) as typeof hook.removeRow,
+    refresh: hook.refresh.bind(hook)  as typeof hook.refresh
   })
 
   return newSetterGetter
@@ -1706,11 +1706,11 @@ function mountModel<T extends any[]>(
   const setterGetter = createModelSetterGetterFunc<T>(hook)
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: hook,
-    exist: hook.exist.bind(hook),
-    create: hook.createRow.bind(hook),
-    update: hook.updateRow.bind(hook),
-    remove: hook.removeRow.bind(hook),
-    refresh: hook.refresh.bind(hook)
+    exist: hook.exist.bind(hook) as typeof hook.exist,
+    create: hook.createRow.bind(hook) as typeof hook.createRow,
+    update: hook.updateRow.bind(hook) as typeof hook.updateRow,
+    remove: hook.removeRow.bind(hook) as typeof hook.removeRow,
+    refresh: hook.refresh.bind(hook)  as typeof hook.refresh
   })
 
   return newSetterGetter
