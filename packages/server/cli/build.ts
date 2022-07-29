@@ -22,7 +22,7 @@ export default async (cwd: string) => {
 
   const allCost = time()
 
-  logFrame(chalk.green('prepare dir and cp models'))
+  logFrame(('prepare dir and cp models'))
 
   prepareDir(config)
 
@@ -33,7 +33,7 @@ export default async (cwd: string) => {
     )
   }
 
-  logFrame(chalk.green('build routes/entryServer/drivers'))
+  logFrame(('build routes/entryServer/drivers'))
 
   const cost = time()
 
@@ -41,20 +41,20 @@ export default async (cwd: string) => {
   
   generateHookDeps(config)
 
-  logFrame(chalk.green(`build routes/entryServer/drivers end. cost ${cost()} seconds`))
+  logFrame((`build routes/entryServer/drivers end. cost ${chalk.green(cost())} seconds`))
 
-  logFrame(chalk.green('build clientRoutes/views'))
+  logFrame(('build clientRoutes/views'))
 
   const cost2 = time()
 
   await Promise.all([
     buildClientRoutes(config).then(() => {
-      logFrame(chalk.green(`build clientRoutes end. cost ${cost2()} seconds`))    
+      logFrame((`build ${chalk.green('clientRoutes')} end. cost ${chalk.green(cost2())} seconds`))    
     }),
     buildViews(config).then(() => {
-      logFrame(chalk.green(`build views end. cost ${cost2()} seconds`))    
+      logFrame((`build ${chalk.green('views')} end. cost ${chalk.green(cost2())} seconds`))    
     }),
   ])
 
-  logFrame(chalk.green(`build end. cost ${allCost()} seconds`))
+  logFrame((`build end. cost ${chalk.green(allCost())} seconds`))
 }

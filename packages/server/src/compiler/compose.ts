@@ -120,7 +120,7 @@ async function generateNewSchema (c: IConfig, schemaContentArr: string[], enhanc
 
             const type = getSourceReferrenceType(source, 'id')
             target.fieldLines.push(`${lowerFirst(source.name)} ${source.name} @relation(fields: [${relation.to.field}], references:[id])`)
-            target.fieldLines.push(`${relation.to.field} ${type} @unique`)
+            target.fieldLines.push(`${relation.to.field} ${type}`)
           }
           break
         case '1:n':
@@ -128,14 +128,14 @@ async function generateNewSchema (c: IConfig, schemaContentArr: string[], enhanc
             source.fieldLines.push(`${relation.from.field} ${target.name}[]`)
             target.fieldLines.push(`${lowerFirst(source.name)} ${source.name} @relation(fields: [${relation.to.field}], references:[id])`)
             const type = getSourceReferrenceType(source, 'id')
-            target.fieldLines.push(`${relation.to.field} ${type} @unique`)
+            target.fieldLines.push(`${relation.to.field} ${type}`)
           }
           break
         case 'n:1':
           {
             const type = getSourceReferrenceType(source, 'id')
             source.fieldLines.push(`${lowerFirst(target.name)} ${target.name} @relation(fields: [${relation.from.field}], references:[id])`)
-            source.fieldLines.push(`${relation.from.field} ${type} @unique`)
+            source.fieldLines.push(`${relation.from.field} ${type}`)
             target.fieldLines.push(`${relation.to.field} ${source.name}[]`)
           }
           break

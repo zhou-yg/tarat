@@ -68,7 +68,7 @@ export default function taratMiddleware (args: {
 
         console.log('=================================================')
 
-        const chain1 = startdReactiveChain()
+        const chain1 = startdReactiveChain(`${driverName}(init)`)
 
         runner.init(c.initialArgList, c)
 
@@ -81,7 +81,7 @@ export default function taratMiddleware (args: {
 
         // debuggerLog(true)
 
-        const chain2 = startdReactiveChain()
+        const chain2 = startdReactiveChain(`${driverName}:call(${c.index})`)
 
         if (c.index !== undefined) {
           await runner.callHook(c.index, c.args)
