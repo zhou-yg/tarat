@@ -87,11 +87,12 @@ export async function buildViews (c: IConfig) {
             plugins: getPlugins({
               css: outputCSS,
               mode: 'build',
+              target: 'unit',
               alias: {
                 'tarat-core': 'tarat-core/dist/index.client.js',
               }
             }, c),
-            external: externalDrivers  // use other types will conflict with auto-external plugins
+            external: externalDrivers  // use other external parameter types will conflict with auto-external plugins
           },
           output: {
             file: outputJS,

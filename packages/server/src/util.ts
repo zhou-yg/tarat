@@ -41,8 +41,14 @@ export function last<T extends any[]>(arr: T) {
   return arr[arr.length - 1]
 }
 
-export function logFrame (content: string, length = 60) {
-  const line = new Array(length).fill('-').join('')
+export function logFrame (content: string, length = 100) {
+  const lineArr = new Array(length).fill('-')  
+  const line2 = lineArr.join('')
+
+  const title = ' tarat '
+  lineArr.splice(1, 0, title)
+  const line1 = lineArr.slice(0, -title.length).join('')
+
   const rows = content.split('\n').map(c => {
     return c.trim().match(new RegExp(`.{1,${length - 4}}`, 'g'))
   }).filter(Boolean).flat()
@@ -51,9 +57,9 @@ export function logFrame (content: string, length = 60) {
 
   return console.log(
     [
-      line,
+      line1,
       ...(rows?.map(s => `| ${s}`) || []),
-      line
+      line2
     ].join('\n')
   )
 }
@@ -100,4 +106,12 @@ export function traverseDir (dir: string, callback: (f: IFile) => void) {
       traverseDir(p, callback)
     }
   })
+}
+
+export function time (sec = true) {
+  let st = Date.now()
+  return () => {
+    const v = Date.now() - st
+    return sec ? Math.floor(v / 1000) : v
+  }
 }

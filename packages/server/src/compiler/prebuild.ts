@@ -19,6 +19,7 @@ import dts from "rollup-plugin-dts"
 import { loadJSON, logFrame } from "../util";
 import chalk from "chalk";
 import { cp } from "shelljs";
+import analyze from 'rollup-plugin-analyzer'
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -93,12 +94,13 @@ async function generateOutput(c: IConfig, bundle: RollupBuild, op: IBuildOption[
 export function getPlugins (input: {
   css: string | boolean,
   mode: 'dev' | 'build',
-  target?: 'browser' | 'node',
+  target?: 'browser' | 'node' | 'unit',
   alias?: { [k: string]: string }
 }, c: IConfig) {
   const { alias, css, mode, target = 'node' } = input
 
   const plugins = [
+    // analyze(),
     replace({
       preventAssignment: true,
       'process.env.NODE_ENV': mode === 'build' ? '"production"' : '"development"'
@@ -120,8 +122,8 @@ export function getPlugins (input: {
       extract: typeof css === 'string'  ? css.replace(c.pointFiles.outputDir, '').replace(/^\//, '') : css, // only support relative path
     }),
     autoExternal({
-      peerDependencies: target === 'node',
-      dependencies: mode === 'dev' && target === 'node'
+      peerDependencies: target !== 'browser', // only under browser need bundle all dependencies
+      dependencies: mode === 'dev' && target !== 'browser'
     }),
     c.ts ? tsPlugin({
       clean: true,
