@@ -24,7 +24,7 @@ model Topic {
 
   comments Comment[]
   user     User      @relation(fields: [author], references: [id])
-  author   String    @unique
+  author   String
 }
 
 model Comment {
@@ -47,7 +47,7 @@ model Comment {
 
   appendComments Comment[] @relation("reply")
   user           User      @relation(fields: [author], references: [id])
-  author         String    @unique
+  author         String
 }
 
 model User {

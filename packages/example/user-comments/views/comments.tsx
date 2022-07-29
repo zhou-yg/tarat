@@ -25,8 +25,6 @@ const Comments = () => {
 
   const notLogin = main.notLogin()
 
-  const topic = useTarat(topicDriver)
-
   return (
     <div className={s.comments}>
       {notLogin ? (
@@ -34,9 +32,36 @@ const Comments = () => {
       ) : ''}
 
       <div className={s.header} >
-        <input value={topic.inputName()} onChange={e => {
-          topic.inputName(() => e.target.value)
+        <label htmlFor="inputName">
+          topic:
+        </label>
+        <input id="inputName" value={main.inputName()} onChange={e => {
+          main.inputName(() => e.target.value)
         }} />
+        <button onClick={() => main.add() }>create</button>
+      </div>
+
+      {main.topics().length ? '' : (
+        <div className={s.noTopic}>
+          no topic
+        </div>
+      )}
+      <div className={s.topics}>
+        <ol>
+          {main.topics().map((o, i) => {
+            return (
+              <li key={o.id} className={s.topicOne}>
+                <div className={s.title}>
+                  {i + 1}.&nbsp;
+                  {o.title}
+                </div>
+                <span className={s.close} onClick={() => main.removeTopic(o.id)}>
+                  X
+                </span>
+              </li>
+            )
+          })}
+        </ol>
       </div>
 
     </div>

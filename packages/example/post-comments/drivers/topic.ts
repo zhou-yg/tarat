@@ -1,5 +1,6 @@
 import {
   computed,
+  connectCreate,
   inputComputeInServer,
   model,
   state
@@ -23,14 +24,14 @@ export default function topic () {
   }))
 
   const inputName = state('')
+
+  connectCreate(topics, () => ({
+    title: inputName()
+  }))
   
-  const add = inputComputeInServer(() => {
+  const add = inputComputeInServer(function * () {
     if (inputName()) {
-      topics(arr => {
-        arr.push({
-          title: inputName()
-        })
-      })
+      yield topics.create()
       inputName(() => '')
     }
   })
@@ -41,7 +42,8 @@ export default function topic () {
     inputName
   }
 }
+
 /*--tarat deps start--*/
-const deps = {'topic':[['h',2,[1],[0,1]]]}
+const deps = {'topic':[['h',2,[1,0],[1]]]}
 Object.assign(topic, { __deps__: deps.topic, __name__: 'topic' })
 /*--tarat deps end--*/
