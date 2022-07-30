@@ -14,10 +14,18 @@ import {
 
 export async function buildEverything (c: IConfig) {
   
+  const cost = time()
+
   await Promise.all([
-    buildRoutes(c),
-    buildEntryServer(c),
-    buildDrivers(c)
+    buildRoutes(c).then(() => {
+      logFrame(`build routes end. cost ${chalk.green(cost())} sec`)
+    }),
+    buildEntryServer(c).then(() => {
+      logFrame(`build entryServer end. cost ${chalk.green(cost())} sec`)
+    }),
+    buildDrivers(c).then(() => {
+      logFrame(`build drivers end. cost ${chalk.green(cost())} sec`)
+    })
   ])
 
   generateHookDeps(c)
@@ -41,6 +49,10 @@ export function prepareDir (c: IConfig) {
 
 
 async function startCompile (c: IConfig) {
+
+  const cost = time()
+
+  logFrame('prepare')
 
   prepareDir(c)
 

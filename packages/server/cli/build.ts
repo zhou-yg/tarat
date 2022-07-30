@@ -39,8 +39,6 @@ export default async (cwd: string) => {
 
   await buildEverything(config)
   
-  generateHookDeps(config)
-
   logFrame((`build routes/entryServer/drivers end. cost ${chalk.green(cost())} seconds`))
 
   logFrame(('build clientRoutes/views'))
