@@ -61,7 +61,7 @@ describe('chain', () => {
     expect(chain.children[0].children.length).toBe(1)
     expect(chain.children[0].children[0].hook).toBeInstanceOf(Computed)
   })
-  it ('state -> nested computed', () => {
+  it('state -> nested computed', () => {
     const runner = new Runner(mockBM.stateInNestedComputed)
     const { s2, c1, c2 } = runner.init()
 
@@ -103,7 +103,7 @@ describe('chain', () => {
 
     const chain = startdReactiveChain()
     ic()
-    stopReactiveChain()
+    chain.stop()
 
     // root
     expect(chain.hook).toBe(undefined)
@@ -133,7 +133,8 @@ describe('chain', () => {
     expect(updateReactiveChain.children[1].children[0].children[0].type).toEqual('call')
 
     expect(updateReactiveChain.children[1].children[0].children[1].hook).toBeInstanceOf(Computed)
-    expect(updateReactiveChain.children[1].children[0].children[1].children).toEqual([])
+    expect(updateReactiveChain.children[1].children[0].children[1].children.length).toEqual(1)
+    expect(updateReactiveChain.children[1].children[0].children[1].children[0].hook).toBeInstanceOf(Computed)
 
     // chain.print()
   })

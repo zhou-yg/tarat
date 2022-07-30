@@ -225,14 +225,11 @@ type TGetterData<T> = () => PartialGetter<T>
 
 class AsyncState<T> extends State<T> {
   init = true
-  getterPromise: Promise<T> | null = null  
-  startAsyncGetter () {
+  getterPromise: Promise<T> | null = null
+  startAsyncGetter() {
     this.init = false
     let resolve: Function
-    this.getterPromise = new Promise(
-      r =>
-        (resolve = r)
-    )
+    this.getterPromise = new Promise(r => (resolve = r))
 
     return () => {
       resolve()
@@ -526,7 +523,6 @@ export class Cache<T> extends AsyncState<T | undefined> {
     const { from } = this.options
     const { source } = this
 
-    
     const end = this.startAsyncGetter()
 
     try {
@@ -636,18 +632,20 @@ export class Computed<T> extends AsyncState<T | Symbol> {
 
     popComputed()
     if (isPromise(r)) {
-      const end = this.startAsyncGetter();
-      (r as Promise<T>).then((asyncResult: T) => {
+      const end = this.startAsyncGetter()
+      ;(r as Promise<T>).then((asyncResult: T) => {
         this.update(asyncResult, [], false, reactiveChain)
         end()
       })
     } else if (isGenerator(r)) {
-      const end = this.startAsyncGetter();
-      (runGenerator(
-        r as Generator,
-        () => pushComputed(this),
-        () => popComputed()
-      ) as Promise<T>).then((asyncResult: T) => {
+      const end = this.startAsyncGetter()
+      ;(
+        runGenerator(
+          r as Generator,
+          () => pushComputed(this),
+          () => popComputed()
+        ) as Promise<T>
+      ).then((asyncResult: T) => {
         this.update(asyncResult, [], false, reactiveChain)
         end()
       })
@@ -751,13 +749,10 @@ export class InputCompute<P extends any[] = any> extends Hook {
 class AsyncInputCompute<T extends any[]> extends InputCompute<T> {
   init = true
   getterPromise: Promise<T> | null = null
-  startAsyncGetter () {
+  startAsyncGetter() {
     this.init = false
     let resolve: Function
-    this.getterPromise = new Promise(
-      r =>
-        (resolve = r)
-    )
+    this.getterPromise = new Promise(r => (resolve = r))
 
     return () => {
       resolve()
@@ -882,6 +877,7 @@ export function stopReactiveChain() {
  */
 export class ReactiveChain<T = any> {
   name?: string
+  index?: number
   oldValue: T | undefined
   newValue: T | undefined
   hasNewValue: boolean = false
@@ -893,6 +889,9 @@ export class ReactiveChain<T = any> {
       this.oldValue = hook._internalValue
     }
   }
+  stop () {
+    stopReactiveChain()
+  }
   update() {
     if (this.hook instanceof State) {
       this.hasNewValue = true
@@ -902,6 +901,12 @@ export class ReactiveChain<T = any> {
   add(child: State<T> | InputCompute): ReactiveChain<T> {
     const childChain = new ReactiveChain(child)
     this.children.push(childChain)
+    if (currentRunnerScope) {
+      const index = currentRunnerScope.hooks.indexOf(child)
+      if (index > -1) {
+        childChain.index = index
+      }
+    }
     return childChain
   }
   addCall(child: State<T> | InputCompute): ReactiveChain<T> {
@@ -924,6 +929,8 @@ export class ReactiveChain<T = any> {
       let currentName = current.hook?.constructor.name || current.name || ''
       if (current.hook?.name) {
         currentName = `${currentName}(${current.hook?.name})`
+      } else if (isDef(current.index)) {
+        currentName = `${currentName}(${current.index})`
       }
       if (current.type) {
         currentName = `${current.type}: ${currentName}`
@@ -1297,9 +1304,9 @@ export class CurrentRunnerScope {
 
   ready(): Promise<void> {
     const asyncHooks = this.hooks.filter(
-      h => 
-        h && Reflect.has(h, 'getterPromise') || 
-        h instanceof AsyncInputCompute || 
+      h =>
+        (h && Reflect.has(h, 'getterPromise')) ||
+        h instanceof AsyncInputCompute ||
         h instanceof AsyncState
     ) as unknown as (AsyncInputCompute<any> | AsyncState<any>)[]
 
@@ -1688,7 +1695,7 @@ function updateModel<T extends any[]>(
     create: hook.createRow.bind(hook) as typeof hook.createRow,
     update: hook.updateRow.bind(hook) as typeof hook.updateRow,
     remove: hook.removeRow.bind(hook) as typeof hook.removeRow,
-    refresh: hook.refresh.bind(hook)  as typeof hook.refresh
+    refresh: hook.refresh.bind(hook) as typeof hook.refresh
   })
 
   return newSetterGetter
@@ -1710,7 +1717,7 @@ function mountModel<T extends any[]>(
     create: hook.createRow.bind(hook) as typeof hook.createRow,
     update: hook.updateRow.bind(hook) as typeof hook.updateRow,
     remove: hook.removeRow.bind(hook) as typeof hook.removeRow,
-    refresh: hook.refresh.bind(hook)  as typeof hook.refresh
+    refresh: hook.refresh.bind(hook) as typeof hook.refresh
   })
 
   return newSetterGetter
@@ -1792,7 +1799,10 @@ function updateComputed<T>(fn: any): any {
   //   currentReactiveChain?.add(hook)
   // hook.run(reactiveChain)
 
-  const getter = () => hook.value
+  const getter = () => {
+    currentReactiveChain?.addCall(hook)
+    return hook.value
+  }
   const newGetter = Object.assign(getter, {
     _hook: hook
   })
@@ -1815,7 +1825,10 @@ function mountComputed<T>(fn: any): any {
     currentReactiveChain?.add(hook)
   hook.run(reactiveChain)
 
-  const getter = () => hook.value
+  const getter = () => {
+    currentReactiveChain?.addCall(hook)
+    return hook.value
+  }
   const newGetter = Object.assign(getter, {
     _hook: hook
   })
@@ -2026,14 +2039,15 @@ export function connectCreate<T>(
   modelGetter._hook.addCreateGetter(dataGetter)
 }
 
-
-interface IGetterPromise<T> {
-  getterPromise: Promise<T>
-}
-
-export function progress<T = any> (getter: { _hook: AsyncState<T> | AsyncInputCompute<T[]> }) {
+export function progress<T = any>(getter: {
+  _hook: AsyncState<T> | AsyncInputCompute<T[]>
+}) {
   const hook = getter._hook
   return () => ({
-    state: hook.init ? EScopeState.init : hook.getterPromise ? EScopeState.pending : EScopeState.idle
+    state: hook.init
+      ? EScopeState.init
+      : hook.getterPromise
+      ? EScopeState.pending
+      : EScopeState.idle
   })
 }

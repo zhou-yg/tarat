@@ -643,11 +643,16 @@ export function stateInNestedComputed() {
 }
 export function statesWithInputCompute() {
   const s1 = state(0)
+  s1._hook.name = 's1'
   const s2 = state(1)
+  s2._hook.name = 's2'
   const c1 = computed(() => s2() + 1)
+  c1._hook.name = 'c1'
   const c2 = computed(() => c1() + 1)
+  c2._hook.name = 'c2'
 
   const c3 = computed(() => s1() + 1)
+  c3._hook.name = 'c3'
 
   const ic = inputCompute(() => {
     s1(v => v + 1)
