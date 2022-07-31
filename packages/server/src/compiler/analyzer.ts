@@ -13,15 +13,7 @@ import type {
 } from 'estree'
 
 import type { THookDeps } from 'tarat-core'
-
-const hookGenerateNames = [
-  'state',
-  'model',
-  'cache',
-  'computed',
-  'inputCompute',
-  'inputComputeInServer',
-]
+import { hookFactoryNames } from 'tarat-core'
 
 const composeName = 'compose'
 
@@ -30,7 +22,7 @@ const composeName = 'compose'
  */
 function isHookCaller (node: CallExpression) {
   return node.type === 'CallExpression' && 
-    (node.callee.type === 'Identifier' && hookGenerateNames.includes(node.callee.name))
+    (node.callee.type === 'Identifier' && hookFactoryNames.includes(node.callee.name))
 }
 
 function isComposeCaller (node: CallExpression) {
@@ -77,15 +69,12 @@ interface IScopeValue2 extends IScopeValueBase {
 }
 
 interface IScopeMap {
-  [key: string]: IScopeMap | IScopeValue | IScopeValue2
+  [variableNameOrMemberKeys: string]: IScopeMap | IScopeValue | IScopeValue2
 }
 /**
  * all drivers must be called at top
  */
 function collectHookVaraibles (BMNode: TBMNode) {
-
-  const variables: (MemberExpression | Identifier)[] = []
-
   const scopeMap: IScopeMap = {}
 
   let hookIndex = 0
@@ -310,6 +299,18 @@ function convertDepsToJSON(m: TOriginDepsMap) {
   return arr
 }
 
+function genIndexNameMap (scope: IScopeMap) {
+  return Object.keys(scope).map(name => {
+    const v = scope[name]
+    if (v.type === 'hook') {
+      return [
+        v.hookIndex,
+        name
+      ]
+    }
+  }).filter(Boolean) as [number, string][]
+}
+
 
 function generateBMDepMaps (BMNode: TBMNode) {
   const scopeMap = collectHookVaraibles(BMNode)
@@ -318,7 +319,11 @@ function generateBMDepMaps (BMNode: TBMNode) {
 
   const depsMap = collectCallerWithAncestor(BMNode, scopeMap)
 
-  return depsMap
+  const nameMap = genIndexNameMap(scopeMap)
+
+  return {
+    nameMap, depsMap
+  }
 }
 
 /**
@@ -378,12 +383,15 @@ export function parseDeps (hookCode: string) {
   const allBMDeps = BMFunctionNodes.map((n, i) => {
     if (i === 0) {
     }
-    const deps = generateBMDepMaps((Array.isArray(n) ? n[0] : n) as any)
+    const { nameMap, depsMap } = generateBMDepMaps((Array.isArray(n) ? n[0] : n) as any)
     
-    const arr = convertDepsToJSON(deps)
+    const arr = convertDepsToJSON(depsMap)
     
     return  {
-      [n[1]]: arr
+      [n[1]]: {
+        names: nameMap,
+        deps: arr
+      },
     }
   }).reduce((p, n) => Object.assign(p, n), {})
 

@@ -19,7 +19,6 @@ import dts from "rollup-plugin-dts"
 import { emptyDirectory, loadJSON, logFrame, traverseDir } from "../util";
 import chalk from "chalk";
 import { cp } from "shelljs";
-import analyze from 'rollup-plugin-analyzer'
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)

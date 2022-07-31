@@ -47,6 +47,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
     }
   })
 
+  const chain = startdReactiveChain('[renderWithDriverContext first]')
   const appEntry = renderWithDriverContext(
     entryFunctionModule(
       routesEntryModule({
@@ -56,6 +57,10 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
     driver,
   )
   const html = renderToString(appEntry.root)
+
+  chain.stop()
+  chain.print()
+
 
   appEntry.cancelAdaptor()
   driver.pushListener = undefined
@@ -69,7 +74,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
 
   driver.switiToConsumeMode()
 
-  const chain1 = startdReactiveChain()
+  const chain2 = startdReactiveChain('[renderWithDriverContext second]')
 
   const appEntryUpdate = renderWithDriverContext(
     entryFunctionModule(
@@ -82,8 +87,8 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
 
   const html2 = renderToString(appEntryUpdate.root)
 
-  stopReactiveChain()
-  chain1.print()
+  chain2.stop()
+  chain2.print()
 
   const css = []
   fs.existsSync(distEntryCSS) && css.push(distEntryCSS)

@@ -1,5 +1,5 @@
 import * as mockUtil from '../mockUtil'
-import { parseDeps as parse } from '../../src/compiler/analyzer'
+import { parseDeps as parse } from '../../src/'
 
 describe('parser', () => {
   it('parse single BM', () => {
