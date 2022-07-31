@@ -889,7 +889,7 @@ export class ReactiveChain<T = any> {
       this.oldValue = hook._internalValue
     }
   }
-  stop () {
+  stop() {
     stopReactiveChain()
   }
   update() {
@@ -1477,10 +1477,7 @@ export const mountHookFactory = {
   cache: mountCache,
   computed: mountComputed,
   inputCompute,
-  inputComputeInServer,
-  before,
-  after,
-  combineLatest
+  inputComputeInServer
 }
 export const updateHookFactory = {
   state: updateState,
@@ -1488,11 +1485,10 @@ export const updateHookFactory = {
   cache: updateCache,
   computed: updateComputed,
   inputCompute,
-  inputComputeInServer,
-  before,
-  after,
-  combineLatest
+  inputComputeInServer
 }
+
+export const hookFactoryNames = Object.keys(mountHookFactory)
 
 export let currentHookFactory: {
   state: typeof mountState
@@ -1501,9 +1497,6 @@ export let currentHookFactory: {
   computed: typeof mountComputed
   inputCompute: typeof inputCompute
   inputComputeInServer: typeof inputComputeInServer
-  before: typeof before
-  after: typeof after
-  combineLatest: typeof combineLatest
 } = updateHookFactory
 
 function createStateSetterGetterFunc<SV>(s: State<SV>): {
