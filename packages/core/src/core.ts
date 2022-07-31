@@ -24,7 +24,8 @@ import {
   runGenerator,
   makeBatchCallback,
   isUndef,
-  getName
+  getName,
+  getNames
 } from './util'
 import EventEmitter from 'eventemitter3'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
@@ -652,6 +653,8 @@ export class Computed<T> extends AsyncState<T | Symbol> {
       })
     } else {
       this.update(r as T, [], false, reactiveChain)
+      /** @TODO this code need consider again.maybe need re-design */
+      this.init = false
     }
   }
   notify(h?: Hook, p?: IPatch[], reactiveChain?: ReactiveChain) {
@@ -2036,6 +2039,7 @@ export function compose<T extends Driver>(f: T, args?: any[]) {
   const endIndex = currentRunnerScope.hooks.length
 
   const deps = getDeps(f)
+  const names = getNames(f)
 
   currentRunnerScope.appendComposeDeps(startIndex, endIndex, deps)
 
