@@ -699,12 +699,14 @@ Object.assign(composeWithSS, {
 export function composeWithSS2() {
   const s1 = state(0)
 
+  /* insert [state, computed], 2 -> 1 */
   const simpleSSResult = compose(simpleSS)
 
   const ic = inputCompute(() => {
     s1(v => v + 1)
   })
 
+  /* insert [state, computed] */
   const { s2 } = compose(simpleSS)
 
   const s33 = computed(() => {
@@ -716,6 +718,8 @@ export function composeWithSS2() {
 Object.assign(composeWithSS2, {
   __deps__: [
     ['h', 2, [], [0]],
-    ['h', 2, [0, ['c', 0, 's1'], ['c', 2, 's2']]]
+    ['h', 2, [0, ['c', 0, 's1'], ['c', 2, 's2']]],
+    // will composed [['h', 1, [0]]] -> [['h', 2, [1]]] ( +1 )
+    // will composed [['h', 1, [0]]] -> [['h', 5, [4]]] ( +4 )
   ]
 })

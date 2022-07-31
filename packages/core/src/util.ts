@@ -664,10 +664,17 @@ export function checkQueryWhere(where: IQueryWhere['where']): boolean {
 export function getDeps(f: Driver) {
   return f.__deps__
 }
+export function getName (f: Driver) {
+  return f.__name__ || f.name
+}
+export function getNames(f: Driver) {
+  return f.__names__
+}
 
 export interface Driver extends Function {
   (...prop: any): any
   __deps__?: THookDeps
+  __names__?: [string, number][] // hook name by index
   __name__?: string
 }
 export type BM = Driver

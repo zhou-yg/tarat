@@ -19,7 +19,7 @@ describe('compose', () => {
     expect(hooks[1]?.watchers.size).toBe(2)
   })
 
-  it ('compose multi same hooks', () => {
+  it('compose multi same hooks', () => {
     const runner = new Runner(mockBM.composeWithSS2)
     runner.init()
 
@@ -31,5 +31,12 @@ describe('compose', () => {
     expect(hooks[0]?.watchers.has((hooks[6] as Computed<any>).watcher)).toBeTruthy()
     expect(hooks[1]?.watchers.has((hooks[6] as Computed<any>).watcher)).toBeTruthy()
     expect(hooks[5]?.watchers.has((hooks[6] as Computed<any>).watcher)).toBeTruthy()
+  })
+
+  describe('update', () => {
+    it ('with deps', () => {
+    })
+    it ('with nested compose', () => {
+    })
   })
 })

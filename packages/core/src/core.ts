@@ -23,7 +23,8 @@ import {
   isGenerator,
   runGenerator,
   makeBatchCallback,
-  isUndef
+  isUndef,
+  getName
 } from './util'
 import EventEmitter from 'eventemitter3'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
@@ -1083,6 +1084,10 @@ export class CurrentRunnerScope {
     })
   }
 
+  /**
+   * add compose deps to current driver.
+   * plus current hook dep index
+   */
   appendComposeDeps(si: number, ei: number, deps?: THookDeps) {
     if (!deps) {
       return
@@ -1107,8 +1112,24 @@ export class CurrentRunnerScope {
       }
       return arr
     })
+    const newModifiedDeps: THookDeps = deps.map(a => {
+      const arr: THookDeps[0] = cloneDeep(a)
 
-    this.intialContextDeps = modifiedDeps.concat(deps)
+      arr[1] += si
+      if (arr[2]) {
+        arr[2] = arr[2].map(v =>
+          typeof v === 'number' ? v + si : [v[0], v[1] + si, v[2]]
+        )
+      }
+      if (arr[3]) {
+        arr[3] = arr[3].map(v =>
+          typeof v === 'number' ? v + si : [v[0], v[1] + si, v[2]]
+        )
+      }
+      return arr
+    })
+
+    this.intialContextDeps = modifiedDeps.concat(newModifiedDeps)
   }
 
   applyComputePatches(
@@ -1365,7 +1386,7 @@ export class Runner<T extends Driver> {
     currentRunnerScope = this.scope
     currentRunnerScope.setIntialArgs(
       args || [],
-      this.driver.__name__ || this.driver.name
+      getName(this.driver)
     )
 
     const deps = getDeps(this.driver)
