@@ -19,9 +19,8 @@ const LoginAction: React.FC<{
 const Comments = () => {
 
   const main = useTarat(mainHook)
-  const mainProgress = useProgress(main)
 
-  console.log('main.notLogin(): ', mainProgress?.state, main.notLogin());
+  console.log('main.notLogin(): ', main.notLogin());
 
   const notLogin = main.notLogin()
 
