@@ -31,7 +31,7 @@ export function initContext(arg: {
     name: arg.name || '',
     data: arg.data || [],
     index: arg.index,
-    args: []
+    args: [],
   }
 }
 
@@ -678,7 +678,11 @@ export function simpleSS() {
   return { s1, s2 }
 }
 Object.assign(simpleSS, {
-  __deps__: [['h', 1, [0]]]
+  __deps__: [['h', 1, [0]]],
+  __names__: [
+    [0, 's1'],
+    [1, 's2']
+  ]
 })
 
 export function composeWithSS() {
@@ -693,7 +697,11 @@ export function composeWithSS() {
   return { s1, s2, simpleSSResult }
 }
 Object.assign(composeWithSS, {
-  __deps__: [['h', 1, [0]]]
+  __deps__: [['h', 1, [0]]],
+  __names__: [
+    [0, 's1'],
+    [1, 's2']
+  ]
 })
 
 export function composeWithSS2() {
@@ -717,9 +725,14 @@ export function composeWithSS2() {
 }
 Object.assign(composeWithSS2, {
   __deps__: [
-    ['h', 2, [], [0]],
-    ['h', 2, [0, ['c', 0, 's1'], ['c', 2, 's2']]],
+    ['h', 2, [], [0]], // will -> 6
+    ['h', 2, [0, ['c', 0, 's1'], ['c', 1, 's2']]], // will -> 6
     // will composed [['h', 1, [0]]] -> [['h', 2, [1]]] ( +1 )
     // will composed [['h', 1, [0]]] -> [['h', 5, [4]]] ( +4 )
+  ],
+  __names__: [
+    [0, 's1'],
+    [1, 'ic'],
+    [2, 's33'],
   ]
 })

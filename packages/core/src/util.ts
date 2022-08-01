@@ -671,10 +671,12 @@ export function getNames(f: Driver) {
   return f.__names__
 }
 
+export type THookNames = [number, string][]
+
 export interface Driver extends Function {
   (...prop: any): any
   __deps__?: THookDeps
-  __names__?: [string, number][] // hook name by index
+  __names__?: THookNames // hook name by index
   __name__?: string
 }
 export type BM = Driver

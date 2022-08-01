@@ -25,7 +25,8 @@ import {
   makeBatchCallback,
   isUndef,
   getName,
-  getNames
+  getNames,
+  THookNames
 } from './util'
 import EventEmitter from 'eventemitter3'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
@@ -678,6 +679,7 @@ export class InputCompute<P extends any[] = any> extends Hook {
       | InputComputeFn<P>
       | AsyncInputComputeFn<P>
       | GeneratorInputComputeFn<P>,
+    /** @TODO should not couple the "scope" */
     public scope: CurrentRunnerScope
   ) {
     super()
@@ -998,6 +1000,7 @@ export class CurrentRunnerScope {
   initialArgList: any[] = []
   intialContextData: IHookContext['data'] | null = null
   intialContextDeps?: THookDeps
+  intialContextNames?: THookNames
   initialHooksSet?: Set<number>
   hookRunnerName = ''
 
@@ -1042,17 +1045,29 @@ export class CurrentRunnerScope {
   setInitialContextDeps(d?: THookDeps) {
     this.intialContextDeps = d
   }
+  setInitialContextNames(n?: THookNames) {
+    this.intialContextNames = n
+  }
 
-  addHook(v: Hook | undefined) {
+  addHook(v: Hook) {
     if (v && this.hooks.indexOf(v) !== -1) {
       throw new Error('add repeat hook')
     }
     this.hooks.push(v)
-    v && this.watcher.addDep(v)
+    this.watcher.addDep(v)
+
+    // assign name by inject deps
+    if (this.intialContextNames) {
+      const r = this.intialContextNames.find(arr => arr[0] === this.hooks.length - 1)
+      if (r?.[1]) {
+        v.name = r[1]
+      }
+    }
   }
 
   applyDepsMap() {
     const deps = this.intialContextDeps
+    console.log('deps: ', deps);
     deps?.forEach(([name, hookIndex, deps]) => {
       deps.forEach(triggerHookIndex => {
         let triggerHook: Hook | undefined | null
@@ -1088,6 +1103,31 @@ export class CurrentRunnerScope {
   }
 
   /**
+   * offset compose names and current initial names
+   */
+  appendComposeNames(si: number, names?: THookNames) {
+    if (!names) {
+      return
+    }
+    const len = names.length
+
+    const modifiedNames = (this.intialContextNames || []).map(a => {
+      const arr: THookNames[0] = cloneDeep(a)
+      if (arr[0] >= si) {
+        arr[0] += len
+      }
+      return arr
+    })
+    const newOffsetNames: THookNames = names.map(a => {
+      return [
+        a[0] + si,
+        a[1]
+      ]
+    })
+    this.intialContextNames = modifiedNames.concat(newOffsetNames)
+  }
+
+  /**
    * add compose deps to current driver.
    * plus current hook dep index
    */
@@ -1095,22 +1135,22 @@ export class CurrentRunnerScope {
     if (!deps) {
       return
     }
-    const composeHooksLen = ei - si
+    const hooksInComposeSize = ei - si
 
     const modifiedDeps = (this.intialContextDeps || []).map(a => {
       const arr: THookDeps[0] = cloneDeep(a)
 
       if (arr[1] >= si) {
-        arr[1] += composeHooksLen
+        arr[1] += hooksInComposeSize
       }
       if (arr[2]) {
         arr[2] = arr[2].map(v =>
-          typeof v === 'number' && v >= si ? v + composeHooksLen : v
+          typeof v === 'number' && v >= si ? v + hooksInComposeSize : v
         )
       }
       if (arr[3]) {
         arr[3] = arr[3].map(v =>
-          typeof v === 'number' && v >= si ? v + composeHooksLen : v
+          typeof v === 'number' && v >= si ? v + hooksInComposeSize : v
         )
       }
       return arr
@@ -1393,7 +1433,9 @@ export class Runner<T extends Driver> {
     )
 
     const deps = getDeps(this.driver)
+    const names = getNames(this.driver)
     currentRunnerScope.setInitialContextDeps(deps)
+    currentRunnerScope.setInitialContextNames(names)
 
     if (initialContext) {
       currentRunnerScope.setInitialContextData(initialContext)
@@ -1808,6 +1850,7 @@ function updateComputed<T>(fn: any): any {
   currentRunnerScope!.addHook(hook)
   // @TODO: update computed won't trigger
   hook._internalValue = initialValue
+  hook.init = false
   if (timestamp) {
     hook.modifiedTimstamp = timestamp
   }
@@ -2032,16 +2075,23 @@ export function compose<T extends Driver>(f: T, args?: any[]) {
 
   const startIndex = currentRunnerScope.hooks.length
 
+  let names = getNames(f)
+  const driverName = getName(f)
+  if (driverName && names) {
+    const composeIndex = currentRunnerScope.composes.length
+    names = names.map(arr => [arr[0], `compose.${composeIndex}.${driverName}.${arr[1]}`])
+    currentRunnerScope.appendComposeNames(startIndex, names)
+  }
+
   const insideResult: ReturnType<T> = executeDriver(f, args)
 
   currentRunnerScope.composes.push(insideResult)
 
   const endIndex = currentRunnerScope.hooks.length
 
-  const deps = getDeps(f)
-  const names = getNames(f)
-
+  const deps = getDeps(f)  
   currentRunnerScope.appendComposeDeps(startIndex, endIndex, deps)
+
 
   return insideResult
 }
