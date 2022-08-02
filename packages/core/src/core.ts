@@ -686,7 +686,7 @@ export class InputCompute<P extends any[] = any> extends Hook {
     scope.addHook(this)
   }
   inputFuncStart() {}
-  async inputFuncEnd(reactiveChain?: ReactiveChain<P>) {
+  inputFuncEnd(reactiveChain?: ReactiveChain<P>) {
     if (currentInputeCompute === this) {
       currentInputeCompute = null
     }
@@ -733,7 +733,7 @@ export class InputCompute<P extends any[] = any> extends Hook {
             }
           }
         )
-        return await this.inputFuncEnd(newReactiveChain)
+        return this.inputFuncEnd(newReactiveChain)
       }
       if (isPromise(funcResult)) {
         // end compute context in advance
@@ -743,7 +743,7 @@ export class InputCompute<P extends any[] = any> extends Hook {
         }
         await funcResult
 
-        return await this.inputFuncEnd(newReactiveChain)
+        return this.inputFuncEnd(newReactiveChain)
       }
     }
     currentReactiveChain = preservedCurrentReactiveChain
