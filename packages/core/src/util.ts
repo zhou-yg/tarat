@@ -233,6 +233,7 @@ export type TContextData =
   | 'patch'
   | 'inputCompute'
   | 'model'
+  | 'writeModel'
   | 'clientModel'
   | 'cache'
   | 'computed'

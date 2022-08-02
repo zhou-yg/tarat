@@ -246,20 +246,17 @@ export class Model<T extends any[]> extends AsyncState<T[]> {
   watcher: Watcher = new Watcher(this)
   // just update latest query
   queryTimeIndex: number = 0
-
-  createGetters: TGetterData<T>[] = []
-
   constructor(
     public entity: string,
-    getQueryWhere: (() => IModelQuery['query'] | void) | void = undefined,
+    getter: (() => IModelQuery['query'] | undefined) | void = undefined,
     public options: IModelOption = {},
     public scope: CurrentRunnerScope
   ) {
     super([])
     scope.addHook(this)
 
-    if (getQueryWhere) {
-      this.queryWhereComputed = new Computed(getQueryWhere)
+    if (getter) {
+      this.queryWhereComputed = new Computed(getter)
       this.watcher.addDep(this.queryWhereComputed)
     }
 
@@ -267,8 +264,16 @@ export class Model<T extends any[]> extends AsyncState<T[]> {
     if (options.immediate || options.immediate === undefined) {
       const reactiveChain: ReactiveChain<T> | undefined =
         currentReactiveChain?.add(this)
-      this.query(reactiveChain)
+
+      // do query after driver ready
+      scope.effect(() => {
+        this.query(reactiveChain)
+      })
     }
+  }
+
+  setGetter (fn: (() => IModelQuery['query'] | undefined)) {
+    this.queryWhereComputed.getter = fn
   }
 
   notify(h?: Hook, p?: IPatch[], reactiveChain?: ReactiveChain) {
@@ -339,46 +344,9 @@ export class Model<T extends any[]> extends AsyncState<T[]> {
       end()
     }
   }
-
-  /**
-   * confirm the last getter could convert previous getter
-   */
-  addCreateGetter(g: TGetterData<T[0]>) {
-    this.createGetters.push(g)
-  }
   async exist(obj: Partial<T[0]>) {
     const result: T = await getPlugin('Model').find(this.entity, { where: obj })
     return result.length > 0
-  }
-  async createRow(obj?: Partial<T[0]>) {
-    const defaults = this.createGetters.reduce((r, func) => {
-      return Object.assign(r, func())
-    }, {} as T[0])
-
-    await getPlugin('Model').create(this.entity, {
-      data: Object.assign(defaults, obj)
-    })
-    await this.refresh()
-  }
-  async updateRow(
-    where: number[] | { id: number }[],
-    obj?: { [k: string]: any }
-  ) {
-    const id = typeof where[0] === 'number' ? where[0] : where[0].id
-
-    await getPlugin('Model').update(this.entity, {
-      where: { id },
-      data: obj
-    })
-    await this.refresh()
-  }
-  async removeRow(where: number[] | { id: number }[]) {
-    const id = typeof where[0] === 'number' ? where[0] : where[0].id
-
-    await getPlugin('Model').remove(this.entity, {
-      where: { id }
-    })
-    await this.refresh()
   }
   async refresh() {
     await this.executeQuery(currentReactiveChain?.add(this))
@@ -423,6 +391,53 @@ export class Model<T extends any[]> extends AsyncState<T[]> {
       end()
     }
     await this.executeQuery(reactiveChain)
+  }
+}
+
+export const writeModelInitialSymbol = Symbol.for('@@writeModelInitial')
+
+export class WriteModel<T> extends AsyncState<T | Symbol> {
+  entity: string = ''
+  sourceModel: Model<T[]> | ClientModel<T[]>
+  constructor (
+    public sourceModelGetter: { _hook: Model<T[]> | ClientModel<T[]> },
+    public getData: () => T
+  ) {
+    super(writeModelInitialSymbol)
+    this.sourceModel = sourceModelGetter._hook
+    this.entity = sourceModelGetter._hook.entity
+  }
+  setGetter (fn: () => T) {
+    this.getData = fn
+  }
+  async createRow(obj?: Partial<T>) {
+    const defaults = this.getData()
+    const r:T = await getPlugin('Model').create(this.entity, {
+      data: Object.assign(defaults, obj)
+    })
+    await this.sourceModel.refresh()
+
+    return r
+  }
+  async updateRow(
+    where: number[] | { id: number }[],
+    obj?: { [k: string]: any }
+  ) {
+    const id = typeof where[0] === 'number' ? where[0] : where[0].id
+
+    await getPlugin('Model').update(this.entity, {
+      where: { id },
+      data: obj
+    })
+    await this.sourceModel.refresh()
+  }
+  async removeRow(where: number[] | { id: number }[]) {
+    const id = typeof where[0] === 'number' ? where[0] : where[0].id
+
+    await getPlugin('Model').remove(this.entity, {
+      where: { id }
+    })
+    await this.sourceModel.refresh()
   }
 }
 
@@ -1011,6 +1026,16 @@ export class CurrentRunnerScope {
   // indicate can beleive the model data in context
   beleiveContext = false
 
+  effectFunArr: Function[] = []
+
+  effect(f: Function) {
+    this.effectFunArr.push(f)
+  }
+  flushEffects () {
+    this.effectFunArr.forEach(f => f())
+    this.effectFunArr = []
+  }
+
   onUpdate(f: Function) {
     this.outerListeners.push(f)
     return () => {
@@ -1067,7 +1092,6 @@ export class CurrentRunnerScope {
 
   applyDepsMap() {
     const deps = this.intialContextDeps
-    console.log('deps: ', deps);
     deps?.forEach(([name, hookIndex, deps]) => {
       deps.forEach(triggerHookIndex => {
         let triggerHook: Hook | undefined | null
@@ -1300,6 +1324,9 @@ export class CurrentRunnerScope {
         if (hook instanceof ClientModel) {
           return ['clientModel']
         }
+        if (hook instanceof WriteModel) {
+          return ['writeModel']
+        }
         // means: server -> client
         if (hook instanceof Model) {
           return ['model', hook.value, hook.modifiedTimstamp]
@@ -1311,7 +1338,7 @@ export class CurrentRunnerScope {
           return ['cache', hook.value, hook.modifiedTimstamp]
         }
         if (hook instanceof InputCompute) {
-          return ['inputCompute', null]
+          return ['inputCompute']
         }
         if (hook instanceof State) {
           return ['state', hook.value, hook.modifiedTimstamp]
@@ -1451,6 +1478,9 @@ export class Runner<T extends Driver> {
       this.scope.applyDepsMap()
     }
 
+    // do execute effect.maybe from model/cache
+    this.scope.flushEffects()
+
     currentRunnerScope = null
 
     this.alreadyInit = true
@@ -1540,6 +1570,7 @@ interface IModelOption {
 export const mountHookFactory = {
   state: mountState,
   model: mountModel,
+  writeModel: mountWriteModel,
   cache: mountCache,
   computed: mountComputed,
   inputCompute,
@@ -1548,6 +1579,7 @@ export const mountHookFactory = {
 export const updateHookFactory = {
   state: updateState,
   model: updateModel,
+  writeModel: mountWriteModel,
   cache: updateCache,
   computed: updateComputed,
   inputCompute,
@@ -1559,6 +1591,7 @@ export const hookFactoryNames = Object.keys(mountHookFactory)
 export let currentHookFactory: {
   state: typeof mountState
   model: typeof mountModel
+  writeModel: typeof mountWriteModel
   cache: typeof mountCache
   computed: typeof mountComputed
   inputCompute: typeof inputCompute
@@ -1712,7 +1745,7 @@ function mountState<T>(initialValue?: T) {
 
 function updateModel<T extends any[]>(
   e: string,
-  q?: () => IModelQuery['query'] | void,
+  q?: () => IModelQuery['query'] | undefined,
   op?: IModelOption
 ) {
   const { hooks, initialHooksSet } = currentRunnerScope!
@@ -1751,9 +1784,9 @@ function updateModel<T extends any[]>(
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: hook,
     exist: hook.exist.bind(hook) as typeof hook.exist,
-    create: hook.createRow.bind(hook) as typeof hook.createRow,
-    update: hook.updateRow.bind(hook) as typeof hook.updateRow,
-    remove: hook.removeRow.bind(hook) as typeof hook.removeRow,
+    // create: hook.createRow.bind(hook) as typeof hook.createRow,
+    // update: hook.updateRow.bind(hook) as typeof hook.updateRow,
+    // remove: hook.removeRow.bind(hook) as typeof hook.removeRow,
     refresh: hook.refresh.bind(hook) as typeof hook.refresh
   })
 
@@ -1761,7 +1794,7 @@ function updateModel<T extends any[]>(
 }
 function mountModel<T extends any[]>(
   e: string,
-  q?: () => IModelQuery['query'] | void,
+  q?: () => IModelQuery['query'] | undefined,
   op?: IModelOption
 ) {
   const hook =
@@ -1773,13 +1806,33 @@ function mountModel<T extends any[]>(
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: hook,
     exist: hook.exist.bind(hook) as typeof hook.exist,
-    create: hook.createRow.bind(hook) as typeof hook.createRow,
-    update: hook.updateRow.bind(hook) as typeof hook.updateRow,
-    remove: hook.removeRow.bind(hook) as typeof hook.removeRow,
+    // create: hook.createRow.bind(hook) as typeof hook.createRow,
+    // update: hook.updateRow.bind(hook) as typeof hook.updateRow,
+    // remove: hook.removeRow.bind(hook) as typeof hook.removeRow,
     refresh: hook.refresh.bind(hook) as typeof hook.refresh
   })
 
   return newSetterGetter
+}
+// "updateWriteModel" same as mountWriteModel
+function mountWriteModel<T> (
+  source: { _hook: Model<T[]> | ClientModel<T[]> },
+  q: () => T,
+) {
+  const hook = new WriteModel(source, q)
+  currentRunnerScope!.addHook(hook)
+
+  const getter = () => {
+    throw new Error('[writeModel] cant get data from writeModel')
+  }
+  const newGetter = Object.assign(getter, {
+    _hook: hook,
+    create: hook.createRow.bind(hook) as typeof hook.createRow,
+    update: hook.updateRow.bind(hook) as typeof hook.updateRow,
+    remove: hook.removeRow.bind(hook) as typeof hook.removeRow,
+  })
+
+  return newGetter
 }
 
 function updateCache<T>(key: string, options: ICacheOptions<T>) {
@@ -1912,13 +1965,23 @@ export function state(initialValue?: any) {
 
 export function model<T extends any[]>(
   e: string,
-  q?: () => IModelQuery['query'] | void,
+  q?: () => IModelQuery['query'] | undefined,
   op?: IModelOption
 ) {
   if (!currentRunnerScope) {
     throw new Error('[model] must under a tarat runner')
   }
   return currentHookFactory.model<T>(e, q, op)
+}
+
+export function writeModel<T>(
+  source: { _hook: Model<T[]> | ClientModel<T[]> },
+  q: () => T,
+) {
+  if (!currentRunnerScope) {
+    throw new Error('[writeModel] must under a tarat runner')
+  }
+  return currentHookFactory.writeModel<T>(source, q)
 }
 
 export function cache<T>(key: string, options: ICacheOptions<T>) {
@@ -2099,12 +2162,12 @@ export function compose<T extends Driver>(f: T, args?: any[]) {
 /**
  * inject input data to Model as initial value
  */
-type TModelGetter<T> = ReturnType<typeof model>
-export function connectCreate<T>(
+type TModelGetter<T> = ReturnType<typeof model | typeof writeModel>
+export function connectModel<T>(
   modelGetter: TModelGetter<T>,
   dataGetter: TGetterData<T>
 ) {
-  modelGetter._hook.addCreateGetter(dataGetter)
+  modelGetter._hook.setGetter(dataGetter)
 }
 
 export function progress<T = any>(getter: {

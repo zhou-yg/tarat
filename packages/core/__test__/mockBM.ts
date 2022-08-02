@@ -14,8 +14,9 @@ import {
   Runner,
   BM,
   compose,
-  connectCreate,
-  progress
+  connectModel,
+  progress,
+  writeModel
 } from '../src/'
 import { loadPlugin } from '../src/plugin'
 
@@ -387,10 +388,13 @@ export function userPessimisticModel() {
   }
 }
 
-export function modelWithConnectCreate() {
+export function modelWithConnectModel() {
   const items = model<{ id: number; name: string }[]>('item', () => ({}))
+  const writeItems = writeModel(items, () => ({
+    
+  }))
   const name = state('')
-  connectCreate(items, () => {
+  connectModel(writeItems, () => {
     return {
       name: name()
     }
@@ -398,9 +402,30 @@ export function modelWithConnectCreate() {
 
   const createItem = inputCompute(async (name: string) => {
     if (name) {
-      await items.create({ name })
+      await writeItems.create({ name })
     } else {
-      await items.create()
+      await writeItems.create()
+    }
+  })
+
+  return {
+    items,
+    name,
+    createItem
+  }
+}
+export function writeModelWithSource() {
+  const items = model<{ id?: number; name: string }[]>('item', () => ({}))
+  const writeItems = writeModel(items, () => ({
+    name: name()
+  }));
+  const name = state('')
+
+  const createItem = inputCompute(async (name: string) => {
+    if (name) {
+      await writeItems.create({ name })
+    } else {
+      await writeItems.create()
     }
   })
 

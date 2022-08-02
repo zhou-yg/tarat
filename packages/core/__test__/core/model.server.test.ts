@@ -266,9 +266,26 @@ describe('model', () => {
       })
     })
 
-    describe('with connect', () => {
+    describe('with writeModel', () => {
+
       it('connectCreate',async () => {
-        const runner = new Runner(mockBM.modelWithConnectCreate)
+        const runner = new Runner(mockBM.writeModelWithSource)
+        const result = runner.init()
+
+        await runner.ready()
+
+        result.name(() => 'c')
+        await result.createItem('')
+
+        expect(result.items()[2].name).toEqual('c')
+
+        await result.createItem('ddd')
+
+        expect(result.items()[3].name).toEqual('ddd')
+      })
+
+      it('add connectModel',async () => {
+        const runner = new Runner(mockBM.modelWithConnectModel)
         const result = runner.init()
 
         await runner.ready()
