@@ -10,13 +10,20 @@ const LoginAction: React.FC<{
 }> = props => {
   return (
     <div className={s.loginAction}>
-      <button onClick={props.onLogin} >去登录</button>
-      <button onClick={props.onSign}>去注册</button>
+      <div className={s.loginRow}>
+        <button onClick={props.onLogin} >去登录</button>
+      </div>
+      <div className={s.loginRow}>
+        <button onClick={props.onSign}>去注册</button>
+      </div>
     </div>
   )
 }
 
-const Comments = () => {
+const Comments: React.FC<{
+  onLogin?: () => void
+  onSign?: () => void
+}> = (props) => {
 
   const main = useTarat(mainHook)
 
@@ -27,7 +34,7 @@ const Comments = () => {
   return (
     <div className={s.comments}>
       {notLogin ? (
-        <LoginAction />
+        <LoginAction onLogin={props.onLogin} onSign={props.onSign} />
       ) : ''}
 
       <div className={s.header} >
