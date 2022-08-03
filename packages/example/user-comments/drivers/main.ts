@@ -1,7 +1,7 @@
 import {
   compose,
   computed,
-  connectCreate,
+  connectModel,
   inputComputeInServer,
   progress,
   state,
@@ -21,7 +21,7 @@ export default function main() {
   });
 
   const topicResult = compose(topic);
-  connectCreate(topicResult.topics, () => {
+  connectModel(topicResult.writeTopics, () => {
     return {
       user: {
         connect: {
@@ -32,7 +32,7 @@ export default function main() {
   });
 
   const removeTopic = inputComputeInServer(async function (id: number) {
-    await topicResult.topics.remove([id]);
+    await topicResult.writeTopics.remove([id]);
   });
 
   return {

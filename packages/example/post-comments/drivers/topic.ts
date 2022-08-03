@@ -1,9 +1,10 @@
 import {
   computed,
-  connectCreate,
+  connectModel,
   inputComputeInServer,
   model,
   state,
+  writeModel,
 } from "tarat-core";
 
 export interface ITopic {
@@ -24,19 +25,22 @@ export default function topic() {
 
   const inputName = state("");
 
-  connectCreate(topics, () => ({
-    title: inputName(),
-  }));
+  const writeTopics = writeModel(topics, () => {
+    return {
+      title: inputName(),
+    };
+  });
 
   const add = inputComputeInServer(function* () {
     if (inputName()) {
-      yield topics.create();
+      yield writeTopics.create();
       inputName(() => "");
     }
   });
 
   return {
     topics,
+    writeTopics,
     add,
     inputName,
   };
@@ -48,9 +52,13 @@ const autoParser = {
     names: [
       [0, "topics"],
       [1, "inputName"],
-      [2, "add"],
+      [2, "writeTopics"],
+      [3, "add"],
     ],
-    deps: [["h", 2, [1, 0], [1]]],
+    deps: [
+      ["h", 2, [1]],
+      ["h", 3, [1, 2], [1]],
+    ],
   },
 };
 Object.assign(topic, {
