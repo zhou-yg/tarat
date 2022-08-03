@@ -398,14 +398,19 @@ export const writeModelInitialSymbol = Symbol.for('@@writeModelInitial')
 
 export class WriteModel<T> extends AsyncState<T | Symbol> {
   entity: string = ''
-  sourceModel: Model<T[]> | ClientModel<T[]>
+  sourceModel?: Model<T[]> | ClientModel<T[]>
   constructor (
-    public sourceModelGetter: { _hook: Model<T[]> | ClientModel<T[]> },
+    public sourceModelGetter: { _hook: Model<T[]> | ClientModel<T[]> } | string,
     public getData: () => T
   ) {
     super(writeModelInitialSymbol)
-    this.sourceModel = sourceModelGetter._hook
-    this.entity = sourceModelGetter._hook.entity
+
+    if (typeof sourceModelGetter !== 'string') {
+      this.sourceModel = sourceModelGetter._hook
+      this.entity = sourceModelGetter._hook.entity
+    } else {
+      this.entity = sourceModelGetter
+    }
   }
   setGetter (fn: () => T) {
     this.getData = fn
@@ -415,7 +420,10 @@ export class WriteModel<T> extends AsyncState<T | Symbol> {
     const r:T = await getPlugin('Model').create(this.entity, {
       data: Object.assign(defaults, obj)
     })
-    await this.sourceModel.refresh()
+
+    if (this.sourceModel) {
+      await this.sourceModel.refresh()
+    }
 
     return r
   }
@@ -429,7 +437,10 @@ export class WriteModel<T> extends AsyncState<T | Symbol> {
       where: { id },
       data: obj
     })
-    await this.sourceModel.refresh()
+
+    if (this.sourceModel) {
+      await this.sourceModel.refresh()
+    }
   }
   async removeRow(where: number[] | { id: number }[]) {
     const id = typeof where[0] === 'number' ? where[0] : where[0].id
@@ -437,7 +448,10 @@ export class WriteModel<T> extends AsyncState<T | Symbol> {
     await getPlugin('Model').remove(this.entity, {
       where: { id }
     })
-    await this.sourceModel.refresh()
+
+    if (this.sourceModel) {
+      await this.sourceModel.refresh()
+    }
   }
 }
 
