@@ -1074,18 +1074,21 @@ export class CurrentRunnerScope {
     this.intialContextNames = n
   }
 
-  addHook(v: Hook) {
+  addHook(v: Hook | undefined) {
     if (v && this.hooks.indexOf(v) !== -1) {
-      throw new Error('add repeat hook')
+      throw new Error('[scope.addHook] cant add repeat hook')
     }
     this.hooks.push(v)
-    this.watcher.addDep(v)
 
-    // assign name by inject deps
-    if (this.intialContextNames) {
-      const r = this.intialContextNames.find(arr => arr[0] === this.hooks.length - 1)
-      if (r?.[1]) {
-        v.name = r[1]
+    if (v) {
+      this.watcher.addDep(v)
+  
+      // assign name by inject deps
+      if (this.intialContextNames) {
+        const r = this.intialContextNames.find(arr => arr[0] === this.hooks.length - 1)
+        if (r?.[1]) {
+          v.name = r[1]
+        }
       }
     }
   }
@@ -1221,7 +1224,7 @@ export class CurrentRunnerScope {
   }
 
   /**
-   * get all related hook index by curernet hookIndex
+   * get all related hook index according to curernet hookIndex
    * design logic:
    * 1.getD -> getD -> getD
    * 2.setD in who's getD -> getD
