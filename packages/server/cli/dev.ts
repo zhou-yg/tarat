@@ -75,9 +75,13 @@ async function startCompile (c: IConfig) {
 
   watcher
     .on('error', console.error)
-    .on('change', () => {
+    .on('change', (path) => {
+      if (/(\.css|\.less|\.scss)$/.test(path)) {
+        return
+      }
+
       const cost = time()
-      logFrame(`[change] re-run compiling`)
+      logFrame(`[change] re-run compiling from "${path}"`)
       readConfig({ cwd: c.cwd }).then(newConfig => {
         return buildEverything(newConfig)
       }).then(() => {
@@ -85,13 +89,13 @@ async function startCompile (c: IConfig) {
       })
     })
     .on('add', () => {
-      logFrame(`[add] ${chalk.green('re-run compiling')}`)
+      logFrame(`[add] ${chalk.green('re-run compiling')}  from "${path}"`)
       readConfig({ cwd: c.cwd }).then(newConfig => {
         buildEverything(newConfig)
       })
     })
     .on('unlink', () => {
-      logFrame(`[unlink] ${chalk.red('re-run compiling')}`)
+      logFrame(`[unlink] ${chalk.red('re-run compiling')}  from "${path}"`)
       readConfig({ cwd: c.cwd }).then(newConfig => {
         buildEverything(newConfig)
       })
