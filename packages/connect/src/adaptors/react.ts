@@ -42,6 +42,8 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
   const init = react.useRef(null)
   const driver: RenderDriver = react.useContext(DriverContext)
 
+  const uneffectCallbacks = react.useRef([])
+
   if (!init.current) {
 
     const serializedArgs = unstable_serialize(args)
@@ -53,10 +55,10 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
     // match the cache
     if (cachedDriverResult) {
       init.current = cachedDriverResult.result
-      cachedDriverResult.runner.onUpdate(() => {
+      const unlisten = cachedDriverResult.runner.onUpdate(() => {
         setHookResult({ ...init.current })
-      })  
-  
+      })
+      uneffectCallbacks.push(unlisten)
     } else {
       const bmName: string = hook.__name__ || hook.name
       let ssrContext: IHookContext[] = []
@@ -76,10 +78,10 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
       const r = runner.init(args, initialContext)
       init.current = r
   
-      runner.onUpdate(() => {
+      const unlisten = runner.onUpdate(() => {
         setHookResult({ ...init.current })
       })
-      typeof window !== 'undefined' && (window.runner = runner)
+      uneffectCallbacks.push(unlisten)
 
       let m = driverWeakMap.get(hook)
       if (!m) {
@@ -93,6 +95,11 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
       })
     }
   }
+  // release event
+  react.useEffect(() => () => {
+    uneffectCallbacks.current?.forEach((f: Function) => f())
+  })
+
   const [hookResult, setHookResult] = react.useState(init.current)
   return hookResult as ReturnType<T>
 }
