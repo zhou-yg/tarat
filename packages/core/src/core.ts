@@ -1328,6 +1328,7 @@ export class CurrentRunnerScope {
   createInputComputeContext(h?: Hook, args?: any[]): IHookContext {
     const { hooks } = this
     const hookIndex = h ? hooks.indexOf(h) : -1
+    const hookName = h?.name || ''
 
     let deps = new Set<number>()
     if (h) {
@@ -1369,6 +1370,7 @@ export class CurrentRunnerScope {
       name: this.hookRunnerName,
       data: hooksData,
       index: hookIndex === -1 ? undefined : hookIndex,
+      indexName: hookName,
       args: args || []
     }
   }

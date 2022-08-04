@@ -1,4 +1,4 @@
-import client from '@prisma/client'
+import * as client from './database/autoPrisma/client'
 
 if (!client.PrismaClient) {
   throw new Error(

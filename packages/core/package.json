@@ -9,7 +9,7 @@
     "watch-unit": "jest --watch -- __test__/core/context.test.ts",
     "wu": "sh scripts/dev-unit.sh",
     "test-unit": "jest",
-    "test-ci": "npm run p:gen && TEST=CI jest",
+    "test-ci": "TEST=CI jest",
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
     "build": "rm -rf dist/ && rollup --config rollup.config.mjs",
     "build:watch": "npm run format && rollup --config rollup.config.mjs --watch",

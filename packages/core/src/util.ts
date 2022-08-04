@@ -246,6 +246,7 @@ export interface IHookContext {
     | [TContextData]
   >
   index?: number
+  indexName?: string
   args: any[]
   name: string
 }
