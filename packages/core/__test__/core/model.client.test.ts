@@ -23,10 +23,10 @@ describe('client model', () => {
     let times = 0;
 
     mockBM.initModelConfig({
-      async find (e: 'item', w: IQueryWhere) {
+      async find (from: string, e: 'item', w: IQueryWhere) {
         return prisma[e].findMany(w as any)
       },
-      async executeDiff (entity: 'item', diff: IDiff) {
+      async executeDiff (from: string, entity: 'item', diff: IDiff) {
         await Promise.all(diff.create.map(async (obj) => {
           await prisma[entity].create({
             data: obj.value as any

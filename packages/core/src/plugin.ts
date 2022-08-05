@@ -63,11 +63,11 @@ export interface IRunningContext {
 
 const plugins: {
   Model?: {
-    find(entity: string, query: IModelQuery['query']): Promise<any>
-    update(entity: string, query: IModelData): Promise<number[]>
-    create(entity: string, data: IModelCreateData): Promise<any>
-    remove(entity: string, data: Omit<IModelData, 'data'>): Promise<number[]>
-    executeDiff(entity: string, d: IDiff): Promise<void>
+    find(from: string, entity: string, query: IModelQuery['query']): Promise<any>
+    update(from: string, entity: string, query: IModelData): Promise<number[]>
+    create(from: string, entity: string, data: IModelCreateData): Promise<any>
+    remove(from: string, entity: string, data: Omit<IModelData, 'data'>): Promise<number[]>
+    executeDiff(from: string, entity: string, d: IDiff): Promise<void>
   }
   Cache?: {
     getValue<T>(

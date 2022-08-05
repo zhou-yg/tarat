@@ -233,10 +233,11 @@ export type TContextData =
   | 'patch'
   | 'inputCompute'
   | 'model'
-  | 'writeModel'
-  | 'clientModel'
   | 'cache'
   | 'computed'
+  | 'prismaModel'  // prisma implement
+  | 'writePrisma'
+  | 'clientPrismaModel'
 
 export interface IHookContext {
   initialArgList: any[]

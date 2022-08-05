@@ -11,20 +11,20 @@ export async function setPrisma (cwd: string)  {
   prisma.$connect()
 
   loadPlugin('Model', {
-    async find(e, w) {
+    async find(from: string, e, w) {
       return prisma[e].findMany(w)
     },
-    async update(e, w) {
+    async update(from: string, e, w) {
       return prisma[e].update(w)
     },
-    async remove(e, d) {
+    async remove(from: string, e, d) {
       return prisma[e].delete(d)
     },
-    async create(e, q) {
+    async create(from: string, e, q) {
       return prisma[e].create(q)
     },
     // should check relation here
-    async executeDiff(e, d) {
+    async executeDiff(from: string, e, d) {
       await Promise.all(d.create.map(async obj => {
         await prisma[e].create({
           data: obj.value

@@ -33,19 +33,19 @@ describe('model', () => {
       })  
     }
     mockBM.initModelConfig({
-      async find (e: 'item', w: IQueryWhere) {
+      async find (from: string, e: 'item', w: IQueryWhere) {
         return prisma[e].findMany(w as any)
       },
-      async create (e: 'item', w: IQueryWhere) {
+      async create (from: string, e: 'item', w: IQueryWhere) {
         return prisma[e].create(w as any)
       },
-      async update (e: 'item', w: IQueryWhere) {
+      async update (from: string, e: 'item', w: IQueryWhere) {
         return prisma[e].update(w as any)
       },
-      async remove (e: 'item', w: IQueryWhere) {
+      async remove (from: string, e: 'item', w: IQueryWhere) {
         return prisma[e].delete(w as any)
       },
-      async executeDiff (entity: 'item', diff: IDiff) {
+      async executeDiff (from: string, entity: 'item', diff: IDiff) {
         await Promise.all(diff.create.map(async (obj) => {
           const r = await prisma[entity].create({
             data: obj.value as any

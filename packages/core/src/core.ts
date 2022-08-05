@@ -31,7 +31,6 @@ import {
 import EventEmitter from 'eventemitter3'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
 import { getPlugin, IModelCreateData, IModelData, IModelQuery, TCacheFrom } from './plugin'
-import { IQueryWhere } from '../dist'
 
 enablePatches()
 
@@ -242,7 +241,7 @@ class AsyncState<T> extends State<T> {
   }
 }
 
-export class Model<T extends any[]> extends AsyncState<T[]> {
+export abstract class Model<T extends any[]> extends AsyncState<T[]> {
   queryWhereComputed: Computed<IModelQuery['query'] | void> | null = null
   watcher: Watcher = new Watcher(this)
   // just update latest query
@@ -318,6 +317,31 @@ export class Model<T extends any[]> extends AsyncState<T[]> {
     const valid = q && checkQueryWhere(q)
     return !!q
   }
+  abstract executeQuery(reactiveChain?: ReactiveChain): Promise<void>
+  abstract exist(obj: Partial<T[0]>): Promise<boolean>
+  abstract refresh(): Promise<void>
+  override async applyInputComputePatches(
+    ic: InputCompute,
+    reactiveChain?: ReactiveChain
+  ) {
+    const exist = this.inputComputePatchesMap.get(ic)
+    if (exist) {
+      this.inputComputePatchesMap.delete(ic)
+      const patches = exist[1]
+      const newValue = applyPatches(this._internalValue, patches)
+      await this.updateWithPatches(newValue, patches, reactiveChain)
+    }
+  }
+  
+  abstract updateWithPatches(
+    v: T[],
+    patches: IPatch[],
+    reactiveChain?: ReactiveChain
+  ): Promise<void>
+}
+
+export class PrismaModel<T extends any[]> extends Model<T> {
+  identifier = 'prisma'
   async executeQuery(reactiveChain?: ReactiveChain) {
     this.queryTimeIndex++
     let currentQueryTimeIndex = this.queryTimeIndex
@@ -330,7 +354,7 @@ export class Model<T extends any[]> extends AsyncState<T[]> {
       let result: T[] = []
       if (!!q) {
         if (this.queryTimeIndex <= currentQueryTimeIndex) {
-          result = await getPlugin('Model').find(this.entity, q)
+          result = await getPlugin('Model').find(this.identifier, this.entity, q)
           log('[Model.executeQuery] 2 result: ', result)
         }
       }
@@ -346,23 +370,11 @@ export class Model<T extends any[]> extends AsyncState<T[]> {
     }
   }
   async exist(obj: Partial<T[0]>) {
-    const result: T = await getPlugin('Model').find(this.entity, { where: obj })
+    const result: T = await getPlugin('Model').find(this.identifier,this.entity, { where: obj })
     return result.length > 0
   }
   async refresh() {
     await this.executeQuery(currentReactiveChain?.add(this))
-  }
-  override async applyInputComputePatches(
-    ic: InputCompute,
-    reactiveChain?: ReactiveChain
-  ) {
-    const exist = this.inputComputePatchesMap.get(ic)
-    if (exist) {
-      this.inputComputePatchesMap.delete(ic)
-      const patches = exist[1]
-      const newValue = applyPatches(this._internalValue, patches)
-      await this.updateWithPatches(newValue, patches, reactiveChain)
-    }
   }
   async updateWithPatches(
     v: T[],
@@ -381,7 +393,7 @@ export class Model<T extends any[]> extends AsyncState<T[]> {
     try {
       const diff = calculateDiff(oldValue, patches)
       log('[Model.updateWithPatches] diff: ', diff)
-      await getPlugin('Model').executeDiff(entity, diff)
+      await getPlugin('Model').executeDiff(this.identifier, entity, diff)
     } catch (e) {
       console.info('[updateWithPatches] postPatches fail', e)
       // @TODO autoRollback value
@@ -395,19 +407,19 @@ export class Model<T extends any[]> extends AsyncState<T[]> {
   }
 }
 
-export const writeModelInitialSymbol = Symbol.for('@@writeModelInitial')
-
 /**
  * only used in writing data to model entity
  */
-export class WriteModel<T> extends AsyncState<T | Symbol> {
+export const writePrismaInitialSymbol = Symbol.for('@@writePrismaInitial')
+export class WritePrisma<T> extends AsyncState<T | Symbol> {
+  identifier = 'prisma'
   entity: string = ''
-  sourceModel?: Model<T[]> | ClientModel<T[]>
+  sourceModel?: Model<T[]>
   constructor (
-    public sourceModelGetter: { _hook: Model<T[]> | ClientModel<T[]> } | string,
+    public sourceModelGetter: { _hook: Model<T[]> } | string,
     public getData: () => T
   ) {
-    super(writeModelInitialSymbol)
+    super(writePrismaInitialSymbol)
 
     if (typeof sourceModelGetter !== 'string') {
       this.sourceModel = sourceModelGetter._hook
@@ -421,7 +433,7 @@ export class WriteModel<T> extends AsyncState<T | Symbol> {
   }
   async createRow(obj?: Partial<T>) {
     const defaults = this.getData()
-    const r:T = await getPlugin('Model').create(this.entity, {
+    const r:T = await getPlugin('Model').create(this.identifier, this.entity, {
       data: Object.assign(defaults, obj)
     })
 
@@ -437,7 +449,7 @@ export class WriteModel<T> extends AsyncState<T | Symbol> {
   ) {
     const id = where //typeof where[0] === 'number' ? where[0] : where[0].id
 
-    await getPlugin('Model').update(this.entity, {
+    await getPlugin('Model').update(this.identifier, this.entity, {
       where: { id },
       data: obj
     })
@@ -449,7 +461,7 @@ export class WriteModel<T> extends AsyncState<T | Symbol> {
   async removeRow(where: number) {
     const id = where // typeof where[0] === 'number' ? where[0] : where[0].id
 
-    await getPlugin('Model').remove(this.entity, {
+    await getPlugin('Model').remove(this.identifier, this.entity, {
       where: { id }
     })
 
@@ -480,9 +492,9 @@ interface IModelEvent {
 }
 export const modelPatchEvents = new Map<string, IModelEvent>()
 /**
- * writeModel in client will record the changing
+ * writePrisma in client will record the changing
  */
-export class ClientWriteModel<T> extends WriteModel<T> {
+export class ClientWritePrisma<T> extends WritePrisma<T> {
 
   createModelPatch (p: IModelEvent['patch']) {
     modelPatchEvents.set(
@@ -529,7 +541,7 @@ export class ClientWriteModel<T> extends WriteModel<T> {
   }
 } 
 
-export class ClientModel<T extends any[]> extends Model<T> {
+export class ClientPrismaModel<T extends any[]> extends PrismaModel<T> {
   override async executeQuery() {
     this.init = false
 
@@ -558,7 +570,7 @@ export class ClientModel<T extends any[]> extends Model<T> {
 
     end()
   }
-  override async updateWithPatches(v: T, patches: IPatch[]) {
+  override async updateWithPatches() {
     throw new Error('cant update in client')
   }
 }
@@ -1413,11 +1425,11 @@ export class CurrentRunnerScope {
     const hooksData: IHookContext['data'] = hooks.map((hook, i) => {
       if (noDeps || deps.has(i)) {
         // means: client -> server, doesn't need model, server must query again
-        if (hook instanceof ClientModel) {
-          return ['clientModel']
+        if (hook instanceof ClientPrismaModel) {
+          return ['clientPrismaModel']
         }
-        if (hook instanceof WriteModel) {
-          return ['writeModel']
+        if (hook instanceof WritePrisma) {
+          return ['writePrisma']
         }
         // means: server -> client
         if (hook instanceof Model) {
@@ -1662,8 +1674,9 @@ interface IModelOption {
 
 export const mountHookFactory = {
   state: mountState,
-  model: mountModel,
-  writeModel: mountWriteModel,
+  model: mountPrisma,
+  prisma: mountPrisma,
+  writePrisma: mountWritePrisma,
   cache: mountCache,
   computed: mountComputed,
   inputCompute,
@@ -1671,8 +1684,9 @@ export const mountHookFactory = {
 }
 export const updateHookFactory = {
   state: updateState,
-  model: updateModel,
-  writeModel: mountWriteModel,
+  model: updatePrisma,
+  prisma: updatePrisma,
+  writePrisma: mountWritePrisma,
   cache: updateCache,
   computed: updateComputed,
   inputCompute,
@@ -1683,8 +1697,9 @@ export const hookFactoryNames = Object.keys(mountHookFactory)
 
 export let currentHookFactory: {
   state: typeof mountState
-  model: typeof mountModel
-  writeModel: typeof mountWriteModel
+  model: typeof mountPrisma
+  prisma: typeof mountPrisma
+  writePrisma: typeof mountWritePrisma
   cache: typeof mountCache
   computed: typeof mountComputed
   inputCompute: typeof inputCompute
@@ -1836,7 +1851,7 @@ function mountState<T>(initialValue?: T) {
   return newSetterGetter
 }
 
-function updateModel<T extends any[]>(
+function updatePrisma<T extends any[]>(
   e: string,
   q?: () => IModelQuery['query'] | undefined,
   op?: IModelOption
@@ -1859,8 +1874,8 @@ function updateModel<T extends any[]>(
   })
 
   const hook = inServer
-    ? new Model<T>(e, q, op, currentRunnerScope!)
-    : new ClientModel<T>(e, q, op, currentRunnerScope!)
+    ? new PrismaModel<T>(e, q, op, currentRunnerScope!)
+    : new ClientPrismaModel<T>(e, q, op, currentRunnerScope!)
 
   if (receiveDataFromContext) {
     const initialValue: T =
@@ -1885,15 +1900,15 @@ function updateModel<T extends any[]>(
 
   return newSetterGetter
 }
-function mountModel<T extends any[]>(
+function mountPrisma<T extends any[]>(
   e: string,
   q?: () => IModelQuery['query'] | undefined,
   op?: IModelOption
 ) {
   const hook =
     process.env.TARGET === 'server'
-      ? new Model<T>(e, q, op, currentRunnerScope!)
-      : new ClientModel<T>(e, q, op, currentRunnerScope!)
+      ? new PrismaModel<T>(e, q, op, currentRunnerScope!)
+      : new ClientPrismaModel<T>(e, q, op, currentRunnerScope!)
 
   const setterGetter = createModelSetterGetterFunc<T>(hook)
   const newSetterGetter = Object.assign(setterGetter, {
@@ -1907,16 +1922,16 @@ function mountModel<T extends any[]>(
 
   return newSetterGetter
 }
-// "updateWriteModel" same as mountWriteModel
-function mountWriteModel<T> (
-  source: { _hook: Model<T[]> | ClientModel<T[]> },
+// "updateWritePrisma" same as mountWritePrisma
+function mountWritePrisma<T> (
+  source: { _hook: Model<T[]> },
   q: () => T,
 ) {
-  const hook = new WriteModel(source, q)
+  const hook = new WritePrisma(source, q)
   currentRunnerScope!.addHook(hook)
 
   const getter = () => {
-    throw new Error('[writeModel] cant get data from writeModel')
+    throw new Error('[writePrisma] cant get data from writePrisma')
   }
   const newGetter = Object.assign(getter, {
     _hook: hook,
@@ -2064,17 +2079,38 @@ export function model<T extends any[]>(
   if (!currentRunnerScope) {
     throw new Error('[model] must under a tarat runner')
   }
-  return currentHookFactory.model<T>(e, q, op)
+  return currentHookFactory.prisma<T>(e, q, op)
 }
-
 export function writeModel<T>(
-  source: { _hook: Model<T[]> | ClientModel<T[]> },
+  source: { _hook: Model<T[]> },
   q: () => T,
 ) {
   if (!currentRunnerScope) {
-    throw new Error('[writeModel] must under a tarat runner')
+    throw new Error('[writePrisma] must under a tarat runner')
   }
-  return currentHookFactory.writeModel<T>(source, q)
+  return currentHookFactory.writePrisma<T>(source, q)
+}
+
+
+export function prisma<T extends any[]>(
+  e: string,
+  q?: () => IModelQuery['query'] | undefined,
+  op?: IModelOption
+) {
+  if (!currentRunnerScope) {
+    throw new Error('[model] must under a tarat runner')
+  }
+  return currentHookFactory.model<T>(e, q, op)
+}
+
+export function writePrisma<T>(
+  source: { _hook: Model<T[]> },
+  q: () => T,
+) {
+  if (!currentRunnerScope) {
+    throw new Error('[writePrisma] must under a tarat runner')
+  }
+  return currentHookFactory.writePrisma<T>(source, q)
 }
 
 export function cache<T>(key: string, options: ICacheOptions<T>) {
@@ -2255,7 +2291,7 @@ export function compose<T extends Driver>(f: T, args?: any[]) {
 /**
  * inject input data to Model as initial value
  */
-type TModelGetter<T> = ReturnType<typeof model | typeof writeModel>
+type TModelGetter<T> = ReturnType<typeof model | typeof writePrisma>
 export function connectModel<T>(
   modelGetter: TModelGetter<T>,
   dataGetter: TGetterData<T>
