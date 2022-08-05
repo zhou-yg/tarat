@@ -106,7 +106,7 @@ export default function taratMiddleware (args: {
       }
     } else if (pre === diffPath && ctx.request.method === 'POST') {
       const c: { entity: string, diff: IDiff } = JSON.parse(ctx.request.body)
-      await getPlugin('Model').executeDiff(c.entity, c.diff)
+      await getPlugin('Model').executeDiff('unknown@@@@@', c.entity, c.diff)
       ctx.body = JSON.stringify({})
     } else {
       await next()
