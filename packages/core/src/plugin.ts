@@ -2,9 +2,9 @@ import { IDiff, IHookContext } from './util'
 import type Cookies from 'cookies'
 import { CurrentRunnerScope } from './core'
 
-type IModelCreateData = Omit<IModelData, 'where'> | Omit<IModelData, 'where'>[]
+export type IModelCreateData = Omit<IModelData, 'where'> | Omit<IModelData, 'where'>[]
 
-interface IModelData {
+export interface IModelData {
   where: { id: number }
   data: {
     [k: string]:

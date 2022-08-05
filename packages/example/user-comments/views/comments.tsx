@@ -3,6 +3,7 @@ import topicDriver from '../drivers/topic'
 import { useTarat, useProgress, useDriver } from 'tarat-connect'
 import React, { useState } from 'react'
 import s from './comments.module.less'
+import { Link } from 'react-router-dom'
 
 const LoginAction: React.FC<{
   onLogin?: () => void
@@ -31,8 +32,18 @@ const Comments: React.FC<{
 
   const notLogin = main.notLogin()
 
+  const ud = main.userData()
+
   return (
     <div className={s.comments}>
+      {ud ? (
+        <div className={s.user}>
+          name: {ud.name}
+
+          <Link to="/login">profile</Link>
+        </div>
+      ) : ''}
+
       {notLogin ? (
         <LoginAction onLogin={props.onLogin} onSign={props.onSign} />
       ) : ''}

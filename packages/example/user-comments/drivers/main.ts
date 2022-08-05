@@ -15,8 +15,6 @@ export default function main() {
   const userDataProgress = progress(loginHook.userData);
 
   const notLogin = computed(() => {
-    console.log("loginHook.userData()", loginHook.userData());
-    console.log("userDataProgress().state: ", userDataProgress().state);
     return !loginHook.alreadyLogin() && userDataProgress().state === "idle";
   });
 
@@ -36,6 +34,7 @@ export default function main() {
   });
 
   return {
+    userData: loginHook.userData,
     s,
     notLogin,
     add: login.add,
@@ -52,16 +51,7 @@ const autoParser = {
       [1, "notLogin"],
       [2, "removeTopic"],
     ],
-    deps: [
-      [
-        "h",
-        1,
-        [
-          ["c", 0, "userData"],
-          ["c", 0, "alreadyLogin"],
-        ],
-      ],
-    ],
+    deps: [["h", 1, [["c", 0, "alreadyLogin"]]]],
   },
 };
 Object.assign(main, {

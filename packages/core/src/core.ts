@@ -30,7 +30,8 @@ import {
 } from './util'
 import EventEmitter from 'eventemitter3'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
-import { getPlugin, IModelQuery, TCacheFrom } from './plugin'
+import { getPlugin, IModelCreateData, IModelData, IModelQuery, TCacheFrom } from './plugin'
+import { IQueryWhere } from '../dist'
 
 enablePatches()
 
@@ -396,6 +397,9 @@ export class Model<T extends any[]> extends AsyncState<T[]> {
 
 export const writeModelInitialSymbol = Symbol.for('@@writeModelInitial')
 
+/**
+ * only used in writing data to model entity
+ */
 export class WriteModel<T> extends AsyncState<T | Symbol> {
   entity: string = ''
   sourceModel?: Model<T[]> | ClientModel<T[]>
@@ -428,10 +432,10 @@ export class WriteModel<T> extends AsyncState<T | Symbol> {
     return r
   }
   async updateRow(
-    where: number[] | { id: number }[],
+    where: number,
     obj?: { [k: string]: any }
   ) {
-    const id = typeof where[0] === 'number' ? where[0] : where[0].id
+    const id = where //typeof where[0] === 'number' ? where[0] : where[0].id
 
     await getPlugin('Model').update(this.entity, {
       where: { id },
@@ -442,8 +446,8 @@ export class WriteModel<T> extends AsyncState<T | Symbol> {
       await this.sourceModel.refresh()
     }
   }
-  async removeRow(where: number[] | { id: number }[]) {
-    const id = typeof where[0] === 'number' ? where[0] : where[0].id
+  async removeRow(where: number) {
+    const id = where // typeof where[0] === 'number' ? where[0] : where[0].id
 
     await getPlugin('Model').remove(this.entity, {
       where: { id }
@@ -454,6 +458,76 @@ export class WriteModel<T> extends AsyncState<T | Symbol> {
     }
   }
 }
+
+/** 
+ * @TODO here shouldn't use "string" type as searching index.that bring too much dynamism
+ */
+interface IPatchCreate {
+  type: 'create',
+  parameter: IModelCreateData
+}
+interface IPatchUpdate {
+  type: 'update',
+  parameter: IModelData
+}
+interface IPatchRemove {
+  type: 'remove',
+  parameter: Omit<IModelData, 'data'>
+}
+interface IModelEvent {
+  timing: number;
+  patch: IPatchCreate | IPatchUpdate | IPatchRemove
+}
+export const modelPatchEvents = new Map<string, IModelEvent>()
+/**
+ * writeModel in client will record the changing
+ */
+export class ClientWriteModel<T> extends WriteModel<T> {
+
+  createModelPatch (p: IModelEvent['patch']) {
+    modelPatchEvents.set(
+      this.entity,
+      {
+        timing: Date.now(),
+        patch: p
+      }
+    )
+  }
+  
+  override async createRow(obj?: Partial<T>): Promise<T> {
+    const r = await super.createRow(obj)
+    this.createModelPatch({
+      type: 'create',
+      parameter: {
+        data: obj
+      }
+    })
+    return r
+  }
+  override async updateRow(
+    whereId: number,
+    obj?: { [k: string]: any }
+  ): Promise<void> {
+    await super.updateRow(whereId, obj)
+
+    this.createModelPatch({
+      type: 'update',
+      parameter: {
+        where: { id: whereId },
+        data: obj
+      }
+    })
+  }
+  override async removeRow(whereId: number): Promise<void> {
+    await super.removeRow(whereId)
+    this.createModelPatch({
+      type: 'remove',
+      parameter: {
+        where: { id: whereId },
+      }
+    })
+  }
+} 
 
 export class ClientModel<T extends any[]> extends Model<T> {
   override async executeQuery() {
