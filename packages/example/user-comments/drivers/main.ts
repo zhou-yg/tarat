@@ -30,7 +30,7 @@ export default function main() {
   });
 
   const removeTopic = inputComputeInServer(async function (id: number) {
-    await topicResult.writeTopics.remove([id]);
+    await topicResult.writeTopics.remove(id);
   });
 
   return {

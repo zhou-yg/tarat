@@ -16,6 +16,7 @@
     "schema": "./models/schema.prisma"
   },
   "dependencies": {
+    "@babel/preset-react": "^7.18.6",
     "@prisma/client": "^3.15.1",
     "@types/node": "^18.6.2",
     "@types/react": "^18.0.15",

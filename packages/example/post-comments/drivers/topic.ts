@@ -52,13 +52,9 @@ const autoParser = {
     names: [
       [0, "topics"],
       [1, "inputName"],
-      [2, "writeTopics"],
-      [3, "add"],
+      [2, "add"],
     ],
-    deps: [
-      ["h", 2, [1]],
-      ["h", 3, [1, 2], [1]],
-    ],
+    deps: [["h", 2, [1], [1]]],
   },
 };
 Object.assign(topic, {
