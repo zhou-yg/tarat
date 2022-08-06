@@ -1,4 +1,5 @@
-import { Runner, cloneDeep, IDiff, IHookContext, IQueryWhere, set, setEnv, debuggerLog } from '../../src/index'
+import { Runner, cloneDeep, IDiff, IHookContext,
+  IQueryWhere, set, setEnv, debuggerLog, IModelCreateData, IModelData } from '../../src/index'
 import prisma, { clearAll } from '../prisma'
 import * as mockBM from '../mockBM'
 
@@ -25,6 +26,9 @@ describe('client model', () => {
     mockBM.initModelConfig({
       async find (from: string, e: 'item', w: IQueryWhere) {
         return prisma[e].findMany(w as any)
+      },
+      async create (from: string, e: 'item', d: Omit<IModelData, 'where'>) {
+        return prisma[e].create(d)
       },
       async executeDiff (from: string, entity: 'item', diff: IDiff) {
         await Promise.all(diff.create.map(async (obj) => {
@@ -85,6 +89,30 @@ describe('client model', () => {
       expect(result.users()).toEqual([
         { id: 1, name: 'a' },
       ])
+    })
+
+    it.only('keep active model in realtime', async () => {
+      const runner1 = new Runner(mockBM.writeModelWithSource)
+      const result1 = runner1.init()
+
+      const runner2 = new Runner(mockBM.writeModelWithSource)
+      const result2 = runner2.init()
+
+      await Promise.all([
+        runner1.ready(),
+        runner2.ready()
+      ])
+      
+      result1.name(() => 'c')
+      await result1.createItem('')
+
+      await Promise.all([
+        runner1.ready(),
+        runner2.ready()
+      ])
+
+      expect(result1.items()[2].name).toEqual('c')
+      expect(result2.items()[2].name).toEqual('c')
     })
   })
   describe('update model', () => {

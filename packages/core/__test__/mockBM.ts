@@ -388,32 +388,6 @@ export function userPessimisticModel() {
   }
 }
 
-export function modelWithConnectModel() {
-  const items = model<{ id: number; name: string }[]>('item', () => ({}))
-  const writeItems = writeModel(items, () => ({
-    
-  }))
-  const name = state('')
-  connectModel(writeItems, () => {
-    return {
-      name: name()
-    }
-  })
-
-  const createItem = inputCompute(async (name: string) => {
-    if (name) {
-      await writeItems.create({ name })
-    } else {
-      await writeItems.create()
-    }
-  })
-
-  return {
-    items,
-    name,
-    createItem
-  }
-}
 export function writeModelWithSource() {
   const items = model<{ id?: number; name: string }[]>('item', () => ({}))
   const writeItems = writeModel(items, () => ({
@@ -435,6 +409,7 @@ export function writeModelWithSource() {
     createItem
   }
 }
+
 
 export function userModelInputeCompute() {
   const items = model<{ id: number; name?: string }[]>('item', () => ({}), {

@@ -100,6 +100,7 @@ export class Watcher<T = Hook> {
 }
 
 export class Hook extends EventEmitter {
+  /** hook's name for debugging */
   name?: string
   freezed?: boolean
   watchers = new Set<Watcher<typeof this>>()
@@ -320,6 +321,7 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
   abstract executeQuery(reactiveChain?: ReactiveChain): Promise<void>
   abstract exist(obj: Partial<T[0]>): Promise<boolean>
   abstract refresh(): Promise<void>
+  abstract checkAndRefresh(): Promise<void>
   override async applyInputComputePatches(
     ic: InputCompute,
     reactiveChain?: ReactiveChain
@@ -405,6 +407,9 @@ export class PrismaModel<T extends any[]> extends Model<T> {
     }
     await this.executeQuery(reactiveChain)
   }
+  async checkAndRefresh() {
+    // no need in server
+  }
 }
 
 /**
@@ -453,7 +458,6 @@ export class WritePrisma<T> extends AsyncState<T | Symbol> {
       where: { id },
       data: obj
     })
-
     if (this.sourceModel) {
       await this.sourceModel.refresh()
     }
@@ -464,7 +468,6 @@ export class WritePrisma<T> extends AsyncState<T | Symbol> {
     await getPlugin('Model').remove(this.identifier, this.entity, {
       where: { id }
     })
-
     if (this.sourceModel) {
       await this.sourceModel.refresh()
     }
@@ -507,41 +510,21 @@ export class ClientWritePrisma<T> extends WritePrisma<T> {
   }
   
   override async createRow(obj?: Partial<T>): Promise<T> {
-    const r = await super.createRow(obj)
-    this.createModelPatch({
-      type: 'create',
-      parameter: {
-        data: obj
-      }
-    })
-    return r
+    throw new Error('[ClientWritePrisma] cant invoke "create" directly in client')
   }
   override async updateRow(
     whereId: number,
     obj?: { [k: string]: any }
   ): Promise<void> {
-    await super.updateRow(whereId, obj)
-
-    this.createModelPatch({
-      type: 'update',
-      parameter: {
-        where: { id: whereId },
-        data: obj
-      }
-    })
+    throw new Error('[ClientWritePrisma] cant invoke "update" directly in client')
   }
   override async removeRow(whereId: number): Promise<void> {
-    await super.removeRow(whereId)
-    this.createModelPatch({
-      type: 'remove',
-      parameter: {
-        where: { id: whereId },
-      }
-    })
+    throw new Error('[ClientWritePrisma] cant invoke "remove" directly in client')
   }
 } 
 
-export class ClientPrismaModel<T extends any[]> extends PrismaModel<T> {
+export class ClientPrisma<T extends any[]> extends PrismaModel<T> {
+
   override async executeQuery() {
     this.init = false
 
@@ -571,7 +554,14 @@ export class ClientPrismaModel<T extends any[]> extends PrismaModel<T> {
     end()
   }
   override async updateWithPatches() {
-    throw new Error('cant update in client')
+    throw new Error('[ClientPrisma] cant update in client')
+  }
+  override async checkAndRefresh() {
+    const { modifiedTimstamp, entity } = this
+    const patchEvent = modelPatchEvents.get(entity)
+    if (patchEvent && patchEvent.timing > modifiedTimstamp) {
+      this.refresh()
+    }
   }
 }
 
@@ -1136,6 +1126,20 @@ export class CurrentRunnerScope {
     this.effectFunArr = []
   }
 
+  /**
+   * while enter UI will activate this function
+   */
+  activate () {
+    this.hooks.forEach(h => {
+      if (h instanceof Model) {
+        h.checkAndRefresh()
+      }
+    })
+  }
+  deactivate () {
+    this.outerListeners = []
+  }
+
   onUpdate(f: Function) {
     this.outerListeners.push(f)
     return () => {
@@ -1425,7 +1429,7 @@ export class CurrentRunnerScope {
     const hooksData: IHookContext['data'] = hooks.map((hook, i) => {
       if (noDeps || deps.has(i)) {
         // means: client -> server, doesn't need model, server must query again
-        if (hook instanceof ClientPrismaModel) {
+        if (hook instanceof ClientPrisma) {
           return ['clientPrismaModel']
         }
         if (hook instanceof WritePrisma) {
@@ -1548,7 +1552,12 @@ export class Runner<T extends Driver> {
     Object.assign(this.options, options)
     this.scope.beleiveContext = options?.beleiveContext
   }
-
+  activate () {
+    this.scope.activate()
+  }
+  deactivate () {
+    this.scope.deactivate()
+  }
   onUpdate(f: Function) {
     return this.scope?.onUpdate(() => {
       f()
@@ -1875,7 +1884,7 @@ function updatePrisma<T extends any[]>(
 
   const hook = inServer
     ? new PrismaModel<T>(e, q, op, currentRunnerScope!)
-    : new ClientPrismaModel<T>(e, q, op, currentRunnerScope!)
+    : new ClientPrisma<T>(e, q, op, currentRunnerScope!)
 
   if (receiveDataFromContext) {
     const initialValue: T =
@@ -1908,7 +1917,7 @@ function mountPrisma<T extends any[]>(
   const hook =
     process.env.TARGET === 'server'
       ? new PrismaModel<T>(e, q, op, currentRunnerScope!)
-      : new ClientPrismaModel<T>(e, q, op, currentRunnerScope!)
+      : new ClientPrisma<T>(e, q, op, currentRunnerScope!)
 
   const setterGetter = createModelSetterGetterFunc<T>(hook)
   const newSetterGetter = Object.assign(setterGetter, {
