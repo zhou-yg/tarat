@@ -91,7 +91,7 @@ describe('client model', () => {
       ])
     })
 
-    it.only('keep active model in realtime', async () => {
+    it('keep active model in realtime', async () => {
       const runner1 = new Runner(mockBM.writeModelWithSource)
       const result1 = runner1.init()
 

@@ -1093,7 +1093,121 @@ export enum EScopeState {
   pending = 'pending'
 }
 
-export class CurrentRunnerScope {
+/**
+ * ScopeContext designed for serialization
+ */
+export class RunnerContext<T extends Driver> {
+  // snapshot
+  initialArgList: Parameters<T>
+  intialData: IHookContext['data'] | null = null
+
+  // action
+  triggerHookIndex?: number
+  triggerHookName?: string
+
+  constructor (
+    public driverName: string,
+    public args?: Parameters<T>,
+    initialContext?: IHookContext
+  ) {
+
+    if (initialContext) {
+      this.initialArgList = initialContext ? initialContext.initialArgList : args
+      this.intialData = initialContext['data']
+  
+      this.triggerHookIndex = initialContext.index
+      this.triggerHookName = initialContext.indexName
+
+      // args in context has higher priority
+      if (initialContext.args) {
+        this.args = initialContext.args as any
+      }
+    }
+  }
+
+  serialize (
+    type: 'current' | 'next'
+  ) {
+
+  } 
+  /**
+  * need deliver context principles, sort by priority:
+  * 1.model/cache(server) needn't
+  * 2.state
+  * 3.related set/get
+  */
+  serializeCurrent(hooks: Hook[], hookIndex: number, args: any[], deps: Set<number>): IHookContext {
+    const h = hooks[hookIndex]
+    const hookName = h?.name || ''
+    const noDeps = deps.size === 0
+
+    const hooksData: IHookContext['data'] = hooks.map((hook, i) => {
+      if (noDeps || deps.has(i)) {
+        // means: client -> server, doesn't need model, server must query again
+        if (hook instanceof ClientPrisma) {
+          return ['clientPrismaModel']
+        }
+        if (hook instanceof WritePrisma) {
+          return ['writePrisma']
+        }
+        // means: server -> client
+        if (hook instanceof Model) {
+          return ['model', hook.value, hook.modifiedTimstamp]
+        }
+        if (hook instanceof Computed) {
+          return ['computed', hook.value, hook.modifiedTimstamp]
+        }
+        if (hook instanceof Cache) {
+          return ['cache', hook.value, hook.modifiedTimstamp]
+        }
+        if (hook instanceof InputCompute) {
+          return ['inputCompute']
+        }
+        if (hook instanceof State) {
+          return ['state', hook.value, hook.modifiedTimstamp]
+        }
+      }
+      return ['unserialized']
+    })
+
+    return {
+      initialArgList: this.initialArgList,
+      name: this.driverName,
+      data: hooksData,
+      index: hookIndex === -1 ? undefined : hookIndex,
+      indexName: hookName,
+      args: args || []
+    }
+  }
+  serializeNext () {
+
+  }
+
+  apply(hooks: Hook[], c: IHookContext, callback: (h: State, value: any, timestamp: number) => void) {
+    const contextData = c.data
+    contextData.forEach(([type, value, timestamp], index) => {
+      if (isDef(value)) {
+        const state = hooks[index] as State
+        switch (type) {
+          case 'unserialized':
+            break
+          default:
+            /**
+             * default to keep silent because of deliver total context now
+             */
+            callback(state, value, timestamp)
+            break
+        }
+      }
+    })
+    if (c.patch) {
+
+    }
+  }
+}
+
+
+export class CurrentRunnerScope<T extends Driver = any> {
   hooks: (Hook | undefined)[] = []
   composes: any[] = [] // store the compose execute resutl
 
@@ -1102,14 +1216,12 @@ export class CurrentRunnerScope {
   stateChangeCallbackCancel = () => {}
   stateChangeWaitHooks: Set<Hook> = new Set<Hook>()
   watcher: Watcher<Hook> = new Watcher(this)
-  initialArgList: any[] = []
-  intialContextData: IHookContext['data'] | null = null
-  intialContextDeps?: THookDeps
-  intialContextNames?: THookNames
+  // static parsed result
   initialHooksSet?: Set<number>
-  hookRunnerName = ''
 
-  intialCallHookIndex?: number
+  // initialArgList: any[] = []
+  // intialContextData: IHookContext['data'] | null = null
+  // hookRunnerName = ''
 
   reactiveChainStack: ReactiveChain[] = []
 
@@ -1118,12 +1230,47 @@ export class CurrentRunnerScope {
 
   effectFunArr: Function[] = []
 
+  constructor (
+    public runnerContext: RunnerContext<T>,
+    public intialContextDeps: THookDeps,
+    public intialContextNames: THookNames  
+  ) {
+    if (runnerContext.triggerHookIndex !== undefined && typeof runnerContext.triggerHookIndex === 'number') {
+      if (intialContextDeps?.length && runnerContext.triggerHookIndex !== undefined) {
+        const s = this.getRelatedHookIndexes(runnerContext.triggerHookIndex)
+        if (s.size !== 0) {
+          this.initialHooksSet = s
+        }
+      }
+    }
+  }
+
+  setBeleiveContext (beleiveContext: boolean) {
+    this.beleiveContext = beleiveContext
+  }
+
   effect(f: Function) {
     this.effectFunArr.push(f)
   }
   flushEffects () {
     this.effectFunArr.forEach(f => f())
     this.effectFunArr = []
+  }
+
+  /**
+   * call the executable hook: Model, InputCompute
+   * @TODO the executable hook maybe need a abstract base class
+   */
+  async callHook(hookIndex: number, args: any[]) {
+    const hook = this.hooks[hookIndex]
+    if (hook) {
+      if (hook instanceof Model) {
+        // console.log('callHook hookIndex=', hookIndex)
+        // await (hook as Model<any>).query()
+      } else {
+        await (hook as InputCompute).run(...args)
+      }
+    }
   }
 
   /**
@@ -1154,28 +1301,6 @@ export class CurrentRunnerScope {
     this.stateChangeCallbackCancel = nextTick(() => {
       this.notifyOuter()
     })
-  }
-  setIntialArgs(argList: any[], name: string) {
-    this.initialArgList = argList || []
-    this.hookRunnerName = name
-  }
-
-  setInitialContextData(context: IHookContext) {
-    this.intialContextData = context['data']
-    if (context.index !== undefined && typeof context.index === 'number') {
-      if (this.intialContextDeps?.length && context.index !== undefined) {
-        const s = this.getRelatedHookIndexes(context.index)
-        if (s.size !== 0) {
-          this.initialHooksSet = s
-        }
-      }
-    }
-  }
-  setInitialContextDeps(d?: THookDeps) {
-    this.intialContextDeps = d
-  }
-  setInitialContextNames(n?: THookNames) {
-    this.intialContextNames = n
   }
 
   addHook(v: Hook | undefined) {
@@ -1418,73 +1543,34 @@ export class CurrentRunnerScope {
   createInputComputeContext(h?: Hook, args?: any[]): IHookContext {
     const { hooks } = this
     const hookIndex = h ? hooks.indexOf(h) : -1
-    const hookName = h?.name || ''
 
     let deps = new Set<number>()
     if (h) {
       deps = this.getRelatedHookIndexes(hookIndex)
     }
-    const noDeps = deps.size === 0
 
-    const hooksData: IHookContext['data'] = hooks.map((hook, i) => {
-      if (noDeps || deps.has(i)) {
-        // means: client -> server, doesn't need model, server must query again
-        if (hook instanceof ClientPrisma) {
-          return ['clientPrismaModel']
-        }
-        if (hook instanceof WritePrisma) {
-          return ['writePrisma']
-        }
-        // means: server -> client
-        if (hook instanceof Model) {
-          return ['model', hook.value, hook.modifiedTimstamp]
-        }
-        if (hook instanceof Computed) {
-          return ['computed', hook.value, hook.modifiedTimstamp]
-        }
-        if (hook instanceof Cache) {
-          return ['cache', hook.value, hook.modifiedTimstamp]
-        }
-        if (hook instanceof InputCompute) {
-          return ['inputCompute']
-        }
-        if (hook instanceof State) {
-          return ['state', hook.value, hook.modifiedTimstamp]
-        }
-      }
-      return ['unserialized']
-    })
-
-    return {
-      initialArgList: this.initialArgList,
-      name: this.hookRunnerName,
-      data: hooksData,
-      index: hookIndex === -1 ? undefined : hookIndex,
-      indexName: hookName,
-      args: args || []
-    }
+    return this.runnerContext.serializeCurrent(
+      hooks,
+      hookIndex,
+      args || [],
+      deps
+    )
   }
   applyContextFromServer(c: IHookContext) {
-    const contextData = c.data
     const { hooks } = this
-    contextData.forEach(([type, value, timestamp], index) => {
-      if (isDef(value)) {
-        const state = hooks[index] as State
-        switch (type) {
-          case 'unserialized':
-            break
-          default:
-            /**
-             * default to keep silent because of deliver total context now
-             */
-            state.update?.(value, [], true)
-            if (value && timestamp) {
-              state.modifiedTimstamp = timestamp
-            }
-            break
+
+    this.runnerContext.apply(
+      hooks,
+      c,
+      // invoke while the target state is valid for updating
+      (state, value, timestamp) => {
+        state.update?.(value, [], true)
+        if (value && timestamp) {
+          state.modifiedTimstamp = timestamp
         }
       }
-    })
+    )
+
     this.notify()
   }
 
@@ -1537,49 +1623,40 @@ export class CurrentRunnerScope {
   }
 }
 
-let currentRunnerScope: CurrentRunnerScope | null = null
+let currentRunnerScope: CurrentRunnerScope<Driver> | null = null
 
 export class Runner<T extends Driver> {
-  scope = new CurrentRunnerScope()
-  alreadyInit = false
+  scope: CurrentRunnerScope<T>
   options: { beleiveContext: boolean; runnerContext?: Symbol } = {
     beleiveContext: false
   }
+  listeners: Function[] = []
   constructor(
     public driver: T,
     options?: { beleiveContext: boolean; runnerContext?: Symbol }
   ) {
     Object.assign(this.options, options)
-    this.scope.beleiveContext = options?.beleiveContext
   }
-  activate () {
-    this.scope.activate()
-  }
-  deactivate () {
-    this.scope.deactivate()
-  }
-  onUpdate(f: Function) {
-    return this.scope?.onUpdate(() => {
-      f()
-    })
-  }
+  /**
+   * @TODO need to refact because of this function should both return result and scope
+   */
   init(args?: Parameters<T>, initialContext?: IHookContext): ReturnType<T> {
-    if (this.alreadyInit) {
-      throw new Error('can not init repeat')
-    }
-    currentRunnerScope = this.scope
-    currentRunnerScope.setIntialArgs(
-      args || [],
-      getName(this.driver)
+
+    const context = new RunnerContext(
+      getName(this.driver),
+      args,
+      initialContext
     )
 
     const deps = getDeps(this.driver)
     const names = getNames(this.driver)
-    currentRunnerScope.setInitialContextDeps(deps)
-    currentRunnerScope.setInitialContextNames(names)
+    currentRunnerScope = new CurrentRunnerScope<T>(context, deps, names)
+    currentRunnerScope.setBeleiveContext(this.options.beleiveContext)
+
+    this.scope = currentRunnerScope
+
 
     if (initialContext) {
-      currentRunnerScope.setInitialContextData(initialContext)
       currentHookFactory = updateHookFactory
     } else {
       currentHookFactory = mountHookFactory
@@ -1589,38 +1666,35 @@ export class Runner<T extends Driver> {
 
     // becase of some hook won't run at intitial time with initialContext
     if (initialContext) {
-      this.scope.applyDepsMap()
+      currentRunnerScope.applyDepsMap()
     }
 
     // do execute effect.maybe from model/cache
-    this.scope.flushEffects()
+    currentRunnerScope.flushEffects()
 
     currentRunnerScope = null
 
-    this.alreadyInit = true
-
     return result
   }
+  mount (args?: Parameters<T>, initialContext?: IHookContext) {
+    return this.init(args, initialContext)
+  }
+  update (initialContext: IHookContext) {
+    return this.init(undefined, initialContext)
+  }
   /**
-   * call the executable hook: Model, InputCompute
-   * @TODO the executable hook maybe need a abstract base class
+   * @TODO after init method refactor. shouldnt callHook through runner but scope
    */
   async callHook(hookIndex: number, args: any[]) {
-    const hook = this.scope.hooks[hookIndex]
-    if (hook) {
-      if (hook instanceof Model) {
-        // console.log('callHook hookIndex=', hookIndex)
-        // await (hook as Model<any>).query()
-      } else {
-        await (hook as InputCompute).run(...args)
-      }
-    }
+    this.scope?.callHook(hookIndex, args)
   }
+  // same above
   state() {
-    return this.scope.state
+    return this.scope?.state
   }
+  // same above
   ready() {
-    return this.scope.ready()
+    return this.scope?.ready()
   }
 }
 
@@ -1825,13 +1899,13 @@ function updateState<T>(initialValue?: T) {
   const currentIndex = hooks.length
   const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
 
-  initialValue = currentRunnerScope!.intialContextData![currentIndex]?.[1]
+  initialValue = currentRunnerScope!.runnerContext.intialData![currentIndex]?.[1]
   // undefined means this hook wont needed in this progress
   if (!valid) {
     currentRunnerScope!.addHook(undefined)
     return createUnaccessGetter<T>(currentIndex)
   }
-  const timestamp = currentRunnerScope!.intialContextData![currentIndex]?.[2]
+  const timestamp = currentRunnerScope!.runnerContext.intialData![currentIndex]?.[2]
   const internalState = new State(initialValue)
   if (timestamp) {
     internalState.modifiedTimstamp = timestamp
@@ -1888,8 +1962,8 @@ function updatePrisma<T extends any[]>(
 
   if (receiveDataFromContext) {
     const initialValue: T =
-      currentRunnerScope!.intialContextData![currentIndex]?.[1]
-    const timestamp = currentRunnerScope!.intialContextData![currentIndex]?.[2]
+      currentRunnerScope!.runnerContext.intialData![currentIndex]?.[1]
+    const timestamp = currentRunnerScope!.runnerContext.intialData![currentIndex]?.[2]
     hook.init = false
     hook._internalValue = initialValue || []
     if (timestamp) {
@@ -1966,8 +2040,8 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
   const hook = new Cache(key, options, currentRunnerScope!)
 
   const initialValue: T =
-    currentRunnerScope!.intialContextData![currentIndex]?.[1]
-  const timestamp = currentRunnerScope!.intialContextData![currentIndex]?.[2]
+    currentRunnerScope!.runnerContext.intialData![currentIndex]?.[1]
+  const timestamp = currentRunnerScope!.runnerContext.intialData![currentIndex]?.[2]
 
   if (initialValue !== undefined) {
     hook._internalValue = initialValue
@@ -2013,8 +2087,8 @@ function updateComputed<T>(fn: any): any {
     return createUnaccessGetter<T>(currentIndex)
   }
   const initialValue: T =
-    currentRunnerScope!.intialContextData![currentIndex]?.[1]
-  const timestamp = currentRunnerScope!.intialContextData![currentIndex]?.[2]
+    currentRunnerScope!.runnerContext.intialData![currentIndex]?.[1]
+  const timestamp = currentRunnerScope!.runnerContext.intialData![currentIndex]?.[2]
 
   const hook = new Computed<T>(fn)
   currentRunnerScope!.addHook(hook)

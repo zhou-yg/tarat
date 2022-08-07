@@ -86,7 +86,7 @@ describe('initContext', () => {
   })
 
   describe('with depsMap', () => {
-    it('call remote with deps', async () => {
+    it('call remote compute with deps', async () => {
       mockBM.initModelConfig({
         async postComputeToServer (c: IHookContext) {
           process.env.TARGET = 'server'
@@ -111,6 +111,10 @@ describe('initContext', () => {
       })
       const clientRunner = new Runner(mockBM.changeStateInputComputeServer2)
   
+      /**
+       * call ic which hook index equal 4
+       * so that the runner only implement the deps who is refered by index 4
+       */
       const context = mockBM.initContext({
         index: 4,
         data: [
@@ -123,7 +127,7 @@ describe('initContext', () => {
       const r = clientRunner.init([], context)
 
       expect(r.s1()).toEqual({ num: 1 })
-      expect(r.s2._hook).toEqual(null)
+      expect(r.s2._hook === null).toBeTruthy()
       expect(r.s1._hook.watchers.size).toBe(2)
 
       const newVal = 10

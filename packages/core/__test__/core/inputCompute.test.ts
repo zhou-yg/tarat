@@ -8,7 +8,6 @@ describe('inputCompute', () => {
 
     const onRunnerUpdate = jest.fn(() => {
     })
-    runner.onUpdate(onRunnerUpdate)
 
     const args: [any, number] = [
       { num1: 0 },
@@ -16,6 +15,7 @@ describe('inputCompute', () => {
     ]
 
     const initResult = runner.init(args)
+    runner.scope.onUpdate(onRunnerUpdate)
 
     const newVal1 = 2
 
@@ -43,8 +43,8 @@ describe('inputCompute', () => {
     const runner = new Runner(mockBM.changeMultiByInputCompute)
     const onRunnerUpdate = jest.fn(() => {
     })
-    runner.onUpdate(onRunnerUpdate)
     const { s1, changeS1 } = runner.init()
+    runner.scope.onUpdate(onRunnerUpdate)
 
     expect(s1().num).toBe(0)
     changeS1(6)
@@ -60,7 +60,6 @@ describe('inputCompute', () => {
 
     const onRunnerUpdate = jest.fn(() => {
     })
-    runner.onUpdate(onRunnerUpdate)
 
     const args: [any, number] = [
       { num1: 0 },
@@ -68,6 +67,7 @@ describe('inputCompute', () => {
     ]
 
     const initResult = runner.init(args)
+    runner.scope.onUpdate(onRunnerUpdate)
 
     const newVal1 = 2
 
@@ -95,7 +95,6 @@ describe('inputCompute', () => {
 
     const onRunnerUpdate = jest.fn(() => {
     })
-    runner.onUpdate(onRunnerUpdate)
 
     const args: [any, number] = [
       { num1: 0 },
@@ -103,6 +102,7 @@ describe('inputCompute', () => {
     ]
 
     const initResult = runner.init(args)
+    runner.scope.onUpdate(onRunnerUpdate)
 
     const newVal1 = 2
 

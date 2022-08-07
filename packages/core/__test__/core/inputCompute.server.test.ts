@@ -9,7 +9,6 @@ describe('inputCompute', () => {
 
     const onRunnerUpdate = jest.fn(() => {
     })
-    runner.onUpdate(onRunnerUpdate)
 
     mockBM.initModelConfig({
       async postComputeToServer (c: IHookContext) {
@@ -32,6 +31,8 @@ describe('inputCompute', () => {
       10
     ]
     const initResult = runner.init(initArgs)
+    runner.scope.onUpdate(onRunnerUpdate)
+
     let newVal1 = 2
 
     await initResult.changeS1(newVal1)

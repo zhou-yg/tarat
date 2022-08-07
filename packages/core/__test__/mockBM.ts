@@ -63,7 +63,7 @@ export function initModelConfig(obj: any = {}) {
     },
     ...obj
   })
-  const cacheMap = new Map<CurrentRunnerScope | null, Map<string, any>>()
+  const cacheMap = new Map<CurrentRunnerScope<any> | null, Map<string, any>>()
   loadPlugin('cookie', {
     async get(scope, key) {
       return cacheMap.get(scope)?.get(key)

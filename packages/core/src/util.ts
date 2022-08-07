@@ -239,17 +239,33 @@ export type TContextData =
   | 'writePrisma'
   | 'clientPrismaModel'
 
+interface IContextHookPatch {
+  op: 'replace'
+  index: number
+  name?: string
+  oldValue: any
+}
+
 export interface IHookContext {
-  initialArgList: any[]
+  // snapshot
+  initialArgList: any
   data: Array<
     | [TContextData, any | IPatch[], number]
     | [TContextData, null]
     | [TContextData]
   >
+  name: string
+  // action
   index?: number
   indexName?: string
   args: any[]
-  name: string
+  // patches
+  // ...
+  patch?: {
+    list: IContextHookPatch[],
+    timestamp: number
+    // state: 'success' | 'error' | 'rollback'
+  }
 }
 
 export type THookDeps = Array<

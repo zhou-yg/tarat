@@ -38,11 +38,11 @@ describe('runner basic', () => {
     const runner = new Runner(mockBM.oneState)
     const onUpdate = jest.fn(() => {
     })
-    runner.onUpdate(onUpdate)
 
     const arg = { a: 1 }
 
     const initResult = runner.init([arg])
+    runner.scope.onUpdate(onUpdate)
 
     expect(initResult.s1()).toEqual(arg.a)
     expect(runner.scope.hooks.length).toStrictEqual(1)
@@ -104,7 +104,6 @@ describe('runner basic', () => {
 
     const onRunnerUpdate = jest.fn(() => {
     })
-    runner.onUpdate(onRunnerUpdate)
 
     const arg = {
       a: 1,
@@ -113,6 +112,7 @@ describe('runner basic', () => {
     }
 
     const initResult = runner.init([arg])
+    runner.scope.onUpdate(onRunnerUpdate)
 
     expect(initResult.s1()).toBe(arg.a)
     expect(runner.scope.hooks.length).toBe(1)

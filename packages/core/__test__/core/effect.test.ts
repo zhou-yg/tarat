@@ -10,10 +10,10 @@ describe('effect', () => {
     const runner = new Runner(mockBM.beforeWithFreeze)
     const onRunnerUpdate = jest.fn(() => {
     })
-    runner.onUpdate(onRunnerUpdate)
 
     const initNum = 0
     const result = runner.init([initNum])
+    runner.scope?.onUpdate(onRunnerUpdate)
 
     expect(result.num()).toBe(initNum)
     expect(result.markBefore).toEqual({ value: 0 })
@@ -40,11 +40,11 @@ describe('effect', () => {
     const runner = new Runner(mockBM.effectAfter)
     const onRunnerUpdate = jest.fn(() => {
     })
-    runner.onUpdate(onRunnerUpdate)
   
     const initNum = 0
     const result = runner.init([initNum])
-
+    runner.scope.onUpdate(onRunnerUpdate)
+  
     expect(result.num()).toBe(initNum)
     expect(result.markBefore).toEqual({ value: 0 })
     expect(runner.scope.hooks.length).toBe(2)
