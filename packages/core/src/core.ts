@@ -242,6 +242,8 @@ class AsyncState<T> extends State<T> {
   }
 }
 
+export const writeInitialSymbol = Symbol.for('@@writePrismaInitial')
+
 export abstract class Model<T extends any[]> extends AsyncState<T[]> {
   queryWhereComputed: Computed<IModelQuery['query'] | void> | null = null
   watcher: Watcher = new Watcher(this)
@@ -342,7 +344,63 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
   ): Promise<void>
 }
 
-export class PrismaModel<T extends any[]> extends Model<T> {
+export abstract class ClientModel<T extends any[]> extends Model<T> { 
+}
+
+export abstract class WriteModel<T> extends AsyncState<T | Symbol> {
+  abstract identifier: string
+  entity: string = ''
+  sourceModel?: Model<T[]>
+  constructor (
+    public sourceModelGetter: { _hook: Model<T[]> } | string,
+    public getData: () => T
+  ) {
+    super(writeInitialSymbol)
+
+    if (typeof sourceModelGetter !== 'string') {
+      this.sourceModel = sourceModelGetter._hook
+      this.entity = sourceModelGetter._hook.entity
+    } else {
+      this.entity = sourceModelGetter
+    }
+  }
+  setGetter (fn: () => T) {
+    this.getData = fn
+  }
+  abstract createRow(obj?: Partial<T>): Promise<T>
+  abstract updateRow(where: number, obj?: { [k: string]: any }): Promise<void>
+  abstract removeRow(where: number): Promise<void>
+}
+export abstract class ClientWriteModel<T> extends WriteModel<T> {
+}
+
+/** 
+ * @TODO here shouldn't use "string" type as searching index.that bring too much dynamism
+ */
+interface IPatchCreate {
+  type: 'create',
+  parameter: IModelCreateData
+}
+interface IPatchUpdate {
+  type: 'update',
+  parameter: IModelData
+}
+interface IPatchRemove {
+  type: 'remove',
+  parameter: Omit<IModelData, 'data'>
+}
+interface IModelEvent {
+  timing: number;
+  patch: IPatchCreate | IPatchUpdate | IPatchRemove
+}
+export const modelPatchEvents = new Map<string, IModelEvent>()
+
+/**
+ * only used in writing data to model entity
+ */
+ export const writePrismaInitialSymbol = Symbol.for('@@writePrismaInitial')
+ 
+ export class PrismaModel<T extends any[]> extends Model<T> {
   identifier = 'prisma'
   async executeQuery(reactiveChain?: ReactiveChain) {
     this.queryTimeIndex++
@@ -412,93 +470,50 @@ export class PrismaModel<T extends any[]> extends Model<T> {
   }
 }
 
-/**
- * only used in writing data to model entity
- */
-export const writePrismaInitialSymbol = Symbol.for('@@writePrismaInitial')
-export class WritePrisma<T> extends AsyncState<T | Symbol> {
-  identifier = 'prisma'
-  entity: string = ''
-  sourceModel?: Model<T[]>
-  constructor (
-    public sourceModelGetter: { _hook: Model<T[]> } | string,
-    public getData: () => T
-  ) {
-    super(writePrismaInitialSymbol)
-
-    if (typeof sourceModelGetter !== 'string') {
-      this.sourceModel = sourceModelGetter._hook
-      this.entity = sourceModelGetter._hook.entity
-    } else {
-      this.entity = sourceModelGetter
-    }
-  }
-  setGetter (fn: () => T) {
-    this.getData = fn
-  }
-  async createRow(obj?: Partial<T>) {
-    const defaults = this.getData()
-    const r:T = await getPlugin('Model').create(this.identifier, this.entity, {
-      data: Object.assign(defaults, obj)
-    })
-
-    if (this.sourceModel) {
-      await this.sourceModel.refresh()
-    }
-
-    return r
-  }
-  async updateRow(
-    where: number,
-    obj?: { [k: string]: any }
-  ) {
-    const id = where //typeof where[0] === 'number' ? where[0] : where[0].id
-
-    await getPlugin('Model').update(this.identifier, this.entity, {
-      where: { id },
-      data: obj
-    })
-    if (this.sourceModel) {
-      await this.sourceModel.refresh()
-    }
-  }
-  async removeRow(where: number) {
-    const id = where // typeof where[0] === 'number' ? where[0] : where[0].id
-
-    await getPlugin('Model').remove(this.identifier, this.entity, {
-      where: { id }
-    })
-    if (this.sourceModel) {
-      await this.sourceModel.refresh()
-    }
-  }
-}
-
-/** 
- * @TODO here shouldn't use "string" type as searching index.that bring too much dynamism
- */
-interface IPatchCreate {
-  type: 'create',
-  parameter: IModelCreateData
-}
-interface IPatchUpdate {
-  type: 'update',
-  parameter: IModelData
-}
-interface IPatchRemove {
-  type: 'remove',
-  parameter: Omit<IModelData, 'data'>
-}
-interface IModelEvent {
-  timing: number;
-  patch: IPatchCreate | IPatchUpdate | IPatchRemove
-}
-export const modelPatchEvents = new Map<string, IModelEvent>()
+ export class WritePrisma<T> extends WriteModel<T | Symbol> {
+   identifier = 'prisma'
+   async createRow(obj?: Partial<T>) {
+     const defaults = this.getData()
+     const r:T = await getPlugin('Model').create(this.identifier, this.entity, {
+       data: Object.assign(defaults, obj)
+     })
+ 
+     if (this.sourceModel) {
+       await this.sourceModel.refresh()
+     }
+ 
+     return r
+   }
+   async updateRow(
+     where: number,
+     obj?: { [k: string]: any }
+   ) {
+     const id = where //typeof where[0] === 'number' ? where[0] : where[0].id
+ 
+     await getPlugin('Model').update(this.identifier, this.entity, {
+       where: { id },
+       data: obj
+     })
+     if (this.sourceModel) {
+       await this.sourceModel.refresh()
+     }
+   }
+   async removeRow(where: number) {
+     const id = where // typeof where[0] === 'number' ? where[0] : where[0].id
+ 
+     await getPlugin('Model').remove(this.identifier, this.entity, {
+       where: { id }
+     })
+     if (this.sourceModel) {
+       await this.sourceModel.refresh()
+     }
+   }
+ } 
 /**
  * writePrisma in client will record the changing
  */
-export class ClientWritePrisma<T> extends WritePrisma<T> {
-
+export class ClientWritePrisma<T> extends WriteModel<T> {
+  identifier: string = 'prisma'
   createModelPatch (p: IModelEvent['patch']) {
     modelPatchEvents.set(
       this.entity,
