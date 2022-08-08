@@ -367,7 +367,7 @@ export abstract class WriteModel<T> extends AsyncState<T | Symbol> {
   setGetter (fn: () => T) {
     this.getData = fn
   }
-  abstract createRow(obj?: Partial<T>): Promise<T>
+  abstract createRow(obj?: Partial<T>): Promise<void>
   abstract updateRow(where: number, obj?: { [k: string]: any }): Promise<void>
   abstract removeRow(where: number): Promise<void>
 }
@@ -470,42 +470,65 @@ export const modelPatchEvents = new Map<string, IModelEvent>()
   }
 }
 
- export class WritePrisma<T> extends WriteModel<T | Symbol> {
+ export class WritePrisma<T> extends WriteModel<T> {
    identifier = 'prisma'
    async createRow(obj?: Partial<T>) {
      const defaults = this.getData()
-     const r:T = await getPlugin('Model').create(this.identifier, this.entity, {
-       data: Object.assign(defaults, obj)
-     })
- 
-     if (this.sourceModel) {
-       await this.sourceModel.refresh()
+
+     if (currentInputeCompute) {
+      const d: T = Object.assign(defaults, obj)
+      this.addInputComputePatches(
+        d,
+        [
+          {
+            op: 'add',
+            path: [],
+            value: d
+          }
+        ]
+      )
+     } else {
+      throw new Error('[WritePrisma] must invoke "createRow" in a InputCompute')
      }
- 
-     return r
    }
    async updateRow(
      where: number,
      obj?: { [k: string]: any }
    ) {
-     const id = where //typeof where[0] === 'number' ? where[0] : where[0].id
- 
-     await getPlugin('Model').update(this.identifier, this.entity, {
-       where: { id },
-       data: obj
-     })
-     if (this.sourceModel) {
-       await this.sourceModel.refresh()
+     if (currentInputeCompute) {
+      const defaults = this.getData()
+      const d: T = Object.assign(defaults, obj, { id: where })
+      this.addInputComputePatches(
+        d,
+        [
+          {
+            op: 'replace',
+            path: [],
+            value: d
+          }
+        ]
+      )
+     } else {
+      throw new Error('[WritePrisma] must invoke "updateRow" in a InputCompute')
      }
    }
    async removeRow(where: number) {
-     const id = where // typeof where[0] === 'number' ? where[0] : where[0].id
- 
-     await getPlugin('Model').remove(this.identifier, this.entity, {
-       where: { id }
-     })
-     if (this.sourceModel) {
-       await this.sourceModel.refresh()
+
+    if (currentInputeCompute) {
+      const defaults = this.getData()
+      const d: T = Object.assign(defaults, { id: where })
+      this.addInputComputePatches(
+        d,
+        [
+          {
+            op: 'remove',
+            path: [],
+            value: d
+          }
+        ]
+      )
+     } else {
+      throw new Error('[WritePrisma] must invoke "updateRow" in a InputCompute')
      }
    }
  } 
@@ -524,7 +547,7 @@ export class ClientWritePrisma<T> extends WriteModel<T> {
     )
   }
   
-  override async createRow(obj?: Partial<T>): Promise<T> {
+  override async createRow(obj?: Partial<T>): Promise<void> {
     throw new Error('[ClientWritePrisma] cant invoke "create" directly in client')
   }
   override async updateRow(
@@ -1445,7 +1468,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
 
     this.intialContextDeps = modifiedDeps.concat(newModifiedDeps)
   }
-
+  
   applyComputePatches(
     currentInputCompute: InputCompute,
     reactiveChain?: ReactiveChain
