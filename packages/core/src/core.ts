@@ -26,7 +26,8 @@ import {
   isUndef,
   getName,
   getNames,
-  THookNames
+  THookNames,
+  IModelPatchRecord
 } from './util'
 import EventEmitter from 'eventemitter3'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
@@ -123,7 +124,7 @@ export class State<T = any> extends Hook {
   freezed?: boolean
   modifiedTimstamp = Date.now()
   inputComputePatchesMap: Map<InputCompute, [T, IPatch[]]> = new Map()
-  constructor(data: T) {
+  constructor(data: T, public scope: CurrentRunnerScope) {
     super()
     this._internalValue = data
   }
@@ -188,7 +189,7 @@ export class State<T = any> extends Hook {
       }
     }
   }
-  applyInputComputePatches(ic: InputCompute, reactiveChain?: ReactiveChain<T>) {
+  applyComputePatches(ic: InputCompute, reactiveChain?: ReactiveChain<T>) {
     let exist = this.inputComputePatchesMap.get(ic)
     if (exist) {
       this.inputComputePatchesMap.delete(ic)
@@ -206,7 +207,7 @@ export class State<T = any> extends Hook {
       return shallowCopy(this._internalValue)
     }
   }
-  addInputComputePatches(value: T, patches: IPatch[]) {
+  addComputePatches(value: T, patches: IPatch[]) {
     if (currentInputeCompute) {
       let exist = this.inputComputePatchesMap.get(currentInputeCompute)
       if (!exist) {
@@ -219,7 +220,7 @@ export class State<T = any> extends Hook {
       exist[1] = exist[1].concat(patches)
       this.inputComputePatchesMap.set(currentInputeCompute, exist)
     } else {
-      throw new Error('[Model.addInputComputePatches] muse invoked under a InputCompute')
+      throw new Error('[Model.addComputePatches] must invoked under a InputCompute')
     }
   }
 }
@@ -257,11 +258,11 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
     public options: IModelOption = {},
     public scope: CurrentRunnerScope
   ) {
-    super([])
+    super([], scope)
     scope.addHook(this)
 
     if (getter) {
-      this.queryWhereComputed = new Computed(getter)
+      this.queryWhereComputed = new Computed(getter, scope)
       this.watcher.addDep(this.queryWhereComputed)
     }
 
@@ -326,7 +327,7 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
   abstract exist(obj: Partial<T[0]>): Promise<boolean>
   abstract refresh(): Promise<void>
   abstract checkAndRefresh(): Promise<void>
-  override async applyInputComputePatches(
+  override async applyComputePatches(
     ic: InputCompute,
     reactiveChain?: ReactiveChain
   ) {
@@ -345,19 +346,16 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
     reactiveChain?: ReactiveChain
   ): Promise<void>
 }
-
-export abstract class ClientModel<T extends any[]> extends Model<T> { 
-}
-
 export abstract class WriteModel<T> extends AsyncState<T | Symbol> {
   abstract identifier: string
   entity: string = ''
   sourceModel?: Model<T[]>
   constructor (
     public sourceModelGetter: { _hook: Model<T[]> } | string,
-    public getData: () => T
+    public getData: () => T,
+    scope: CurrentRunnerScope
   ) {
-    super(writeInitialSymbol)
+    super(writeInitialSymbol, scope)
 
     if (typeof sourceModelGetter !== 'string') {
       this.sourceModel = sourceModelGetter._hook
@@ -372,7 +370,24 @@ export abstract class WriteModel<T> extends AsyncState<T | Symbol> {
   abstract createRow(obj?: Partial<T>): Promise<void>
   abstract updateRow(where: number, obj?: { [k: string]: any }): Promise<void>
   abstract removeRow(where: number): Promise<void>
+  override applyComputePatches(
+    ic: InputCompute,
+    reactiveChain?: ReactiveChain
+  ) {
+    const exist = this.inputComputePatchesMap.get(ic)
+    if (exist) {
+      this.inputComputePatchesMap.delete(ic)
+      const patches = exist[1]
+
+      // this.scope.pushModelPatch(this, patches)
+      this.scope.modelPatchEvents.pushPatch(this, patches)
+    }
+  }
 }
+/** TIP: code for example */
+export abstract class ClientModel<T extends any[]> extends Model<T> { 
+}
+/** TIP: code for example */
 export abstract class ClientWriteModel<T> extends WriteModel<T> {
 }
 
@@ -391,11 +406,6 @@ interface IPatchRemove {
   type: 'remove',
   parameter: Omit<IModelData, 'data'>
 }
-interface IModelEvent {
-  timing: number;
-  patch: IPatchCreate | IPatchUpdate | IPatchRemove
-}
-export const modelPatchEvents = new Map<string, IModelEvent>()
 
 /**
  * only used in writing data to model entity
@@ -479,7 +489,7 @@ export const modelPatchEvents = new Map<string, IModelEvent>()
 
      if (currentInputeCompute) {
       const d: T = Object.assign(defaults, obj)
-      this.addInputComputePatches(
+      this.addComputePatches(
         d,
         [
           {
@@ -500,7 +510,7 @@ export const modelPatchEvents = new Map<string, IModelEvent>()
      if (currentInputeCompute) {
       const defaults = this.getData()
       const d: T = Object.assign(defaults, obj, { id: where })
-      this.addInputComputePatches(
+      this.addComputePatches(
         d,
         [
           {
@@ -519,7 +529,7 @@ export const modelPatchEvents = new Map<string, IModelEvent>()
     if (currentInputeCompute) {
       const defaults = this.getData()
       const d: T = Object.assign(defaults, { id: where })
-      this.addInputComputePatches(
+      this.addComputePatches(
         d,
         [
           {
@@ -534,34 +544,6 @@ export const modelPatchEvents = new Map<string, IModelEvent>()
      }
    }
  } 
-/**
- * writePrisma in client will record the changing
- */
-export class ClientWritePrisma<T> extends WriteModel<T> {
-  identifier: string = 'prisma'
-  createModelPatch (p: IModelEvent['patch']) {
-    modelPatchEvents.set(
-      this.entity,
-      {
-        timing: Date.now(),
-        patch: p
-      }
-    )
-  }
-  
-  override async createRow(obj?: Partial<T>): Promise<void> {
-    throw new Error('[ClientWritePrisma] cant invoke "create" directly in client')
-  }
-  override async updateRow(
-    whereId: number,
-    obj?: { [k: string]: any }
-  ): Promise<void> {
-    throw new Error('[ClientWritePrisma] cant invoke "update" directly in client')
-  }
-  override async removeRow(whereId: number): Promise<void> {
-    throw new Error('[ClientWritePrisma] cant invoke "remove" directly in client')
-  }
-} 
 
 export class ClientPrisma<T extends any[]> extends Prisma<T> {
 
@@ -597,13 +579,32 @@ export class ClientPrisma<T extends any[]> extends Prisma<T> {
     throw new Error('[ClientPrisma] cant update in client')
   }
   override async checkAndRefresh() {
-    const { modifiedTimstamp, entity } = this
-    const patchEvent = modelPatchEvents.get(entity)
-    if (patchEvent && patchEvent.timing > modifiedTimstamp) {
+    const { modifiedTimstamp } = this
+    const patchEvent = this.scope.modelPatchEvents.getRecord(this)
+    if (patchEvent && patchEvent.some(obj => {
+      return obj.timing > modifiedTimstamp
+    })) {
       this.refresh()
     }
   }
 }
+/**
+ * writePrisma in client will record the changing
+ */
+ export class ClientWritePrisma<T> extends WritePrisma<T> {
+  override async createRow(obj?: Partial<T>): Promise<void> {
+    throw new Error('[ClientWritePrisma] cant invoke "create" directly in client')
+  }
+  override async updateRow(
+    whereId: number,
+    obj?: { [k: string]: any }
+  ): Promise<void> {
+    throw new Error('[ClientWritePrisma] cant invoke "update" directly in client')
+  }
+  override async removeRow(whereId: number): Promise<void> {
+    throw new Error('[ClientWritePrisma] cant invoke "remove" directly in client')
+  }
+} 
 
 export interface ICacheOptions<T> {
   source?: { _hook: State<T> }
@@ -623,7 +624,7 @@ export class Cache<T> extends AsyncState<T | undefined> {
     public options: ICacheOptions<T>,
     public scope: CurrentRunnerScope
   ) {
-    super(undefined)
+    super(undefined, scope)
     scope.addHook(this)
     this.getterKey = key // `tarat_cache_${scope.hookRunnerName}__${key}`
 
@@ -748,9 +749,10 @@ export class Computed<T> extends AsyncState<T | Symbol> {
     public getter:
       | FComputedFunc<T | Symbol>
       | FComputedFuncAsync<T | Symbol>
-      | FComputedFuncGenerator<T | Symbol>
+      | FComputedFuncGenerator<T | Symbol>,
+    scope: CurrentRunnerScope
   ) {
-    super(ComputedInitial)
+    super(ComputedInitial, scope)
   }
   // override update (
   //   v: T,
@@ -839,7 +841,7 @@ export class InputCompute<P extends any[] = any> extends Hook {
     const updateReactiveChain: ReactiveChain | undefined =
       reactiveChain?.addUpdate(this)
 
-    this.scope.applyComputePatches(this, updateReactiveChain)
+    this.scope.applyAllComputePatches(this, updateReactiveChain)
     unFreeze({ _hook: this })
     this.emit(EHookEvents.afterCalling, this)
   }
@@ -1145,6 +1147,8 @@ export class RunnerContext<T extends Driver> {
   triggerHookIndex?: number
   triggerHookName?: string
 
+  patch?: IHookContext['patch']
+
   constructor (
     public driverName: string,
     public args?: Parameters<T>,
@@ -1162,6 +1166,9 @@ export class RunnerContext<T extends Driver> {
       if (initialContext.args) {
         this.args = initialContext.args as any
       }
+      if (initialContext.patch) {
+        this.patch = initialContext.patch
+      }
     }
   }
 
@@ -1169,20 +1176,11 @@ export class RunnerContext<T extends Driver> {
     type: 'current' | 'next'
   ) {
 
-  } 
-  /**
-  * need deliver context principles, sort by priority:
-  * 1.model/cache(server) needn't
-  * 2.state
-  * 3.related set/get
-  */
-  serializeCurrent(hooks: Hook[], hookIndex: number, args: any[], deps: Set<number>): IHookContext {
-    const h = hooks[hookIndex]
-    const hookName = h?.name || ''
-    const noDeps = deps.size === 0
+  }
 
+  formatContextData (hooks: Hook[], enable?: (i: number) => boolean) {
     const hooksData: IHookContext['data'] = hooks.map((hook, i) => {
-      if (noDeps || deps.has(i)) {
+      if (hook && (!enable || enable(i))) {
         // means: client -> server, doesn't need model, server must query again
         if (hook instanceof ClientPrisma) {
           return ['clientPrisma']
@@ -1209,6 +1207,21 @@ export class RunnerContext<T extends Driver> {
       }
       return ['unserialized']
     })
+    return hooksData
+  }
+
+  /**
+  * need deliver context principles, sort by priority:
+  * 1.model/cache(server) needn't
+  * 2.state
+  * 3.related set/get
+  */
+  serializeAction(hooks: Hook[], hookIndex: number, args: any[], deps: Set<number>): IHookContext {
+    const h = hooks[hookIndex]
+    const hookName = h?.name || ''
+    const noDeps = deps.size === 0
+
+    const hooksData = this.formatContextData(hooks, (i) => noDeps || deps.has(i))
 
     return {
       initialArgList: this.initialArgList,
@@ -1219,12 +1232,26 @@ export class RunnerContext<T extends Driver> {
       args: args || []
     }
   }
-  serializeNext () {
-
+  serializePatch(hooks: Hook[], modelPatchEvents: IModelEvent): IHookContext {
+    const hooksData = this.formatContextData(hooks)
+    const p = modelPatchEvents.toArray()
+    return {
+      initialArgList: this.initialArgList,
+      name: this.driverName,
+      data: hooksData,
+      // index: -1,
+      // indexName: '',
+      // args: [],
+      patch: p
+    }
   }
 
-  apply(hooks: Hook[], c: IHookContext, callback: (h: State, value: any, timestamp: number) => void) {
+  apply(
+    hooks: Hook[], c: IHookContext, 
+    needUpdateCallback: (h: State, value: any, timestamp: number) => void,
+  ) {
     const contextData = c.data
+    /** @TODO runContext shouldnt care the update logic */
     contextData.forEach(([type, value, timestamp], index) => {
       if (isDef(value)) {
         const state = hooks[index] as State
@@ -1235,17 +1262,52 @@ export class RunnerContext<T extends Driver> {
             /**
              * default to keep silent because of deliver total context now
              */
-            callback(state, value, timestamp)
+            needUpdateCallback(state, value, timestamp)
             break
         }
       }
     })
-    if (c.patch) {
 
-    }
+    this.patch = c.patch
   }
 }
 
+type TModelEntity = string
+
+class IModelEvent {
+  private data = new Map<TModelEntity, IModelPatchRecord[]>()
+
+  from (arr: IHookContext['patch']) {
+    this.data.clear()
+    arr.forEach(([entity, record]) => {
+      this.data.set(entity, record)  
+    })
+  }
+  toArray () {
+    const arr: IHookContext['patch'] = []
+    this.data.forEach((v, k) => {
+      arr.push([
+        k, v
+      ])
+    })
+    return arr
+  }
+
+  getRecord (m: { entity: string }) {
+    return this.data.get(m.entity)
+  }
+  pushPatch (m: { entity: string }, p: IPatch[]) {
+    let record = this.data.get(m.entity)
+    if (!record) {
+      record = []
+      this.data.set(m.entity, record)
+    }
+    record.push({
+      timing: Date.now(),
+      patch: p
+    })
+  }
+}
 
 export class CurrentRunnerScope<T extends Driver = any> {
   hooks: (Hook | undefined)[] = []
@@ -1269,6 +1331,8 @@ export class CurrentRunnerScope<T extends Driver = any> {
   beleiveContext = false
 
   effectFunArr: Function[] = []
+
+  modelPatchEvents = new IModelEvent()
 
   constructor (
     public runnerContext: RunnerContext<T>,
@@ -1317,14 +1381,18 @@ export class CurrentRunnerScope<T extends Driver = any> {
    * while enter UI will activate this function
    */
   activate () {
+    this.notifyAllModel()
+  }
+  deactivate () {
+    this.outerListeners = []
+  }
+
+  private notifyAllModel () {
     this.hooks.forEach(h => {
       if (h instanceof Model) {
         h.checkAndRefresh()
       }
     })
-  }
-  deactivate () {
-    this.outerListeners = []
   }
 
   onUpdate(f: Function) {
@@ -1471,7 +1539,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
     this.intialContextDeps = modifiedDeps.concat(newModifiedDeps)
   }
   
-  applyComputePatches(
+  applyAllComputePatches(
     currentInputCompute: InputCompute,
     reactiveChain?: ReactiveChain
   ) {
@@ -1481,10 +1549,11 @@ export class CurrentRunnerScope<T extends Driver = any> {
       }
     })
 
+
     if (hookModified.length) {
       hookModified.forEach(h => {
         const newChildChain = reactiveChain?.add(h as State)
-        ;(h as State).applyInputComputePatches(
+        ;(h as State).applyComputePatches(
           currentInputCompute,
           newChildChain
         )
@@ -1575,12 +1644,24 @@ export class CurrentRunnerScope<T extends Driver = any> {
     return deps
   }
   /**
+   * as a resonse while receive a input context
+   */
+  createPatchContext () {
+    const { hooks, modelPatchEvents } = this
+    return this.runnerContext.serializePatch(
+      hooks,
+      modelPatchEvents
+    )
+  }
+
+  /**
+   * as a input of other's Runner and trigger
    * need deliver context principles, sort by priority:
    * 1.model/cache(server) needn't
    * 2.state
    * 3.related set/get
    */
-  createInputComputeContext(h?: Hook, args?: any[]): IHookContext {
+   createActionContext(h?: Hook, args?: any[]): IHookContext {
     const { hooks } = this
     const hookIndex = h ? hooks.indexOf(h) : -1
 
@@ -1589,12 +1670,16 @@ export class CurrentRunnerScope<T extends Driver = any> {
       deps = this.getRelatedHookIndexes(hookIndex)
     }
 
-    return this.runnerContext.serializeCurrent(
+    return this.runnerContext.serializeAction(
       hooks,
       hookIndex,
       args || [],
       deps
     )
+  }
+  // alias
+  createInputComputeContext(h?: Hook, args?: any[]): IHookContext {
+    return this.createActionContext(h, args)
   }
   applyContextFromServer(c: IHookContext) {
     const { hooks } = this
@@ -1610,6 +1695,9 @@ export class CurrentRunnerScope<T extends Driver = any> {
         }
       }
     )
+    if (c.patch) {
+      this.notifyAllModel()
+    }
 
     this.notify()
   }
@@ -1778,6 +1866,8 @@ interface IModelOption {
   autoRollback?: boolean
   pessimisticUpdate?: boolean
   ignoreClientEnable?: boolean
+  // a custom callback to check if the clientModel
+  checkRefresh?: (ps: IPatch[]) => boolean
 }
 
 /**
@@ -1838,7 +1928,7 @@ function createStateSetterGetterFunc<SV>(s: State<SV>): {
       if (isFunc(paramter)) {
         const [result, patches] = produceWithPatches(s.value, paramter)
         if (currentInputeCompute) {
-          s.addInputComputePatches(result, patches)
+          s.addComputePatches(result, patches)
         } else {
           const reactiveChain: ReactiveChain<SV> | undefined =
             currentReactiveChain?.addUpdate(s)
@@ -1873,7 +1963,7 @@ function createModelSetterGetterFunc<T extends any[]>(
       )
 
       if (currentInputeCompute) {
-        m.addInputComputePatches(result, patches)
+        m.addComputePatches(result, patches)
       } else {
         const reactiveChain: ReactiveChain<T> | undefined =
           currentReactiveChain?.addUpdate(m)
@@ -1894,7 +1984,7 @@ function createCacheSetterGetterFunc<SV>(c: Cache<SV>): {
       if (isFunc(paramter)) {
         const [result, patches] = produceWithPatches(c.value, paramter)
         if (currentInputeCompute) {
-          c.addInputComputePatches(result, patches)
+          c.addComputePatches(result, patches)
         } else {
           const reactiveChain: ReactiveChain<SV> | undefined =
             currentReactiveChain?.addUpdate(c)
@@ -1946,7 +2036,7 @@ function updateState<T>(initialValue?: T) {
     return createUnaccessGetter<T>(currentIndex)
   }
   const timestamp = currentRunnerScope!.runnerContext.intialData![currentIndex]?.[2]
-  const internalState = new State(initialValue)
+  const internalState = new State(initialValue, currentRunnerScope)
   if (timestamp) {
     internalState.modifiedTimstamp = timestamp
   }
@@ -1962,7 +2052,7 @@ function updateState<T>(initialValue?: T) {
 }
 
 function mountState<T>(initialValue?: T) {
-  const internalState = new State(initialValue)
+  const internalState = new State(initialValue, currentRunnerScope)
 
   const setterGetter = createStateSetterGetterFunc(internalState)
   currentRunnerScope!.addHook(internalState)
@@ -2050,7 +2140,7 @@ function mountWritePrisma<T> (
   source: { _hook: Model<T[]> },
   q: () => T,
 ) {
-  const hook = new WritePrisma(source, q)
+  const hook = new WritePrisma(source, q, currentRunnerScope)
   currentRunnerScope!.addHook(hook)
 
   const getter = () => {
@@ -2130,7 +2220,7 @@ function updateComputed<T>(fn: any): any {
     currentRunnerScope!.runnerContext.intialData![currentIndex]?.[1]
   const timestamp = currentRunnerScope!.runnerContext.intialData![currentIndex]?.[2]
 
-  const hook = new Computed<T>(fn)
+  const hook = new Computed<T>(fn, currentRunnerScope)
   currentRunnerScope!.addHook(hook)
   // @TODO: update computed won't trigger
   hook._internalValue = initialValue
@@ -2162,7 +2252,7 @@ function mountComputed<T>(
   fn: FComputedFunc<T>
 ): (() => T) & { _hook: Computed<T> }
 function mountComputed<T>(fn: any): any {
-  const hook = new Computed<T>(fn)
+  const hook = new Computed<T>(fn, currentRunnerScope)
   currentRunnerScope!.addHook(hook)
 
   const reactiveChain: ReactiveChain<T> | undefined =

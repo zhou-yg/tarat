@@ -85,7 +85,7 @@ export const isEqual = (x: any, y: any): boolean => {
   return x !== x && y !== y
 }
 
-export function last(arr: any[]) {
+export function last<T>(arr: T[]): T {
   return arr[arr.length - 1]
 }
 export function cloneDeep(obj?: any) {
@@ -237,6 +237,7 @@ export type TContextData =
   | 'computed'
   | 'prismaModel'  // prisma implement
   | 'writePrisma'
+  | 'clientPrisma'
   | 'clientPrismaModel'
 
 interface IContextHookPatch {
@@ -244,6 +245,11 @@ interface IContextHookPatch {
   index: number
   name?: string
   oldValue: any
+}
+
+export interface IModelPatchRecord {
+  timing: number;
+  patch: IPatch[]
 }
 
 export interface IHookContext {
@@ -258,14 +264,10 @@ export interface IHookContext {
   // action
   index?: number
   indexName?: string
-  args: any[]
+  args?: any[]
   // patches
   // ...
-  patch?: {
-    list: IContextHookPatch[],
-    timestamp: number
-    // state: 'success' | 'error' | 'rollback'
-  }
+  patch?: [string, IModelPatchRecord[]][]
 }
 
 export type THookDeps = Array<
