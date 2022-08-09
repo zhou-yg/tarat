@@ -218,6 +218,8 @@ export class State<T = any> extends Hook {
        */
       exist[1] = exist[1].concat(patches)
       this.inputComputePatchesMap.set(currentInputeCompute, exist)
+    } else {
+      throw new Error('[Model.addInputComputePatches] muse invoked under a InputCompute')
     }
   }
 }
@@ -400,7 +402,7 @@ export const modelPatchEvents = new Map<string, IModelEvent>()
  */
  export const writePrismaInitialSymbol = Symbol.for('@@writePrismaInitial')
  
- export class PrismaModel<T extends any[]> extends Model<T> {
+ export class Prisma<T extends any[]> extends Model<T> {
   identifier = 'prisma'
   async executeQuery(reactiveChain?: ReactiveChain) {
     this.queryTimeIndex++
@@ -561,7 +563,7 @@ export class ClientWritePrisma<T> extends WriteModel<T> {
   }
 } 
 
-export class ClientPrisma<T extends any[]> extends PrismaModel<T> {
+export class ClientPrisma<T extends any[]> extends Prisma<T> {
 
   override async executeQuery() {
     this.init = false
@@ -1183,7 +1185,7 @@ export class RunnerContext<T extends Driver> {
       if (noDeps || deps.has(i)) {
         // means: client -> server, doesn't need model, server must query again
         if (hook instanceof ClientPrisma) {
-          return ['clientPrismaModel']
+          return ['clientPrisma']
         }
         if (hook instanceof WritePrisma) {
           return ['writePrisma']
@@ -1995,7 +1997,7 @@ function updatePrisma<T extends any[]>(
   })
 
   const hook = inServer
-    ? new PrismaModel<T>(e, q, op, currentRunnerScope!)
+    ? new Prisma<T>(e, q, op, currentRunnerScope!)
     : new ClientPrisma<T>(e, q, op, currentRunnerScope!)
 
   if (receiveDataFromContext) {
@@ -2028,7 +2030,7 @@ function mountPrisma<T extends any[]>(
 ) {
   const hook =
     process.env.TARGET === 'server'
-      ? new PrismaModel<T>(e, q, op, currentRunnerScope!)
+      ? new Prisma<T>(e, q, op, currentRunnerScope!)
       : new ClientPrisma<T>(e, q, op, currentRunnerScope!)
 
   const setterGetter = createModelSetterGetterFunc<T>(hook)
