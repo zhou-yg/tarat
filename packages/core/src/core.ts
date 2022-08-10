@@ -133,7 +133,7 @@ export class State<T = any> extends Hook {
   freezed?: boolean
   modifiedTimstamp = Date.now()
   inputComputePatchesMap: Map<InputCompute, [T, IPatch[]]> = new Map()
-  constructor(data: T, public scope: CurrentRunnerScope) {
+  constructor(data: T, public scope?: CurrentRunnerScope) {
     super()
     this._internalValue = data
   }
@@ -390,9 +390,12 @@ export abstract class WriteModel<T> extends AsyncState<T | Symbol> {
       this.inputComputePatchesMap.delete(ic)
       const patches = exist[1].filter(isModelPatch) as IModelPatch[]
       const end = this.startAsyncGetter()
+
       await this.executeModelPath(patches)
-      await this.sourceModel?.refresh()
       this.scope.modelPatchEvents.pushPatch(this, patches)
+      // TIP: must refresh after patch recording to make sure the modified time of model > patch time
+      await this.sourceModel?.refresh()
+
       end()
     }
   }
@@ -498,7 +501,7 @@ interface IPatchRemove {
  export class WritePrisma<T> extends WriteModel<T> {
    identifier = 'prisma'
    async executeModelPath (ps: IModelPatch[]) {
-    await Promise.all(ps.map(p => {
+    const arr = ps.map(p => {
       switch (p.op) {
         case 'create':
           return getPlugin('Model').create(this.identifier, this.entity, p.value)
@@ -507,7 +510,8 @@ interface IPatchRemove {
         case 'remove':
           return getPlugin('Model').remove(this.identifier, this.entity, p.value)
       }
-    }))
+    })
+    await Promise.all(arr)
   }
    async createRow(obj?: Partial<T>) {
      const defaults = this.getData()
@@ -588,7 +592,7 @@ export class ClientPrisma<T extends any[]> extends Prisma<T> {
 
     // @TODO: ignoreClientEnable will useless
     if (valid || this.options.ignoreClientEnable) {
-      const context = this.scope.createInputComputeContext(this)
+      const context = this.scope.createActionContext(this)
       log('[ClientModel.executeQuery] before post')
       const result: IHookContext = await getPlugin('Context').postQueryToServer(
         context
@@ -778,7 +782,7 @@ export class Computed<T> extends AsyncState<T | Symbol> {
       | FComputedFunc<T | Symbol>
       | FComputedFuncAsync<T | Symbol>
       | FComputedFuncGenerator<T | Symbol>,
-    scope: CurrentRunnerScope
+    scope?: CurrentRunnerScope
   ) {
     super(ComputedInitial, scope)
   }
@@ -953,7 +957,7 @@ class InputComputeInServer<P extends any[]> extends AsyncInputCompute<P> {
         newReactiveChain.async = true
       }
 
-      const context = this.scope.createInputComputeContext(this, args)
+      const context = this.scope.createActionContext(this, args)
       const result = await getPlugin('Context').postComputeToServer(context)
       this.scope.applyContextFromServer(result)
     }
@@ -1260,7 +1264,7 @@ export class RunnerContext<T extends Driver> {
       args: args || []
     }
   }
-  serializePatch(hooks: Hook[], modelPatchEvents: IModelEvent): IHookContext {
+  serializePatch(hooks: Hook[], modelPatchEvents: ModelEvent): IHookContext {
     const hooksData = this.formatContextData(hooks)
     const p = modelPatchEvents.toArray()
     return {
@@ -1302,14 +1306,24 @@ export class RunnerContext<T extends Driver> {
 
 type TModelEntity = string
 
-class IModelEvent {
+class ModelEvent {
   private data = new Map<TModelEntity, IModelPatchRecord[]>()
+  listeners: Function[] = []
+
+  subscribe (f: () => void) {
+    this.listeners.push(f)
+    return () => {
+      const i = this.listeners.indexOf(f)
+      this.listeners.splice(i, 1)
+    }  
+  }
 
   from (arr: IHookContext['patch']) {
     this.data.clear()
     arr.forEach(([entity, record]) => {
       this.data.set(entity, record)  
     })
+    this.listeners.forEach(f => f())
   }
   toArray () {
     const arr: IHookContext['patch'] = []
@@ -1358,14 +1372,14 @@ export class CurrentRunnerScope<T extends Driver = any> {
   // indicate can beleive the model data in context
   beleiveContext = false
 
-  effectFunArr: Function[] = []
-
-  modelPatchEvents = new IModelEvent()
+  effectFuncArr: Function[] = []
+  disposeFuncArr: Function[] = []
 
   constructor (
     public runnerContext: RunnerContext<T>,
     public intialContextDeps: THookDeps,
-    public intialContextNames: THookNames  
+    public intialContextNames: THookNames,
+    public modelPatchEvents: ModelEvent,
   ) {
     if (runnerContext.triggerHookIndex !== undefined && typeof runnerContext.triggerHookIndex === 'number') {
       if (intialContextDeps?.length && runnerContext.triggerHookIndex !== undefined) {
@@ -1375,6 +1389,9 @@ export class CurrentRunnerScope<T extends Driver = any> {
         }
       }
     }
+    this.disposeFuncArr.push(modelPatchEvents.subscribe(() => {
+      this.notifyAllModel()
+    }))
   }
 
   setBeleiveContext (beleiveContext: boolean) {
@@ -1382,11 +1399,11 @@ export class CurrentRunnerScope<T extends Driver = any> {
   }
 
   effect(f: Function) {
-    this.effectFunArr.push(f)
+    this.effectFuncArr.push(f)
   }
   flushEffects () {
-    this.effectFunArr.forEach(f => f())
-    this.effectFunArr = []
+    this.effectFuncArr.forEach(f => f())
+    this.effectFuncArr = []
   }
 
   /**
@@ -1409,10 +1426,16 @@ export class CurrentRunnerScope<T extends Driver = any> {
    * while enter UI will activate this function
    */
   activate () {
+    this.disposeFuncArr.push(this.modelPatchEvents.subscribe(() => {
+      this.notifyAllModel()
+    }))
+
     this.notifyAllModel()
   }
   deactivate () {
     this.outerListeners = []
+    this.disposeFuncArr.forEach(f => f())
+    this.disposeFuncArr = []
   }
 
   private notifyAllModel () {
@@ -1724,7 +1747,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
       }
     )
     if (c.patch) {
-      this.notifyAllModel()
+      this.modelPatchEvents.from(c.patch)
     }
 
     this.notify()
@@ -1762,10 +1785,13 @@ export class CurrentRunnerScope<T extends Driver = any> {
         throw new Error('[Scope.ready] unexpect loop for ready')
       }
       let notReadyHooks = asyncHooks
-        .filter(h => {
-          return !!h.getterPromise
-        })
-        .map(h => h.getterPromise)
+      .filter(h => {
+        // if (h.getterPromise) {
+        //   console.log(h)
+        // }
+        return !!h.getterPromise
+      })
+      .map(h => h.getterPromise)
       if (notReadyHooks.length === 0) {
         readyResolve()
       } else {
@@ -1780,6 +1806,8 @@ export class CurrentRunnerScope<T extends Driver = any> {
 }
 
 let currentRunnerScope: CurrentRunnerScope<Driver> | null = null
+
+export const GlobalModelEvent = new ModelEvent()
 
 export class Runner<T extends Driver> {
   scope: CurrentRunnerScope<T>
@@ -1804,9 +1832,14 @@ export class Runner<T extends Driver> {
       initialContext
     )
 
+    const modelPatchEvents =   process.env.TARGET === 'server' ? new ModelEvent() : GlobalModelEvent
+
     const deps = getDeps(this.driver)
     const names = getNames(this.driver)
-    currentRunnerScope = new CurrentRunnerScope<T>(context, deps, names)
+    currentRunnerScope = new CurrentRunnerScope<T>(
+      context, deps, names,
+      modelPatchEvents
+    )
     currentRunnerScope.setBeleiveContext(this.options.beleiveContext)
 
     this.scope = currentRunnerScope
@@ -2155,20 +2188,20 @@ function mountPrisma<T extends any[]>(
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: hook,
     exist: hook.exist.bind(hook) as typeof hook.exist,
-    // create: hook.createRow.bind(hook) as typeof hook.createRow,
-    // update: hook.updateRow.bind(hook) as typeof hook.updateRow,
-    // remove: hook.removeRow.bind(hook) as typeof hook.removeRow,
     refresh: hook.refresh.bind(hook) as typeof hook.refresh
   })
 
   return newSetterGetter
 }
-// "updateWritePrisma" same as mountWritePrisma
+// TIP: "function updateWritePrisma" same as mountWritePrisma
 function mountWritePrisma<T> (
   source: { _hook: Model<T[]> },
   q: () => T,
 ) {
-  const hook = new WritePrisma(source, q, currentRunnerScope)
+  const hook = 
+    process.env.TARGET === 'server'
+    ? new WritePrisma(source, q, currentRunnerScope)
+    : new ClientWritePrisma(source, q, currentRunnerScope)
   currentRunnerScope!.addHook(hook)
 
   const getter = () => {

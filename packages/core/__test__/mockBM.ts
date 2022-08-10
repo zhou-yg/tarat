@@ -22,6 +22,19 @@ import { loadPlugin } from '../src/plugin'
 
 initModelConfig()
 
+export function enterClient () {
+  process.env.TARGET = 'client'
+  return () => {
+    process.env.TARGET = ''
+  }
+}
+export function enterServer () {
+  process.env.TARGET = 'server'
+  return () => {
+    process.env.TARGET = ''
+  }
+}
+
 export function initContext(arg: {
   name?: IHookContext['name']
   data?: IHookContext['data']
@@ -395,7 +408,7 @@ export function writeModelWithSource() {
   }));
   const name = state('')
 
-  const createItem = inputCompute(async (name: string) => {
+  const createItem = inputComputeInServer(async (name: string) => {
     if (name) {
       await writeItems.create({ name })
     } else {

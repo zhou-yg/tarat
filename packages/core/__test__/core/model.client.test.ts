@@ -6,7 +6,7 @@ import * as mockBM from '../mockBM'
 describe('client model', () => {
   beforeAll(() => {
     // make sure the model run in server envirnment
-    process.env.TARGET = 'server'
+    mockBM.enterServer()
     clearAll()
   })
   beforeEach(async () => {
@@ -24,6 +24,7 @@ describe('client model', () => {
     let times = 0;
 
     mockBM.initModelConfig({
+
       async find (from: string, e: 'item', w: IQueryWhere) {
         return prisma[e].findMany(w as any)
       },
@@ -48,8 +49,23 @@ describe('client model', () => {
           })
         }))
       },
+      async postComputeToServer(c: IHookContext) {
+        const leave = mockBM.enterServer()
+        const serverRunner = new Runner(mockBM[c.name as keyof typeof mockBM])
+        serverRunner.init(c.initialArgList as [any, any], c)
+  
+        if (c.index) {
+          await serverRunner.callHook(c.index, c.args)
+        }
+        await serverRunner.ready()
+        const context = serverRunner.scope.createPatchContext()
+  
+        leave()
+  
+        return context
+      },
       async postQueryToServer(c: IHookContext): Promise<IHookContext> {
-        process.env.TARGET = 'server'
+        const leave = mockBM.enterServer()
 
         times++
         if (times > 3) {
@@ -64,9 +80,9 @@ describe('client model', () => {
         await runner.ready()
 
         await mockBM.wait(100)
-        const context = runner.scope.createInputComputeContext()
+        const context = runner.scope.createPatchContext()
 
-        process.env.TARGET = ''
+        leave()
         debuggerLog(false)
 
         return context
@@ -79,11 +95,11 @@ describe('client model', () => {
   describe('mount model', () => {
   
     it('post query to server', async () => {
-      process.env.TARGET = 'client'
+      const leave = mockBM.enterClient()
       const runner = new Runner(mockBM.userModelClient)
-      const result = runner.init()
-      process.env.TARGET = 'server'
-  
+      const result = runner.init()  
+      leave()
+
       await runner.ready()
 
       expect(result.users()).toEqual([
@@ -92,17 +108,22 @@ describe('client model', () => {
     })
 
     it('keep active model in realtime', async () => {
+
+      const leave = mockBM.enterClient()
+
       const runner1 = new Runner(mockBM.writeModelWithSource)
       const result1 = runner1.init()
 
       const runner2 = new Runner(mockBM.writeModelWithSource)
       const result2 = runner2.init()
 
+      leave()
+
       await Promise.all([
         runner1.ready(),
         runner2.ready()
       ])
-      
+
       result1.name(() => 'c')
       await result1.createItem('')
 
@@ -117,7 +138,7 @@ describe('client model', () => {
   })
   describe('update model', () => {
     it('query immediate with context still wont send query', async () => {
-      process.env.TARGET = 'client'
+      mockBM.enterClient()
       const runner = new Runner(mockBM.userModelClient)
       const cd: IHookContext['data'] = [
         ['data', 3, Date.now()],
@@ -130,7 +151,7 @@ describe('client model', () => {
       // debuggerLog(true)
       const result = runner.init([], context)
 
-      process.env.TARGET = 'server'
+      mockBM.enterServer()
     
       await runner.ready()
 

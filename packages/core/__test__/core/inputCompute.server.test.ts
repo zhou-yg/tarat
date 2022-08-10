@@ -10,21 +10,7 @@ describe('inputCompute', () => {
     const onRunnerUpdate = jest.fn(() => {
     })
 
-    mockBM.initModelConfig({
-      async postComputeToServer (c: IHookContext) {
-        process.env.TARGET = 'server'
-        const runner = new Runner(mockBM.changeStateInputComputeServer)
-
-        runner.init(c.initialArgList as [any, any], c)
-
-        if (c.index) {
-          await runner.callHook(c.index, c.args)
-        }
-
-        process.env.TARGET = ''
-        return runner.scope.createInputComputeContext()
-      }  
-    })
+    mockBM.useSimpleServerMiddleware(mockBM.changeStateInputComputeServer)
 
     const initArgs: [any, number] = [
       { num1: 0 },
