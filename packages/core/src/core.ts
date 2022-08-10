@@ -27,7 +27,11 @@ import {
   getName,
   getNames,
   THookNames,
-  IModelPatchRecord
+  IModelPatchRecord,
+  IModelPatch,
+  IDataPatch,
+  isDataPatch,
+  isModelPatch
 } from './util'
 import EventEmitter from 'eventemitter3'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
@@ -119,6 +123,11 @@ enum EHookEvents {
   afterCalling = 'afterCalling'
 }
 
+interface RecordInputComputePatches<T> {
+  inputComputePatchesMap: Map<InputCompute, [T, IPatch[]]>
+
+}
+
 export class State<T = any> extends Hook {
   _internalValue: T
   freezed?: boolean
@@ -158,7 +167,7 @@ export class State<T = any> extends Hook {
   }
   update(
     v: T,
-    patches?: IPatch[],
+    patches?: IDataPatch[],
     silent?: boolean,
     reactiveChain?: ReactiveChain<T>
   ) {
@@ -193,7 +202,7 @@ export class State<T = any> extends Hook {
     let exist = this.inputComputePatchesMap.get(ic)
     if (exist) {
       this.inputComputePatchesMap.delete(ic)
-      this.update(exist[0], exist[1], false, reactiveChain)
+      this.update(exist[0], exist[1]?.filter(isDataPatch) as IDataPatch[], false, reactiveChain)
     }
   }
   getInputComputeDraftValue(): T {
@@ -334,7 +343,7 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
     const exist = this.inputComputePatchesMap.get(ic)
     if (exist) {
       this.inputComputePatchesMap.delete(ic)
-      const patches = exist[1]
+      const patches = exist[1].filter(isDataPatch) as IDataPatch[]
       const newValue = applyPatches(this._internalValue, patches)
       await this.updateWithPatches(newValue, patches, reactiveChain)
     }
@@ -350,6 +359,7 @@ export abstract class WriteModel<T> extends AsyncState<T | Symbol> {
   abstract identifier: string
   entity: string = ''
   sourceModel?: Model<T[]>
+
   constructor (
     public sourceModelGetter: { _hook: Model<T[]> } | string,
     public getData: () => T,
@@ -370,17 +380,20 @@ export abstract class WriteModel<T> extends AsyncState<T | Symbol> {
   abstract createRow(obj?: Partial<T>): Promise<void>
   abstract updateRow(where: number, obj?: { [k: string]: any }): Promise<void>
   abstract removeRow(where: number): Promise<void>
-  override applyComputePatches(
+  abstract executeModelPath(ps: IModelPatch[]): Promise<void>
+  override async applyComputePatches(
     ic: InputCompute,
     reactiveChain?: ReactiveChain
   ) {
     const exist = this.inputComputePatchesMap.get(ic)
     if (exist) {
       this.inputComputePatchesMap.delete(ic)
-      const patches = exist[1]
-
-      // this.scope.pushModelPatch(this, patches)
+      const patches = exist[1].filter(isModelPatch) as IModelPatch[]
+      const end = this.startAsyncGetter()
+      await this.executeModelPath(patches)
+      await this.sourceModel?.refresh()
       this.scope.modelPatchEvents.pushPatch(this, patches)
+      end()
     }
   }
 }
@@ -450,7 +463,7 @@ interface IPatchRemove {
   }
   async updateWithPatches(
     v: T[],
-    patches: IPatch[],
+    patches: IDataPatch[],
     reactiveChain?: ReactiveChain
   ) {
     const oldValue = this._internalValue
@@ -484,18 +497,31 @@ interface IPatchRemove {
 
  export class WritePrisma<T> extends WriteModel<T> {
    identifier = 'prisma'
+   async executeModelPath (ps: IModelPatch[]) {
+    await Promise.all(ps.map(p => {
+      switch (p.op) {
+        case 'create':
+          return getPlugin('Model').create(this.identifier, this.entity, p.value)
+        case 'update':
+          return getPlugin('Model').update(this.identifier, this.entity, p.value)
+        case 'remove':
+          return getPlugin('Model').remove(this.identifier, this.entity, p.value)
+      }
+    }))
+  }
    async createRow(obj?: Partial<T>) {
      const defaults = this.getData()
 
      if (currentInputeCompute) {
       const d: T = Object.assign(defaults, obj)
       this.addComputePatches(
-        d,
+        undefined,
         [
           {
-            op: 'add',
-            path: [],
-            value: d
+            op: 'create',
+            value: {
+              data: d
+            }
           }
         ]
       )
@@ -509,14 +535,16 @@ interface IPatchRemove {
    ) {
      if (currentInputeCompute) {
       const defaults = this.getData()
-      const d: T = Object.assign(defaults, obj, { id: where })
+      const d: T = Object.assign(defaults, obj)
       this.addComputePatches(
-        d,
+        undefined,
         [
           {
-            op: 'replace',
-            path: [],
-            value: d
+            op: 'update',
+            value: {
+              where: { id: where },
+              data: d
+            }
           }
         ]
       )
@@ -528,14 +556,14 @@ interface IPatchRemove {
 
     if (currentInputeCompute) {
       const defaults = this.getData()
-      const d: T = Object.assign(defaults, { id: where })
       this.addComputePatches(
-        d,
+        undefined,
         [
           {
             op: 'remove',
-            path: [],
-            value: d
+            value: {
+              where: { id: where }
+            }
           }
         ]
       )
@@ -720,7 +748,7 @@ export class Cache<T> extends AsyncState<T | undefined> {
         '[Cache] can not update value directly while the cache has "source" in options '
       )
     } else {
-      super.update(v, patches, silent, reactiveChain)
+      super.update(v, patches?.filter(isDataPatch) as IDataPatch[], silent, reactiveChain)
       await getPlugin('Cache').setValue(this.scope, this.getterKey, v, from)
     }
   }
@@ -1296,7 +1324,7 @@ class IModelEvent {
   getRecord (m: { entity: string }) {
     return this.data.get(m.entity)
   }
-  pushPatch (m: { entity: string }, p: IPatch[]) {
+  pushPatch (m: { entity: string }, p: IModelPatch[]) {
     let record = this.data.get(m.entity)
     if (!record) {
       record = []

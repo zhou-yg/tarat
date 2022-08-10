@@ -268,7 +268,7 @@ describe('model', () => {
 
     describe('with writeModel', () => {
 
-      it('connectModel',async () => {
+      it('connectModel', async () => {
         const runner = new Runner(mockBM.writeModelWithSource)
         const result = runner.init()
 
@@ -277,9 +277,12 @@ describe('model', () => {
         result.name(() => 'c')
         await result.createItem('')
 
+        await runner.scope.ready()
+
         expect(result.items()[2].name).toEqual('c')
 
         await result.createItem('ddd')
+        await runner.scope.ready()
 
         expect(result.items()[3].name).toEqual('ddd')
       })

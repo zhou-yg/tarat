@@ -1,5 +1,5 @@
 import { applyPatches } from 'immer'
-import { IQueryWhere } from './plugin'
+import type { IModelCreateData, IModelData, IModelQuery, IQueryWhere } from './plugin'
 import co from './lib/co'
 export const isArray = Array.isArray
 /* copy from immer's common.ts  */
@@ -92,8 +92,8 @@ export function cloneDeep(obj?: any) {
   return obj && JSON.parse(JSON.stringify(obj))
 }
 
-export function applyPatchesToObject(target: any, patches: IPatch[]) {
-  patches.forEach((p: IPatch) => {
+export function applyPatchesToObject(target: any, patches: IDataPatch[]) {
+  patches.forEach((p: IDataPatch) => {
     switch (p.op) {
       case 'add':
         set(target, p.path, p.value)
@@ -123,7 +123,7 @@ export function isPrimtive(v: any) {
   ].includes(type)
 }
 
-export function deleteKey(obj: any, p: IPatch) {
+export function deleteKey(obj: any, p: IDataPatch) {
   const { path, value } = p
   let tail = path.length > 0 ? get(obj, path.slice(0, -1)) : obj
   const key = last(path)
@@ -249,14 +249,14 @@ interface IContextHookPatch {
 
 export interface IModelPatchRecord {
   timing: number;
-  patch: IPatch[]
+  patch: IModelPatch[]
 }
 
 export interface IHookContext {
   // snapshot
   initialArgList: any
   data: Array<
-    | [TContextData, any | IPatch[], number]
+    | [TContextData, any | IDataPatch[], number]
     | [TContextData, null]
     | [TContextData]
   >
@@ -292,11 +292,28 @@ export function findWithDefault<T>(
   return e
 }
 
-export interface IPatch {
+export type IPatch = IDataPatch | IModelPatch
+
+export const isDataPatch = (p: IPatch) => Reflect.has(p, 'path')
+export const isModelPatch = (p: IPatch) => !Reflect.has(p, 'path')
+
+// for data
+export interface IDataPatch {
   op: 'replace' | 'add' | 'remove'
   path: (string | number)[]
   value?: any
 }
+// for model
+export type IModelPatch = {
+  op: 'create',
+  value: IModelCreateData
+} | {
+  op: 'update',
+  value: IModelData
+} | {
+  op: 'remove',
+  value: Omit<IModelData, 'data'>
+} 
 
 export interface IStackUnit {
   value: {
@@ -320,7 +337,7 @@ export interface IStackUnit {
  *      解决方法：乐观更新的model，在生产patch需要维护一个本地序列来生产
  */
 
-function preparePatches2(data: any | any[], ps: IPatch[]) {
+function preparePatches2(data: any | any[], ps: IDataPatch[]) {
   const lengthPatchIndexes: Array<[number, any, (string | number)[]]> = []
   ps.forEach((p, i) => {
     const source = p.path.length === 1 ? data : get(data, p.path.slice(0, -1))
@@ -329,11 +346,11 @@ function preparePatches2(data: any | any[], ps: IPatch[]) {
     }
   })
   if (lengthPatchIndexes.length > 0) {
-    const allInsertPatches: Array<[number, number, IPatch[]]> = []
+    const allInsertPatches: Array<[number, number, IDataPatch[]]> = []
 
     lengthPatchIndexes.forEach(([index, source, currentPath]) => {
       const newArrLength = ps[index].value
-      const sourcePatches: IPatch[] = []
+      const sourcePatches: IDataPatch[] = []
 
       let startMovingIndex = index - 1
       for (index - 1; startMovingIndex >= 0; startMovingIndex--) {
@@ -351,8 +368,8 @@ function preparePatches2(data: any | any[], ps: IPatch[]) {
       }
       const newSource = applyPatches(source, sourcePatches)
 
-      const reservedPatches: IPatch[] = []
-      const newInsertPatches: IPatch[] = []
+      const reservedPatches: IDataPatch[] = []
+      const newInsertPatches: IDataPatch[] = []
 
       sourcePatches.forEach(p => {
         // value: maybe add, reserve
@@ -448,7 +465,7 @@ export type IDiff = ReturnType<typeof calculateDiff>
 /**
  * 根据patch计算diff，决定要进行的数据库操作
  */
-export function calculateDiff(data: any | any[], ps: IPatch[]) {
+export function calculateDiff(data: any | any[], ps: IDataPatch[]) {
   data = cloneDeep(data)
 
   ps = preparePatches2(data, ps)
@@ -611,7 +628,7 @@ export type TPath = (string | number)[]
  * a.0.b.0.c --> a 变化
  * a.b.c --> a.b.c 变化，需要通知到a.b吗？因为如果不是进一步的依赖，那说明b就是primitive的
  */
-export function calculateChangedPath(source: any, ps: IPatch[]): TPath[] {
+export function calculateChangedPath(source: any, ps: IDataPatch[]): TPath[] {
   if (isArray(source)) {
     return [['']] // root
   }
