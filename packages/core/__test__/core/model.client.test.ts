@@ -68,7 +68,7 @@ describe('client model', () => {
         const leave = mockBM.enterServer()
 
         times++
-        if (times > 3) {
+        if (times > 5) {
           throw new Error('max call')
         }
 
@@ -105,6 +105,8 @@ describe('client model', () => {
       expect(result.users()).toEqual([
         { id: 1, name: 'a' },
       ])
+
+      runner.scope.deactivate()
     })
 
     it('keep active model in realtime', async () => {
@@ -134,6 +136,9 @@ describe('client model', () => {
 
       expect(result1.items()[2].name).toEqual('c')
       expect(result2.items()[2].name).toEqual('c')
+
+      runner1.scope.deactivate()
+      runner2.scope.deactivate()
     })
   })
   describe('update model', () => {
