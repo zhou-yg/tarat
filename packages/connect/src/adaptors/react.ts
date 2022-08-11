@@ -55,7 +55,7 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
     // match the cache
     if (cachedDriverResult) {
       init.current = cachedDriverResult.result
-      const unlisten = cachedDriverResult.runner.onUpdate(() => {
+      const unlisten = cachedDriverResult.runner.scope.onUpdate(() => {
         setHookResult({ ...init.current })
       })
       uneffectCallbacks.push(unlisten)
@@ -78,7 +78,7 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
       const r = runner.init(args, initialContext)
       init.current = r
   
-      const unlisten = runner.onUpdate(() => {
+      const unlisten = runner.scope.onUpdate(() => {
         setHookResult({ ...init.current })
       })
       uneffectCallbacks.push(unlisten)
