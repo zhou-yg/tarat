@@ -2,8 +2,9 @@ import React, { createContext, useState } from 'react'
 import s from './main.module.less'
 import TopicList from '../../views/topicList'
 import { Link, Outlet } from 'react-router-dom'
-import Radio, { RadioChangeEvent } from 'antd/lib/radio'
-import 'antd/dist/antd.css'
+import Radio from '@mui/material/Radio'
+import RadioGroup from '@mui/material/RadioGroup'
+import FormControlLabel from '@mui/material/FormControlLabel'
 
 const roles = {
   0: {
@@ -25,7 +26,7 @@ export const RoleContext = createContext<typeof roles['0']>(null)
 export default function Main () {
   const [value, setValue] = useState(0);
 
-  const onChange = (e: RadioChangeEvent) => {
+  const onChange = (e) => {
     setValue(e.target.value);
   }
 
@@ -56,11 +57,11 @@ export default function Main () {
           <span style={{ marginRight: '10px' }}>
             select role:
           </span>
-          <Radio.Group onChange={onChange} value={value}>
-            <Radio value={0}>zhouyg</Radio>
-            <Radio value={1}>angel</Radio>
-            <Radio value={2}>evil</Radio>
-          </Radio.Group>
+          <RadioGroup onChange={onChange} value={value}>
+            <FormControlLabel value={0} label="zhouyg" control={<Radio />} ></FormControlLabel>
+            <FormControlLabel value={1} label="angel" control={<Radio />} ></FormControlLabel>
+            <FormControlLabel value={2} label="evil" control={<Radio />} ></FormControlLabel>
+          </RadioGroup>
         </div>
       </div>
     </div>

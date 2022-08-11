@@ -2,18 +2,12 @@ import React, { ReactElement, useEffect, useState } from 'react'
 
 import s from './commentList.module.less'
 import { useTarat } from 'tarat-connect'
-// import List from 'antd/lib/list/index'
-// import Button from 'antd/lib/button/index'
-// import Input from 'antd/lib/input/index'
-// import Comment from 'antd/lib/comment/index'
-import { Comment, Input, Button, List } from 'antd'
+
+import { Button, Input, List, ListItem } from '@mui/material'
 
 import commentHook, { ICommentTree } from '../drivers/comment'
 import topicOneHook from '../drivers/topicOne'
 
-// import LikeOutlined from '@ant-design/icons/LikeOutlined';
-// import UndoOutlined from '@ant-design/icons/UndoOutlined'
-// import CommentOutlined from '@ant-design/icons/CommentOutlined'
 import { CommentOutlined, UndoOutlined, LikeOutlined } from '@ant-design/icons'
 
 import * as dateFns from 'date-fns'
@@ -23,35 +17,39 @@ const CommentChildren: React.FC<{
   tree: ICommentTree[]
 }> = props => {
   const { comment, tree } = props
+  console.log('tree: ', tree);
   return (
-    <List
-      dataSource={tree}
-      bordered
-      renderItem={(item, i) => {
+    <List>
+      {tree.map((item) => {
         return (
-          <List.Item>
-            <Comment
-              className={s.commentOne}
-              author={<>
+          <ListItem key={item.id}>
+            <div className={s.commentOne} >
+              <p> 
+                author:
                 <span>{item.name}</span>
                 <span className={s.sub}>（{item.authorId}）</span>
-              </>}
-              content={<div className={s.content}>{item.content}</div>}
-              datetime={dateFns.formatDistanceToNow(new Date(item.createdAt!))}
-              actions={[
+              </p>
+              <p>
+                datetime:
+                {dateFns.formatDistanceToNow(new Date(item.createdAt!))}
+              </p>
+              <p>
+                content:
+                <span className={s.content}>{item.content}</span>
+              </p>
+              <p>
                 <span key="like" className={s.like}>
                   <LikeOutlined />
-                </span>,
+                </span>
                 <span key="comment-basic-reply-to" className={s.reply} onClick={() => {
                   comment.replyCommentId(() => item.id)
                 }}><CommentOutlined /></span>
-              ]}
-            >
-            {item.children.length > 0 ? <CommentChildren comment={comment} tree={item.children} /> : ''}
-            </Comment>
-          </List.Item>
+              </p>
+              {item.children.length > 0 ? <CommentChildren comment={comment} tree={item.children} /> : ''}
+            </div>
+          </ListItem>
         )
-      }}>
+      })}
     </List>
   )
 }
@@ -98,7 +96,6 @@ const CommentList: React.FC<{
         {comment.replyTarget() ? <div className={s.replyTarget}>reply to: {comment.replyTarget()?.content}</div> : ''}
         <div className={s.inputCommentBox}>
           <Input
-            showCount maxLength={200} bordered
             value={comment.inputComment()}
             onChange={e => comment.inputComment(() => e.target.value) }
             onKeyDown={e => {
@@ -106,7 +103,7 @@ const CommentList: React.FC<{
             }}/>
         </div>
         <div className={s.commentAction}>
-          <Button type="primary" disabled={comment.inputComment()?.length === 0} onClick={() => {
+          <Button variant="contained" disabled={comment.inputComment()?.length === 0} onClick={() => {
             comment.createComment()
           }}>add comment</Button>
         </div>
