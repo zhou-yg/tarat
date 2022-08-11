@@ -22,13 +22,13 @@ import { loadPlugin } from '../src/plugin'
 
 initModelConfig()
 
-export function enterClient () {
+export function enterClient() {
   process.env.TARGET = 'client'
   return () => {
     process.env.TARGET = ''
   }
 }
-export function enterServer () {
+export function enterServer() {
   process.env.TARGET = 'server'
   return () => {
     process.env.TARGET = ''
@@ -45,7 +45,7 @@ export function initContext(arg: {
     name: arg.name || '',
     data: arg.data || [],
     index: arg.index,
-    args: [],
+    args: []
   }
 }
 
@@ -405,7 +405,7 @@ export function writeModelWithSource() {
   const items = model<{ id?: number; name: string }[]>('item', () => ({}))
   const writeItems = writeModel(items, () => ({
     name: name()
-  }));
+  }))
   const name = state('')
 
   const createItem = inputComputeInServer(async (name: string) => {
@@ -422,7 +422,6 @@ export function writeModelWithSource() {
     createItem
   }
 }
-
 
 export function userModelInputeCompute() {
   const items = model<{ id: number; name?: string }[]>('item', () => ({}), {
@@ -739,13 +738,13 @@ export function composeWithSS2() {
 Object.assign(composeWithSS2, {
   __deps__: [
     ['h', 2, [], [0]], // will -> 6
-    ['h', 2, [0, ['c', 0, 's1'], ['c', 1, 's2']]], // will -> 6
+    ['h', 2, [0, ['c', 0, 's1'], ['c', 1, 's2']]] // will -> 6
     // will composed [['h', 1, [0]]] -> [['h', 2, [1]]] ( +1 )
     // will composed [['h', 1, [0]]] -> [['h', 5, [4]]] ( +4 )
   ],
   __names__: [
     [0, 's1'],
     [1, 'ic'],
-    [2, 's33'],
+    [2, 's33']
   ]
 })

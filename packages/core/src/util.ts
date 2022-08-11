@@ -1,5 +1,10 @@
 import { applyPatches } from 'immer'
-import type { IModelCreateData, IModelData, IModelQuery, IQueryWhere } from './plugin'
+import type {
+  IModelCreateData,
+  IModelData,
+  IModelQuery,
+  IQueryWhere
+} from './plugin'
 import co from './lib/co'
 export const isArray = Array.isArray
 /* copy from immer's common.ts  */
@@ -235,7 +240,7 @@ export type TContextData =
   | 'model'
   | 'cache'
   | 'computed'
-  | 'prismaModel'  // prisma implement
+  | 'prismaModel' // prisma implement
   | 'writePrisma'
   | 'clientPrisma'
   | 'clientPrismaModel'
@@ -248,7 +253,7 @@ interface IContextHookPatch {
 }
 
 export interface IModelPatchRecord {
-  timing: number;
+  timing: number
   patch: IModelPatch[]
 }
 
@@ -304,16 +309,19 @@ export interface IDataPatch {
   value?: any
 }
 // for model
-export type IModelPatch = {
-  op: 'create',
-  value: IModelCreateData
-} | {
-  op: 'update',
-  value: IModelData
-} | {
-  op: 'remove',
-  value: Omit<IModelData, 'data'>
-} 
+export type IModelPatch =
+  | {
+      op: 'create'
+      value: IModelCreateData
+    }
+  | {
+      op: 'update'
+      value: IModelData
+    }
+  | {
+      op: 'remove'
+      value: Omit<IModelData, 'data'>
+    }
 
 export interface IStackUnit {
   value: {
@@ -702,7 +710,7 @@ export function checkQueryWhere(where: IQueryWhere['where']): boolean {
 export function getDeps(f: Driver) {
   return f.__deps__
 }
-export function getName (f: Driver) {
+export function getName(f: Driver) {
   return f.__name__ || f.name
 }
 export function getNames(f: Driver) {
