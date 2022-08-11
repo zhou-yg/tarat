@@ -28,22 +28,6 @@ export default [
         tsconfig: './tsconfig.json',
       }),
       replace({
-        'process.env.TARGET': '"server"'
-      }),
-    ],
-    input: 'src/index.ts',
-    output: {
-      file: 'dist/index.server.mjs',
-      format: 'esm'
-    },
-  },
-  {
-    plugins: [
-      tsPlugin({
-        clean: true,
-        tsconfig: './tsconfig.json',
-      }),
-      replace({
         'process.env.TARGET': '"client"'
       }),
     ],
