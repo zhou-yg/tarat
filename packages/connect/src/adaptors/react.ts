@@ -58,7 +58,7 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
       const unlisten = cachedDriverResult.runner.scope.onUpdate(() => {
         setHookResult({ ...init.current })
       })
-      uneffectCallbacks.push(unlisten)
+      uneffectCallbacks.current.push(unlisten)
     } else {
       const bmName: string = hook.__name__ || hook.name
       let ssrContext: IHookContext[] = []
@@ -81,7 +81,7 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
       const unlisten = runner.scope.onUpdate(() => {
         setHookResult({ ...init.current })
       })
-      uneffectCallbacks.push(unlisten)
+      uneffectCallbacks.current.push(unlisten)
 
       let m = driverWeakMap.get(hook)
       if (!m) {

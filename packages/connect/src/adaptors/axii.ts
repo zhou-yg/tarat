@@ -4,7 +4,7 @@ import {
   Runner,
   State,
   Watcher,
-  IPatch,
+  IDataPatch,
   applyPatchesToObject,
   BM,
   cloneDeep,
@@ -16,8 +16,8 @@ import {
 
 class AxiiData {
   watcher: Watcher<Hook> = new Watcher(this)
-  constructor(public callback: (hook?: Hook, patches?: IPatch[]) => void) {}
-  notify(hook?: Hook, patches?: IPatch[]) {
+  constructor(public callback: (hook?: Hook, patches?: IDataPatch[]) => void) {}
+  notify(hook?: Hook, patches?: IDataPatch[]) {
     this.callback(hook, patches)
   }
 }
@@ -43,7 +43,7 @@ export function useAxiiHook<T extends BM>(axii: any, hook: T, ...args: any) {
           if (param && isFunc(param)) {
             const [_, patches] = valueGetter(param)
             if (primitive) {
-              patches.forEach((p: IPatch) => {
+              patches.forEach((p: IDataPatch) => {
                 reactiveObj.value = p.value
               })
             } else {
