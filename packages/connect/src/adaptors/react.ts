@@ -54,11 +54,10 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
 
     // match the cache
     if (cachedDriverResult) {
-      init.current = cachedDriverResult.result
-      const unlisten = cachedDriverResult.runner.scope.onUpdate(() => {
-        setHookResult({ ...init.current })
-      })
-      uneffectCallbacks.current.push(unlisten)
+      init.current = {
+        result: cachedDriverResult.result,
+        runner: cachedDriverResult.runner
+      }
     } else {
       const bmName: string = hook.__name__ || hook.name
       let ssrContext: IHookContext[] = []
@@ -76,13 +75,11 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
   
       const initialContext = ssrContext.pop()
       const r = runner.init(args, initialContext)
-      init.current = r
+      init.current = {
+        runner,
+        result: r
+      }
   
-      const unlisten = runner.scope.onUpdate(() => {
-        setHookResult({ ...init.current })
-      })
-      uneffectCallbacks.current.push(unlisten)
-
       let m = driverWeakMap.get(hook)
       if (!m) {
         m = new Map
@@ -96,10 +93,16 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
     }
   }
   // release event
-  react.useEffect(() => () => {
-    uneffectCallbacks.current?.forEach((f: Function) => f())
+  react.useEffect(() => {
+    init.current.runner.scope.onUpdate(() => {
+      setHookResult({ ...init.current.result })
+    })
+    init.current.runner.scope.activate()
+    return () => {
+      init.current.runner.scope.deactivate()
+    }
   })
 
-  const [hookResult, setHookResult] = react.useState(init.current)
+  const [hookResult, setHookResult] = react.useState(init.current.result)
   return hookResult as ReturnType<T>
 }
