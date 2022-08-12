@@ -2003,6 +2003,8 @@ export const updateHookFactory = {
 }
 
 export const hookFactoryNames = Object.keys(mountHookFactory)
+/** @TODO need refact code to auto export these hooks */
+export const hasSourceHookFactoryNames = ['cache', 'writeModel', 'writePrisma']
 
 export let currentHookFactory: {
   state: typeof mountState
