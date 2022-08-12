@@ -3,7 +3,7 @@ import React, { ReactElement, useState } from 'react'
 import s from './topicList.module.less'
 import { useTarat } from 'tarat-connect'
 import topicHook, { ITopic } from '../drivers/topic'
-import { Button, Input, List, ListItem } from '@mui/material'
+import { Button, Input, List, ListItem, ListItemButton } from '@mui/material'
 
 const TopicList: React.FC<{
   renderItem?: (e: ITopic, i: number) => ReactElement
@@ -16,12 +16,12 @@ const TopicList: React.FC<{
     topic.add()
   }
   return (
-    <div className={s.topicList}>
+    <div className={`${s.topicList}`}>
       <header className={s.title}>
         top topics
       </header>
       <div className={s.newTopic}>
-        <Input placeholder="new topic name" value={topic.inputName()} onChange={e => {
+        <Input className={s.topicInput} placeholder="new topic name" value={topic.inputName()} onChange={e => {
           topic.inputName(() => e.target.value)
         }} />
         <Button variant="contained" onClick={creatTopic} >create topic</Button>
@@ -30,9 +30,11 @@ const TopicList: React.FC<{
       <List>
         {topic.topics().map((item, i) => {
           return (
-            <ListItem key={item.id} >
-              {renderItem(item, i)}
-            </ListItem>
+            <ListItemButton key={item.id} >
+              <ListItem>
+                {renderItem(item, i)}
+              </ListItem>
+            </ListItemButton>
           )
         })}
       </List>

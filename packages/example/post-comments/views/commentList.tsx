@@ -83,19 +83,20 @@ const CommentList: React.FC<{
 
   return (
     <div className={s.commentList}>
-      <h2>
+      <header>
         {topicOne.currentTopic()?.title}
 
         <span className={s.sub} style={{ marginLeft: '10px' }}>
           <UndoOutlined onClick={() => comment.refresh()} />
         </span>
-      </h2>
+      </header>
       <CommentChildren comment={comment} tree={comment.commentTree()} />
 
       <div className={s.inputCommentBox}>
         {comment.replyTarget() ? <div className={s.replyTarget}>reply to: {comment.replyTarget()?.content}</div> : ''}
         <div className={s.inputCommentBox}>
           <Input
+            className={s.commentInput}
             value={comment.inputComment()}
             onChange={e => comment.inputComment(() => e.target.value) }
             onKeyDown={e => {

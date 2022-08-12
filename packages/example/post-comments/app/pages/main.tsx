@@ -50,7 +50,7 @@ export default function Main () {
         <RoleContext.Provider value={currentRole}>
           <Outlet />
         </RoleContext.Provider>
-        <div>
+        <div className={s.roles}>
           <p>
             current: <span style={{ fontWeight: 'bold' }}>{currentRole.name}</span> ({currentRole.id})
           </p>
