@@ -9,9 +9,15 @@ describe('parser', () => {
     const deps = parse(code)
 
     expect(deps).toEqual({
-      singleBM: [
-        ['h', 1, [0]]
-      ]
+      singleBM: {
+        names: [
+          [0, 's1'],
+          [1, 'c1'],
+        ],
+        deps: [
+          ['h', 1, [0]]
+        ]
+      }
     })
   })
 
@@ -22,10 +28,17 @@ describe('parser', () => {
     const deps = parse(code)
 
     expect(deps).toEqual({
-      singleBM: [
-        ['h', 1, [0]],
-        ['h', 2, [1, 0], [0]]
-      ]
+      singleBM: {
+        names: [
+          [0, 's1'],
+          [1, 'c1'],
+          [2, 'ic']
+        ],
+        deps: [
+          ['h', 1, [0]],
+          ['h', 2, [1, 0], [0]]
+        ]
+      }
     })    
   })
   it ('parse model.query', () => {
@@ -34,12 +47,12 @@ describe('parser', () => {
 
     const deps = parse(code)
 
-    expect(deps).toEqual({
-      singleBM: [
+    expect(deps.singleBM.deps).toEqual(
+      [
         ['h', 1, [0]],
         ['h', 2, [0, 1]]
       ]
-    })    
+    )
   })
   it ('parse simple model', () => {
     const BM = 'simpleModel.js'
@@ -48,7 +61,10 @@ describe('parser', () => {
     const deps = parse(code)
 
     expect(deps).toEqual({
-      singleBM: []
+      singleBM: {
+        names: [[0, 's1'], [1, 'items']],
+        deps: []
+      }
     })    
   })
 
@@ -57,10 +73,9 @@ describe('parser', () => {
     const code = mockUtil.readMock(BM)
 
     const deps = parse(code)
-    // console.log('deps: ', JSON.stringify(deps, null, 2));
 
-    expect(deps).toEqual({
-      composeWithSS2: [
+    expect(deps.composeWithSS2.deps).toEqual(
+      [
         ['h', 1, [], [0]],
         ['h', 2, [
           0,
@@ -69,6 +84,29 @@ describe('parser', () => {
           ['c', 2, 's1'],
         ]]
       ]
+    )
+  })
+
+  it('parse with writeModel', () => {
+    const BM = 'writeModel.js'
+    const code = mockUtil.readMock(BM)
+
+    const deps = parse(code)
+
+    expect(deps).toEqual({
+      writeModelDriver: {
+        names: [
+          [0, 's1'],
+          [1, 'items'],
+          [2, 'writeItems'],
+          [3, 'ic'],
+        ],
+        deps: [
+          ['h', 1, [0]],
+          ['h', 2, [1], [1]],
+          ['h', 3, [2]],
+        ]
+      }
     })
   })
 })

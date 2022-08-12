@@ -13,7 +13,7 @@ import type {
 } from 'estree'
 
 import type { THookDeps } from 'tarat-core'
-import { hookFactoryNames } from 'tarat-core'
+import { hasSourceHookFactoryNames, hookFactoryNames } from 'tarat-core'
 
 const composeName = 'compose'
 
@@ -188,6 +188,26 @@ function findInScopeMap (s: IScopeMap, targetHook: CallExpression) {
   return found
 }
 
+function findParentCallerHook (ancestor: acorn.Node[]) {
+  let i = ancestor.length - 2
+  let parent: any = ancestor[i]
+
+  let parentCallerHook: CallExpression | undefined;
+
+  while (i >= 0 && parent) {
+    if (parent.type === 'CallExpression') {
+      if (isHookCaller(parent)) {
+        parentCallerHook = parent
+        break
+      }
+    }
+    i--
+    parent = ancestor[i]
+  }
+  return parentCallerHook
+}
+
+
 /**
  * find the callled hook caller in other caller hook
  */
@@ -227,21 +247,9 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
 
       /** find which hook use this */
       if (existSourceInScope) {
-        let i = ancestor.length - 2
-        let parent: any = ancestor[i]
         
-        let parentCallerHook: CallExpression | undefined;
+        const parentCallerHook = findParentCallerHook(ancestor)
 
-        while (i >= 0 && parent) {
-          if (parent.type === 'CallExpression') {
-            if (isHookCaller(parent)) {
-              parentCallerHook = parent
-              break
-            }
-          }
-          i--
-          parent = ancestor[i]
-        }
         if (parentCallerHook) {
           const v1 = findInScopeMap(scope, existSourceInScope)
           const parentCaller = findInScopeMap(scope, parentCallerHook)
@@ -275,6 +283,36 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
             }
           }
 
+        }
+      }
+    },
+    // just support writeModel/writePrisma/cache
+    Identifier (n, s, ancestor) {
+      if (n.type === 'Identifier') {
+        const { name } = (n as any as Identifier)
+        const hook =  get(scope, name)
+        if (hook && hook.type === 'hook') {
+          const parentCallerHook = findParentCallerHook(ancestor)
+          if (
+            parentCallerHook &&
+            parentCallerHook.callee.type === 'Identifier' &&
+            hasSourceHookFactoryNames.includes(parentCallerHook.callee.name)
+          ) {
+            const parentCaller = findInScopeMap(scope, parentCallerHook)
+            
+            if (parentCaller?.type === 'hook') {
+              let deps = depsMap.get(parentCaller.hookIndex)
+              if (!deps) {
+                deps = {
+                  get: new Set(),
+                  set: new Set()
+                }
+                depsMap.set(parentCaller.hookIndex, deps)
+              }
+              deps.set.add(hook.hookIndex)
+              deps.get.add(hook.hookIndex)
+            }
+          }
         }
       }
     }
