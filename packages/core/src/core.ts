@@ -406,7 +406,14 @@ export abstract class WriteModel<T> extends AsyncState<T | Symbol> {
       await this.executeModelPath(patches)
       this.scope.modelPatchEvents.pushPatch(this, patches)
       // TIP: must refresh after patch recording to make sure the modified time of model > patch time
+
+      log('[WriteModel.applyComputePatches]', 'execute patches done')
+
       await this.sourceModel?.refresh()
+
+      log('[WriteModel.applyComputePatches]', 'sourceModel refresh done')
+
+      reactiveChain.update()
 
       end()
     }
@@ -544,6 +551,7 @@ export class WritePrisma<T> extends WriteModel<T> {
     await Promise.all(arr)
   }
   async createRow(obj?: Partial<T>) {
+    log('[WritePrisma.createRow]')
     const defaults = this.getData()
 
     if (currentInputeCompute) {
@@ -561,6 +569,7 @@ export class WritePrisma<T> extends WriteModel<T> {
     }
   }
   async updateRow(where: number, obj?: { [k: string]: any }) {
+    log('[WritePrisma.updateRow]')
     if (currentInputeCompute) {
       const defaults = this.getData()
       const d: T = Object.assign(defaults, obj)
@@ -577,14 +586,15 @@ export class WritePrisma<T> extends WriteModel<T> {
       throw new Error('[WritePrisma] must invoke "updateRow" in a InputCompute')
     }
   }
-  async removeRow(where: number) {
+  async removeRow(where?: number) {
+    log('[WritePrisma.removeRow]')
     if (currentInputeCompute) {
       const defaults = this.getData()
       this.addComputePatches(undefined, [
         {
           op: 'remove',
           value: {
-            where: { id: where }
+            where: { id: where || (defaults as any)?.id }
           }
         }
       ])
@@ -927,6 +937,7 @@ export class InputCompute<P extends any[] = any> extends Hook {
       }
       currentReactiveChain = preservedCurrentReactiveChain
 
+      log('[InputCompute.run]', `isGen=${isGenerator(funcResult)}`, `isP=${isPromise(funcResult)}`)
       // use generator
       if (isGenerator(funcResult)) {
         await runGenerator(
@@ -943,8 +954,7 @@ export class InputCompute<P extends any[] = any> extends Hook {
           }
         )
         return this.inputFuncEnd(newReactiveChain)
-      }
-      if (isPromise(funcResult)) {
+      } else if (isPromise(funcResult)) {
         // end compute context in advance
 
         if (currentInputeCompute === this) {
@@ -1455,7 +1465,9 @@ export class CurrentRunnerScope<T extends Driver = any> {
         // console.log('callHook hookIndex=', hookIndex)
         // await (hook as Model<any>).query()
       } else {
+        log('[Scope.callHook] start')
         await (hook as InputCompute).run(...args)
+        log('[Scope.callHook] end')
       }
     }
   }
@@ -1907,7 +1919,7 @@ export class Runner<T extends Driver> {
   /**
    * @TODO after init method refactor. shouldnt callHook through runner but scope
    */
-  async callHook(hookIndex: number, args: any[]) {
+  callHook(hookIndex: number, args: any[]) {
     this.scope?.callHook(hookIndex, args)
   }
   // same above
