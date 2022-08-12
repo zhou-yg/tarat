@@ -22,7 +22,6 @@ const TopicList: React.FC<{
       </header>
       <div className={s.newTopic}>
         <Input placeholder="new topic name" value={topic.inputName()} onChange={e => {
-          console.log('e: ', e.target.value);
           topic.inputName(() => e.target.value)
         }} />
         <Button variant="contained" onClick={creatTopic} >create topic</Button>

@@ -5,6 +5,7 @@ import {
   model,
   state,
   writeModel,
+  writePrisma,
 } from "tarat-core";
 
 export interface ITopic {
@@ -25,7 +26,7 @@ export default function topic() {
 
   const inputName = state("");
 
-  const writeTopics = writeModel(topics, () => {
+  const writeTopics = writePrisma(topics, () => {
     return {
       title: inputName(),
     };
@@ -52,9 +53,13 @@ const autoParser = {
     names: [
       [0, "topics"],
       [1, "inputName"],
-      [2, "add"],
+      [2, "writeTopics"],
+      [3, "add"],
     ],
-    deps: [["h", 2, [1], [1]]],
+    deps: [
+      ["h", 2, [0, 1], [0, 1]],
+      ["h", 3, [1, 2], [1]],
+    ],
   },
 };
 Object.assign(topic, {
