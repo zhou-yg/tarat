@@ -84,7 +84,7 @@ export default function taratMiddleware (args: {
         const chain2 = startdReactiveChain(`${driverName}:call(${c.index})`)
 
         if (c.index !== undefined) {
-          await runner.callHook(c.index, c.args)
+          await runner.scope.callHook(c.index, c.args)
         }
 
         await runner.ready()
@@ -93,14 +93,13 @@ export default function taratMiddleware (args: {
 
         chain2.print()
 
-        const context = runner.scope.createInputComputeContext()
-
+        const context = runner.scope.createPatchContext()
         
         ctx.body = JSON.stringify(context);
 
         (runner as any) = null
 
-        console.log(`[${driverName}] is end`)
+        console.log(`[${driverName}] is end \n ---`)
       } else {
         await next()        
       }
