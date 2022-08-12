@@ -24,17 +24,14 @@ const CommentChildren: React.FC<{
         return (
           <ListItem key={item.id}>
             <div className={s.commentOne} >
-              <p> 
-                author:
+              <p className={s.author}>
                 <span>{item.name}</span>
                 <span className={s.sub}>（{item.authorId}）</span>
+                <span className={s.fromNow}>
+                  {dateFns.formatDistanceToNow(new Date(item.createdAt!))}
+                </span>
               </p>
               <p>
-                datetime:
-                {dateFns.formatDistanceToNow(new Date(item.createdAt!))}
-              </p>
-              <p>
-                content:
                 <span className={s.content}>{item.content}</span>
               </p>
               <p>
@@ -90,7 +87,9 @@ const CommentList: React.FC<{
           <UndoOutlined onClick={() => comment.refresh()} />
         </span>
       </header>
-      <CommentChildren comment={comment} tree={comment.commentTree()} />
+      <div className={s.commentInnerList}>
+        <CommentChildren comment={comment} tree={comment.commentTree()} />
+      </div>
 
       <div className={s.inputCommentBox}>
         {comment.replyTarget() ? <div className={s.replyTarget}>reply to: {comment.replyTarget()?.content}</div> : ''}
