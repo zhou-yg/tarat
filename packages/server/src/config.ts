@@ -36,6 +36,7 @@ export const defaultConfig = () => ({
   prismaModelPart: 'part.prisma', // postfix
   targetSchemaPrisma: 'schema.prisma',
 
+
   // server side
   apiPre: '_hook',
 

@@ -46,8 +46,24 @@ export function getTSConfigPath (c: IConfig) {
   if (fs.existsSync(tsconfigFile)) {
     return tsconfigFile
   }
-  console.log(`[esbuildDrivers] using default tsconfig setting: ${defaultTsconfigJSON}`)
+  console.log(`[getTSConfigPath] using default tsconfig setting: ${defaultTsconfigJSON}`)
   return defaultTsconfigJSON
+}
+
+function getPostCssConfigPath (c: IConfig) {
+  let pp = ''
+  fs.readdirSync(c.cwd).forEach(f => {
+    if (/postcss\.config/.test(f)) {
+      if (pp) {
+        throw new Error(`[getPostCssConfigPath] duplcate postcsss.config file exist in ${c.cwd}`)
+      } else {
+        pp = path.join(c.cwd, f)
+      }
+    }
+  })
+  if (pp && fs.existsSync(pp)) {
+    return pp
+  }
 }
 
 export async function build (c: IConfig, op: IBuildOption) {
@@ -118,6 +134,10 @@ export function getPlugins (input: {
       presets: ['@babel/preset-react']
     }),
     postcss({
+      config: {
+        path: getPostCssConfigPath(c),
+        ctx: {}
+      },
       extract: typeof css === 'string'  ? css.replace(c.pointFiles.outputDir, '').replace(/^\//, '') : css, // only support relative path
     }),
     autoExternal({
