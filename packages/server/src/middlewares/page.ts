@@ -47,15 +47,20 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
     }
   })
 
+  const routerLocation = ctx.request.path + ctx.request.search
+
   const chain = startdReactiveChain('[renderWithDriverContext first]')
   const appEntry = renderWithDriverContext(
     entryFunctionModule(
       routesEntryModule({
-        location: ctx.request.path
+        location: routerLocation
       })
     ),
     driver,
   )
+
+  debuggerLog(true)
+
   const html = renderToString(appEntry.root)
 
   chain.stop()
@@ -70,7 +75,11 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
   for (const BMArr of driver.BMValuesMap.values()) {
     allRunedHook.push(...BMArr)
   }
-  await Promise.all(allRunedHook.map((runner: Runner<any>) => runner.ready()))
+  await Promise.all(allRunedHook.map((runner: Runner<any>) => {
+    // console.log('runner: ', runner.scope);
+    return runner.scope.ready()
+  }))
+  console.log('---- await first done ----')
 
   driver.switiToConsumeMode()
 
@@ -79,7 +88,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
   const appEntryUpdate = renderWithDriverContext(
     entryFunctionModule(
       routesEntryModule({
-        location: ctx.request.path
+        location: routerLocation
       })
     ),
     driver,
@@ -120,6 +129,8 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
     if (viewConfig) {
       let context: { [k: string]: IHookContext[] } = {}
       let ssrHTML = ''
+
+      console.log('>> start render page path=', pathname)
 
       const r = await renderPage(ctx, args.config)
       if (r) {
