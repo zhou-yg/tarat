@@ -18,6 +18,8 @@ export const defaultConfig = () => ({
 
   publicDirectory: 'public',
 
+  entry: 'entry', // jsx|tsx|css|less|json
+
   entryServer: 'entry.server', // .(j|t)sx in app
   routesServer: 'routes.server', // serve for tarat self
   routes: 'routes', // serve for tarat self
@@ -215,6 +217,22 @@ function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) 
   }
 }
 
+function readEntryCSS (pre: string, ) {
+  const postfix = ['less', 'css']
+  let r = ''
+  postfix.forEach(p => {
+    const f = `${pre}.${p}`
+    if(fs.existsSync(f)) {
+      if (r) {
+        throw new Error(`[config.readEntryCSS] should not have duplcate style file from ${postfix}`)
+      } else {
+        r = f
+      }
+    }
+  })
+  return r
+}
+
 export async function readConfig (arg: {
   cwd: string,
   isProd?: boolean
@@ -250,6 +268,8 @@ export async function readConfig (arg: {
     }
   })
 
+  const entryCSS = readEntryCSS(path.join(cwd, config.appDirectory, config.entry))
+
 
   const devPointFiles = getOutputFiles(config, cwd, path.join(cwd, config.devCacheDirectory))
   const buildPointFiles = getOutputFiles(config, cwd, path.join(cwd, config.buildDirectory))
@@ -261,6 +281,7 @@ export async function readConfig (arg: {
   return {
     ...config,
     isProd,
+    entryCSS,
     pointFiles,
     devPointFiles,
     buildPointFiles,

@@ -283,12 +283,16 @@ export async function buildRoutes(c: IConfig) {
 
   const r = generateRoutesContent(routesTreeArr)
 
-  // const routeIndex = routesTreeArr.find(r => r.index)
-  // const index = routeIndex ? `<Route path="/" element={<Index />} />` : ''
   const index = ''
+
+  let entryCSSPath = ''
+  if (c.entryCSS) {
+    entryCSSPath = `import "${c.entryCSS}"`
+  }
 
   const routesStr = routesTemplate({
     imports: importsWithAbsolutePathServer,
+    entryCSSPath,
     index,
     routes: r
   })
