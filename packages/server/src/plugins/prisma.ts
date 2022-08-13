@@ -1,9 +1,27 @@
 import { loadPlugin } from 'tarat-core'
 import { join } from 'path'
-export async function setPrisma (cwd: string)  {
-  // make sure import the prisma from current development project
-  // @ts-ignore
-  const client: any = (await import(join(cwd, 'node_modules/@prisma/client/index.js')))
+import { IConfig } from '../config'
+import * as prismaInternals from '@prisma/internals'
+import { existsSync, readFileSync } from 'fs'
+
+export async function setPrisma (config: IConfig)  {
+  const { cwd } = config
+  const schemaFile = join(cwd, config.modelsDirectory, config.targetSchemaPrisma)
+
+  let client: any;
+  if (existsSync(schemaFile)) {
+    const gen = await prismaInternals.getGenerator({
+      schemaPath: schemaFile,
+      dataProxy: false
+    })
+    const output = gen.config.output.value
+    client = (require(output))
+  } else {
+    // make sure import the prisma from current development project
+    // @ts-ignore
+    client = (await import(join(cwd, 'node_modules/@prisma/client/index.js')))
+  }
+
   if (!client.PrismaClient) {
     throw new Error('[setPrisma] error, prisma.PrismaClient not found please run prisma generate first')
   }

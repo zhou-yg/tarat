@@ -44,7 +44,7 @@ export default function taratMiddleware (args: {
   setRunning()
   setCookies()
   if (model?.engine === 'prisma') {
-    setPrisma(cwd)
+    setPrisma(config)
   } else if (model?.engine === 'er') {
     setER()
   }
