@@ -80,6 +80,7 @@ exports.Prisma.MarkdownScalarFieldEnum = makeEnum({
   id: 'id',
   createdAt: 'createdAt',
   modifiedAt: 'modifiedAt',
+  title: 'title',
   content: 'content'
 });
 

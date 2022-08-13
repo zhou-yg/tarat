@@ -20,7 +20,8 @@ export type Markdown = {
   id: number
   createdAt: Date
   modifiedAt: Date
-  content: string
+  title: string | null
+  content: string | null
 }
 
 /**
@@ -799,6 +800,7 @@ export namespace Prisma {
     id: number | null
     createdAt: Date | null
     modifiedAt: Date | null
+    title: string | null
     content: string | null
   }
 
@@ -806,6 +808,7 @@ export namespace Prisma {
     id: number | null
     createdAt: Date | null
     modifiedAt: Date | null
+    title: string | null
     content: string | null
   }
 
@@ -813,6 +816,7 @@ export namespace Prisma {
     id: number
     createdAt: number
     modifiedAt: number
+    title: number
     content: number
     _all: number
   }
@@ -830,6 +834,7 @@ export namespace Prisma {
     id?: true
     createdAt?: true
     modifiedAt?: true
+    title?: true
     content?: true
   }
 
@@ -837,6 +842,7 @@ export namespace Prisma {
     id?: true
     createdAt?: true
     modifiedAt?: true
+    title?: true
     content?: true
   }
 
@@ -844,6 +850,7 @@ export namespace Prisma {
     id?: true
     createdAt?: true
     modifiedAt?: true
+    title?: true
     content?: true
     _all?: true
   }
@@ -944,7 +951,8 @@ export namespace Prisma {
     id: number
     createdAt: Date
     modifiedAt: Date
-    content: string
+    title: string | null
+    content: string | null
     _count: MarkdownCountAggregateOutputType | null
     _avg: MarkdownAvgAggregateOutputType | null
     _sum: MarkdownSumAggregateOutputType | null
@@ -970,6 +978,7 @@ export namespace Prisma {
     id?: boolean
     createdAt?: boolean
     modifiedAt?: boolean
+    title?: boolean
     content?: boolean
   }
 
@@ -2409,6 +2418,7 @@ export namespace Prisma {
     id: 'id',
     createdAt: 'createdAt',
     modifiedAt: 'modifiedAt',
+    title: 'title',
     content: 'content'
   };
 
@@ -2445,13 +2455,15 @@ export namespace Prisma {
     id?: IntFilter | number
     createdAt?: DateTimeFilter | Date | string
     modifiedAt?: DateTimeFilter | Date | string
-    content?: StringFilter | string
+    title?: StringNullableFilter | string | null
+    content?: StringNullableFilter | string | null
   }
 
   export type MarkdownOrderByWithRelationInput = {
     id?: SortOrder
     createdAt?: SortOrder
     modifiedAt?: SortOrder
+    title?: SortOrder
     content?: SortOrder
   }
 
@@ -2463,6 +2475,7 @@ export namespace Prisma {
     id?: SortOrder
     createdAt?: SortOrder
     modifiedAt?: SortOrder
+    title?: SortOrder
     content?: SortOrder
     _count?: MarkdownCountOrderByAggregateInput
     _avg?: MarkdownAvgOrderByAggregateInput
@@ -2478,7 +2491,8 @@ export namespace Prisma {
     id?: IntWithAggregatesFilter | number
     createdAt?: DateTimeWithAggregatesFilter | Date | string
     modifiedAt?: DateTimeWithAggregatesFilter | Date | string
-    content?: StringWithAggregatesFilter | string
+    title?: StringNullableWithAggregatesFilter | string | null
+    content?: StringNullableWithAggregatesFilter | string | null
   }
 
   export type MarkdownXWhereInput = {
@@ -2527,40 +2541,46 @@ export namespace Prisma {
   export type MarkdownCreateInput = {
     createdAt?: Date | string
     modifiedAt?: Date | string
-    content: string
+    title?: string | null
+    content?: string | null
   }
 
   export type MarkdownUncheckedCreateInput = {
     id?: number
     createdAt?: Date | string
     modifiedAt?: Date | string
-    content: string
+    title?: string | null
+    content?: string | null
   }
 
   export type MarkdownUpdateInput = {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    content?: StringFieldUpdateOperationsInput | string
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    content?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MarkdownUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    content?: StringFieldUpdateOperationsInput | string
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    content?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MarkdownUpdateManyMutationInput = {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    content?: StringFieldUpdateOperationsInput | string
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    content?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MarkdownUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    content?: StringFieldUpdateOperationsInput | string
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    content?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MarkdownXCreateInput = {
@@ -2624,10 +2644,10 @@ export namespace Prisma {
     not?: NestedDateTimeFilter | Date | string
   }
 
-  export type StringFilter = {
-    equals?: string
-    in?: Enumerable<string>
-    notIn?: Enumerable<string>
+  export type StringNullableFilter = {
+    equals?: string | null
+    in?: Enumerable<string> | null
+    notIn?: Enumerable<string> | null
     lt?: string
     lte?: string
     gt?: string
@@ -2635,13 +2655,14 @@ export namespace Prisma {
     contains?: string
     startsWith?: string
     endsWith?: string
-    not?: NestedStringFilter | string
+    not?: NestedStringNullableFilter | string | null
   }
 
   export type MarkdownCountOrderByAggregateInput = {
     id?: SortOrder
     createdAt?: SortOrder
     modifiedAt?: SortOrder
+    title?: SortOrder
     content?: SortOrder
   }
 
@@ -2653,6 +2674,7 @@ export namespace Prisma {
     id?: SortOrder
     createdAt?: SortOrder
     modifiedAt?: SortOrder
+    title?: SortOrder
     content?: SortOrder
   }
 
@@ -2660,6 +2682,7 @@ export namespace Prisma {
     id?: SortOrder
     createdAt?: SortOrder
     modifiedAt?: SortOrder
+    title?: SortOrder
     content?: SortOrder
   }
 
@@ -2697,7 +2720,24 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter
   }
 
-  export type StringWithAggregatesFilter = {
+  export type StringNullableWithAggregatesFilter = {
+    equals?: string | null
+    in?: Enumerable<string> | null
+    notIn?: Enumerable<string> | null
+    lt?: string
+    lte?: string
+    gt?: string
+    gte?: string
+    contains?: string
+    startsWith?: string
+    endsWith?: string
+    not?: NestedStringNullableWithAggregatesFilter | string | null
+    _count?: NestedIntNullableFilter
+    _min?: NestedStringNullableFilter
+    _max?: NestedStringNullableFilter
+  }
+
+  export type StringFilter = {
     equals?: string
     in?: Enumerable<string>
     notIn?: Enumerable<string>
@@ -2708,10 +2748,7 @@ export namespace Prisma {
     contains?: string
     startsWith?: string
     endsWith?: string
-    not?: NestedStringWithAggregatesFilter | string
-    _count?: NestedIntFilter
-    _min?: NestedStringFilter
-    _max?: NestedStringFilter
+    not?: NestedStringFilter | string
   }
 
   export type MarkdownXCountOrderByAggregateInput = {
@@ -2743,12 +2780,29 @@ export namespace Prisma {
     id?: SortOrder
   }
 
+  export type StringWithAggregatesFilter = {
+    equals?: string
+    in?: Enumerable<string>
+    notIn?: Enumerable<string>
+    lt?: string
+    lte?: string
+    gt?: string
+    gte?: string
+    contains?: string
+    startsWith?: string
+    endsWith?: string
+    not?: NestedStringWithAggregatesFilter | string
+    _count?: NestedIntFilter
+    _min?: NestedStringFilter
+    _max?: NestedStringFilter
+  }
+
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
   }
 
-  export type StringFieldUpdateOperationsInput = {
-    set?: string
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
   }
 
   export type IntFieldUpdateOperationsInput = {
@@ -2757,6 +2811,10 @@ export namespace Prisma {
     decrement?: number
     multiply?: number
     divide?: number
+  }
+
+  export type StringFieldUpdateOperationsInput = {
+    set?: string
   }
 
   export type NestedIntFilter = {
@@ -2781,10 +2839,10 @@ export namespace Prisma {
     not?: NestedDateTimeFilter | Date | string
   }
 
-  export type NestedStringFilter = {
-    equals?: string
-    in?: Enumerable<string>
-    notIn?: Enumerable<string>
+  export type NestedStringNullableFilter = {
+    equals?: string | null
+    in?: Enumerable<string> | null
+    notIn?: Enumerable<string> | null
     lt?: string
     lte?: string
     gt?: string
@@ -2792,7 +2850,7 @@ export namespace Prisma {
     contains?: string
     startsWith?: string
     endsWith?: string
-    not?: NestedStringFilter | string
+    not?: NestedStringNullableFilter | string | null
   }
 
   export type NestedIntWithAggregatesFilter = {
@@ -2834,6 +2892,48 @@ export namespace Prisma {
     _count?: NestedIntFilter
     _min?: NestedDateTimeFilter
     _max?: NestedDateTimeFilter
+  }
+
+  export type NestedStringNullableWithAggregatesFilter = {
+    equals?: string | null
+    in?: Enumerable<string> | null
+    notIn?: Enumerable<string> | null
+    lt?: string
+    lte?: string
+    gt?: string
+    gte?: string
+    contains?: string
+    startsWith?: string
+    endsWith?: string
+    not?: NestedStringNullableWithAggregatesFilter | string | null
+    _count?: NestedIntNullableFilter
+    _min?: NestedStringNullableFilter
+    _max?: NestedStringNullableFilter
+  }
+
+  export type NestedIntNullableFilter = {
+    equals?: number | null
+    in?: Enumerable<number> | null
+    notIn?: Enumerable<number> | null
+    lt?: number
+    lte?: number
+    gt?: number
+    gte?: number
+    not?: NestedIntNullableFilter | number | null
+  }
+
+  export type NestedStringFilter = {
+    equals?: string
+    in?: Enumerable<string>
+    notIn?: Enumerable<string>
+    lt?: string
+    lte?: string
+    gt?: string
+    gte?: string
+    contains?: string
+    startsWith?: string
+    endsWith?: string
+    not?: NestedStringFilter | string
   }
 
   export type NestedStringWithAggregatesFilter = {

@@ -14,14 +14,9 @@ import { useTarat } from 'tarat-connect'
 const mdParser = new MarkdownIt(/* Markdown-it options */);
 
 export default function Editor (props) {
-  const { height = 800 } = props
+  const { id, height = 800 } = props
 
-  let query = { id: 1 }
-  // if (typeof location !== undefined) {
-  //   query = location.replace(/^\?/, '').split('&').map(kv => kv.split('=')).map(arr => ({
-  //     [arr[0]]: arr[1]
-  //   })).reduce((p, n) => Object.assign(p, n), {})
-  // }
+  let query = { id }
 
   const mdEditorHook = useTarat(mdEditor, query)
 

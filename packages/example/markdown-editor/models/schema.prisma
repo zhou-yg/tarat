@@ -15,7 +15,8 @@ model Markdown {
   createdAt  DateTime @default(now())
   modifiedAt DateTime @default(now())
 
-  content String // equal sqlite.TEXT 
+  title String?
+  content String? // equal sqlite.TEXT 
 }
 
 model MarkdownX {
