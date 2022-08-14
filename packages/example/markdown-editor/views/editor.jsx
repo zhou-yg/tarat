@@ -23,18 +23,18 @@ export default function Editor (props) {
 
   return (
     <div className={s.editor}>
-      <header className={s.header}>
+      <header className="my-2">
         <button className="bg-black text-white px-4 py-1" onClick={() => {
           mdEditorHook.save()
         }}>Save Markdown</button>
       </header>
-      <div className="p-2">
+      <div className="my-2">
         <input
           value={mdEditorHook.displayTitle()}
           onChange={e => mdEditorHook.inputTitle(() => e.target.value)}
           className="p-2 w-full border-x border-y" placeholder="markdown title" />
       </div>
-      <div className="p-2">
+      <div className="my-2">
         <MDEditor
           defaultValue={mdEditorHook.displayMD() || ''}
           style={{ height: `${height}px` }}

@@ -6,6 +6,7 @@ import {
   inputComputeInServer,
   model,
   state,
+  writeModel,
 } from "tarat-core";
 
 export default function mdEditor(q = {}) {
@@ -35,16 +36,16 @@ export default function mdEditor(q = {}) {
   const displayMD = combineLatest([inputMD, postedMD]);
   const displayTitle = combineLatest([inputTitle, markdownTitle]);
 
+  const writeCurrentMD = writeModel(currentPost, () => ({
+    title: inputTitle() || displayTitle(),
+    content: inputMD() || displayMD(),
+  }));
+
   const save = inputComputeInServer(async () => {
     const cid = currentId();
     if (cid) {
-      if (currentPost()[0]) {
-        currentPost((arr) => {
-          /** @TODO should analyze corect deps */
-          arr[0].title = inputTitle() || displayTitle();
-          arr[0].content = inputMD() || displayMD();
-        });
-      }
+      /** @TODO should analyze corect deps */
+      writeCurrentMD.update(cid);
     }
   });
 
@@ -68,13 +69,15 @@ const autoParser = {
       [3, "currentPost"],
       [4, "markdownTitle"],
       [5, "postedMD"],
-      [6, "save"],
+      [6, "writeCurrentMD"],
+      [7, "save"],
     ],
     deps: [
       ["h", 3, [0]],
       ["h", 4, [3]],
       ["h", 5, [3]],
-      ["h", 6, [0, 3, 2, 1], [3]],
+      ["h", 6, [3, 2, 1], [3, 2, 1]],
+      ["h", 7, [0], [6]],
     ],
   },
 };
