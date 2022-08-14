@@ -5,12 +5,13 @@ import { useLocation, useSearchParams } from 'react-router-dom'
 
 export default function Main () {
   const searchParams = useSearchParams()
-
+  const location = useLocation()
+  
   const mdId = searchParams[0].get('id')
 
   return (
     <div className={s.index}>
-      <Editor id={mdId} />
+      <Editor id={mdId ? parseInt(mdId) : mdId} />
     </div>
   )
 }

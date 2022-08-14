@@ -15,6 +15,7 @@ const mdParser = new MarkdownIt(/* Markdown-it options */);
 
 export default function Editor (props) {
   const { id, height = 800 } = props
+  console.log('[Editor] id: ', id);
 
   let query = { id }
 
@@ -23,21 +24,29 @@ export default function Editor (props) {
   return (
     <div className={s.editor}>
       <header className={s.header}>
-        <button className={s.saveBtn} onClick={() => {
+        <button className="bg-black text-white px-4 py-1" onClick={() => {
           mdEditorHook.save()
-        }}>Save</button>
+        }}>Save Markdown</button>
       </header>
-      <MDEditor
-        defaultValue={mdEditorHook.displayMD() || ''}
-        style={{ height: `${height}px` }}
-        renderHTML={text => {
-          return mdParser.render(text)
-        }}
-        onChange={(v) => {
-          setTimeout(() => {
-            mdEditorHook.inputMD(() => v.text)
-          })
-        }} />
+      <div className="p-2">
+        <input
+          value={mdEditorHook.displayTitle()}
+          onChange={e => mdEditorHook.inputTitle(() => e.target.value)}
+          className="p-2 w-full border-x border-y" placeholder="markdown title" />
+      </div>
+      <div className="p-2">
+        <MDEditor
+          defaultValue={mdEditorHook.displayMD() || ''}
+          style={{ height: `${height}px` }}
+          renderHTML={text => {
+            return mdParser.render(text)
+          }}
+          onChange={(v) => {
+            setTimeout(() => {
+              mdEditorHook.inputMD(() => v.text)
+            })
+          }} />
+        </div>
     </div>
   )
 }

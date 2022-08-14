@@ -11,6 +11,7 @@ import {
 export default function mdEditor(q = {}) {
   const currentId = state(q.id);
   const inputMD = state("");
+  const inputTitle = state("");
 
   const currentPost = model("markdown", () => {
     const cid = currentId();
@@ -23,34 +24,36 @@ export default function mdEditor(q = {}) {
     }
   });
 
+  const markdownTitle = computed(() => {
+    return currentPost()[0]?.title;
+  });
+
   const postedMD = computed(() => {
     return currentPost()[0]?.content;
   });
 
   const displayMD = combineLatest([inputMD, postedMD]);
+  const displayTitle = combineLatest([inputTitle, markdownTitle]);
 
   const save = inputComputeInServer(async () => {
     const cid = currentId();
     if (cid) {
       if (currentPost()[0]) {
         currentPost((arr) => {
-          arr[0].content = inputMD();
+          /** @TODO should analyze corect deps */
+          arr[0].title = inputTitle() || displayTitle();
+          arr[0].content = inputMD() || displayMD();
         });
       }
-    } else {
-      const r = await currentPost.create({
-        content: inputMD(),
-      });
-      currentId(() => r.id);
     }
   });
-
-  after(() => {}, [currentPost]);
 
   return {
     displayMD,
     postedMD,
     inputMD,
+    inputTitle,
+    displayTitle,
     save,
   };
 }
@@ -61,14 +64,17 @@ const autoParser = {
     names: [
       [0, "currentId"],
       [1, "inputMD"],
-      [2, "currentPost"],
-      [3, "postedMD"],
-      [4, "save"],
+      [2, "inputTitle"],
+      [3, "currentPost"],
+      [4, "markdownTitle"],
+      [5, "postedMD"],
+      [6, "save"],
     ],
     deps: [
-      ["h", 2, [0]],
-      ["h", 3, [2]],
-      ["h", 4, [0, 2, 1], [2, 0]],
+      ["h", 3, [0]],
+      ["h", 4, [3]],
+      ["h", 5, [3]],
+      ["h", 6, [0, 3, 2, 1], [3]],
     ],
   },
 };
