@@ -101,7 +101,7 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
     return () => {
       init.current.runner.scope.deactivate()
     }
-  })
+  }, [])
 
   const [hookResult, setHookResult] = react.useState(init.current.result)
   return hookResult as ReturnType<T>

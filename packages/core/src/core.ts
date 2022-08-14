@@ -309,10 +309,17 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
     this.executeQuery(newReactiveChain)
   }
   async getQueryWhere(): Promise<IModelQuery['query'] | void> {
-    await this.queryWhereComputed!.getterPromise
+    if (this.queryWhereComputed.getterPromise) {
+      await this.queryWhereComputed!.getterPromise
+    }
     const queryWhereValue = this.queryWhereComputed!.value
-    if (queryWhereValue && typeof queryWhereValue !== 'symbol') {
-      return queryWhereValue as IModelQuery['query']
+    if (queryWhereValue) {
+      if (queryWhereValue === ComputedInitial) {
+        // queryWhereComputed hadnt run.
+        this.query()
+      } else {
+        return queryWhereValue as IModelQuery['query']
+      }
     }
   }
   override get value(): T[] {
@@ -1476,12 +1483,12 @@ export class CurrentRunnerScope<T extends Driver = any> {
    * while enter UI will activate this function
    */
   activate() {
+    console.log('[Scope] activate')
     this.disposeFuncArr.push(
       this.modelPatchEvents.subscribe(() => {
         this.notifyAllModel()
       })
     )
-
     this.notifyAllModel()
   }
   deactivate() {
@@ -1791,6 +1798,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
       }
     )
     if (c.patch) {
+      console.log('[Scope] refresh patch from:', c.patch)
       this.modelPatchEvents.from(c.patch)
     }
 
