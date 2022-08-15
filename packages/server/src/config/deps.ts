@@ -10,7 +10,7 @@ interface IPkg {
 }
 export function findDependencies (cwd: string) {
   const pkgJSON: IPkg = loadJSON(path.join(cwd, 'package.json'))
-  const pkgModules = Object.keys(pkgJSON.dependencies)
+  const pkgModules = Object.keys(pkgJSON.dependencies || {})
 
   const modules: string[] = pkgModules.filter(moduleName => {
     const dir = path.join(cwd, 'node_modules', moduleName)
