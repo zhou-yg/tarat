@@ -9,11 +9,23 @@ generator client {
   previewFeatures = ["fullTextSearch", "fullTextIndex"]
 }
 
-model TodoItem {
+model Folder {
   id          Int      @id @default(autoincrement())
   createdAt   DateTime @default(now())
   modifiedAt  DateTime @default(now())
 
-  status      String?
-  description String?
+  rm Boolean @default(false)
+  name String
+  items Item[]
+}
+
+model Item {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  modifiedAt  DateTime @default(now()) 
+
+  folder Folder? @relation(references: [id], fields: [folderId])
+  folderId Int?
+
+  name String
 }

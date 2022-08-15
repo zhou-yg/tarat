@@ -1,7 +1,7 @@
 import React from 'react'
 
-import Todos from '../../views/todos'
+import Cascading from '../../views/cascading'
 
 export default function Main () {
-  return (<Todos />)
+  return (<Cascading />)
 }

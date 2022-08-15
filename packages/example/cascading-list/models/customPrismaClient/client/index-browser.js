@@ -2,7 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 
 const {
-  Decimal
+  Decimal,
+  objectEnumValues,
+  makeStrictEnum
 } = require('./runtime/index-browser')
 
 
@@ -11,12 +13,12 @@ const Prisma = {}
 exports.Prisma = Prisma
 
 /**
- * Prisma Client JS version: 3.15.1
- * Query Engine version: 461d6a05159055555eb7dfb337c9fb271cbd4d7e
+ * Prisma Client JS version: 4.2.1
+ * Query Engine version: 2920a97877e12e055c1333079b8d19cee7f33826
  */
 Prisma.prismaVersion = {
-  client: "3.15.1",
-  engine: "461d6a05159055555eb7dfb337c9fb271cbd4d7e"
+  client: "4.2.1",
+  engine: "2920a97877e12e055c1333079b8d19cee7f33826"
 }
 
 Prisma.PrismaClientKnownRequestError = () => {
@@ -37,6 +39,10 @@ In case this error is unexpected for you, please report it in https://github.com
 )}
 Prisma.PrismaClientValidationError = () => {
   throw new Error(`PrismaClientValidationError is unable to be run in the browser.
+In case this error is unexpected for you, please report it in https://github.com/prisma/prisma/issues`,
+)}
+Prisma.NotFoundError = () => {
+  throw new Error(`NotFoundError is unable to be run in the browser.
 In case this error is unexpected for you, please report it in https://github.com/prisma/prisma/issues`,
 )}
 Prisma.Decimal = Decimal
@@ -65,9 +71,15 @@ Prisma.validator = () => (val) => val
 /**
  * Shorthand utilities for JSON filtering
  */
-Prisma.DbNull = 'DbNull'
-Prisma.JsonNull = 'JsonNull'
-Prisma.AnyNull = 'AnyNull'
+Prisma.DbNull = objectEnumValues.instances.DbNull
+Prisma.JsonNull = objectEnumValues.instances.JsonNull
+Prisma.AnyNull = objectEnumValues.instances.AnyNull
+
+Prisma.NullTypes = {
+  DbNull: objectEnumValues.classes.DbNull,
+  JsonNull: objectEnumValues.classes.JsonNull,
+  AnyNull: objectEnumValues.classes.AnyNull
+}
 
 /**
  * Enums
@@ -76,12 +88,20 @@ Prisma.AnyNull = 'AnyNull'
 // https://github.com/microsoft/TypeScript/issues/3192#issuecomment-261720275
 function makeEnum(x) { return x; }
 
-exports.Prisma.TodoItemScalarFieldEnum = makeEnum({
+exports.Prisma.FolderScalarFieldEnum = makeEnum({
   id: 'id',
   createdAt: 'createdAt',
   modifiedAt: 'modifiedAt',
-  status: 'status',
-  description: 'description'
+  rm: 'rm',
+  name: 'name'
+});
+
+exports.Prisma.ItemScalarFieldEnum = makeEnum({
+  id: 'id',
+  createdAt: 'createdAt',
+  modifiedAt: 'modifiedAt',
+  folderId: 'folderId',
+  name: 'name'
 });
 
 exports.Prisma.SortOrder = makeEnum({
@@ -89,9 +109,14 @@ exports.Prisma.SortOrder = makeEnum({
   desc: 'desc'
 });
 
+exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
+  Serializable: 'Serializable'
+});
+
 
 exports.Prisma.ModelName = makeEnum({
-  TodoItem: 'TodoItem'
+  Folder: 'Folder',
+  Item: 'Item'
 });
 
 /**

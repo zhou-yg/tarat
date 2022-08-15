@@ -13,15 +13,27 @@ type UnwrapTuple<Tuple extends readonly unknown[]> = {
 
 
 /**
- * Model TodoItem
+ * Model Folder
  * 
  */
-export type TodoItem = {
+export type Folder = {
   id: number
   createdAt: Date
   modifiedAt: Date
-  status: string | null
-  description: string | null
+  rm: boolean
+  name: string
+}
+
+/**
+ * Model Item
+ * 
+ */
+export type Item = {
+  id: number
+  createdAt: Date
+  modifiedAt: Date
+  folderId: number | null
+  name: string
 }
 
 
@@ -32,8 +44,8 @@ export type TodoItem = {
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more TodoItems
- * const todoItems = await prisma.todoItem.findMany()
+ * // Fetch zero or more Folders
+ * const folders = await prisma.folder.findMany()
  * ```
  *
  * 
@@ -78,8 +90,8 @@ export class PrismaClient<
    * @example
    * ```
    * const prisma = new PrismaClient()
-   * // Fetch zero or more TodoItems
-   * const todoItems = await prisma.todoItem.findMany()
+   * // Fetch zero or more Folders
+   * const folders = await prisma.folder.findMany()
    * ```
    *
    * 
@@ -166,14 +178,24 @@ export class PrismaClient<
   $transaction<P extends PrismaPromise<any>[]>(arg: [...P]): Promise<UnwrapTuple<P>>;
 
       /**
-   * `prisma.todoItem`: Exposes CRUD operations for the **TodoItem** model.
+   * `prisma.folder`: Exposes CRUD operations for the **Folder** model.
     * Example usage:
     * ```ts
-    * // Fetch zero or more TodoItems
-    * const todoItems = await prisma.todoItem.findMany()
+    * // Fetch zero or more Folders
+    * const folders = await prisma.folder.findMany()
     * ```
     */
-  get todoItem(): Prisma.TodoItemDelegate<GlobalReject>;
+  get folder(): Prisma.FolderDelegate<GlobalReject>;
+
+  /**
+   * `prisma.item`: Exposes CRUD operations for the **Item** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Items
+    * const items = await prisma.item.findMany()
+    * ```
+    */
+  get item(): Prisma.ItemDelegate<GlobalReject>;
 }
 
 export namespace Prisma {
@@ -187,6 +209,7 @@ export namespace Prisma {
   export import PrismaClientRustPanicError = runtime.PrismaClientRustPanicError
   export import PrismaClientInitializationError = runtime.PrismaClientInitializationError
   export import PrismaClientValidationError = runtime.PrismaClientValidationError
+  export import NotFoundError = runtime.NotFoundError
 
   /**
    * Re-export of sql-template-tag
@@ -205,8 +228,16 @@ export namespace Prisma {
   export type DecimalJsLike = runtime.DecimalJsLike
 
   /**
-   * Prisma Client JS version: 3.15.1
-   * Query Engine version: 461d6a05159055555eb7dfb337c9fb271cbd4d7e
+   * Metrics 
+   */
+  export import Metrics = runtime.Metrics
+  export import Metric = runtime.Metric
+  export import MetricHistogram = runtime.MetricHistogram
+  export import MetricHistogramBucket = runtime.MetricHistogramBucket
+
+  /**
+   * Prisma Client JS version: 4.2.1
+   * Query Engine version: 2920a97877e12e055c1333079b8d19cee7f33826
    */
   export type PrismaVersion = {
     client: string
@@ -265,25 +296,68 @@ export namespace Prisma {
   export type InputJsonValue = string | number | boolean | InputJsonObject | InputJsonArray
 
   /**
+   * Types of the values used to represent different kinds of `null` values when working with JSON fields.
+   * 
+   * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
+   */
+  namespace NullTypes {
+    /**
+    * Type of `Prisma.DbNull`.
+    * 
+    * You cannot use other instances of this class. Please use the `Prisma.DbNull` value.
+    * 
+    * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
+    */
+    class DbNull {
+      private DbNull: never
+      private constructor()
+    }
+
+    /**
+    * Type of `Prisma.JsonNull`.
+    * 
+    * You cannot use other instances of this class. Please use the `Prisma.JsonNull` value.
+    * 
+    * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
+    */
+    class JsonNull {
+      private JsonNull: never
+      private constructor()
+    }
+
+    /**
+    * Type of `Prisma.AnyNull`.
+    * 
+    * You cannot use other instances of this class. Please use the `Prisma.AnyNull` value.
+    * 
+    * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
+    */
+    class AnyNull {
+      private AnyNull: never
+      private constructor()
+    }
+  }
+
+  /**
    * Helper for filtering JSON entries that have `null` on the database (empty on the db)
    * 
    * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
    */
-  export const DbNull: 'DbNull'
+  export const DbNull: NullTypes.DbNull
 
   /**
    * Helper for filtering JSON entries that have JSON `null` values (not empty on the db)
    * 
    * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
    */
-  export const JsonNull: 'JsonNull'
+  export const JsonNull: NullTypes.JsonNull
 
   /**
    * Helper for filtering JSON entries that are `Prisma.DbNull` or `Prisma.JsonNull`
    * 
    * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
    */
-  export const AnyNull: 'AnyNull'
+  export const AnyNull: NullTypes.AnyNull
 
   type SelectAndInclude = {
     select: any
@@ -590,7 +664,8 @@ export namespace Prisma {
   }
 
   export const ModelName: {
-    TodoItem: 'TodoItem'
+    Folder: 'Folder',
+    Item: 'Item'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -627,7 +702,8 @@ export namespace Prisma {
   export interface PrismaClientOptions {
     /**
      * Configure findUnique/findFirst to throw an error if the query returns null. 
-     *  * @example
+     * @deprecated since 4.0.0. Use `findUniqueOrThrow`/`findFirstOrThrow` methods instead.
+     * @example
      * ```
      * // Reject on both findUnique/findFirst
      * rejectOnNotFound: true
@@ -639,7 +715,7 @@ export namespace Prisma {
      */
     rejectOnNotFound?: RejectOnNotFound | RejectPerOperation
     /**
-     * Overwrites the datasource url from your prisma.schema file
+     * Overwrites the datasource url from your schema.prisma file
      */
     datasources?: Datasources
 
@@ -748,334 +824,394 @@ export namespace Prisma {
    */
 
 
+  /**
+   * Count Type FolderCountOutputType
+   */
+
+
+  export type FolderCountOutputType = {
+    items: number
+  }
+
+  export type FolderCountOutputTypeSelect = {
+    items?: boolean
+  }
+
+  export type FolderCountOutputTypeGetPayload<
+    S extends boolean | null | undefined | FolderCountOutputTypeArgs,
+    U = keyof S
+      > = S extends true
+        ? FolderCountOutputType
+    : S extends undefined
+    ? never
+    : S extends FolderCountOutputTypeArgs
+    ?'include' extends U
+    ? FolderCountOutputType 
+    : 'select' extends U
+    ? {
+    [P in TrueKeys<S['select']>]:
+    P extends keyof FolderCountOutputType ? FolderCountOutputType[P] : never
+  } 
+    : FolderCountOutputType
+  : FolderCountOutputType
+
+
+
+
+  // Custom InputTypes
+
+  /**
+   * FolderCountOutputType without action
+   */
+  export type FolderCountOutputTypeArgs = {
+    /**
+     * Select specific fields to fetch from the FolderCountOutputType
+     * 
+    **/
+    select?: FolderCountOutputTypeSelect | null
+  }
+
+
 
   /**
    * Models
    */
 
   /**
-   * Model TodoItem
+   * Model Folder
    */
 
 
-  export type AggregateTodoItem = {
-    _count: TodoItemCountAggregateOutputType | null
-    _avg: TodoItemAvgAggregateOutputType | null
-    _sum: TodoItemSumAggregateOutputType | null
-    _min: TodoItemMinAggregateOutputType | null
-    _max: TodoItemMaxAggregateOutputType | null
+  export type AggregateFolder = {
+    _count: FolderCountAggregateOutputType | null
+    _avg: FolderAvgAggregateOutputType | null
+    _sum: FolderSumAggregateOutputType | null
+    _min: FolderMinAggregateOutputType | null
+    _max: FolderMaxAggregateOutputType | null
   }
 
-  export type TodoItemAvgAggregateOutputType = {
+  export type FolderAvgAggregateOutputType = {
     id: number | null
   }
 
-  export type TodoItemSumAggregateOutputType = {
+  export type FolderSumAggregateOutputType = {
     id: number | null
   }
 
-  export type TodoItemMinAggregateOutputType = {
-    id: number | null
-    createdAt: Date | null
-    modifiedAt: Date | null
-    status: string | null
-    description: string | null
-  }
-
-  export type TodoItemMaxAggregateOutputType = {
+  export type FolderMinAggregateOutputType = {
     id: number | null
     createdAt: Date | null
     modifiedAt: Date | null
-    status: string | null
-    description: string | null
+    rm: boolean | null
+    name: string | null
   }
 
-  export type TodoItemCountAggregateOutputType = {
+  export type FolderMaxAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    modifiedAt: Date | null
+    rm: boolean | null
+    name: string | null
+  }
+
+  export type FolderCountAggregateOutputType = {
     id: number
     createdAt: number
     modifiedAt: number
-    status: number
-    description: number
+    rm: number
+    name: number
     _all: number
   }
 
 
-  export type TodoItemAvgAggregateInputType = {
+  export type FolderAvgAggregateInputType = {
     id?: true
   }
 
-  export type TodoItemSumAggregateInputType = {
+  export type FolderSumAggregateInputType = {
     id?: true
   }
 
-  export type TodoItemMinAggregateInputType = {
+  export type FolderMinAggregateInputType = {
     id?: true
     createdAt?: true
     modifiedAt?: true
-    status?: true
-    description?: true
+    rm?: true
+    name?: true
   }
 
-  export type TodoItemMaxAggregateInputType = {
+  export type FolderMaxAggregateInputType = {
     id?: true
     createdAt?: true
     modifiedAt?: true
-    status?: true
-    description?: true
+    rm?: true
+    name?: true
   }
 
-  export type TodoItemCountAggregateInputType = {
+  export type FolderCountAggregateInputType = {
     id?: true
     createdAt?: true
     modifiedAt?: true
-    status?: true
-    description?: true
+    rm?: true
+    name?: true
     _all?: true
   }
 
-  export type TodoItemAggregateArgs = {
+  export type FolderAggregateArgs = {
     /**
-     * Filter which TodoItem to aggregate.
+     * Filter which Folder to aggregate.
      * 
     **/
-    where?: TodoItemWhereInput
+    where?: FolderWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of TodoItems to fetch.
+     * Determine the order of Folders to fetch.
      * 
     **/
-    orderBy?: Enumerable<TodoItemOrderByWithRelationInput>
+    orderBy?: Enumerable<FolderOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the start position
      * 
     **/
-    cursor?: TodoItemWhereUniqueInput
+    cursor?: FolderWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` TodoItems from the position of the cursor.
+     * Take `±n` Folders from the position of the cursor.
      * 
     **/
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` TodoItems.
+     * Skip the first `n` Folders.
      * 
     **/
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
-     * Count returned TodoItems
+     * Count returned Folders
     **/
-    _count?: true | TodoItemCountAggregateInputType
+    _count?: true | FolderCountAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to average
     **/
-    _avg?: TodoItemAvgAggregateInputType
+    _avg?: FolderAvgAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to sum
     **/
-    _sum?: TodoItemSumAggregateInputType
+    _sum?: FolderSumAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to find the minimum value
     **/
-    _min?: TodoItemMinAggregateInputType
+    _min?: FolderMinAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to find the maximum value
     **/
-    _max?: TodoItemMaxAggregateInputType
+    _max?: FolderMaxAggregateInputType
   }
 
-  export type GetTodoItemAggregateType<T extends TodoItemAggregateArgs> = {
-        [P in keyof T & keyof AggregateTodoItem]: P extends '_count' | 'count'
+  export type GetFolderAggregateType<T extends FolderAggregateArgs> = {
+        [P in keyof T & keyof AggregateFolder]: P extends '_count' | 'count'
       ? T[P] extends true
         ? number
-        : GetScalarType<T[P], AggregateTodoItem[P]>
-      : GetScalarType<T[P], AggregateTodoItem[P]>
+        : GetScalarType<T[P], AggregateFolder[P]>
+      : GetScalarType<T[P], AggregateFolder[P]>
   }
 
 
 
 
-  export type TodoItemGroupByArgs = {
-    where?: TodoItemWhereInput
-    orderBy?: Enumerable<TodoItemOrderByWithAggregationInput>
-    by: Array<TodoItemScalarFieldEnum>
-    having?: TodoItemScalarWhereWithAggregatesInput
+  export type FolderGroupByArgs = {
+    where?: FolderWhereInput
+    orderBy?: Enumerable<FolderOrderByWithAggregationInput>
+    by: Array<FolderScalarFieldEnum>
+    having?: FolderScalarWhereWithAggregatesInput
     take?: number
     skip?: number
-    _count?: TodoItemCountAggregateInputType | true
-    _avg?: TodoItemAvgAggregateInputType
-    _sum?: TodoItemSumAggregateInputType
-    _min?: TodoItemMinAggregateInputType
-    _max?: TodoItemMaxAggregateInputType
+    _count?: FolderCountAggregateInputType | true
+    _avg?: FolderAvgAggregateInputType
+    _sum?: FolderSumAggregateInputType
+    _min?: FolderMinAggregateInputType
+    _max?: FolderMaxAggregateInputType
   }
 
 
-  export type TodoItemGroupByOutputType = {
+  export type FolderGroupByOutputType = {
     id: number
     createdAt: Date
     modifiedAt: Date
-    status: string | null
-    description: string | null
-    _count: TodoItemCountAggregateOutputType | null
-    _avg: TodoItemAvgAggregateOutputType | null
-    _sum: TodoItemSumAggregateOutputType | null
-    _min: TodoItemMinAggregateOutputType | null
-    _max: TodoItemMaxAggregateOutputType | null
+    rm: boolean
+    name: string
+    _count: FolderCountAggregateOutputType | null
+    _avg: FolderAvgAggregateOutputType | null
+    _sum: FolderSumAggregateOutputType | null
+    _min: FolderMinAggregateOutputType | null
+    _max: FolderMaxAggregateOutputType | null
   }
 
-  type GetTodoItemGroupByPayload<T extends TodoItemGroupByArgs> = PrismaPromise<
+  type GetFolderGroupByPayload<T extends FolderGroupByArgs> = PrismaPromise<
     Array<
-      PickArray<TodoItemGroupByOutputType, T['by']> &
+      PickArray<FolderGroupByOutputType, T['by']> &
         {
-          [P in ((keyof T) & (keyof TodoItemGroupByOutputType))]: P extends '_count'
+          [P in ((keyof T) & (keyof FolderGroupByOutputType))]: P extends '_count'
             ? T[P] extends boolean
               ? number
-              : GetScalarType<T[P], TodoItemGroupByOutputType[P]>
-            : GetScalarType<T[P], TodoItemGroupByOutputType[P]>
+              : GetScalarType<T[P], FolderGroupByOutputType[P]>
+            : GetScalarType<T[P], FolderGroupByOutputType[P]>
         }
       >
     >
 
 
-  export type TodoItemSelect = {
+  export type FolderSelect = {
     id?: boolean
     createdAt?: boolean
     modifiedAt?: boolean
-    status?: boolean
-    description?: boolean
+    rm?: boolean
+    name?: boolean
+    items?: boolean | ItemFindManyArgs
+    _count?: boolean | FolderCountOutputTypeArgs
   }
 
-  export type TodoItemGetPayload<
-    S extends boolean | null | undefined | TodoItemArgs,
+  export type FolderInclude = {
+    items?: boolean | ItemFindManyArgs
+    _count?: boolean | FolderCountOutputTypeArgs
+  }
+
+  export type FolderGetPayload<
+    S extends boolean | null | undefined | FolderArgs,
     U = keyof S
       > = S extends true
-        ? TodoItem
+        ? Folder
     : S extends undefined
     ? never
-    : S extends TodoItemArgs | TodoItemFindManyArgs
+    : S extends FolderArgs | FolderFindManyArgs
     ?'include' extends U
-    ? TodoItem 
+    ? Folder  & {
+    [P in TrueKeys<S['include']>]:
+        P extends 'items' ? Array < ItemGetPayload<S['include'][P]>>  :
+        P extends '_count' ? FolderCountOutputTypeGetPayload<S['include'][P]> :  never
+  } 
     : 'select' extends U
     ? {
     [P in TrueKeys<S['select']>]:
-    P extends keyof TodoItem ? TodoItem[P] : never
+        P extends 'items' ? Array < ItemGetPayload<S['select'][P]>>  :
+        P extends '_count' ? FolderCountOutputTypeGetPayload<S['select'][P]> :  P extends keyof Folder ? Folder[P] : never
   } 
-    : TodoItem
-  : TodoItem
+    : Folder
+  : Folder
 
 
-  type TodoItemCountArgs = Merge<
-    Omit<TodoItemFindManyArgs, 'select' | 'include'> & {
-      select?: TodoItemCountAggregateInputType | true
+  type FolderCountArgs = Merge<
+    Omit<FolderFindManyArgs, 'select' | 'include'> & {
+      select?: FolderCountAggregateInputType | true
     }
   >
 
-  export interface TodoItemDelegate<GlobalRejectSettings> {
+  export interface FolderDelegate<GlobalRejectSettings> {
     /**
-     * Find zero or one TodoItem that matches the filter.
-     * @param {TodoItemFindUniqueArgs} args - Arguments to find a TodoItem
+     * Find zero or one Folder that matches the filter.
+     * @param {FolderFindUniqueArgs} args - Arguments to find a Folder
      * @example
-     * // Get one TodoItem
-     * const todoItem = await prisma.todoItem.findUnique({
+     * // Get one Folder
+     * const folder = await prisma.folder.findUnique({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
     **/
-    findUnique<T extends TodoItemFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args: SelectSubset<T, TodoItemFindUniqueArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'TodoItem'> extends True ? CheckSelect<T, Prisma__TodoItemClient<TodoItem>, Prisma__TodoItemClient<TodoItemGetPayload<T>>> : CheckSelect<T, Prisma__TodoItemClient<TodoItem | null >, Prisma__TodoItemClient<TodoItemGetPayload<T> | null >>
+    findUnique<T extends FolderFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, FolderFindUniqueArgs>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Folder'> extends True ? CheckSelect<T, Prisma__FolderClient<Folder>, Prisma__FolderClient<FolderGetPayload<T>>> : CheckSelect<T, Prisma__FolderClient<Folder | null >, Prisma__FolderClient<FolderGetPayload<T> | null >>
 
     /**
-     * Find the first TodoItem that matches the filter.
+     * Find the first Folder that matches the filter.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TodoItemFindFirstArgs} args - Arguments to find a TodoItem
+     * @param {FolderFindFirstArgs} args - Arguments to find a Folder
      * @example
-     * // Get one TodoItem
-     * const todoItem = await prisma.todoItem.findFirst({
+     * // Get one Folder
+     * const folder = await prisma.folder.findFirst({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
     **/
-    findFirst<T extends TodoItemFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args?: SelectSubset<T, TodoItemFindFirstArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'TodoItem'> extends True ? CheckSelect<T, Prisma__TodoItemClient<TodoItem>, Prisma__TodoItemClient<TodoItemGetPayload<T>>> : CheckSelect<T, Prisma__TodoItemClient<TodoItem | null >, Prisma__TodoItemClient<TodoItemGetPayload<T> | null >>
+    findFirst<T extends FolderFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, FolderFindFirstArgs>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Folder'> extends True ? CheckSelect<T, Prisma__FolderClient<Folder>, Prisma__FolderClient<FolderGetPayload<T>>> : CheckSelect<T, Prisma__FolderClient<Folder | null >, Prisma__FolderClient<FolderGetPayload<T> | null >>
 
     /**
-     * Find zero or more TodoItems that matches the filter.
+     * Find zero or more Folders that matches the filter.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TodoItemFindManyArgs=} args - Arguments to filter and select certain fields only.
+     * @param {FolderFindManyArgs=} args - Arguments to filter and select certain fields only.
      * @example
-     * // Get all TodoItems
-     * const todoItems = await prisma.todoItem.findMany()
+     * // Get all Folders
+     * const folders = await prisma.folder.findMany()
      * 
-     * // Get first 10 TodoItems
-     * const todoItems = await prisma.todoItem.findMany({ take: 10 })
+     * // Get first 10 Folders
+     * const folders = await prisma.folder.findMany({ take: 10 })
      * 
      * // Only select the `id`
-     * const todoItemWithIdOnly = await prisma.todoItem.findMany({ select: { id: true } })
+     * const folderWithIdOnly = await prisma.folder.findMany({ select: { id: true } })
      * 
     **/
-    findMany<T extends TodoItemFindManyArgs>(
-      args?: SelectSubset<T, TodoItemFindManyArgs>
-    ): CheckSelect<T, PrismaPromise<Array<TodoItem>>, PrismaPromise<Array<TodoItemGetPayload<T>>>>
+    findMany<T extends FolderFindManyArgs>(
+      args?: SelectSubset<T, FolderFindManyArgs>
+    ): CheckSelect<T, PrismaPromise<Array<Folder>>, PrismaPromise<Array<FolderGetPayload<T>>>>
 
     /**
-     * Create a TodoItem.
-     * @param {TodoItemCreateArgs} args - Arguments to create a TodoItem.
+     * Create a Folder.
+     * @param {FolderCreateArgs} args - Arguments to create a Folder.
      * @example
-     * // Create one TodoItem
-     * const TodoItem = await prisma.todoItem.create({
+     * // Create one Folder
+     * const Folder = await prisma.folder.create({
      *   data: {
-     *     // ... data to create a TodoItem
+     *     // ... data to create a Folder
      *   }
      * })
      * 
     **/
-    create<T extends TodoItemCreateArgs>(
-      args: SelectSubset<T, TodoItemCreateArgs>
-    ): CheckSelect<T, Prisma__TodoItemClient<TodoItem>, Prisma__TodoItemClient<TodoItemGetPayload<T>>>
+    create<T extends FolderCreateArgs>(
+      args: SelectSubset<T, FolderCreateArgs>
+    ): CheckSelect<T, Prisma__FolderClient<Folder>, Prisma__FolderClient<FolderGetPayload<T>>>
 
     /**
-     * Delete a TodoItem.
-     * @param {TodoItemDeleteArgs} args - Arguments to delete one TodoItem.
+     * Delete a Folder.
+     * @param {FolderDeleteArgs} args - Arguments to delete one Folder.
      * @example
-     * // Delete one TodoItem
-     * const TodoItem = await prisma.todoItem.delete({
+     * // Delete one Folder
+     * const Folder = await prisma.folder.delete({
      *   where: {
-     *     // ... filter to delete one TodoItem
+     *     // ... filter to delete one Folder
      *   }
      * })
      * 
     **/
-    delete<T extends TodoItemDeleteArgs>(
-      args: SelectSubset<T, TodoItemDeleteArgs>
-    ): CheckSelect<T, Prisma__TodoItemClient<TodoItem>, Prisma__TodoItemClient<TodoItemGetPayload<T>>>
+    delete<T extends FolderDeleteArgs>(
+      args: SelectSubset<T, FolderDeleteArgs>
+    ): CheckSelect<T, Prisma__FolderClient<Folder>, Prisma__FolderClient<FolderGetPayload<T>>>
 
     /**
-     * Update one TodoItem.
-     * @param {TodoItemUpdateArgs} args - Arguments to update one TodoItem.
+     * Update one Folder.
+     * @param {FolderUpdateArgs} args - Arguments to update one Folder.
      * @example
-     * // Update one TodoItem
-     * const todoItem = await prisma.todoItem.update({
+     * // Update one Folder
+     * const folder = await prisma.folder.update({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -1085,34 +1221,34 @@ export namespace Prisma {
      * })
      * 
     **/
-    update<T extends TodoItemUpdateArgs>(
-      args: SelectSubset<T, TodoItemUpdateArgs>
-    ): CheckSelect<T, Prisma__TodoItemClient<TodoItem>, Prisma__TodoItemClient<TodoItemGetPayload<T>>>
+    update<T extends FolderUpdateArgs>(
+      args: SelectSubset<T, FolderUpdateArgs>
+    ): CheckSelect<T, Prisma__FolderClient<Folder>, Prisma__FolderClient<FolderGetPayload<T>>>
 
     /**
-     * Delete zero or more TodoItems.
-     * @param {TodoItemDeleteManyArgs} args - Arguments to filter TodoItems to delete.
+     * Delete zero or more Folders.
+     * @param {FolderDeleteManyArgs} args - Arguments to filter Folders to delete.
      * @example
-     * // Delete a few TodoItems
-     * const { count } = await prisma.todoItem.deleteMany({
+     * // Delete a few Folders
+     * const { count } = await prisma.folder.deleteMany({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      * 
     **/
-    deleteMany<T extends TodoItemDeleteManyArgs>(
-      args?: SelectSubset<T, TodoItemDeleteManyArgs>
+    deleteMany<T extends FolderDeleteManyArgs>(
+      args?: SelectSubset<T, FolderDeleteManyArgs>
     ): PrismaPromise<BatchPayload>
 
     /**
-     * Update zero or more TodoItems.
+     * Update zero or more Folders.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TodoItemUpdateManyArgs} args - Arguments to update one or more rows.
+     * @param {FolderUpdateManyArgs} args - Arguments to update one or more rows.
      * @example
-     * // Update many TodoItems
-     * const todoItem = await prisma.todoItem.updateMany({
+     * // Update many Folders
+     * const folder = await prisma.folder.updateMany({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -1122,59 +1258,93 @@ export namespace Prisma {
      * })
      * 
     **/
-    updateMany<T extends TodoItemUpdateManyArgs>(
-      args: SelectSubset<T, TodoItemUpdateManyArgs>
+    updateMany<T extends FolderUpdateManyArgs>(
+      args: SelectSubset<T, FolderUpdateManyArgs>
     ): PrismaPromise<BatchPayload>
 
     /**
-     * Create or update one TodoItem.
-     * @param {TodoItemUpsertArgs} args - Arguments to update or create a TodoItem.
+     * Create or update one Folder.
+     * @param {FolderUpsertArgs} args - Arguments to update or create a Folder.
      * @example
-     * // Update or create a TodoItem
-     * const todoItem = await prisma.todoItem.upsert({
+     * // Update or create a Folder
+     * const folder = await prisma.folder.upsert({
      *   create: {
-     *     // ... data to create a TodoItem
+     *     // ... data to create a Folder
      *   },
      *   update: {
      *     // ... in case it already exists, update
      *   },
      *   where: {
-     *     // ... the filter for the TodoItem we want to update
+     *     // ... the filter for the Folder we want to update
      *   }
      * })
     **/
-    upsert<T extends TodoItemUpsertArgs>(
-      args: SelectSubset<T, TodoItemUpsertArgs>
-    ): CheckSelect<T, Prisma__TodoItemClient<TodoItem>, Prisma__TodoItemClient<TodoItemGetPayload<T>>>
+    upsert<T extends FolderUpsertArgs>(
+      args: SelectSubset<T, FolderUpsertArgs>
+    ): CheckSelect<T, Prisma__FolderClient<Folder>, Prisma__FolderClient<FolderGetPayload<T>>>
 
     /**
-     * Count the number of TodoItems.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {TodoItemCountArgs} args - Arguments to filter TodoItems to count.
+     * Find one Folder that matches the filter or throw
+     * `NotFoundError` if no matches were found.
+     * @param {FolderFindUniqueOrThrowArgs} args - Arguments to find a Folder
      * @example
-     * // Count the number of TodoItems
-     * const count = await prisma.todoItem.count({
+     * // Get one Folder
+     * const folder = await prisma.folder.findUniqueOrThrow({
      *   where: {
-     *     // ... the filter for the TodoItems we want to count
+     *     // ... provide filter here
      *   }
      * })
     **/
-    count<T extends TodoItemCountArgs>(
-      args?: Subset<T, TodoItemCountArgs>,
+    findUniqueOrThrow<T extends FolderFindUniqueOrThrowArgs>(
+      args?: SelectSubset<T, FolderFindUniqueOrThrowArgs>
+    ): CheckSelect<T, Prisma__FolderClient<Folder>, Prisma__FolderClient<FolderGetPayload<T>>>
+
+    /**
+     * Find the first Folder that matches the filter or
+     * throw `NotFoundError` if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FolderFindFirstOrThrowArgs} args - Arguments to find a Folder
+     * @example
+     * // Get one Folder
+     * const folder = await prisma.folder.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirstOrThrow<T extends FolderFindFirstOrThrowArgs>(
+      args?: SelectSubset<T, FolderFindFirstOrThrowArgs>
+    ): CheckSelect<T, Prisma__FolderClient<Folder>, Prisma__FolderClient<FolderGetPayload<T>>>
+
+    /**
+     * Count the number of Folders.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FolderCountArgs} args - Arguments to filter Folders to count.
+     * @example
+     * // Count the number of Folders
+     * const count = await prisma.folder.count({
+     *   where: {
+     *     // ... the filter for the Folders we want to count
+     *   }
+     * })
+    **/
+    count<T extends FolderCountArgs>(
+      args?: Subset<T, FolderCountArgs>,
     ): PrismaPromise<
       T extends _Record<'select', any>
         ? T['select'] extends true
           ? number
-          : GetScalarType<T['select'], TodoItemCountAggregateOutputType>
+          : GetScalarType<T['select'], FolderCountAggregateOutputType>
         : number
     >
 
     /**
-     * Allows you to perform aggregations operations on a TodoItem.
+     * Allows you to perform aggregations operations on a Folder.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TodoItemAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @param {FolderAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
      * @example
      * // Ordered by age ascending
      * // Where email contains prisma.io
@@ -1194,13 +1364,13 @@ export namespace Prisma {
      *   take: 10,
      * })
     **/
-    aggregate<T extends TodoItemAggregateArgs>(args: Subset<T, TodoItemAggregateArgs>): PrismaPromise<GetTodoItemAggregateType<T>>
+    aggregate<T extends FolderAggregateArgs>(args: Subset<T, FolderAggregateArgs>): PrismaPromise<GetFolderAggregateType<T>>
 
     /**
-     * Group by TodoItem.
+     * Group by Folder.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TodoItemGroupByArgs} args - Group by arguments.
+     * @param {FolderGroupByArgs} args - Group by arguments.
      * @example
      * // Group by city, order by createdAt, get count
      * const result = await prisma.user.groupBy({
@@ -1215,14 +1385,14 @@ export namespace Prisma {
      * 
     **/
     groupBy<
-      T extends TodoItemGroupByArgs,
+      T extends FolderGroupByArgs,
       HasSelectOrTake extends Or<
         Extends<'skip', Keys<T>>,
         Extends<'take', Keys<T>>
       >,
       OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: TodoItemGroupByArgs['orderBy'] }
-        : { orderBy?: TodoItemGroupByArgs['orderBy'] },
+        ? { orderBy: FolderGroupByArgs['orderBy'] }
+        : { orderBy?: FolderGroupByArgs['orderBy'] },
       OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
       ByFields extends TupleToUnion<T['by']>,
       ByValid extends Has<ByFields, OrderFields>,
@@ -1271,16 +1441,16 @@ export namespace Prisma {
             ? never
             : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
         }[OrderFields]
-    >(args: SubsetIntersection<T, TodoItemGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTodoItemGroupByPayload<T> : PrismaPromise<InputErrors>
+    >(args: SubsetIntersection<T, FolderGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetFolderGroupByPayload<T> : PrismaPromise<InputErrors>
   }
 
   /**
-   * The delegate class that acts as a "Promise-like" for TodoItem.
+   * The delegate class that acts as a "Promise-like" for Folder.
    * Why is this prefixed with `Prisma__`?
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export class Prisma__TodoItemClient<T> implements PrismaPromise<T> {
+  export class Prisma__FolderClient<T> implements PrismaPromise<T> {
     [prisma]: true;
     private readonly _dmmf;
     private readonly _fetcher;
@@ -1297,6 +1467,7 @@ export namespace Prisma {
     constructor(_dmmf: runtime.DMMFClass, _fetcher: PrismaClientFetcher, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
     readonly [Symbol.toStringTag]: 'PrismaClientPromise';
 
+    items<T extends ItemFindManyArgs = {}>(args?: Subset<T, ItemFindManyArgs>): CheckSelect<T, PrismaPromise<Array<Item>>, PrismaPromise<Array<ItemGetPayload<T>>>>;
 
     private get _document();
     /**
@@ -1324,251 +1495,1246 @@ export namespace Prisma {
   // Custom InputTypes
 
   /**
-   * TodoItem findUnique
+   * Folder base type for findUnique actions
    */
-  export type TodoItemFindUniqueArgs = {
+  export type FolderFindUniqueArgsBase = {
     /**
-     * Select specific fields to fetch from the TodoItem
+     * Select specific fields to fetch from the Folder
      * 
     **/
-    select?: TodoItemSelect | null
+    select?: FolderSelect | null
     /**
-     * Throw an Error if a TodoItem can't be found
+     * Choose, which related nodes to fetch as well.
      * 
     **/
-    rejectOnNotFound?: RejectOnNotFound
+    include?: FolderInclude | null
     /**
-     * Filter, which TodoItem to fetch.
+     * Filter, which Folder to fetch.
      * 
     **/
-    where: TodoItemWhereUniqueInput
+    where: FolderWhereUniqueInput
   }
 
+  /**
+   * Folder: findUnique
+   */
+  export interface FolderFindUniqueArgs extends FolderFindUniqueArgsBase {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
 
   /**
-   * TodoItem findFirst
+   * Folder base type for findFirst actions
    */
-  export type TodoItemFindFirstArgs = {
+  export type FolderFindFirstArgsBase = {
     /**
-     * Select specific fields to fetch from the TodoItem
+     * Select specific fields to fetch from the Folder
      * 
     **/
-    select?: TodoItemSelect | null
+    select?: FolderSelect | null
     /**
-     * Throw an Error if a TodoItem can't be found
+     * Choose, which related nodes to fetch as well.
      * 
     **/
-    rejectOnNotFound?: RejectOnNotFound
+    include?: FolderInclude | null
     /**
-     * Filter, which TodoItem to fetch.
+     * Filter, which Folder to fetch.
      * 
     **/
-    where?: TodoItemWhereInput
+    where?: FolderWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of TodoItems to fetch.
+     * Determine the order of Folders to fetch.
      * 
     **/
-    orderBy?: Enumerable<TodoItemOrderByWithRelationInput>
+    orderBy?: Enumerable<FolderOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
-     * Sets the position for searching for TodoItems.
+     * Sets the position for searching for Folders.
      * 
     **/
-    cursor?: TodoItemWhereUniqueInput
+    cursor?: FolderWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` TodoItems from the position of the cursor.
+     * Take `±n` Folders from the position of the cursor.
      * 
     **/
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` TodoItems.
+     * Skip the first `n` Folders.
      * 
     **/
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
-     * Filter by unique combinations of TodoItems.
+     * Filter by unique combinations of Folders.
      * 
     **/
-    distinct?: Enumerable<TodoItemScalarFieldEnum>
+    distinct?: Enumerable<FolderScalarFieldEnum>
   }
 
+  /**
+   * Folder: findFirst
+   */
+  export interface FolderFindFirstArgs extends FolderFindFirstArgsBase {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
 
   /**
-   * TodoItem findMany
+   * Folder findMany
    */
-  export type TodoItemFindManyArgs = {
+  export type FolderFindManyArgs = {
     /**
-     * Select specific fields to fetch from the TodoItem
+     * Select specific fields to fetch from the Folder
      * 
     **/
-    select?: TodoItemSelect | null
+    select?: FolderSelect | null
     /**
-     * Filter, which TodoItems to fetch.
+     * Choose, which related nodes to fetch as well.
      * 
     **/
-    where?: TodoItemWhereInput
+    include?: FolderInclude | null
+    /**
+     * Filter, which Folders to fetch.
+     * 
+    **/
+    where?: FolderWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of TodoItems to fetch.
+     * Determine the order of Folders to fetch.
      * 
     **/
-    orderBy?: Enumerable<TodoItemOrderByWithRelationInput>
+    orderBy?: Enumerable<FolderOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
-     * Sets the position for listing TodoItems.
+     * Sets the position for listing Folders.
      * 
     **/
-    cursor?: TodoItemWhereUniqueInput
+    cursor?: FolderWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` TodoItems from the position of the cursor.
+     * Take `±n` Folders from the position of the cursor.
      * 
     **/
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` TodoItems.
+     * Skip the first `n` Folders.
      * 
     **/
     skip?: number
-    distinct?: Enumerable<TodoItemScalarFieldEnum>
+    distinct?: Enumerable<FolderScalarFieldEnum>
   }
 
 
   /**
-   * TodoItem create
+   * Folder create
    */
-  export type TodoItemCreateArgs = {
+  export type FolderCreateArgs = {
     /**
-     * Select specific fields to fetch from the TodoItem
+     * Select specific fields to fetch from the Folder
      * 
     **/
-    select?: TodoItemSelect | null
+    select?: FolderSelect | null
     /**
-     * The data needed to create a TodoItem.
+     * Choose, which related nodes to fetch as well.
      * 
     **/
-    data: XOR<TodoItemCreateInput, TodoItemUncheckedCreateInput>
+    include?: FolderInclude | null
+    /**
+     * The data needed to create a Folder.
+     * 
+    **/
+    data: XOR<FolderCreateInput, FolderUncheckedCreateInput>
   }
 
 
   /**
-   * TodoItem update
+   * Folder update
    */
-  export type TodoItemUpdateArgs = {
+  export type FolderUpdateArgs = {
     /**
-     * Select specific fields to fetch from the TodoItem
+     * Select specific fields to fetch from the Folder
      * 
     **/
-    select?: TodoItemSelect | null
+    select?: FolderSelect | null
     /**
-     * The data needed to update a TodoItem.
+     * Choose, which related nodes to fetch as well.
      * 
     **/
-    data: XOR<TodoItemUpdateInput, TodoItemUncheckedUpdateInput>
+    include?: FolderInclude | null
     /**
-     * Choose, which TodoItem to update.
+     * The data needed to update a Folder.
      * 
     **/
-    where: TodoItemWhereUniqueInput
+    data: XOR<FolderUpdateInput, FolderUncheckedUpdateInput>
+    /**
+     * Choose, which Folder to update.
+     * 
+    **/
+    where: FolderWhereUniqueInput
   }
 
 
   /**
-   * TodoItem updateMany
+   * Folder updateMany
    */
-  export type TodoItemUpdateManyArgs = {
+  export type FolderUpdateManyArgs = {
     /**
-     * The data used to update TodoItems.
+     * The data used to update Folders.
      * 
     **/
-    data: XOR<TodoItemUpdateManyMutationInput, TodoItemUncheckedUpdateManyInput>
+    data: XOR<FolderUpdateManyMutationInput, FolderUncheckedUpdateManyInput>
     /**
-     * Filter which TodoItems to update
+     * Filter which Folders to update
      * 
     **/
-    where?: TodoItemWhereInput
+    where?: FolderWhereInput
   }
 
 
   /**
-   * TodoItem upsert
+   * Folder upsert
    */
-  export type TodoItemUpsertArgs = {
+  export type FolderUpsertArgs = {
     /**
-     * Select specific fields to fetch from the TodoItem
+     * Select specific fields to fetch from the Folder
      * 
     **/
-    select?: TodoItemSelect | null
+    select?: FolderSelect | null
     /**
-     * The filter to search for the TodoItem to update in case it exists.
+     * Choose, which related nodes to fetch as well.
      * 
     **/
-    where: TodoItemWhereUniqueInput
+    include?: FolderInclude | null
     /**
-     * In case the TodoItem found by the `where` argument doesn't exist, create a new TodoItem with this data.
+     * The filter to search for the Folder to update in case it exists.
      * 
     **/
-    create: XOR<TodoItemCreateInput, TodoItemUncheckedCreateInput>
+    where: FolderWhereUniqueInput
     /**
-     * In case the TodoItem was found with the provided `where` argument, update it with this data.
+     * In case the Folder found by the `where` argument doesn't exist, create a new Folder with this data.
      * 
     **/
-    update: XOR<TodoItemUpdateInput, TodoItemUncheckedUpdateInput>
+    create: XOR<FolderCreateInput, FolderUncheckedCreateInput>
+    /**
+     * In case the Folder was found with the provided `where` argument, update it with this data.
+     * 
+    **/
+    update: XOR<FolderUpdateInput, FolderUncheckedUpdateInput>
   }
 
 
   /**
-   * TodoItem delete
+   * Folder delete
    */
-  export type TodoItemDeleteArgs = {
+  export type FolderDeleteArgs = {
     /**
-     * Select specific fields to fetch from the TodoItem
+     * Select specific fields to fetch from the Folder
      * 
     **/
-    select?: TodoItemSelect | null
+    select?: FolderSelect | null
     /**
-     * Filter which TodoItem to delete.
+     * Choose, which related nodes to fetch as well.
      * 
     **/
-    where: TodoItemWhereUniqueInput
+    include?: FolderInclude | null
+    /**
+     * Filter which Folder to delete.
+     * 
+    **/
+    where: FolderWhereUniqueInput
   }
 
 
   /**
-   * TodoItem deleteMany
+   * Folder deleteMany
    */
-  export type TodoItemDeleteManyArgs = {
+  export type FolderDeleteManyArgs = {
     /**
-     * Filter which TodoItems to delete
+     * Filter which Folders to delete
      * 
     **/
-    where?: TodoItemWhereInput
+    where?: FolderWhereInput
   }
 
 
   /**
-   * TodoItem without action
+   * Folder: findUniqueOrThrow
    */
-  export type TodoItemArgs = {
+  export type FolderFindUniqueOrThrowArgs = FolderFindUniqueArgsBase
+      
+
+  /**
+   * Folder: findFirstOrThrow
+   */
+  export type FolderFindFirstOrThrowArgs = FolderFindFirstArgsBase
+      
+
+  /**
+   * Folder without action
+   */
+  export type FolderArgs = {
     /**
-     * Select specific fields to fetch from the TodoItem
+     * Select specific fields to fetch from the Folder
      * 
     **/
-    select?: TodoItemSelect | null
+    select?: FolderSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: FolderInclude | null
+  }
+
+
+
+  /**
+   * Model Item
+   */
+
+
+  export type AggregateItem = {
+    _count: ItemCountAggregateOutputType | null
+    _avg: ItemAvgAggregateOutputType | null
+    _sum: ItemSumAggregateOutputType | null
+    _min: ItemMinAggregateOutputType | null
+    _max: ItemMaxAggregateOutputType | null
+  }
+
+  export type ItemAvgAggregateOutputType = {
+    id: number | null
+    folderId: number | null
+  }
+
+  export type ItemSumAggregateOutputType = {
+    id: number | null
+    folderId: number | null
+  }
+
+  export type ItemMinAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    modifiedAt: Date | null
+    folderId: number | null
+    name: string | null
+  }
+
+  export type ItemMaxAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    modifiedAt: Date | null
+    folderId: number | null
+    name: string | null
+  }
+
+  export type ItemCountAggregateOutputType = {
+    id: number
+    createdAt: number
+    modifiedAt: number
+    folderId: number
+    name: number
+    _all: number
+  }
+
+
+  export type ItemAvgAggregateInputType = {
+    id?: true
+    folderId?: true
+  }
+
+  export type ItemSumAggregateInputType = {
+    id?: true
+    folderId?: true
+  }
+
+  export type ItemMinAggregateInputType = {
+    id?: true
+    createdAt?: true
+    modifiedAt?: true
+    folderId?: true
+    name?: true
+  }
+
+  export type ItemMaxAggregateInputType = {
+    id?: true
+    createdAt?: true
+    modifiedAt?: true
+    folderId?: true
+    name?: true
+  }
+
+  export type ItemCountAggregateInputType = {
+    id?: true
+    createdAt?: true
+    modifiedAt?: true
+    folderId?: true
+    name?: true
+    _all?: true
+  }
+
+  export type ItemAggregateArgs = {
+    /**
+     * Filter which Item to aggregate.
+     * 
+    **/
+    where?: ItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Items to fetch.
+     * 
+    **/
+    orderBy?: Enumerable<ItemOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     * 
+    **/
+    cursor?: ItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Items from the position of the cursor.
+     * 
+    **/
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Items.
+     * 
+    **/
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Items
+    **/
+    _count?: true | ItemCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ItemAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ItemSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ItemMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ItemMaxAggregateInputType
+  }
+
+  export type GetItemAggregateType<T extends ItemAggregateArgs> = {
+        [P in keyof T & keyof AggregateItem]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateItem[P]>
+      : GetScalarType<T[P], AggregateItem[P]>
+  }
+
+
+
+
+  export type ItemGroupByArgs = {
+    where?: ItemWhereInput
+    orderBy?: Enumerable<ItemOrderByWithAggregationInput>
+    by: Array<ItemScalarFieldEnum>
+    having?: ItemScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ItemCountAggregateInputType | true
+    _avg?: ItemAvgAggregateInputType
+    _sum?: ItemSumAggregateInputType
+    _min?: ItemMinAggregateInputType
+    _max?: ItemMaxAggregateInputType
+  }
+
+
+  export type ItemGroupByOutputType = {
+    id: number
+    createdAt: Date
+    modifiedAt: Date
+    folderId: number | null
+    name: string
+    _count: ItemCountAggregateOutputType | null
+    _avg: ItemAvgAggregateOutputType | null
+    _sum: ItemSumAggregateOutputType | null
+    _min: ItemMinAggregateOutputType | null
+    _max: ItemMaxAggregateOutputType | null
+  }
+
+  type GetItemGroupByPayload<T extends ItemGroupByArgs> = PrismaPromise<
+    Array<
+      PickArray<ItemGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ItemGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ItemGroupByOutputType[P]>
+            : GetScalarType<T[P], ItemGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ItemSelect = {
+    id?: boolean
+    createdAt?: boolean
+    modifiedAt?: boolean
+    folder?: boolean | FolderArgs
+    folderId?: boolean
+    name?: boolean
+  }
+
+  export type ItemInclude = {
+    folder?: boolean | FolderArgs
+  }
+
+  export type ItemGetPayload<
+    S extends boolean | null | undefined | ItemArgs,
+    U = keyof S
+      > = S extends true
+        ? Item
+    : S extends undefined
+    ? never
+    : S extends ItemArgs | ItemFindManyArgs
+    ?'include' extends U
+    ? Item  & {
+    [P in TrueKeys<S['include']>]:
+        P extends 'folder' ? FolderGetPayload<S['include'][P]> | null :  never
+  } 
+    : 'select' extends U
+    ? {
+    [P in TrueKeys<S['select']>]:
+        P extends 'folder' ? FolderGetPayload<S['select'][P]> | null :  P extends keyof Item ? Item[P] : never
+  } 
+    : Item
+  : Item
+
+
+  type ItemCountArgs = Merge<
+    Omit<ItemFindManyArgs, 'select' | 'include'> & {
+      select?: ItemCountAggregateInputType | true
+    }
+  >
+
+  export interface ItemDelegate<GlobalRejectSettings> {
+    /**
+     * Find zero or one Item that matches the filter.
+     * @param {ItemFindUniqueArgs} args - Arguments to find a Item
+     * @example
+     * // Get one Item
+     * const item = await prisma.item.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUnique<T extends ItemFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, ItemFindUniqueArgs>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Item'> extends True ? CheckSelect<T, Prisma__ItemClient<Item>, Prisma__ItemClient<ItemGetPayload<T>>> : CheckSelect<T, Prisma__ItemClient<Item | null >, Prisma__ItemClient<ItemGetPayload<T> | null >>
+
+    /**
+     * Find the first Item that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ItemFindFirstArgs} args - Arguments to find a Item
+     * @example
+     * // Get one Item
+     * const item = await prisma.item.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirst<T extends ItemFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, ItemFindFirstArgs>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Item'> extends True ? CheckSelect<T, Prisma__ItemClient<Item>, Prisma__ItemClient<ItemGetPayload<T>>> : CheckSelect<T, Prisma__ItemClient<Item | null >, Prisma__ItemClient<ItemGetPayload<T> | null >>
+
+    /**
+     * Find zero or more Items that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ItemFindManyArgs=} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Items
+     * const items = await prisma.item.findMany()
+     * 
+     * // Get first 10 Items
+     * const items = await prisma.item.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const itemWithIdOnly = await prisma.item.findMany({ select: { id: true } })
+     * 
+    **/
+    findMany<T extends ItemFindManyArgs>(
+      args?: SelectSubset<T, ItemFindManyArgs>
+    ): CheckSelect<T, PrismaPromise<Array<Item>>, PrismaPromise<Array<ItemGetPayload<T>>>>
+
+    /**
+     * Create a Item.
+     * @param {ItemCreateArgs} args - Arguments to create a Item.
+     * @example
+     * // Create one Item
+     * const Item = await prisma.item.create({
+     *   data: {
+     *     // ... data to create a Item
+     *   }
+     * })
+     * 
+    **/
+    create<T extends ItemCreateArgs>(
+      args: SelectSubset<T, ItemCreateArgs>
+    ): CheckSelect<T, Prisma__ItemClient<Item>, Prisma__ItemClient<ItemGetPayload<T>>>
+
+    /**
+     * Delete a Item.
+     * @param {ItemDeleteArgs} args - Arguments to delete one Item.
+     * @example
+     * // Delete one Item
+     * const Item = await prisma.item.delete({
+     *   where: {
+     *     // ... filter to delete one Item
+     *   }
+     * })
+     * 
+    **/
+    delete<T extends ItemDeleteArgs>(
+      args: SelectSubset<T, ItemDeleteArgs>
+    ): CheckSelect<T, Prisma__ItemClient<Item>, Prisma__ItemClient<ItemGetPayload<T>>>
+
+    /**
+     * Update one Item.
+     * @param {ItemUpdateArgs} args - Arguments to update one Item.
+     * @example
+     * // Update one Item
+     * const item = await prisma.item.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    update<T extends ItemUpdateArgs>(
+      args: SelectSubset<T, ItemUpdateArgs>
+    ): CheckSelect<T, Prisma__ItemClient<Item>, Prisma__ItemClient<ItemGetPayload<T>>>
+
+    /**
+     * Delete zero or more Items.
+     * @param {ItemDeleteManyArgs} args - Arguments to filter Items to delete.
+     * @example
+     * // Delete a few Items
+     * const { count } = await prisma.item.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+    **/
+    deleteMany<T extends ItemDeleteManyArgs>(
+      args?: SelectSubset<T, ItemDeleteManyArgs>
+    ): PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Items.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ItemUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Items
+     * const item = await prisma.item.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    updateMany<T extends ItemUpdateManyArgs>(
+      args: SelectSubset<T, ItemUpdateManyArgs>
+    ): PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Item.
+     * @param {ItemUpsertArgs} args - Arguments to update or create a Item.
+     * @example
+     * // Update or create a Item
+     * const item = await prisma.item.upsert({
+     *   create: {
+     *     // ... data to create a Item
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Item we want to update
+     *   }
+     * })
+    **/
+    upsert<T extends ItemUpsertArgs>(
+      args: SelectSubset<T, ItemUpsertArgs>
+    ): CheckSelect<T, Prisma__ItemClient<Item>, Prisma__ItemClient<ItemGetPayload<T>>>
+
+    /**
+     * Find one Item that matches the filter or throw
+     * `NotFoundError` if no matches were found.
+     * @param {ItemFindUniqueOrThrowArgs} args - Arguments to find a Item
+     * @example
+     * // Get one Item
+     * const item = await prisma.item.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUniqueOrThrow<T extends ItemFindUniqueOrThrowArgs>(
+      args?: SelectSubset<T, ItemFindUniqueOrThrowArgs>
+    ): CheckSelect<T, Prisma__ItemClient<Item>, Prisma__ItemClient<ItemGetPayload<T>>>
+
+    /**
+     * Find the first Item that matches the filter or
+     * throw `NotFoundError` if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ItemFindFirstOrThrowArgs} args - Arguments to find a Item
+     * @example
+     * // Get one Item
+     * const item = await prisma.item.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirstOrThrow<T extends ItemFindFirstOrThrowArgs>(
+      args?: SelectSubset<T, ItemFindFirstOrThrowArgs>
+    ): CheckSelect<T, Prisma__ItemClient<Item>, Prisma__ItemClient<ItemGetPayload<T>>>
+
+    /**
+     * Count the number of Items.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ItemCountArgs} args - Arguments to filter Items to count.
+     * @example
+     * // Count the number of Items
+     * const count = await prisma.item.count({
+     *   where: {
+     *     // ... the filter for the Items we want to count
+     *   }
+     * })
+    **/
+    count<T extends ItemCountArgs>(
+      args?: Subset<T, ItemCountArgs>,
+    ): PrismaPromise<
+      T extends _Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ItemCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Item.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ItemAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ItemAggregateArgs>(args: Subset<T, ItemAggregateArgs>): PrismaPromise<GetItemAggregateType<T>>
+
+    /**
+     * Group by Item.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ItemGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ItemGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ItemGroupByArgs['orderBy'] }
+        : { orderBy?: ItemGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends TupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ItemGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetItemGroupByPayload<T> : PrismaPromise<InputErrors>
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Item.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export class Prisma__ItemClient<T> implements PrismaPromise<T> {
+    [prisma]: true;
+    private readonly _dmmf;
+    private readonly _fetcher;
+    private readonly _queryType;
+    private readonly _rootField;
+    private readonly _clientMethod;
+    private readonly _args;
+    private readonly _dataPath;
+    private readonly _errorFormat;
+    private readonly _measurePerformance?;
+    private _isList;
+    private _callsite;
+    private _requestPromise?;
+    constructor(_dmmf: runtime.DMMFClass, _fetcher: PrismaClientFetcher, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
+    readonly [Symbol.toStringTag]: 'PrismaClientPromise';
+
+    folder<T extends FolderArgs = {}>(args?: Subset<T, FolderArgs>): CheckSelect<T, Prisma__FolderClient<Folder | null >, Prisma__FolderClient<FolderGetPayload<T> | null >>;
+
+    private get _document();
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): Promise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): Promise<T>;
+  }
+
+  // Custom InputTypes
+
+  /**
+   * Item base type for findUnique actions
+   */
+  export type ItemFindUniqueArgsBase = {
+    /**
+     * Select specific fields to fetch from the Item
+     * 
+    **/
+    select?: ItemSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: ItemInclude | null
+    /**
+     * Filter, which Item to fetch.
+     * 
+    **/
+    where: ItemWhereUniqueInput
+  }
+
+  /**
+   * Item: findUnique
+   */
+  export interface ItemFindUniqueArgs extends ItemFindUniqueArgsBase {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * Item base type for findFirst actions
+   */
+  export type ItemFindFirstArgsBase = {
+    /**
+     * Select specific fields to fetch from the Item
+     * 
+    **/
+    select?: ItemSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: ItemInclude | null
+    /**
+     * Filter, which Item to fetch.
+     * 
+    **/
+    where?: ItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Items to fetch.
+     * 
+    **/
+    orderBy?: Enumerable<ItemOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Items.
+     * 
+    **/
+    cursor?: ItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Items from the position of the cursor.
+     * 
+    **/
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Items.
+     * 
+    **/
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Items.
+     * 
+    **/
+    distinct?: Enumerable<ItemScalarFieldEnum>
+  }
+
+  /**
+   * Item: findFirst
+   */
+  export interface ItemFindFirstArgs extends ItemFindFirstArgsBase {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * Item findMany
+   */
+  export type ItemFindManyArgs = {
+    /**
+     * Select specific fields to fetch from the Item
+     * 
+    **/
+    select?: ItemSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: ItemInclude | null
+    /**
+     * Filter, which Items to fetch.
+     * 
+    **/
+    where?: ItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Items to fetch.
+     * 
+    **/
+    orderBy?: Enumerable<ItemOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Items.
+     * 
+    **/
+    cursor?: ItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Items from the position of the cursor.
+     * 
+    **/
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Items.
+     * 
+    **/
+    skip?: number
+    distinct?: Enumerable<ItemScalarFieldEnum>
+  }
+
+
+  /**
+   * Item create
+   */
+  export type ItemCreateArgs = {
+    /**
+     * Select specific fields to fetch from the Item
+     * 
+    **/
+    select?: ItemSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: ItemInclude | null
+    /**
+     * The data needed to create a Item.
+     * 
+    **/
+    data: XOR<ItemCreateInput, ItemUncheckedCreateInput>
+  }
+
+
+  /**
+   * Item update
+   */
+  export type ItemUpdateArgs = {
+    /**
+     * Select specific fields to fetch from the Item
+     * 
+    **/
+    select?: ItemSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: ItemInclude | null
+    /**
+     * The data needed to update a Item.
+     * 
+    **/
+    data: XOR<ItemUpdateInput, ItemUncheckedUpdateInput>
+    /**
+     * Choose, which Item to update.
+     * 
+    **/
+    where: ItemWhereUniqueInput
+  }
+
+
+  /**
+   * Item updateMany
+   */
+  export type ItemUpdateManyArgs = {
+    /**
+     * The data used to update Items.
+     * 
+    **/
+    data: XOR<ItemUpdateManyMutationInput, ItemUncheckedUpdateManyInput>
+    /**
+     * Filter which Items to update
+     * 
+    **/
+    where?: ItemWhereInput
+  }
+
+
+  /**
+   * Item upsert
+   */
+  export type ItemUpsertArgs = {
+    /**
+     * Select specific fields to fetch from the Item
+     * 
+    **/
+    select?: ItemSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: ItemInclude | null
+    /**
+     * The filter to search for the Item to update in case it exists.
+     * 
+    **/
+    where: ItemWhereUniqueInput
+    /**
+     * In case the Item found by the `where` argument doesn't exist, create a new Item with this data.
+     * 
+    **/
+    create: XOR<ItemCreateInput, ItemUncheckedCreateInput>
+    /**
+     * In case the Item was found with the provided `where` argument, update it with this data.
+     * 
+    **/
+    update: XOR<ItemUpdateInput, ItemUncheckedUpdateInput>
+  }
+
+
+  /**
+   * Item delete
+   */
+  export type ItemDeleteArgs = {
+    /**
+     * Select specific fields to fetch from the Item
+     * 
+    **/
+    select?: ItemSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: ItemInclude | null
+    /**
+     * Filter which Item to delete.
+     * 
+    **/
+    where: ItemWhereUniqueInput
+  }
+
+
+  /**
+   * Item deleteMany
+   */
+  export type ItemDeleteManyArgs = {
+    /**
+     * Filter which Items to delete
+     * 
+    **/
+    where?: ItemWhereInput
+  }
+
+
+  /**
+   * Item: findUniqueOrThrow
+   */
+  export type ItemFindUniqueOrThrowArgs = ItemFindUniqueArgsBase
+      
+
+  /**
+   * Item: findFirstOrThrow
+   */
+  export type ItemFindFirstOrThrowArgs = ItemFindFirstArgsBase
+      
+
+  /**
+   * Item without action
+   */
+  export type ItemArgs = {
+    /**
+     * Select specific fields to fetch from the Item
+     * 
+    **/
+    select?: ItemSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: ItemInclude | null
   }
 
 
@@ -1580,15 +2746,26 @@ export namespace Prisma {
   // Based on
   // https://github.com/microsoft/TypeScript/issues/3192#issuecomment-261720275
 
-  export const TodoItemScalarFieldEnum: {
+  export const FolderScalarFieldEnum: {
     id: 'id',
     createdAt: 'createdAt',
     modifiedAt: 'modifiedAt',
-    status: 'status',
-    description: 'description'
+    rm: 'rm',
+    name: 'name'
   };
 
-  export type TodoItemScalarFieldEnum = (typeof TodoItemScalarFieldEnum)[keyof typeof TodoItemScalarFieldEnum]
+  export type FolderScalarFieldEnum = (typeof FolderScalarFieldEnum)[keyof typeof FolderScalarFieldEnum]
+
+
+  export const ItemScalarFieldEnum: {
+    id: 'id',
+    createdAt: 'createdAt',
+    modifiedAt: 'modifiedAt',
+    folderId: 'folderId',
+    name: 'name'
+  };
+
+  export type ItemScalarFieldEnum = (typeof ItemScalarFieldEnum)[keyof typeof ItemScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -1599,101 +2776,207 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+  export const TransactionIsolationLevel: {
+    Serializable: 'Serializable'
+  };
+
+  export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
+
+
   /**
    * Deep Input Types
    */
 
 
-  export type TodoItemWhereInput = {
-    AND?: Enumerable<TodoItemWhereInput>
-    OR?: Enumerable<TodoItemWhereInput>
-    NOT?: Enumerable<TodoItemWhereInput>
+  export type FolderWhereInput = {
+    AND?: Enumerable<FolderWhereInput>
+    OR?: Enumerable<FolderWhereInput>
+    NOT?: Enumerable<FolderWhereInput>
     id?: IntFilter | number
     createdAt?: DateTimeFilter | Date | string
     modifiedAt?: DateTimeFilter | Date | string
-    status?: StringNullableFilter | string | null
-    description?: StringNullableFilter | string | null
+    rm?: BoolFilter | boolean
+    name?: StringFilter | string
+    items?: ItemListRelationFilter
   }
 
-  export type TodoItemOrderByWithRelationInput = {
+  export type FolderOrderByWithRelationInput = {
     id?: SortOrder
     createdAt?: SortOrder
     modifiedAt?: SortOrder
-    status?: SortOrder
-    description?: SortOrder
+    rm?: SortOrder
+    name?: SortOrder
+    items?: ItemOrderByRelationAggregateInput
   }
 
-  export type TodoItemWhereUniqueInput = {
+  export type FolderWhereUniqueInput = {
     id?: number
   }
 
-  export type TodoItemOrderByWithAggregationInput = {
+  export type FolderOrderByWithAggregationInput = {
     id?: SortOrder
     createdAt?: SortOrder
     modifiedAt?: SortOrder
-    status?: SortOrder
-    description?: SortOrder
-    _count?: TodoItemCountOrderByAggregateInput
-    _avg?: TodoItemAvgOrderByAggregateInput
-    _max?: TodoItemMaxOrderByAggregateInput
-    _min?: TodoItemMinOrderByAggregateInput
-    _sum?: TodoItemSumOrderByAggregateInput
+    rm?: SortOrder
+    name?: SortOrder
+    _count?: FolderCountOrderByAggregateInput
+    _avg?: FolderAvgOrderByAggregateInput
+    _max?: FolderMaxOrderByAggregateInput
+    _min?: FolderMinOrderByAggregateInput
+    _sum?: FolderSumOrderByAggregateInput
   }
 
-  export type TodoItemScalarWhereWithAggregatesInput = {
-    AND?: Enumerable<TodoItemScalarWhereWithAggregatesInput>
-    OR?: Enumerable<TodoItemScalarWhereWithAggregatesInput>
-    NOT?: Enumerable<TodoItemScalarWhereWithAggregatesInput>
+  export type FolderScalarWhereWithAggregatesInput = {
+    AND?: Enumerable<FolderScalarWhereWithAggregatesInput>
+    OR?: Enumerable<FolderScalarWhereWithAggregatesInput>
+    NOT?: Enumerable<FolderScalarWhereWithAggregatesInput>
     id?: IntWithAggregatesFilter | number
     createdAt?: DateTimeWithAggregatesFilter | Date | string
     modifiedAt?: DateTimeWithAggregatesFilter | Date | string
-    status?: StringNullableWithAggregatesFilter | string | null
-    description?: StringNullableWithAggregatesFilter | string | null
+    rm?: BoolWithAggregatesFilter | boolean
+    name?: StringWithAggregatesFilter | string
   }
 
-  export type TodoItemCreateInput = {
+  export type ItemWhereInput = {
+    AND?: Enumerable<ItemWhereInput>
+    OR?: Enumerable<ItemWhereInput>
+    NOT?: Enumerable<ItemWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    modifiedAt?: DateTimeFilter | Date | string
+    folder?: XOR<FolderRelationFilter, FolderWhereInput> | null
+    folderId?: IntNullableFilter | number | null
+    name?: StringFilter | string
+  }
+
+  export type ItemOrderByWithRelationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    modifiedAt?: SortOrder
+    folder?: FolderOrderByWithRelationInput
+    folderId?: SortOrder
+    name?: SortOrder
+  }
+
+  export type ItemWhereUniqueInput = {
+    id?: number
+  }
+
+  export type ItemOrderByWithAggregationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    modifiedAt?: SortOrder
+    folderId?: SortOrder
+    name?: SortOrder
+    _count?: ItemCountOrderByAggregateInput
+    _avg?: ItemAvgOrderByAggregateInput
+    _max?: ItemMaxOrderByAggregateInput
+    _min?: ItemMinOrderByAggregateInput
+    _sum?: ItemSumOrderByAggregateInput
+  }
+
+  export type ItemScalarWhereWithAggregatesInput = {
+    AND?: Enumerable<ItemScalarWhereWithAggregatesInput>
+    OR?: Enumerable<ItemScalarWhereWithAggregatesInput>
+    NOT?: Enumerable<ItemScalarWhereWithAggregatesInput>
+    id?: IntWithAggregatesFilter | number
+    createdAt?: DateTimeWithAggregatesFilter | Date | string
+    modifiedAt?: DateTimeWithAggregatesFilter | Date | string
+    folderId?: IntNullableWithAggregatesFilter | number | null
+    name?: StringWithAggregatesFilter | string
+  }
+
+  export type FolderCreateInput = {
     createdAt?: Date | string
     modifiedAt?: Date | string
-    status?: string | null
-    description?: string | null
+    rm?: boolean
+    name: string
+    items?: ItemCreateNestedManyWithoutFolderInput
   }
 
-  export type TodoItemUncheckedCreateInput = {
+  export type FolderUncheckedCreateInput = {
     id?: number
     createdAt?: Date | string
     modifiedAt?: Date | string
-    status?: string | null
-    description?: string | null
+    rm?: boolean
+    name: string
+    items?: ItemUncheckedCreateNestedManyWithoutFolderInput
   }
 
-  export type TodoItemUpdateInput = {
+  export type FolderUpdateInput = {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    status?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
+    rm?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    items?: ItemUpdateManyWithoutFolderNestedInput
   }
 
-  export type TodoItemUncheckedUpdateInput = {
+  export type FolderUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    status?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
+    rm?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    items?: ItemUncheckedUpdateManyWithoutFolderNestedInput
   }
 
-  export type TodoItemUpdateManyMutationInput = {
+  export type FolderUpdateManyMutationInput = {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    status?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
+    rm?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
   }
 
-  export type TodoItemUncheckedUpdateManyInput = {
+  export type FolderUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    status?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
+    rm?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ItemCreateInput = {
+    createdAt?: Date | string
+    modifiedAt?: Date | string
+    folder?: FolderCreateNestedOneWithoutItemsInput
+    name: string
+  }
+
+  export type ItemUncheckedCreateInput = {
+    id?: number
+    createdAt?: Date | string
+    modifiedAt?: Date | string
+    folderId?: number | null
+    name: string
+  }
+
+  export type ItemUpdateInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    folder?: FolderUpdateOneWithoutItemsNestedInput
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ItemUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    folderId?: NullableIntFieldUpdateOperationsInput | number | null
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ItemUpdateManyMutationInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ItemUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    folderId?: NullableIntFieldUpdateOperationsInput | number | null
+    name?: StringFieldUpdateOperationsInput | string
   }
 
   export type IntFilter = {
@@ -1718,10 +3001,15 @@ export namespace Prisma {
     not?: NestedDateTimeFilter | Date | string
   }
 
-  export type StringNullableFilter = {
-    equals?: string | null
-    in?: Enumerable<string> | null
-    notIn?: Enumerable<string> | null
+  export type BoolFilter = {
+    equals?: boolean
+    not?: NestedBoolFilter | boolean
+  }
+
+  export type StringFilter = {
+    equals?: string
+    in?: Enumerable<string>
+    notIn?: Enumerable<string>
     lt?: string
     lte?: string
     gt?: string
@@ -1729,38 +3017,48 @@ export namespace Prisma {
     contains?: string
     startsWith?: string
     endsWith?: string
-    not?: NestedStringNullableFilter | string | null
+    not?: NestedStringFilter | string
   }
 
-  export type TodoItemCountOrderByAggregateInput = {
+  export type ItemListRelationFilter = {
+    every?: ItemWhereInput
+    some?: ItemWhereInput
+    none?: ItemWhereInput
+  }
+
+  export type ItemOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type FolderCountOrderByAggregateInput = {
     id?: SortOrder
     createdAt?: SortOrder
     modifiedAt?: SortOrder
-    status?: SortOrder
-    description?: SortOrder
+    rm?: SortOrder
+    name?: SortOrder
   }
 
-  export type TodoItemAvgOrderByAggregateInput = {
+  export type FolderAvgOrderByAggregateInput = {
     id?: SortOrder
   }
 
-  export type TodoItemMaxOrderByAggregateInput = {
-    id?: SortOrder
-    createdAt?: SortOrder
-    modifiedAt?: SortOrder
-    status?: SortOrder
-    description?: SortOrder
-  }
-
-  export type TodoItemMinOrderByAggregateInput = {
+  export type FolderMaxOrderByAggregateInput = {
     id?: SortOrder
     createdAt?: SortOrder
     modifiedAt?: SortOrder
-    status?: SortOrder
-    description?: SortOrder
+    rm?: SortOrder
+    name?: SortOrder
   }
 
-  export type TodoItemSumOrderByAggregateInput = {
+  export type FolderMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    modifiedAt?: SortOrder
+    rm?: SortOrder
+    name?: SortOrder
+  }
+
+  export type FolderSumOrderByAggregateInput = {
     id?: SortOrder
   }
 
@@ -1794,10 +3092,18 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter
   }
 
-  export type StringNullableWithAggregatesFilter = {
-    equals?: string | null
-    in?: Enumerable<string> | null
-    notIn?: Enumerable<string> | null
+  export type BoolWithAggregatesFilter = {
+    equals?: boolean
+    not?: NestedBoolWithAggregatesFilter | boolean
+    _count?: NestedIntFilter
+    _min?: NestedBoolFilter
+    _max?: NestedBoolFilter
+  }
+
+  export type StringWithAggregatesFilter = {
+    equals?: string
+    in?: Enumerable<string>
+    notIn?: Enumerable<string>
     lt?: string
     lte?: string
     gt?: string
@@ -1805,22 +3111,154 @@ export namespace Prisma {
     contains?: string
     startsWith?: string
     endsWith?: string
-    not?: NestedStringNullableWithAggregatesFilter | string | null
+    not?: NestedStringWithAggregatesFilter | string
+    _count?: NestedIntFilter
+    _min?: NestedStringFilter
+    _max?: NestedStringFilter
+  }
+
+  export type FolderRelationFilter = {
+    is?: FolderWhereInput | null
+    isNot?: FolderWhereInput | null
+  }
+
+  export type IntNullableFilter = {
+    equals?: number | null
+    in?: Enumerable<number> | null
+    notIn?: Enumerable<number> | null
+    lt?: number
+    lte?: number
+    gt?: number
+    gte?: number
+    not?: NestedIntNullableFilter | number | null
+  }
+
+  export type ItemCountOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    modifiedAt?: SortOrder
+    folderId?: SortOrder
+    name?: SortOrder
+  }
+
+  export type ItemAvgOrderByAggregateInput = {
+    id?: SortOrder
+    folderId?: SortOrder
+  }
+
+  export type ItemMaxOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    modifiedAt?: SortOrder
+    folderId?: SortOrder
+    name?: SortOrder
+  }
+
+  export type ItemMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    modifiedAt?: SortOrder
+    folderId?: SortOrder
+    name?: SortOrder
+  }
+
+  export type ItemSumOrderByAggregateInput = {
+    id?: SortOrder
+    folderId?: SortOrder
+  }
+
+  export type IntNullableWithAggregatesFilter = {
+    equals?: number | null
+    in?: Enumerable<number> | null
+    notIn?: Enumerable<number> | null
+    lt?: number
+    lte?: number
+    gt?: number
+    gte?: number
+    not?: NestedIntNullableWithAggregatesFilter | number | null
     _count?: NestedIntNullableFilter
-    _min?: NestedStringNullableFilter
-    _max?: NestedStringNullableFilter
+    _avg?: NestedFloatNullableFilter
+    _sum?: NestedIntNullableFilter
+    _min?: NestedIntNullableFilter
+    _max?: NestedIntNullableFilter
+  }
+
+  export type ItemCreateNestedManyWithoutFolderInput = {
+    create?: XOR<Enumerable<ItemCreateWithoutFolderInput>, Enumerable<ItemUncheckedCreateWithoutFolderInput>>
+    connectOrCreate?: Enumerable<ItemCreateOrConnectWithoutFolderInput>
+    connect?: Enumerable<ItemWhereUniqueInput>
+  }
+
+  export type ItemUncheckedCreateNestedManyWithoutFolderInput = {
+    create?: XOR<Enumerable<ItemCreateWithoutFolderInput>, Enumerable<ItemUncheckedCreateWithoutFolderInput>>
+    connectOrCreate?: Enumerable<ItemCreateOrConnectWithoutFolderInput>
+    connect?: Enumerable<ItemWhereUniqueInput>
   }
 
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
   }
 
-  export type NullableStringFieldUpdateOperationsInput = {
-    set?: string | null
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type StringFieldUpdateOperationsInput = {
+    set?: string
+  }
+
+  export type ItemUpdateManyWithoutFolderNestedInput = {
+    create?: XOR<Enumerable<ItemCreateWithoutFolderInput>, Enumerable<ItemUncheckedCreateWithoutFolderInput>>
+    connectOrCreate?: Enumerable<ItemCreateOrConnectWithoutFolderInput>
+    upsert?: Enumerable<ItemUpsertWithWhereUniqueWithoutFolderInput>
+    set?: Enumerable<ItemWhereUniqueInput>
+    disconnect?: Enumerable<ItemWhereUniqueInput>
+    delete?: Enumerable<ItemWhereUniqueInput>
+    connect?: Enumerable<ItemWhereUniqueInput>
+    update?: Enumerable<ItemUpdateWithWhereUniqueWithoutFolderInput>
+    updateMany?: Enumerable<ItemUpdateManyWithWhereWithoutFolderInput>
+    deleteMany?: Enumerable<ItemScalarWhereInput>
   }
 
   export type IntFieldUpdateOperationsInput = {
     set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type ItemUncheckedUpdateManyWithoutFolderNestedInput = {
+    create?: XOR<Enumerable<ItemCreateWithoutFolderInput>, Enumerable<ItemUncheckedCreateWithoutFolderInput>>
+    connectOrCreate?: Enumerable<ItemCreateOrConnectWithoutFolderInput>
+    upsert?: Enumerable<ItemUpsertWithWhereUniqueWithoutFolderInput>
+    set?: Enumerable<ItemWhereUniqueInput>
+    disconnect?: Enumerable<ItemWhereUniqueInput>
+    delete?: Enumerable<ItemWhereUniqueInput>
+    connect?: Enumerable<ItemWhereUniqueInput>
+    update?: Enumerable<ItemUpdateWithWhereUniqueWithoutFolderInput>
+    updateMany?: Enumerable<ItemUpdateManyWithWhereWithoutFolderInput>
+    deleteMany?: Enumerable<ItemScalarWhereInput>
+  }
+
+  export type FolderCreateNestedOneWithoutItemsInput = {
+    create?: XOR<FolderCreateWithoutItemsInput, FolderUncheckedCreateWithoutItemsInput>
+    connectOrCreate?: FolderCreateOrConnectWithoutItemsInput
+    connect?: FolderWhereUniqueInput
+  }
+
+  export type FolderUpdateOneWithoutItemsNestedInput = {
+    create?: XOR<FolderCreateWithoutItemsInput, FolderUncheckedCreateWithoutItemsInput>
+    connectOrCreate?: FolderCreateOrConnectWithoutItemsInput
+    upsert?: FolderUpsertWithoutItemsInput
+    disconnect?: boolean
+    delete?: boolean
+    connect?: FolderWhereUniqueInput
+    update?: XOR<FolderUpdateWithoutItemsInput, FolderUncheckedUpdateWithoutItemsInput>
+  }
+
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
     increment?: number
     decrement?: number
     multiply?: number
@@ -1849,10 +3287,15 @@ export namespace Prisma {
     not?: NestedDateTimeFilter | Date | string
   }
 
-  export type NestedStringNullableFilter = {
-    equals?: string | null
-    in?: Enumerable<string> | null
-    notIn?: Enumerable<string> | null
+  export type NestedBoolFilter = {
+    equals?: boolean
+    not?: NestedBoolFilter | boolean
+  }
+
+  export type NestedStringFilter = {
+    equals?: string
+    in?: Enumerable<string>
+    notIn?: Enumerable<string>
     lt?: string
     lte?: string
     gt?: string
@@ -1860,7 +3303,7 @@ export namespace Prisma {
     contains?: string
     startsWith?: string
     endsWith?: string
-    not?: NestedStringNullableFilter | string | null
+    not?: NestedStringFilter | string
   }
 
   export type NestedIntWithAggregatesFilter = {
@@ -1904,10 +3347,18 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter
   }
 
-  export type NestedStringNullableWithAggregatesFilter = {
-    equals?: string | null
-    in?: Enumerable<string> | null
-    notIn?: Enumerable<string> | null
+  export type NestedBoolWithAggregatesFilter = {
+    equals?: boolean
+    not?: NestedBoolWithAggregatesFilter | boolean
+    _count?: NestedIntFilter
+    _min?: NestedBoolFilter
+    _max?: NestedBoolFilter
+  }
+
+  export type NestedStringWithAggregatesFilter = {
+    equals?: string
+    in?: Enumerable<string>
+    notIn?: Enumerable<string>
     lt?: string
     lte?: string
     gt?: string
@@ -1915,10 +3366,10 @@ export namespace Prisma {
     contains?: string
     startsWith?: string
     endsWith?: string
-    not?: NestedStringNullableWithAggregatesFilter | string | null
-    _count?: NestedIntNullableFilter
-    _min?: NestedStringNullableFilter
-    _max?: NestedStringNullableFilter
+    not?: NestedStringWithAggregatesFilter | string
+    _count?: NestedIntFilter
+    _min?: NestedStringFilter
+    _max?: NestedStringFilter
   }
 
   export type NestedIntNullableFilter = {
@@ -1930,6 +3381,138 @@ export namespace Prisma {
     gt?: number
     gte?: number
     not?: NestedIntNullableFilter | number | null
+  }
+
+  export type NestedIntNullableWithAggregatesFilter = {
+    equals?: number | null
+    in?: Enumerable<number> | null
+    notIn?: Enumerable<number> | null
+    lt?: number
+    lte?: number
+    gt?: number
+    gte?: number
+    not?: NestedIntNullableWithAggregatesFilter | number | null
+    _count?: NestedIntNullableFilter
+    _avg?: NestedFloatNullableFilter
+    _sum?: NestedIntNullableFilter
+    _min?: NestedIntNullableFilter
+    _max?: NestedIntNullableFilter
+  }
+
+  export type NestedFloatNullableFilter = {
+    equals?: number | null
+    in?: Enumerable<number> | null
+    notIn?: Enumerable<number> | null
+    lt?: number
+    lte?: number
+    gt?: number
+    gte?: number
+    not?: NestedFloatNullableFilter | number | null
+  }
+
+  export type ItemCreateWithoutFolderInput = {
+    createdAt?: Date | string
+    modifiedAt?: Date | string
+    name: string
+  }
+
+  export type ItemUncheckedCreateWithoutFolderInput = {
+    id?: number
+    createdAt?: Date | string
+    modifiedAt?: Date | string
+    name: string
+  }
+
+  export type ItemCreateOrConnectWithoutFolderInput = {
+    where: ItemWhereUniqueInput
+    create: XOR<ItemCreateWithoutFolderInput, ItemUncheckedCreateWithoutFolderInput>
+  }
+
+  export type ItemUpsertWithWhereUniqueWithoutFolderInput = {
+    where: ItemWhereUniqueInput
+    update: XOR<ItemUpdateWithoutFolderInput, ItemUncheckedUpdateWithoutFolderInput>
+    create: XOR<ItemCreateWithoutFolderInput, ItemUncheckedCreateWithoutFolderInput>
+  }
+
+  export type ItemUpdateWithWhereUniqueWithoutFolderInput = {
+    where: ItemWhereUniqueInput
+    data: XOR<ItemUpdateWithoutFolderInput, ItemUncheckedUpdateWithoutFolderInput>
+  }
+
+  export type ItemUpdateManyWithWhereWithoutFolderInput = {
+    where: ItemScalarWhereInput
+    data: XOR<ItemUpdateManyMutationInput, ItemUncheckedUpdateManyWithoutItemsInput>
+  }
+
+  export type ItemScalarWhereInput = {
+    AND?: Enumerable<ItemScalarWhereInput>
+    OR?: Enumerable<ItemScalarWhereInput>
+    NOT?: Enumerable<ItemScalarWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    modifiedAt?: DateTimeFilter | Date | string
+    folderId?: IntNullableFilter | number | null
+    name?: StringFilter | string
+  }
+
+  export type FolderCreateWithoutItemsInput = {
+    createdAt?: Date | string
+    modifiedAt?: Date | string
+    rm?: boolean
+    name: string
+  }
+
+  export type FolderUncheckedCreateWithoutItemsInput = {
+    id?: number
+    createdAt?: Date | string
+    modifiedAt?: Date | string
+    rm?: boolean
+    name: string
+  }
+
+  export type FolderCreateOrConnectWithoutItemsInput = {
+    where: FolderWhereUniqueInput
+    create: XOR<FolderCreateWithoutItemsInput, FolderUncheckedCreateWithoutItemsInput>
+  }
+
+  export type FolderUpsertWithoutItemsInput = {
+    update: XOR<FolderUpdateWithoutItemsInput, FolderUncheckedUpdateWithoutItemsInput>
+    create: XOR<FolderCreateWithoutItemsInput, FolderUncheckedCreateWithoutItemsInput>
+  }
+
+  export type FolderUpdateWithoutItemsInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    rm?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type FolderUncheckedUpdateWithoutItemsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    rm?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ItemUpdateWithoutFolderInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ItemUncheckedUpdateWithoutFolderInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ItemUncheckedUpdateManyWithoutItemsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    name?: StringFieldUpdateOperationsInput | string
   }
 
 
@@ -1945,5 +3528,5 @@ export namespace Prisma {
   /**
    * DMMF
    */
-  export const dmmf: runtime.DMMF.Document;
+  export const dmmf: runtime.BaseDMMF
 }
