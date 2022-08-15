@@ -90,12 +90,12 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
   }
   // release event
   react.useEffect(() => {
-    init.current.runner.scope.onUpdate(() => {
+    function fn() {
       setHookResult({ ...init.current.result })
-    })
-    init.current.runner.scope.activate()
+    }
+    init.current.runner.scope.activate(fn)
     return () => {
-      init.current.runner.scope.deactivate()
+      init.current.runner.scope.deactivate(fn)
     }
   }, [])
 

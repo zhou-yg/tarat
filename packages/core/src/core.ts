@@ -190,6 +190,7 @@ export class State<T = any> extends Hook {
     }
 
     // trigger only changed
+    console.log('shouldTrigger: ', shouldTrigger);
     if (shouldTrigger) {
       const triggeredSet = this.trigger(undefined, undefined, reactiveChain)
 
@@ -1495,19 +1496,14 @@ export class CurrentRunnerScope<T extends Driver = any> {
   /**
    * while enter UI will activate this function
    */
-  activate() {
+  activate(fn?: Function) {
     console.log('[Scope] activate')
-    this.disposeFuncArr.push(
-      this.modelPatchEvents.subscribe(() => {
-        this.notifyAllModel()
-      })
-    )
     this.notifyAllModel()
+    this.outerListeners.push(fn)
   }
-  deactivate() {
-    this.outerListeners = []
-    this.disposeFuncArr.forEach(f => f())
-    this.disposeFuncArr = []
+  deactivate(fn?: Function) {
+    console.log('[Scope] deactivate')
+    this.outerListeners = fn ? this.outerListeners.filter(f => f !== fn) : []
   }
 
   private notifyAllModel() {
