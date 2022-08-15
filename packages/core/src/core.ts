@@ -190,7 +190,6 @@ export class State<T = any> extends Hook {
     }
 
     // trigger only changed
-    console.log('shouldTrigger: ', shouldTrigger);
     if (shouldTrigger) {
       const triggeredSet = this.trigger(undefined, undefined, reactiveChain)
 
