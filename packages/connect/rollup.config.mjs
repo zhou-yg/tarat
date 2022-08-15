@@ -19,6 +19,19 @@ export default [
     },
   },
   {
+    plugins: [
+      tsPlugin({
+        clean: true,
+        tsconfig: './tsconfig.json',
+      }),
+    ],
+    input: 'src/index.ts',
+    output: {
+      file: 'dist/index.esm.js',
+      format: 'esm'
+    },
+  },
+  {
     input: "src/index.ts",
     output: [
       { file: "dist/index.d.ts", format: "es" }
