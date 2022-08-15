@@ -278,12 +278,10 @@ export async function buildRoutes(c: IConfig) {
 
   const includingTs = imports.some(([n, f]) => /\.ts(x?)$/.test(f))
   if (includingTs && !c.ts) {
-    throw new Error('[tarat] you are using ts file. please specific ts:true in tarat.config.js')
+    throw new Error('[tarat] you are using ts file. please specific "ts:true" in tarat.config.js')
   }
 
   const r = generateRoutesContent(routesTreeArr)
-
-  const index = ''
 
   let entryCSSPath = ''
   if (c.entryCSS) {
@@ -293,14 +291,12 @@ export async function buildRoutes(c: IConfig) {
   const routesStr = routesTemplate({
     imports: importsWithAbsolutePathServer,
     entryCSSPath,
-    index,
     routes: r
   })
   fs.writeFileSync(autoGenerateServerRoutes, prettier.format(routesStr))
 
   const routesStr2 = routesClientTemplate({
     imports: importsWithAbsolutePathClient,
-    index,
     routes: r
   })
   // generate for vite.js
