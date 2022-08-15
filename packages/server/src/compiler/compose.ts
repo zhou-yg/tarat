@@ -254,7 +254,7 @@ export { default } from '${arg.path}'
 async function generateReferrenceDrivers (c: IConfig, h: IDependencyHook[]) {
   const curDriversDir = path.join(c.cwd, c.driversDirectory, c.composeDriversDirectory)
 
-  if (!fs.existsSync(curDriversDir)) {
+  if (!fs.existsSync(curDriversDir) && h.length > 0) {
     fs.mkdirSync(curDriversDir)
   }
 
