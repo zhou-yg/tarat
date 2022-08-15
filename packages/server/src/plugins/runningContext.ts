@@ -5,13 +5,13 @@ let currentRunningMap: Map<CurrentRunnerScope, IRunningContext> = new Map()
 
 export async function setRunning ()  {
   loadPlugin('GlobalRunning', {
-    setCurrent (s, api) {
+    setCurrent (scope, api) {
       if (api) {
-        currentRunningMap.set(s, api)
+        currentRunningMap.set(scope, api)
       }
     },
-    getCurrent (s) {
-      return currentRunningMap.get(s) || null
+    getCurrent (scope) {
+      return currentRunningMap.get(scope) || null
     }
   })
 }

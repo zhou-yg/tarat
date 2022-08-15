@@ -72,11 +72,11 @@ export default function taratMiddleware (args: {
 
         runner.init(c.initialArgList, c)
 
-        stopReactiveChain()
-
         getPlugin('GlobalRunning').setCurrent(runner.scope, null)
 
         await runner.ready()
+
+        chain1.stop()
         chain1.print()
 
         // debuggerLog(true)
@@ -89,8 +89,7 @@ export default function taratMiddleware (args: {
 
         await runner.ready()
 
-        stopReactiveChain()
-
+        chain2.stop()
         chain2.print()
 
         const context = runner.scope.createPatchContext()
@@ -105,7 +104,7 @@ export default function taratMiddleware (args: {
       }
     } else if (pre === diffPath && ctx.request.method === 'POST') {
       const c: { entity: string, diff: IDiff } = JSON.parse(ctx.request.body)
-      await getPlugin('Model').executeDiff('unknown@@@@@', c.entity, c.diff)
+      await getPlugin('Model').executeDiff('@unknownExecuteDiff', c.entity, c.diff)
       ctx.body = JSON.stringify({})
     } else {
       await next()

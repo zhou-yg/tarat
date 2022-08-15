@@ -1,6 +1,5 @@
 import Application from "koa";
 import koaBody from 'koa-body'
-import os from "os";
 import cors from '@koa/cors'
 import Koa from 'koa'
 import staticServe from 'koa-static'
@@ -13,7 +12,6 @@ import { createServer as createViteServer } from "vite";
 import { IConfig } from "./config";
 import getPort, { makeRange as portNumbers } from "get-port";
 
-import rollupPluginBMDeps from './compiler/plugins/rollup-plugin-BM-deps'
 import pureDevCache from "./middlewares/pureDevCache";
 import { getAddress, getDefeaultRoute, logFrame } from "./util";
 
