@@ -1805,7 +1805,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
     this.notify()
   }
 
-  get state() {
+  getState() {
     const asyncHooks = this.hooks.filter(
       h => h && Reflect.has(h, 'getterPromise')
     ) as unknown as { getterPromise: Promise<any> | null }[]
@@ -1814,7 +1814,6 @@ export class CurrentRunnerScope<T extends Driver = any> {
       .filter(h => {
         return !!h.getterPromise
       })
-      .map(h => h.getterPromise)
 
     return notReadyHooks.length === 0 ? EScopeState.idle : EScopeState.pending
   }
@@ -1932,7 +1931,7 @@ export class Runner<T extends Driver> {
   }
   // same above
   state() {
-    return this.scope?.state
+    return this.scope.getState()
   }
   // same above
   ready() {
