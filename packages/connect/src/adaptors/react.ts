@@ -26,12 +26,11 @@ export interface IProgress {
 
 export function useReactProgress<T extends Driver> (react: any, result: ReturnType<T>): IProgress | null {
   const init = react.useRef(null)
-  if (!init.current) {
-    const runner = resultRunnerWeakMap.get(result)
-    if (runner) {
-      init.current = {
-        state: runner.state()
-      }
+
+  const runner = resultRunnerWeakMap.get(result)
+  if (runner) {
+    init.current = {
+      state: runner.state()
     }
   }
 
