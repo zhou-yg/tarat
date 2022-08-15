@@ -5,6 +5,7 @@ import {
   inputCompute,
   inputComputeInServer,
   model,
+  progress,
   state,
   writeModel,
 } from "tarat-core";
@@ -24,6 +25,7 @@ export default function mdEditor(q = {}) {
       };
     }
   });
+  const currentProgress = progress(currentPost);
 
   const markdownTitle = computed(() => {
     return currentPost()[0]?.title;
@@ -37,8 +39,8 @@ export default function mdEditor(q = {}) {
   const displayTitle = combineLatest([inputTitle, markdownTitle]);
 
   const writeCurrentMD = writeModel(currentPost, () => ({
-    title: inputTitle() || displayTitle(),
-    content: inputMD() || displayMD(),
+    title: inputTitle() || displayTitle() || "",
+    content: inputMD() || displayMD() || "",
   }));
 
   const save = inputComputeInServer(async () => {
@@ -50,6 +52,7 @@ export default function mdEditor(q = {}) {
   });
 
   return {
+    currentProgress,
     displayMD,
     postedMD,
     inputMD,

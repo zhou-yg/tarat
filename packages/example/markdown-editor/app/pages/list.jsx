@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect} from 'react'
 import mdDriver from '../../drivers/mdList'
 import { useTarat } from 'tarat-connect'
 import { Link } from 'react-router-dom'
