@@ -13,35 +13,29 @@ declare global {
 }
 
 type ArgResultMap = Map<string, any>
-type ResultRunnerMap = Map<any, Runner<any>>
 
-const resultRunnerWeakMap = new WeakMap<any, Runner<any>>()
 const driverWeakMap = new Map<Driver, ArgResultMap>()
 
 typeof window !== 'undefined' && (window.driverWeakMap = driverWeakMap)
+
+const scopeSymbol = Symbol.for('@taratScope')
 
 export interface IProgress {
   state: EScopeState
 }
 
 export function useReactProgress<T extends Driver> (react: any, result: ReturnType<T>): IProgress | null {
-  const init = react.useRef(null)
 
-  const runner = resultRunnerWeakMap.get(result)
-  if (runner) {
-    init.current = {
-      state: runner.state()
-    }
+  const state = result[scopeSymbol].getState()
+
+  return {
+    state,
   }
-
-  return init.current
 }
 
 export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
   const init = react.useRef(null)
   const driver: RenderDriver = react.useContext(DriverContext)
-
-  const uneffectCallbacks = react.useRef([])
 
   if (!init.current) {
 
@@ -54,8 +48,10 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
     // match the cache
     if (cachedDriverResult) {
       init.current = {
-        result: cachedDriverResult.result,
-        runner: cachedDriverResult.runner
+        runner: cachedDriverResult.runner,
+        result: Object.assign({
+          [scopeSymbol]: cachedDriverResult.runner.scope,
+        }, cachedDriverResult.result),
       }
     } else {
       const bmName: string = hook.__name__ || hook.name
@@ -76,7 +72,9 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
       const r = runner.init(args, initialContext)
       init.current = {
         runner,
-        result: r
+        result: Object.assign({
+          [scopeSymbol]: runner.scope,
+        }, r)
       }
   
       let m = driverWeakMap.get(hook)
@@ -84,7 +82,6 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
         m = new Map
         driverWeakMap.set(hook, m)
       }
-      resultRunnerWeakMap.set(r, runner)
       m.set(serializedArgs, {
         runner,
         result: r,
