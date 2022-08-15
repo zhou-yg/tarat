@@ -135,7 +135,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
       const r = await renderPage(ctx, args.config)
       if (r) {
         for (const v of r.driver.BMValuesMap) {
-          context[v[0]] = v[1].map((runner: Runner<any>) => runner.scope.createInputComputeContext())
+          context[v[0]] = v[1].map((runner: Runner<any>) => runner.scope.createBaseContext())
         }
         ssrHTML = r.html2
       }

@@ -1326,6 +1326,19 @@ export class RunnerContext<T extends Driver> {
     }
   }
 
+  serializeBase(hooks: Hook[]): IHookContext {
+    const hooksData = this.formatContextData(hooks)
+    return {
+      initialArgList: this.initialArgList,
+      name: this.driverName,
+      data: hooksData,
+      // index: -1,
+      // indexName: '',
+      // args: [],
+      patch: []
+    }
+  }
+
   apply(
     hooks: Hook[],
     c: IHookContext,
@@ -1748,6 +1761,11 @@ export class CurrentRunnerScope<T extends Driver = any> {
 
     return deps
   }
+
+  createBaseContext () {
+    const { hooks } = this
+    return this.runnerContext.serializeBase(hooks)
+  }
   /**
    * as a resonse while receive a input context
    */
@@ -1755,7 +1773,6 @@ export class CurrentRunnerScope<T extends Driver = any> {
     const { hooks, modelPatchEvents } = this
     return this.runnerContext.serializePatch(hooks, modelPatchEvents)
   }
-
   /**
    * as a input of other's Runner and trigger
    * need deliver context principles, sort by priority:
