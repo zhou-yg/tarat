@@ -1,4 +1,10 @@
-import { inputComputeInServer, prisma, state, writePrisma } from "tarat-core";
+import {
+  inputCompute,
+  inputComputeInServer,
+  prisma,
+  state,
+  writePrisma,
+} from "tarat-core";
 
 export interface Folder {
   id?: number;
@@ -85,13 +91,53 @@ function cascading() {
     currentFolderId(() => folders()[0]?.id);
   });
 
+  const renameFolderInput = state({
+    id: null,
+    name: "",
+  });
+  const startRename = inputCompute((f: Folder) => {
+    renameFolderInput((v) => {
+      Object.assign(v, {
+        id: f.id,
+        name: f.name,
+      });
+    });
+    currentFolderId(() => f.id);
+  });
+
+  const switchCurrent = inputCompute((f: Folder) => {
+    if (f.id !== currentFolderId()) {
+      currentFolderId(() => f.id);
+      renameFolderInput((v) => {
+        v.id = null;
+      });
+    }
+  });
+
+  const renameFolder = inputComputeInServer(function* () {
+    const input = renameFolderInput();
+    if (input.id) {
+      folderName(() => input.name);
+      yield updateFolder();
+      renameFolderInput((v) => {
+        v.id = null;
+      });
+    }
+  });
+
   return {
     // folder
     folders,
+    folderName,
     currentFolderId,
+    switchCurrent,
     createFolder,
     updateFolder,
     removeFolder,
+    // folder rename
+    renameFolderInput,
+    startRename,
+    renameFolder,
     // item
     items,
     itemName,
@@ -122,6 +168,10 @@ const autoParser = {
       [12, "createItem"],
       [13, "updateItem"],
       [14, "removeItem"],
+      [15, "renameFolderInput"],
+      [16, "startRename"],
+      [17, "switchCurrent"],
+      [18, "renameFolder"],
     ],
     deps: [
       ["h", 3, [0, 2], [0, 2]],
@@ -134,6 +184,9 @@ const autoParser = {
       ["h", 12, [11], [2]],
       ["h", 13, [9], [11, 2]],
       ["h", 14, [9, 0], [11, 1]],
+      ["h", 16, [], [15, 1]],
+      ["h", 17, [1], [1, 15]],
+      ["h", 18, [15, 6], [2, 15]],
     ],
   },
 };
