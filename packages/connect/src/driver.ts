@@ -68,6 +68,7 @@ export class RenderDriver {
       this.BMValuesMap.set(name, values)
     }
     this.pushListener?.(runner)
+    console.log('this.pushListener: ', this.pushListener)
     return values.push(runner)
   }
 }

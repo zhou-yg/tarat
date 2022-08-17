@@ -66,10 +66,14 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
       }
   
       const runner = new Runner(hook, { beleiveContext: driver?.beleiveContext })
-      driver?.push(runner, bmName)
-  
+      runner.beforeInitOnce(() => {
+        console.log('[driver.beforeInitOnce]: ', !!runner.scope, bmName);
+        driver?.push(runner, bmName)
+      })
+
       const initialContext = ssrContext.pop()
       const r = runner.init(args, initialContext)
+
       init.current = {
         runner,
         result: Object.assign({

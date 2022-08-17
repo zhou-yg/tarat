@@ -25,6 +25,7 @@ export function wrapCtx (ctx: any) {
         return ctx.cookies.set(name, value)
       },
       get (name: any) {
+        console.log('[wrapCtx] get name: ', name);
         const val = ctx.cookies.get(name)
         return val
       }
@@ -64,7 +65,9 @@ export default function taratMiddleware (args: {
         const c: IHookContext = parseWithUndef(ctx.request.body)
 
         let runner = new Runner(BM.default)
-        getPlugin('GlobalRunning').setCurrent(runner.scope, wrapCtx(ctx))
+        runner.beforeInitOnce(() => {
+          getPlugin('GlobalRunning').setCurrent(runner.scope, wrapCtx(ctx))
+        })
 
         console.log('=================================================')
 

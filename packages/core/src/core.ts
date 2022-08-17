@@ -944,7 +944,11 @@ export class InputCompute<P extends any[] = any> extends Hook {
       }
       currentReactiveChain = preservedCurrentReactiveChain
 
-      log('[InputCompute.run]', `isGen=${isGenerator(funcResult)}`, `isP=${isPromise(funcResult)}`)
+      log(
+        '[InputCompute.run]',
+        `isGen=${isGenerator(funcResult)}`,
+        `isP=${isPromise(funcResult)}`
+      )
       // use generator
       if (isGenerator(funcResult)) {
         await runGenerator(
@@ -1449,11 +1453,11 @@ export class CurrentRunnerScope<T extends Driver = any> {
     )
   }
 
-  initializeHookSet () {
+  initializeHookSet() {
     const { runnerContext, intialContextDeps } = this
     if (
       runnerContext.triggerHookIndex !== undefined &&
-      typeof runnerContext.triggerHookIndex === 'number' && 
+      typeof runnerContext.triggerHookIndex === 'number' &&
       runnerContext.intialData.length > 0
     ) {
       /** @TODO belive deps calculation from client.it's maybe dangerous' */
@@ -1711,7 +1715,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
                 const [type, composeIndex, variableName] = numOrArr
                 if (type === 'c') {
                   const setterGetterFunc: { _hook: Hook } | undefined =
-                  this.composes[composeIndex]?.[variableName]
+                    this.composes[composeIndex]?.[variableName]
                   if (setterGetterFunc?._hook) {
                     num = this.hooks.indexOf(setterGetterFunc._hook)
                   }
@@ -1764,7 +1768,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
     return deps
   }
 
-  createBaseContext () {
+  createBaseContext() {
     const { hooks } = this
     return this.runnerContext.serializeBase(hooks)
   }
@@ -1828,10 +1832,9 @@ export class CurrentRunnerScope<T extends Driver = any> {
       h => h && Reflect.has(h, 'getterPromise')
     ) as unknown as { getterPromise: Promise<any> | null }[]
 
-    let notReadyHooks = asyncHooks
-      .filter(h => {
-        return !!h.getterPromise
-      })
+    let notReadyHooks = asyncHooks.filter(h => {
+      return !!h.getterPromise
+    })
 
     return notReadyHooks.length === 0 ? EScopeState.idle : EScopeState.pending
   }
@@ -1878,7 +1881,7 @@ let currentRunnerScope: CurrentRunnerScope<Driver> | null = null
 
 export let GlobalModelEvent: ModelEvent | null = null
 
-export function setGlobalModelEvent (me: ModelEvent | null) {
+export function setGlobalModelEvent(me: ModelEvent | null) {
   GlobalModelEvent = me
 }
 
@@ -1887,12 +1890,16 @@ export class Runner<T extends Driver> {
   options: { beleiveContext: boolean; runnerContext?: Symbol } = {
     beleiveContext: false
   }
-  listeners: Function[] = []
+  beforeOncelisteners: Function[] = []
   constructor(
     public driver: T,
     options?: { beleiveContext: boolean; runnerContext?: Symbol }
   ) {
     Object.assign(this.options, options)
+  }
+
+  beforeInitOnce(f: Function) {
+    this.beforeOncelisteners.push(f)
   }
   /**
    * @TODO need to refact because of this function should both return result and scope
@@ -1905,7 +1912,9 @@ export class Runner<T extends Driver> {
     )
 
     const modelPatchEvents =
-      process.env.TARGET === 'server' || !GlobalModelEvent ? new ModelEvent() : GlobalModelEvent
+      process.env.TARGET === 'server' || !GlobalModelEvent
+        ? new ModelEvent()
+        : GlobalModelEvent
 
     const deps = getDeps(this.driver)
     const names = getNames(this.driver)
@@ -1924,6 +1933,9 @@ export class Runner<T extends Driver> {
     } else {
       currentHookFactory = mountHookFactory
     }
+
+    this.beforeOncelisteners.forEach(f => f(currentRunnerScope))
+    this.beforeOncelisteners = []
 
     const result: ReturnType<T> = executeDriver(this.driver, args)
 
@@ -2148,7 +2160,10 @@ function createUnaccessGetter<T>(index: number) {
   })
   return newF
 }
-function createUnaccessModelGetter<T extends any[]>(index: number, entity: string) {
+function createUnaccessModelGetter<T extends any[]>(
+  index: number,
+  entity: string
+) {
   const f = (): any => {
     throw new Error(`[update getter] cant access un initialized hook(${index})`)
   }
@@ -2494,8 +2509,7 @@ type GeneratorInputComputeFn<T extends any[]> = (
   ...arg: T
 ) => Generator<unknown, void>
 
-
-function updateInputCompute (func: any) {
+function updateInputCompute(func: any) {
   const { hooks, initialHooksSet } = currentRunnerScope!
   const currentIndex = hooks.length
   const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
@@ -2507,7 +2521,7 @@ function updateInputCompute (func: any) {
 
   return mountInputCompute(func)
 }
-function mountInputCompute (func: any) {
+function mountInputCompute(func: any) {
   const hook = new InputCompute(func, currentRunnerScope)
 
   const wrapFunc = (...args: any) => {
@@ -2535,7 +2549,7 @@ export function inputCompute(func: any) {
   return wrapFunc
 }
 
-function updateInputComputeInServer (func: any) {
+function updateInputComputeInServer(func: any) {
   const { hooks, initialHooksSet } = currentRunnerScope!
   const currentIndex = hooks.length
   const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
@@ -2547,7 +2561,7 @@ function updateInputComputeInServer (func: any) {
   return mountInputComputeInServer(func)
 }
 
-function mountInputComputeInServer (func: any) {
+function mountInputComputeInServer(func: any) {
   const hook = new InputComputeInServer(func, currentRunnerScope)
 
   const wrapFunc = (...args: any) => {

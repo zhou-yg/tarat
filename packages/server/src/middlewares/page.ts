@@ -40,7 +40,12 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
 
   let cancelGlobalRunning = () => {}
 
+  console.log('[before driver.onPush] : ');
+
   driver.onPush(runner => {
+
+    console.log('[driver.onPush] : ', !!runner.scope);
+
     getPlugin('GlobalRunning').setCurrent(runner.scope, wrapCtx(ctx))
     cancelGlobalRunning = () => {
       getPlugin('GlobalRunning').setCurrent(runner.scope, null) 
@@ -61,6 +66,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
 
   debuggerLog(true)
 
+  console.log('[before renderToString] first ');
   const html = renderToString(appEntry.root)
 
   chain.stop()
