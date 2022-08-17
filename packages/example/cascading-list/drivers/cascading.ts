@@ -1,10 +1,14 @@
 import {
+  combineLatest,
+  compose,
   inputCompute,
   inputComputeInServer,
   prisma,
   state,
   writePrisma,
 } from "tarat-core";
+
+import rename from "./rename";
 
 export interface Folder {
   id?: number;
@@ -22,10 +26,15 @@ export interface FolderItem {
 const INITIAL_FOLDER_NAME = "新建文件夹";
 const INITIAL_ITEM_NAME = "新建文件";
 
+export enum ETypes {
+  folder = "folder",
+  item = "item",
+}
+
 function cascading() {
   const folders = prisma<Folder[]>("folder", () => ({}));
 
-  const currentFolderId = state<number>();
+  const renameFolderCompose = compose(rename);
 
   const folderName = state(INITIAL_FOLDER_NAME);
 
@@ -43,17 +52,26 @@ function cascading() {
   });
 
   const updateFolder = inputComputeInServer(function* () {
-    yield createOrUpdateFolers.update(currentFolderId());
+    yield createOrUpdateFolers.update(renameFolderCompose.currentId());
     folderName(() => INITIAL_FOLDER_NAME);
   });
 
   const removeFolder = inputComputeInServer(function* () {
-    yield removeFolders.remove(currentFolderId());
-    currentFolderId(() => folders()[0]?.id);
+    yield removeFolders.remove(renameFolderCompose.currentId());
+    renameFolderCompose.currentId(() => folders()[0]?.id);
+  });
+
+  const renameFolder = inputComputeInServer(function* () {
+    const input = renameFolderCompose.renameInput();
+    if (input.id) {
+      folderName(() => input.name);
+      yield updateFolder();
+      renameFolderCompose.endRename();
+    }
   });
 
   const items = prisma<FolderItem[]>("item", () => {
-    const fid = currentFolderId();
+    const fid = renameFolderCompose.currentId();
     if (fid) {
       return {
         where: {
@@ -63,14 +81,16 @@ function cascading() {
     }
   });
 
-  const currentItemId = state<number>();
+  const myItemId = state<number>();
+
+  const renameItemCompose = compose(rename);
 
   const itemName = state(INITIAL_ITEM_NAME);
 
   const writeItems = writePrisma(items, () => ({
     folder: {
       connect: {
-        id: currentFolderId(),
+        id: renameFolderCompose.currentId(),
       },
     },
     name: itemName(),
@@ -78,50 +98,25 @@ function cascading() {
 
   const createItem = inputComputeInServer(function* () {
     yield writeItems.create();
-    folderName(() => INITIAL_ITEM_NAME);
+    itemName(() => INITIAL_ITEM_NAME);
   });
 
   const updateItem = inputComputeInServer(function* () {
-    yield writeItems.update(currentItemId());
-    folderName(() => INITIAL_ITEM_NAME);
+    yield writeItems.update(renameItemCompose.currentId());
+    itemName(() => INITIAL_ITEM_NAME);
   });
 
   const removeItem = inputComputeInServer(function* () {
-    yield writeItems.remove(currentItemId());
-    currentFolderId(() => folders()[0]?.id);
+    yield writeItems.remove(renameItemCompose.currentId());
+    myItemId(() => folders()[0]?.id);
   });
 
-  const renameFolderInput = state({
-    id: null,
-    name: "",
-  });
-  const startRename = inputCompute((f: Folder) => {
-    renameFolderInput((v) => {
-      Object.assign(v, {
-        id: f.id,
-        name: f.name,
-      });
-    });
-    currentFolderId(() => f.id);
-  });
-
-  const switchCurrent = inputCompute((f: Folder) => {
-    if (f.id !== currentFolderId()) {
-      currentFolderId(() => f.id);
-      renameFolderInput((v) => {
-        v.id = null;
-      });
-    }
-  });
-
-  const renameFolder = inputComputeInServer(function* () {
-    const input = renameFolderInput();
+  const renameItem = inputComputeInServer(function* () {
+    const input = renameItemCompose.renameInput();
     if (input.id) {
-      folderName(() => input.name);
-      yield updateFolder();
-      renameFolderInput((v) => {
-        v.id = null;
-      });
+      itemName(() => input.name);
+      yield updateItem();
+      renameItemCompose.endRename();
     }
   });
 
@@ -129,21 +124,27 @@ function cascading() {
     // folder
     folders,
     folderName,
-    currentFolderId,
-    switchCurrent,
+    currentFolderId: renameFolderCompose.currentId,
+    switchCurrentFolder: renameFolderCompose.switchCurrent,
     createFolder,
     updateFolder,
     removeFolder,
     // folder rename
-    renameFolderInput,
-    startRename,
+    renameFolderInput: renameFolderCompose.renameInput,
+    startRename: renameFolderCompose.startRename,
     renameFolder,
     // item
     items,
     itemName,
+    currentItemId: renameItemCompose.currentId,
+    switchCurrentItem: renameItemCompose.switchCurrent,
     createItem,
     updateItem,
     removeItem,
+    // item rename
+    renameItemInput: renameItemCompose.renameInput,
+    startItemRename: renameItemCompose.startRename,
+    renameItem,
   };
 }
 
@@ -154,39 +155,35 @@ const autoParser = {
   cascading: {
     names: [
       [0, "folders"],
-      [1, "currentFolderId"],
-      [2, "folderName"],
-      [3, "createOrUpdateFolers"],
-      [4, "removeFolders"],
-      [5, "createFolder"],
-      [6, "updateFolder"],
-      [7, "removeFolder"],
+      [1, "folderName"],
+      [2, "createOrUpdateFolers"],
+      [3, "removeFolders"],
+      [4, "createFolder"],
+      [5, "updateFolder"],
+      [6, "removeFolder"],
+      [7, "renameFolder"],
       [8, "items"],
-      [9, "currentItemId"],
+      [9, "myItemId"],
       [10, "itemName"],
       [11, "writeItems"],
       [12, "createItem"],
       [13, "updateItem"],
       [14, "removeItem"],
-      [15, "renameFolderInput"],
-      [16, "startRename"],
-      [17, "switchCurrent"],
-      [18, "renameFolder"],
+      [15, "renameItem"],
     ],
     deps: [
-      ["h", 3, [0, 2], [0, 2]],
-      ["h", 4, [0], [0]],
-      ["h", 5, [3], [2]],
-      ["h", 6, [1], [3, 2]],
-      ["h", 7, [1, 0], [4, 1]],
-      ["h", 8, [1]],
-      ["h", 11, [8, 1, 10], [8, 1, 10]],
-      ["h", 12, [11], [2]],
-      ["h", 13, [9], [11, 2]],
-      ["h", 14, [9, 0], [11, 1]],
-      ["h", 16, [], [15, 1]],
-      ["h", 17, [1], [1, 15]],
-      ["h", 18, [15, 6], [2, 15]],
+      ["h", 2, [0, 1], [0, 1]],
+      ["h", 3, [0], [0]],
+      ["h", 4, [2], [1]],
+      ["h", 5, [["c", 0, "currentId"]], [2, 1]],
+      ["h", 6, [["c", 0, "currentId"], 0], [3, ["c", 0, "currentId"]]],
+      ["h", 7, [["c", 0, "renameInput"], 5, ["c", 0, "endRename"]], [1]],
+      ["h", 8, [["c", 0, "currentId"]]],
+      ["h", 11, [8, ["c", 0, "currentId"], 10], [8, 10]],
+      ["h", 12, [11], [10]],
+      ["h", 13, [["c", 1, "currentId"]], [11, 10]],
+      ["h", 14, [["c", 1, "currentId"], 0], [11, 9]],
+      ["h", 15, [["c", 1, "renameInput"], 13, ["c", 1, "endRename"]], [10]],
     ],
   },
 };
