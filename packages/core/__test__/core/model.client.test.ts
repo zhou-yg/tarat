@@ -1,5 +1,5 @@
 import { Runner, cloneDeep, IDiff, IHookContext,
-  IQueryWhere, set, setEnv, debuggerLog, IModelCreateData, IModelData } from '../../src/index'
+  IQueryWhere, set, setEnv, debuggerLog, IModelCreateData, IModelData, setGlobalModelEvent, ModelEvent } from '../../src/index'
 import prisma, { clearAll } from '../prisma'
 import * as mockBM from '../mockBM'
 
@@ -10,6 +10,9 @@ describe('client model', () => {
     clearAll()
   })
   beforeEach(async () => {
+
+    setGlobalModelEvent(new ModelEvent())
+
     await prisma.item.deleteMany({})
 
     const mockUsersData = [
@@ -91,6 +94,7 @@ describe('client model', () => {
   })
   afterAll(() => {
     process.env.TARGET = ''
+    setGlobalModelEvent(null)
   })
   describe('mount model', () => {
   

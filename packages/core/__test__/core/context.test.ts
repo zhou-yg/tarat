@@ -119,7 +119,7 @@ describe('initContext', () => {
         index: 4,
         data: [
           ['state', { num: 1 }, Date.now()],
-          ['state', 2, Date.now()],
+          ['unserialized'],
           ['computed', 3, Date.now()],
           ['computed', 4, Date.now()],
         ]

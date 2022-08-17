@@ -420,7 +420,7 @@ export abstract class WriteModel<T> extends AsyncState<T | Symbol> {
 
       log('[WriteModel.applyComputePatches]', 'sourceModel refresh done')
 
-      reactiveChain.update()
+      reactiveChain?.update()
 
       end()
     }
@@ -1368,7 +1368,7 @@ export class RunnerContext<T extends Driver> {
 
 type TModelEntity = string
 
-class ModelEvent {
+export class ModelEvent {
   private data = new Map<TModelEntity, IModelPatchRecord[]>()
   listeners: Function[] = []
 
@@ -1441,25 +1441,34 @@ export class CurrentRunnerScope<T extends Driver = any> {
     public intialContextNames: THookNames,
     public modelPatchEvents: ModelEvent
   ) {
-    if (
-      runnerContext.triggerHookIndex !== undefined &&
-      typeof runnerContext.triggerHookIndex === 'number'
-    ) {
-      if (
-        intialContextDeps?.length &&
-        runnerContext.triggerHookIndex !== undefined
-      ) {
-        const s = this.getRelatedHookIndexes(runnerContext.triggerHookIndex)
-        if (s.size !== 0) {
-          this.initialHooksSet = s
-        }
-      }
-    }
+    this.initializeHookSet()
     this.disposeFuncArr.push(
       modelPatchEvents.subscribe(() => {
         this.notifyAllModel()
       })
     )
+  }
+
+  initializeHookSet () {
+    const { runnerContext, intialContextDeps } = this
+    if (
+      runnerContext.triggerHookIndex !== undefined &&
+      typeof runnerContext.triggerHookIndex === 'number' && 
+      runnerContext.intialData.length > 0
+    ) {
+      /** @TODO belive deps calculation from client.it's maybe dangerous' */
+      const s = new Set<number>([runnerContext.triggerHookIndex])
+      runnerContext.intialData.forEach((d, i) => {
+        if (d[0] !== 'unserialized') {
+          s.add(i)
+        }
+      })
+      this.initialHooksSet = s
+      // const s = this.getRelatedHookIndexes(runnerContext.triggerHookIndex)
+      // if (s.size !== 0) {
+      //   this.initialHooksSet = s
+      // }
+    }
   }
 
   setBeleiveContext(beleiveContext: boolean) {
@@ -1496,12 +1505,10 @@ export class CurrentRunnerScope<T extends Driver = any> {
    * while enter UI will activate this function
    */
   activate(fn?: Function) {
-    console.log('[Scope] activate')
     this.notifyAllModel()
     this.outerListeners.push(fn)
   }
   deactivate(fn?: Function) {
-    console.log('[Scope] deactivate')
     this.outerListeners = fn ? this.outerListeners.filter(f => f !== fn) : []
   }
 
@@ -1704,7 +1711,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
                 const [type, composeIndex, variableName] = numOrArr
                 if (type === 'c') {
                   const setterGetterFunc: { _hook: Hook } | undefined =
-                    this.composes[composeIndex]?.[variableName]
+                  this.composes[composeIndex]?.[variableName]
                   if (setterGetterFunc?._hook) {
                     num = this.hooks.indexOf(setterGetterFunc._hook)
                   }
@@ -1810,7 +1817,6 @@ export class CurrentRunnerScope<T extends Driver = any> {
       }
     )
     if (c.patch) {
-      console.log('[Scope] refresh patch from:', c.patch)
       this.modelPatchEvents.from(c.patch)
     }
 
@@ -1870,7 +1876,11 @@ export class CurrentRunnerScope<T extends Driver = any> {
 
 let currentRunnerScope: CurrentRunnerScope<Driver> | null = null
 
-export const GlobalModelEvent = new ModelEvent()
+export let GlobalModelEvent: ModelEvent | null = null
+
+export function setGlobalModelEvent (me: ModelEvent | null) {
+  GlobalModelEvent = me
+}
 
 export class Runner<T extends Driver> {
   scope: CurrentRunnerScope<T>
@@ -1895,7 +1905,7 @@ export class Runner<T extends Driver> {
     )
 
     const modelPatchEvents =
-      process.env.TARGET === 'server' ? new ModelEvent() : GlobalModelEvent
+      process.env.TARGET === 'server' || !GlobalModelEvent ? new ModelEvent() : GlobalModelEvent
 
     const deps = getDeps(this.driver)
     const names = getNames(this.driver)
@@ -2018,8 +2028,8 @@ export const mountHookFactory = {
   writeModel: writeModel,
   cache: mountCache,
   computed: mountComputed,
-  inputCompute,
-  inputComputeInServer
+  inputCompute: mountInputCompute,
+  inputComputeInServer: mountInputComputeInServer
 }
 export const updateHookFactory = {
   state: updateState,
@@ -2029,8 +2039,8 @@ export const updateHookFactory = {
   writePrisma: mountWritePrisma,
   cache: updateCache,
   computed: updateComputed,
-  inputCompute,
-  inputComputeInServer
+  inputCompute: updateInputCompute,
+  inputComputeInServer: updateInputComputeInServer
 }
 
 export const hookFactoryNames = Object.keys(mountHookFactory)
@@ -2044,8 +2054,8 @@ export let currentHookFactory: {
   writePrisma: typeof mountWritePrisma
   cache: typeof mountCache
   computed: typeof mountComputed
-  inputCompute: typeof inputCompute
-  inputComputeInServer: typeof inputComputeInServer
+  inputCompute: typeof mountInputCompute
+  inputComputeInServer: typeof mountInputComputeInServer
 } = updateHookFactory
 
 function createStateSetterGetterFunc<SV>(s: State<SV>): {
@@ -2138,12 +2148,12 @@ function createUnaccessGetter<T>(index: number) {
   })
   return newF
 }
-function createUnaccessGetter2<T extends any[]>(index: number) {
+function createUnaccessModelGetter<T extends any[]>(index: number, entity: string) {
   const f = (): any => {
     throw new Error(`[update getter] cant access un initialized hook(${index})`)
   }
   const newF: any = Object.assign(f, {
-    _hook: null,
+    _hook: { entity },
     exist: () => true,
     create: () => {},
     update: () => {},
@@ -2206,7 +2216,7 @@ function updatePrisma<T extends any[]>(
 
   if (!valid) {
     currentRunnerScope!.addHook(undefined)
-    return createUnaccessGetter2<T>(currentIndex)
+    return createUnaccessModelGetter<T>(currentIndex, e)
   }
   const inServer = process.env.TARGET === 'server'
   const { beleiveContext } = currentRunnerScope!
@@ -2484,6 +2494,30 @@ type GeneratorInputComputeFn<T extends any[]> = (
   ...arg: T
 ) => Generator<unknown, void>
 
+
+function updateInputCompute (func: any) {
+  const { hooks, initialHooksSet } = currentRunnerScope!
+  const currentIndex = hooks.length
+  const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
+
+  if (!valid) {
+    currentRunnerScope!.addHook(undefined)
+    return createUnaccessGetter(currentIndex)
+  }
+
+  return mountInputCompute(func)
+}
+function mountInputCompute (func: any) {
+  const hook = new InputCompute(func, currentRunnerScope)
+
+  const wrapFunc = (...args: any) => {
+    return hook.run(...args)
+  }
+  wrapFunc._hook = hook
+
+  return wrapFunc
+}
+
 export function inputCompute<T extends any[]>(
   func: AsyncInputComputeFn<T>
 ): AsyncInputComputeFn<T> & { _hook: Hook }
@@ -2497,13 +2531,30 @@ export function inputCompute(func: any) {
   if (!currentRunnerScope) {
     throw new Error('[inputCompute] must under a tarat runner')
   }
+  const wrapFunc = currentHookFactory.inputCompute(func)
+  return wrapFunc
+}
 
-  const hook = new InputCompute(func, currentRunnerScope)
+function updateInputComputeInServer (func: any) {
+  const { hooks, initialHooksSet } = currentRunnerScope!
+  const currentIndex = hooks.length
+  const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
+
+  if (!valid) {
+    currentRunnerScope!.addHook(undefined)
+    return createUnaccessGetter(currentIndex)
+  }
+  return mountInputComputeInServer(func)
+}
+
+function mountInputComputeInServer (func: any) {
+  const hook = new InputComputeInServer(func, currentRunnerScope)
 
   const wrapFunc = (...args: any) => {
     return hook.run(...args)
   }
   wrapFunc._hook = hook
+
   return wrapFunc
 }
 
@@ -2511,8 +2562,11 @@ export function inputComputeInServer<T extends any[]>(
   func: AsyncInputComputeFn<T>
 ): AsyncInputComputeFn<T> & { _hook: Hook }
 export function inputComputeInServer<T extends any[]>(
-  func: InputComputeFn<T>
+  func: GeneratorInputComputeFn<T>
 ): AsyncInputComputeFn<T> & { _hook: Hook }
+export function inputComputeInServer<T extends any[]>(
+  func: InputComputeFn<T>
+): InputComputeFn<T> & { _hook: Hook }
 export function inputComputeInServer(func: any) {
   if (!currentRunnerScope) {
     throw new Error('[inputComputeServer] must under a tarat runner')
@@ -2524,13 +2578,7 @@ export function inputComputeInServer(func: any) {
   if (process.env.TARGET === 'server') {
     return inputCompute(func)
   }
-
-  const hook = new InputComputeInServer(func, currentRunnerScope)
-
-  const wrapFunc = (...args: any) => {
-    return hook.run(...args)
-  }
-  wrapFunc._hook = hook
+  const wrapFunc = currentHookFactory.inputComputeInServer(func)
   return wrapFunc
 }
 
@@ -2615,14 +2663,13 @@ export function compose<T extends Driver>(f: T, args?: any[]) {
     currentRunnerScope.appendComposeNames(startIndex, names)
   }
 
+  const endIndex = startIndex + names.length
+  const deps = getDeps(f)
+  currentRunnerScope.appendComposeDeps(startIndex, endIndex, deps)
+
   const insideResult: ReturnType<T> = executeDriver(f, args)
 
   currentRunnerScope.composes.push(insideResult)
-
-  const endIndex = currentRunnerScope.hooks.length
-
-  const deps = getDeps(f)
-  currentRunnerScope.appendComposeDeps(startIndex, endIndex, deps)
 
   return insideResult
 }
