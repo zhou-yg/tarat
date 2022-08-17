@@ -1,4 +1,4 @@
-import { loadPlugin } from 'tarat-core'
+import { loadPlugin, ModelEvent, setGlobalModelEvent } from 'tarat-core'
 import { setHookAdaptor } from './adaptor'
 
 const undefTag = '__tarat_undefined_placehodler_tag__'
@@ -27,6 +27,9 @@ export function clientRuntime(c: {
   const { framework = {}, name = 'react', modelConfig = {}, host = '/' } = c
 
   setHookAdaptor(framework, name)
+
+  const me = new ModelEvent()
+  setGlobalModelEvent(me)
 
   const hostConfig = `${host}${(window as any).taratConfig?.apiPre || '_hook'}`
   const diffPath = `${host}${(window as any).taratConfig?.diffPath || '_diff'}`
