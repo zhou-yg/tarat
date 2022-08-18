@@ -1232,13 +1232,15 @@ export class RunnerContext<T extends Driver> {
 
   patch?: IHookContext['patch']
 
+  withInitialContext: boolean
+
   constructor(
     public driverName: string,
     public args?: Parameters<T>,
     initialContext?: IHookContext
   ) {
     this.initialArgList = initialContext ? initialContext.initialArgList : args
-
+    this.withInitialContext = !!initialContext
     if (initialContext) {
       this.intialData = initialContext['data']
 
@@ -1901,10 +1903,8 @@ export class Runner<T extends Driver> {
   beforeInitOnce(f: Function) {
     this.beforeOncelisteners.push(f)
   }
-  /**
-   * @TODO need to refact because of this function should both return result and scope
-   */
-  init(args?: Parameters<T>, initialContext?: IHookContext): ReturnType<T> {
+
+  prepareScope(args?: Parameters<T>, initialContext?: IHookContext) {
     const context = new RunnerContext(
       getName(this.driver),
       args,
@@ -1918,36 +1918,51 @@ export class Runner<T extends Driver> {
 
     const deps = getDeps(this.driver)
     const names = getNames(this.driver)
-    currentRunnerScope = new CurrentRunnerScope<T>(
+    const scope = new CurrentRunnerScope<T>(
       context,
       deps,
       names,
       modelPatchEvents
     )
-    currentRunnerScope.setBeleiveContext(this.options.beleiveContext)
+    scope.setBeleiveContext(this.options.beleiveContext)
 
-    this.scope = currentRunnerScope
+    return scope
+  }
 
-    if (initialContext) {
+  executeDriver(scope: CurrentRunnerScope<T>) {
+    const { withInitialContext } = scope.runnerContext
+    if (withInitialContext) {
       currentHookFactory = updateHookFactory
-    } else {
-      currentHookFactory = mountHookFactory
     }
 
-    this.beforeOncelisteners.forEach(f => f(currentRunnerScope))
+    currentRunnerScope = scope
+    const result: ReturnType<T> = executeDriver(
+      this.driver,
+      scope.runnerContext.args
+    )
+    currentRunnerScope = null
+
+    if (withInitialContext) {
+      scope.applyDepsMap()
+    }
+    // do execute effect.maybe from model/cache
+    scope.flushEffects()
+
+    currentHookFactory = mountHookFactory
+
+    return result
+  }
+  /**
+   * @TODO need to refact because of this function should both return result and scope
+   */
+  init(args?: Parameters<T>, initialContext?: IHookContext): ReturnType<T> {
+    const scope = this.prepareScope(args, initialContext)
+
+    this.scope = scope
+    this.beforeOncelisteners.forEach(f => f(scope))
     this.beforeOncelisteners = []
 
-    const result: ReturnType<T> = executeDriver(this.driver, args)
-
-    // becase of some hook won't run at intitial time with initialContext
-    if (initialContext) {
-      currentRunnerScope.applyDepsMap()
-    }
-
-    // do execute effect.maybe from model/cache
-    currentRunnerScope.flushEffects()
-
-    currentRunnerScope = null
+    const result = this.executeDriver(scope)
 
     return result
   }
@@ -2068,7 +2083,7 @@ export let currentHookFactory: {
   computed: typeof mountComputed
   inputCompute: typeof mountInputCompute
   inputComputeInServer: typeof mountInputComputeInServer
-} = updateHookFactory
+} = mountHookFactory
 
 function createStateSetterGetterFunc<SV>(s: State<SV>): {
   (): SV

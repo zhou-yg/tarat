@@ -28,11 +28,12 @@ describe('runner basic', () => {
 
     const arg = { a: 1 }
 
-    const initResult = runner.init([arg])
+    const scope = runner.prepareScope([arg])
+    const initResult = runner.executeDriver(scope)
 
     expect(initResult.s1()).toEqual(arg.a)
-    expect(runner.scope.hooks.length).toStrictEqual(1)
-    expect((runner.scope.hooks[0] as any).value).toBe(arg.a)
+    expect(scope.hooks.length).toStrictEqual(1)
+    expect((scope.hooks[0] as any).value).toBe(arg.a)
   })
   it('run onUpdate', async () => {
     const runner = new Runner(mockBM.oneState)
