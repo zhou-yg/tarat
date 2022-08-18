@@ -1,4 +1,4 @@
-import { Runner, BM, Driver, EScopeState } from 'tarat-core'
+import { Runner, BM, Driver, EScopeState, CurrentRunnerScope } from 'tarat-core'
 import type { IHookContext } from 'tarat-core'
 import { DriverContext, RenderDriver } from '../driver'
 import { unstable_serialize } from 'swr'
@@ -33,24 +33,29 @@ export function useReactProgress<T extends Driver> (react: any, result: ReturnTy
   }
 }
 
+interface ICacheDriver<T extends BM> {
+  scope: CurrentRunnerScope<T>
+  result: ReturnType<T>
+}
+
 export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
-  const init = react.useRef(null)
+  const init = react.useRef(null) as { current: ICacheDriver<T> | null }
   const driver: RenderDriver = react.useContext(DriverContext)
 
   if (!init.current) {
 
     const serializedArgs = unstable_serialize(args)
     const cachedDriverResult: {
-      runner: Runner<T>
+      scope: CurrentRunnerScope<T>
       result: ReturnType<T>
     } = driverWeakMap.get(hook)?.get(serializedArgs)
 
     // match the cache
     if (cachedDriverResult) {
       init.current = {
-        runner: cachedDriverResult.runner,
+        scope: cachedDriverResult.scope,
         result: Object.assign({
-          [scopeSymbol]: cachedDriverResult.runner.scope,
+          [scopeSymbol]: cachedDriverResult.scope,
         }, cachedDriverResult.result),
       }
     } else {
@@ -66,18 +71,18 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
       }
   
       const runner = new Runner(hook, { beleiveContext: driver?.beleiveContext })
-      runner.beforeInitOnce(() => {
-        console.log('[driver.beforeInitOnce]: ', !!runner.scope, bmName);
-        driver?.push(runner, bmName)
-      })
 
       const initialContext = ssrContext.pop()
-      const r = runner.init(args, initialContext)
+
+      const scope = runner.prepareScope(args, initialContext)
+      driver?.push(scope, bmName)
+
+      const r = runner.executeDriver(scope)
 
       init.current = {
-        runner,
+        scope,
         result: Object.assign({
-          [scopeSymbol]: runner.scope,
+          [scopeSymbol]: scope,
         }, r)
       }
   
@@ -97,9 +102,9 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
     function fn() {
       setHookResult({ ...init.current.result })
     }
-    init.current.runner.scope.activate(fn)
+    init.current.scope.activate(fn)
     return () => {
-      init.current.runner.scope.deactivate(fn)
+      init.current.scope.deactivate(fn)
     }
   }, [])
 

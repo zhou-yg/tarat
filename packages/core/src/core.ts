@@ -1892,16 +1892,11 @@ export class Runner<T extends Driver> {
   options: { beleiveContext: boolean; runnerContext?: Symbol } = {
     beleiveContext: false
   }
-  beforeOncelisteners: Function[] = []
   constructor(
     public driver: T,
     options?: { beleiveContext: boolean; runnerContext?: Symbol }
   ) {
     Object.assign(this.options, options)
-  }
-
-  beforeInitOnce(f: Function) {
-    this.beforeOncelisteners.push(f)
   }
 
   prepareScope(args?: Parameters<T>, initialContext?: IHookContext) {
@@ -1959,8 +1954,6 @@ export class Runner<T extends Driver> {
     const scope = this.prepareScope(args, initialContext)
 
     this.scope = scope
-    this.beforeOncelisteners.forEach(f => f(scope))
-    this.beforeOncelisteners = []
 
     const result = this.executeDriver(scope)
 

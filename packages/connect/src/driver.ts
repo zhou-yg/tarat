@@ -1,4 +1,4 @@
-import { BM, IHookContext, ReactiveChain, Runner } from 'tarat-core'
+import { BM, CurrentRunnerScope, IHookContext, ReactiveChain, Runner } from 'tarat-core'
 import React, { createElement, createContext } from 'react'
 
 import { setHookAdaptor } from './adaptor'
@@ -23,9 +23,9 @@ export class RenderDriver {
 
   beleiveContext = false
 
-  BMValuesMap: Map<string, Runner<any>[]> = new Map()
+  BMValuesMap: Map<string, CurrentRunnerScope<any>[]> = new Map()
 
-  pushListener?: (runner: Runner<any>) => void
+  pushListener?: (scope: CurrentRunnerScope<any>) => void
 
   consumeCache: Map<string, IHookContext[] | undefined> = new Map()
 
@@ -44,8 +44,8 @@ export class RenderDriver {
     }
     let r = this.consumeCache.get(name)
     if (!r) {
-      r = this.BMValuesMap.get(name)?.map(r =>
-        r.scope.createInputComputeContext()
+      r = this.BMValuesMap.get(name)?.map(s =>
+        s.createInputComputeContext()
       )
       this.consumeCache.set(name, r)
     }
@@ -53,11 +53,11 @@ export class RenderDriver {
     return r
   }
 
-  onPush(f: (runner: Runner<any>) => void) {
+  onPush(f: (scope: CurrentRunnerScope<any>) => void) {
     this.pushListener = f
   }
 
-  push(runner: Runner<any>, name: string) {
+  push(scope: CurrentRunnerScope<any>, name: string) {
     if (this.mode !== 'collect') {
       return
     }
@@ -67,8 +67,7 @@ export class RenderDriver {
       values = []
       this.BMValuesMap.set(name, values)
     }
-    this.pushListener?.(runner)
-    console.log('this.pushListener: ', this.pushListener)
-    return values.push(runner)
+    this.pushListener?.(scope)
+    return values.push(scope)
   }
 }

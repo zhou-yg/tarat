@@ -5,7 +5,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { ViteDevServer } from "vite";
 import { fileURLToPath } from 'url'
-import { debuggerLog, getPlugin, IHookContext, Runner, startdReactiveChain, stopReactiveChain } from "tarat-core";
+import { CurrentRunnerScope, debuggerLog, getPlugin, IHookContext, Runner, startdReactiveChain, stopReactiveChain } from "tarat-core";
 import { wrapCtx } from "./taratRunner";
 import { buildEntryServer, buildRoutes } from "../compiler/prebuild";
 import { renderToString } from 'react-dom/server'
@@ -42,13 +42,11 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
 
   console.log('[before driver.onPush] : ');
 
-  driver.onPush(runner => {
+  driver.onPush(scope => {
 
-    console.log('[driver.onPush] : ', !!runner.scope);
-
-    getPlugin('GlobalRunning').setCurrent(runner.scope, wrapCtx(ctx))
+    getPlugin('GlobalRunning').setCurrent(scope, wrapCtx(ctx))
     cancelGlobalRunning = () => {
-      getPlugin('GlobalRunning').setCurrent(runner.scope, null) 
+      getPlugin('GlobalRunning').setCurrent(scope, null) 
     }
   })
 
@@ -77,13 +75,12 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
   driver.pushListener = undefined
   cancelGlobalRunning()
 
-  const allRunedHook = []
+  let allRunedHook: CurrentRunnerScope<any>[] = []
   for (const BMArr of driver.BMValuesMap.values()) {
-    allRunedHook.push(...BMArr)
+    allRunedHook = allRunedHook.concat(BMArr)
   }
-  await Promise.all(allRunedHook.map((runner: Runner<any>) => {
-    // console.log('runner: ', runner.scope);
-    return runner.scope.ready()
+  await Promise.all(allRunedHook.map((scope) => {
+    return scope.ready()
   }))
   console.log('---- await first done ----')
 
@@ -141,7 +138,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
       const r = await renderPage(ctx, args.config)
       if (r) {
         for (const v of r.driver.BMValuesMap) {
-          context[v[0]] = v[1].map((runner: Runner<any>) => runner.scope.createBaseContext())
+          context[v[0]] = v[1].map((scope: CurrentRunnerScope<any>) => scope.createBaseContext())
         }
         ssrHTML = r.html2
       }

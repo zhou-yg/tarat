@@ -65,17 +65,17 @@ export default function taratMiddleware (args: {
         const c: IHookContext = parseWithUndef(ctx.request.body)
 
         let runner = new Runner(BM.default)
-        runner.beforeInitOnce(() => {
-          getPlugin('GlobalRunning').setCurrent(runner.scope, wrapCtx(ctx))
-        })
+        
+        const scope = runner.prepareScope(c.initialArgList, c)
+        getPlugin('GlobalRunning').setCurrent(scope, wrapCtx(ctx))
 
-        console.log('=================================================')
+        console.log('==== before exeexecuteDriver ===============')
 
         const chain1 = startdReactiveChain(`${driverName}(init)`)
 
-        runner.init(c.initialArgList, c)
+        runner.executeDriver(scope)
 
-        getPlugin('GlobalRunning').setCurrent(runner.scope, null)
+        getPlugin('GlobalRunning').setCurrent(scope, null)
 
         await runner.ready()
 
