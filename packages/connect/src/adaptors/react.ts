@@ -92,7 +92,7 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
         driverWeakMap.set(hook, m)
       }
       m.set(serializedArgs, {
-        runner,
+        scope,
         result: r,
       })
     }
