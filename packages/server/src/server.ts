@@ -9,6 +9,8 @@ import taratRunner from "./middlewares/taratRunner";
 import page from "./middlewares/page";
 
 import { createServer as createViteServer } from "vite";
+import tsconfigPaths from 'vite-tsconfig-paths'
+
 import { IConfig } from "./config";
 import getPort, { makeRange as portNumbers } from "get-port";
 
@@ -66,6 +68,7 @@ export async function createDevServer (c: IConfig) {
     root: c.cwd,
     server:{ middlewareMode: 'ssr' },
     plugins: [
+      tsconfigPaths(),
       // {
       //   ...rollupPlugintaratRuntime(c),
       //   enforce: 'pre',

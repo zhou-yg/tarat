@@ -66,7 +66,7 @@ export default function taratMiddleware (args: {
 
         let runner = new Runner(BM.default)
         
-        const scope = runner.prepareScope(c.initialArgList, c)
+        let scope = runner.prepareScope(c.initialArgList, c)
         getPlugin('GlobalRunning').setCurrent(scope, wrapCtx(ctx))
 
         console.log('==== before exeexecuteDriver ===============')
@@ -77,7 +77,7 @@ export default function taratMiddleware (args: {
 
         getPlugin('GlobalRunning').setCurrent(scope, null)
 
-        await runner.ready()
+        await scope.ready()
 
         chain1.stop()
         chain1.print()
@@ -87,19 +87,21 @@ export default function taratMiddleware (args: {
         const chain2 = startdReactiveChain(`${driverName}:call(${c.index})`)
 
         if (c.index !== undefined) {
-          await runner.scope.callHook(c.index, c.args)
+          await scope.callHook(c.index, c.args)
         }
 
-        await runner.ready()
+        await scope.ready()
 
         chain2.stop()
         chain2.print()
 
-        const context = runner.scope.createPatchContext()
+        const context = scope.createPatchContext()
         
         ctx.body = JSON.stringify(context);
 
-        (runner as any) = null
+        (runner as any) = null;
+        (scope as any) = null;
+
 
         console.log(`[${driverName}] is end \n ---`)
       } else {
