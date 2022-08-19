@@ -56,8 +56,8 @@ function cascading() {
     folderName(() => INITIAL_FOLDER_NAME);
   });
 
-  const removeFolder = inputComputeInServer(function* () {
-    yield removeFolders.remove(renameFolderCompose.currentId());
+  const removeFolder = inputComputeInServer(function* (folder?: Folder) {
+    yield removeFolders.remove(folder.id || renameFolderCompose.currentId());
     renameFolderCompose.currentId(() => folders()[0]?.id);
   });
 
@@ -106,8 +106,8 @@ function cascading() {
     itemName(() => INITIAL_ITEM_NAME);
   });
 
-  const removeItem = inputComputeInServer(function* () {
-    yield writeItems.remove(renameItemCompose.currentId());
+  const removeItem = inputComputeInServer(function* (item?: FolderItem) {
+    yield writeItems.remove(item.id || renameItemCompose.currentId());
     myItemId(() => folders()[0]?.id);
   });
 
@@ -120,7 +120,10 @@ function cascading() {
     }
   });
 
+  const ss = state("");
+
   return {
+    ss,
     // folder
     folders,
     folderName,
@@ -170,6 +173,7 @@ const autoParser = {
       [13, "updateItem"],
       [14, "removeItem"],
       [15, "renameItem"],
+      [16, "ss"],
     ],
     deps: [
       ["h", 2, [0, 1], [0, 1]],
