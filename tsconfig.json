@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "outDir": "dist",
     "sourceMap": true,
     "target": "es2016",
@@ -8,13 +7,18 @@
     "module": "esnext",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "allowJs": true,
     "experimentalDecorators": true,
     "resolveJsonModule": true,
-    "esModuleInterop": true,
     "removeComments": false,
-    "jsx": "preserve",
+    "jsx": "react",
     "lib": ["esnext", "dom"],
-    "types": ["jest", "node"]
+    "types": ["node", "jest"],
+    "baseUrl": ".",
+    "paths": {
+      "immer": ["node_modules/immer"],
+      "@/*": ["./*"]
+    }
   }
 }
