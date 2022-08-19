@@ -84,7 +84,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
   }))
   console.log('---- await first done ----')
 
-  driver.switiToConsumeMode()
+  driver.switchToServerConsumeMode()
 
   const chain2 = startdReactiveChain('[renderWithDriverContext second]')
 
@@ -130,7 +130,7 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
     const pathname = ctx.request.path
     const viewConfig = matchRoute(args.pages, pathname)
     if (viewConfig) {
-      let context: { [k: string]: IHookContext[] } = {}
+      let context: Record<string, IHookContext[]> = {}
       let ssrHTML = ''
 
       console.log('>> start render page path=', pathname)

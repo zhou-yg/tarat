@@ -19,9 +19,8 @@ export function renderWithDriverContext(
 export class RenderDriver {
   mode?: 'collect' | 'consume'
 
-  eanbleCache = true
-
   beleiveContext = false
+  updateCallbackSync = false
 
   BMValuesMap: Map<string, CurrentRunnerScope<any>[]> = new Map()
 
@@ -29,9 +28,21 @@ export class RenderDriver {
 
   consumeCache: Map<string, IHookContext[] | undefined> = new Map()
 
-  switiToConsumeMode() {
+  fromContextMap (contextMap: Record<string, IHookContext[]>) {
+    Object.keys(contextMap).forEach(bmName => {
+      this.consumeCache.set(bmName, contextMap[bmName])
+    })
+  }
+
+  switchToServerConsumeMode() {
     this.mode = 'consume'
     this.beleiveContext = true
+    this.updateCallbackSync = false
+  }
+  switchToClientConsumeMode() {
+    this.mode = 'consume'
+    this.beleiveContext = false
+    this.updateCallbackSync = true
   }
 
   pop(name: string) {

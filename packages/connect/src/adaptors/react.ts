@@ -64,13 +64,16 @@ export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
       if (driver) {
         ssrContext = driver.getContext(bmName) || []
       } else {
-        ssrContext =
-          typeof window !== 'undefined'
-            ? window.hookContextMap?.[bmName] || []
-            : []
+        throw new Error('[useTarat] must provide a DriverContext at Root ')
       }
   
-      const runner = new Runner(hook, { beleiveContext: driver?.beleiveContext })
+      const runner = new Runner(
+        hook,
+        {
+          beleiveContext: driver.beleiveContext,
+          updateCallbackSync: driver.updateCallbackSync,
+        }
+      )
 
       const initialContext = ssrContext.pop()
 

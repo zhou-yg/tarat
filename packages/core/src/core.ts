@@ -1437,6 +1437,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
 
   // indicate can beleive the model data in context
   beleiveContext = false
+  updateCallbackSync = false
 
   effectFuncArr: Function[] = []
   disposeFuncArr: Function[] = []
@@ -1477,8 +1478,9 @@ export class CurrentRunnerScope<T extends Driver = any> {
     }
   }
 
-  setBeleiveContext(beleiveContext: boolean) {
-    this.beleiveContext = beleiveContext
+  setOptions(op: Partial<IRunnerOptions>) {
+    this.beleiveContext = op.beleiveContext
+    this.updateCallbackSync = op.updateCallbackSync
   }
 
   effect(f: Function) {
@@ -1536,10 +1538,14 @@ export class CurrentRunnerScope<T extends Driver = any> {
     this.outerListeners.forEach(f => f())
   }
   notify(s?: Hook) {
-    this.stateChangeCallbackCancel()
-    this.stateChangeCallbackCancel = nextTick(() => {
+    if (this.updateCallbackSync) {
       this.notifyOuter()
-    })
+    } else {
+      this.stateChangeCallbackCancel()
+      this.stateChangeCallbackCancel = nextTick(() => {
+        this.notifyOuter()
+      })
+    }
   }
 
   addHook(v: Hook | undefined) {
@@ -1887,14 +1893,23 @@ export function setGlobalModelEvent(me: ModelEvent | null) {
   GlobalModelEvent = me
 }
 
+export interface IRunnerOptions {
+  // scope
+  beleiveContext: boolean;
+  updateCallbackSync?: boolean
+  // 
+  runnerContext?: Symbol
+}
+
 export class Runner<T extends Driver> {
   scope: CurrentRunnerScope<T>
-  options: { beleiveContext: boolean; runnerContext?: Symbol } = {
-    beleiveContext: false
+  options: IRunnerOptions = {
+    beleiveContext: false,
+    updateCallbackSync: false,
   }
   constructor(
     public driver: T,
-    options?: { beleiveContext: boolean; runnerContext?: Symbol }
+    options?: IRunnerOptions
   ) {
     Object.assign(this.options, options)
   }
@@ -1919,7 +1934,10 @@ export class Runner<T extends Driver> {
       names,
       modelPatchEvents
     )
-    scope.setBeleiveContext(this.options.beleiveContext)
+    scope.setOptions({
+      updateCallbackSync: this.options.updateCallbackSync,
+      beleiveContext: this.options.beleiveContext
+    })
 
     return scope
   }
