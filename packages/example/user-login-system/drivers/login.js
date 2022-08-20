@@ -6,6 +6,7 @@ import {
   combineLatest,
   inputCompute,
   inputComputeInServer,
+  writePrisma,
 } from "tarat-core";
 import { nanoid } from "nanoid";
 
@@ -18,11 +19,6 @@ export default function login() {
   const inputPassword = state();
   const repeatPassword = state();
 
-  const signAndAutoLogin = state(false);
-
-  /* 6 */
-  const cookieId = cache("userDataKey", { from: "cookie" }); // just run in server because by it depends 'cookie'
-  /* 7 */
   const userDataByInput = model("user", (prev) => {
     if (name() && password()) {
       return {
@@ -30,9 +26,23 @@ export default function login() {
           name: name(), // maybe be unique?
           password: password(),
         },
+        select: {
+          id: true,
+          name: true,
+        },
       };
     }
   });
+  const writeUserData = writePrisma(userDataByInput, () => ({
+    data: {
+      name: name(),
+      password: password(),
+    },
+  }));
+
+  const signAndAutoLogin = state(false);
+
+  const cookieId = cache("userDataKey", { from: "cookie" }); // just run in server because by it depends 'cookie'
 
   const sessionStore = model(
     "sessionStore",
@@ -49,25 +59,14 @@ export default function login() {
     },
     { ignoreClientEnable: true }
   );
-
-  /* 9 */
-  const userIdInSession = computed(() => {
-    const ss = sessionStore();
-    if (ss && ss.length > 0) {
-      return {
-        name: ss[0].name,
-        password: ss[0].password,
-      };
-    }
-  });
+  const writeSessionStore = writePrisma(sessionStore);
 
   const userDataByCookie = model("user", (prev) => {
-    const u = userIdInSession();
-    if (u) {
+    const ss = sessionStore();
+    if (ss & (ss.length > 0)) {
       return {
         where: {
-          name: u.name,
-          password: u.password,
+          id: ss[0].userId,
         },
       };
     }
@@ -122,22 +121,18 @@ export default function login() {
 
   const errorTip = combineLatest([errorTip1, errorTip2]);
 
-  const sign = inputComputeInServer(async () => {
+  const sign = inputComputeInServer(function* () {
     const inputNameVal = inputName();
     const inputPasswordVal = inputPassword();
-    const r = await userDataByInput.exist({
+    const r = yield userDataByInput.exist({
       name: inputNameVal,
       password: inputPasswordVal,
     });
     if (!r) {
-      userDataByInput((draft) => {
-        draft.push({
-          name: inputNameVal,
-          password: inputPasswordVal,
-        });
-      });
+      yield writeUserData.create();
+
       if (signAndAutoLogin()) {
-        login(inputNameVal, inputPasswordVal);
+        yield login(inputNameVal, inputPasswordVal);
       }
     } else {
       errorTip2(() => "user already exist");
@@ -145,25 +140,22 @@ export default function login() {
   });
 
   /* 16 */
-  const login = inputComputeInServer(async () => {
+  const login = inputComputeInServer(function* () {
     const inputNameVal = inputName();
     const inputPasswordVal = inputPassword();
-    const valid = await userDataByInput.exist({
+    const existUser = yield userDataByInput.exist({
       name: inputNameVal,
       password: inputPasswordVal,
     }); // query DB
-    if (valid) {
+    if (existUser) {
       name(() => inputNameVal);
       password(() => inputPasswordVal);
 
       const nid = nanoid();
 
-      sessionStore((draft) => {
-        draft.push({
-          name: inputNameVal,
-          password: inputPasswordVal,
-          fromIndex: nid,
-        });
+      yield writeSessionStore.create({
+        userId: existUser.id,
+        fromIndex: nid,
       });
 
       cookieId(() => nid);
@@ -172,20 +164,17 @@ export default function login() {
     }
   });
 
-  const logout = inputComputeInServer(() => {
+  const logout = inputComputeInServer(function* () {
+    const cid = cookieId();
+    cookieId(() => "");
+
     name(() => null);
     password(() => null);
-    const cid = cookieId();
-    console.log("logout cid: ", cid);
-    cookieId(() => "");
-    sessionStore((arr) => {
-      console.log("[userIdInSession] arr: ", arr);
-      const i = arr.findIndex((o) => o.fromIndex === cid);
-      console.log("[userIdInSession] logout i: ", i);
-      if (i >= 0) {
-        arr.splice(i, 1);
-      }
-    });
+
+    const ss = sessionStore().find((o) => o.fromIndex === cid);
+    if (ss) {
+      yield writeSessionStore.remove(ss.id);
+    }
   });
 
   return {
@@ -213,31 +202,33 @@ const autoParser = {
       [2, "inputName"],
       [3, "inputPassword"],
       [4, "repeatPassword"],
-      [5, "signAndAutoLogin"],
-      [6, "cookieId"],
-      [7, "userDataByInput"],
-      [8, "sessionStore"],
-      [9, "userIdInSession"],
-      [10, "userDataByCookie"],
-      [11, "userData"],
-      [12, "alreadyLogin"],
-      [13, "errorTip1"],
-      [14, "errorTip2"],
-      [15, "sign"],
-      [16, "login2"],
-      [17, "logout"],
+      [5, "userDataByInput"],
+      [6, "writeUserData"],
+      [7, "signAndAutoLogin"],
+      [8, "cookieId"],
+      [9, "sessionStore"],
+      [10, "writeSessionStore"],
+      [11, "userDataByCookie"],
+      [12, "userData"],
+      [13, "alreadyLogin"],
+      [14, "errorTip1"],
+      [15, "errorTip2"],
+      [16, "sign"],
+      [17, "login2"],
+      [18, "logout"],
     ],
     deps: [
-      ["h", 7, [1, 0]],
-      ["h", 8, [6]],
+      ["h", 5, [1, 0]],
+      ["h", 6, [5, 1, 0], [5, 1, 0]],
       ["h", 9, [8]],
-      ["h", 10, [9]],
-      ["h", 11, [10, 7]],
-      ["h", 12, [11]],
-      ["h", 13, [1, 0, 11, 4]],
-      ["h", 15, [2, 3, 5], [7, 16, 14]],
-      ["h", 16, [2, 3], [7, 1, 0, 8, 6, 14]],
-      ["h", 17, [6], [1, 0, 6, 8]],
+      ["h", 10, [9], [9]],
+      ["h", 11, [9]],
+      ["h", 12, [11, 5]],
+      ["h", 13, [12]],
+      ["h", 14, [1, 0, 12, 4]],
+      ["h", 16, [2, 3, 6, 7], [5, 17, 15]],
+      ["h", 17, [2, 3], [5, 1, 0, 10, 8, 15]],
+      ["h", 18, [8, 9], [8, 1, 0, 10]],
     ],
   },
 };

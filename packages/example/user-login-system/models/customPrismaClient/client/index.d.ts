@@ -32,9 +32,8 @@ export type SessionStore = {
   id: number
   createdAt: Date
   modifiedAt: Date
-  name: string
-  password: string
   fromIndex: string
+  userId: string
 }
 
 
@@ -1588,27 +1587,24 @@ export namespace Prisma {
     id: number | null
     createdAt: Date | null
     modifiedAt: Date | null
-    name: string | null
-    password: string | null
     fromIndex: string | null
+    userId: string | null
   }
 
   export type SessionStoreMaxAggregateOutputType = {
     id: number | null
     createdAt: Date | null
     modifiedAt: Date | null
-    name: string | null
-    password: string | null
     fromIndex: string | null
+    userId: string | null
   }
 
   export type SessionStoreCountAggregateOutputType = {
     id: number
     createdAt: number
     modifiedAt: number
-    name: number
-    password: number
     fromIndex: number
+    userId: number
     _all: number
   }
 
@@ -1625,27 +1621,24 @@ export namespace Prisma {
     id?: true
     createdAt?: true
     modifiedAt?: true
-    name?: true
-    password?: true
     fromIndex?: true
+    userId?: true
   }
 
   export type SessionStoreMaxAggregateInputType = {
     id?: true
     createdAt?: true
     modifiedAt?: true
-    name?: true
-    password?: true
     fromIndex?: true
+    userId?: true
   }
 
   export type SessionStoreCountAggregateInputType = {
     id?: true
     createdAt?: true
     modifiedAt?: true
-    name?: true
-    password?: true
     fromIndex?: true
+    userId?: true
     _all?: true
   }
 
@@ -1745,9 +1738,8 @@ export namespace Prisma {
     id: number
     createdAt: Date
     modifiedAt: Date
-    name: string
-    password: string
     fromIndex: string
+    userId: string
     _count: SessionStoreCountAggregateOutputType | null
     _avg: SessionStoreAvgAggregateOutputType | null
     _sum: SessionStoreSumAggregateOutputType | null
@@ -1773,9 +1765,8 @@ export namespace Prisma {
     id?: boolean
     createdAt?: boolean
     modifiedAt?: boolean
-    name?: boolean
-    password?: boolean
     fromIndex?: boolean
+    userId?: boolean
   }
 
   export type SessionStoreGetPayload<
@@ -2413,9 +2404,8 @@ export namespace Prisma {
     id: 'id',
     createdAt: 'createdAt',
     modifiedAt: 'modifiedAt',
-    name: 'name',
-    password: 'password',
-    fromIndex: 'fromIndex'
+    fromIndex: 'fromIndex',
+    userId: 'userId'
   };
 
   export type SessionStoreScalarFieldEnum = (typeof SessionStoreScalarFieldEnum)[keyof typeof SessionStoreScalarFieldEnum]
@@ -2455,6 +2445,7 @@ export namespace Prisma {
 
   export type UserWhereUniqueInput = {
     id?: string
+    name?: string
   }
 
   export type UserOrderByWithAggregationInput = {
@@ -2486,18 +2477,16 @@ export namespace Prisma {
     id?: IntFilter | number
     createdAt?: DateTimeFilter | Date | string
     modifiedAt?: DateTimeFilter | Date | string
-    name?: StringFilter | string
-    password?: StringFilter | string
     fromIndex?: StringFilter | string
+    userId?: StringFilter | string
   }
 
   export type SessionStoreOrderByWithRelationInput = {
     id?: SortOrder
     createdAt?: SortOrder
     modifiedAt?: SortOrder
-    name?: SortOrder
-    password?: SortOrder
     fromIndex?: SortOrder
+    userId?: SortOrder
   }
 
   export type SessionStoreWhereUniqueInput = {
@@ -2508,9 +2497,8 @@ export namespace Prisma {
     id?: SortOrder
     createdAt?: SortOrder
     modifiedAt?: SortOrder
-    name?: SortOrder
-    password?: SortOrder
     fromIndex?: SortOrder
+    userId?: SortOrder
     _count?: SessionStoreCountOrderByAggregateInput
     _avg?: SessionStoreAvgOrderByAggregateInput
     _max?: SessionStoreMaxOrderByAggregateInput
@@ -2525,9 +2513,8 @@ export namespace Prisma {
     id?: IntWithAggregatesFilter | number
     createdAt?: DateTimeWithAggregatesFilter | Date | string
     modifiedAt?: DateTimeWithAggregatesFilter | Date | string
-    name?: StringWithAggregatesFilter | string
-    password?: StringWithAggregatesFilter | string
     fromIndex?: StringWithAggregatesFilter | string
+    userId?: StringWithAggregatesFilter | string
   }
 
   export type UserCreateInput = {
@@ -2581,52 +2568,46 @@ export namespace Prisma {
   export type SessionStoreCreateInput = {
     createdAt?: Date | string
     modifiedAt?: Date | string
-    name: string
-    password: string
     fromIndex: string
+    userId: string
   }
 
   export type SessionStoreUncheckedCreateInput = {
     id?: number
     createdAt?: Date | string
     modifiedAt?: Date | string
-    name: string
-    password: string
     fromIndex: string
+    userId: string
   }
 
   export type SessionStoreUpdateInput = {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    name?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
     fromIndex?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
   }
 
   export type SessionStoreUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    name?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
     fromIndex?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
   }
 
   export type SessionStoreUpdateManyMutationInput = {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    name?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
     fromIndex?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
   }
 
   export type SessionStoreUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modifiedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    name?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
     fromIndex?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
   }
 
   export type StringFilter = {
@@ -2724,9 +2705,8 @@ export namespace Prisma {
     id?: SortOrder
     createdAt?: SortOrder
     modifiedAt?: SortOrder
-    name?: SortOrder
-    password?: SortOrder
     fromIndex?: SortOrder
+    userId?: SortOrder
   }
 
   export type SessionStoreAvgOrderByAggregateInput = {
@@ -2737,18 +2717,16 @@ export namespace Prisma {
     id?: SortOrder
     createdAt?: SortOrder
     modifiedAt?: SortOrder
-    name?: SortOrder
-    password?: SortOrder
     fromIndex?: SortOrder
+    userId?: SortOrder
   }
 
   export type SessionStoreMinOrderByAggregateInput = {
     id?: SortOrder
     createdAt?: SortOrder
     modifiedAt?: SortOrder
-    name?: SortOrder
-    password?: SortOrder
     fromIndex?: SortOrder
+    userId?: SortOrder
   }
 
   export type SessionStoreSumOrderByAggregateInput = {

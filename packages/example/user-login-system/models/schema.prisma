@@ -14,7 +14,7 @@ model User {
   createdAt  DateTime @default(now())
   modifiedAt DateTime @default(now())
 
-  name String
+  name String @unique
   password String
 }
 
@@ -22,7 +22,7 @@ model SessionStore {
   id         Int @id @default(autoincrement())
   createdAt  DateTime @default(now())
   modifiedAt DateTime @default(now())
-  name     String
-  password String
+
   fromIndex  String // paltform unique cookie id
+  userId String
 }

@@ -88,9 +88,8 @@ exports.Prisma.SessionStoreScalarFieldEnum = makeEnum({
   id: 'id',
   createdAt: 'createdAt',
   modifiedAt: 'modifiedAt',
-  name: 'name',
-  password: 'password',
-  fromIndex: 'fromIndex'
+  fromIndex: 'fromIndex',
+  userId: 'userId'
 });
 
 exports.Prisma.SortOrder = makeEnum({

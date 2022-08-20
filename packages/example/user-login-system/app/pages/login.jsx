@@ -10,6 +10,10 @@ export const meta = () => ({
 export default () => {
 
   return (
-    <Login />
+    <div className="w-full h-screen bg-slate-100 flex items-center justify-center">
+      <Login title={
+        <h2 className="text-xl">LOGIN EXAMPLE</h2>
+      } type="login" />
+    </div>
   )
 }

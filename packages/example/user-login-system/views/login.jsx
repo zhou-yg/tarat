@@ -1,75 +1,132 @@
-import React, { forwardRef, useImperativeHandle } from 'react'
+import React, { useState, forwardRef, useImperativeHandle } from 'react'
 import { useTarat } from 'tarat-connect'
 import login from '../drivers/login'
 import s from './login.module.less'
 import classnames from 'classnames'
 
-const LoginFrame = (props, ref) => {
+const SignFrame = (props) => {
+  const loginHook = useTarat(login)
+  const cls = classnames(s.row, {
+    show: !!loginHook?.errorTip()
+  })
+
+  return (
+    <div>
+      <div className={s.row + ' p-2'} >
+        <input placeholder="username" onInput={e => {
+          loginHook.inputName(() => e.target.value)
+        }} className="border-x border-y"  />
+      </div>
+      <div className={s.row + ' p-2'} >
+        <input placeholder="password" onInput={e => {
+          loginHook.inputPassword(() => e.target.value)
+        }} className="border-x border-y"  />
+      </div>
+      <div className={s.row + ' p-2'} >
+        <input placeholder="confirm password" onInput={e => {
+          loginHook.inputPassword(() => e.target.value)
+        }} className="border-x border-y"  />
+      </div>
+      {loginHook?.errorTip() ? (
+        <div className={cls}>
+          {loginHook?.errorTip()}
+        </div>
+      ) : ''}
+      <div className="p-2">
+        <button
+          className="border-x border-y p-2 w-full rounded hover:text-white hover:bg-black"
+          onClick={() => loginHook.login()}>Sign</button>
+      </div>
+      <div className="p-2 flex justify-between items-center">
+        <span className="flex items-center">
+          <span>sign and auto login</span>
+          <input type="checkbox" checked={loginHook.signAndAutoLogin()} onChange={e => {
+            loginHook.signAndAutoLogin(() => e.target.checked)
+          }}  className="ml-1 relative top-px"/>
+        </span>
+        <button onClick={() => {
+          props.setLoginType(LoginTypes.login)
+        }} className="hover:underline underline-offset-2">goto login &gt;</button>
+      </div>
+    </div>
+  )
+}
+
+const LoginFrame = (props) => {
+  const loginHook = useTarat(login)
+  const cls = classnames(s.row, {
+    show: !!loginHook?.errorTip()
+  })
+
+  return (
+    <div>
+      <div className={s.row + ' p-2'} >
+        <input placeholder="username" onInput={e => {
+          loginHook.inputName(() => e.target.value)
+        }} className="border-x border-y"  />
+      </div>
+      <div className={s.row + ' p-2'} >
+        <input placeholder="password" onInput={e => {
+          loginHook.inputPassword(() => e.target.value)
+        }} className="border-x border-y"  />
+      </div>
+      {loginHook?.errorTip() ? (
+        <div className={cls}>
+          {loginHook?.errorTip()}
+        </div>
+      ) : ''}
+      <div className="p-2">
+        {/* <div>
+          <button onClick={() => loginHook.sign()}>Sign</button>
+          sign and auto login <input type="checkbox" checked={loginHook.signAndAutoLogin()} onChange={e => {
+            loginHook.signAndAutoLogin(() => e.target.checked)
+          }} />
+        </div> */}
+        <button
+          className="border-x border-y p-2 w-full rounded hover:text-white hover:bg-black"
+          onClick={() => loginHook.login()}>Login</button>
+      </div>
+      <div className="p-2 flex justify-end">
+        <button onClick={() => {
+          props.setLoginType(LoginTypes.sign)
+        }} className="hover:underline underline-offset-2">goto sign &gt;</button>
+      </div>
+    </div>
+  )
+}
+
+const LoginTypes = {
+  login: 'login',
+  sign: 'sign'
+}
+
+const LoginBox = (props, ref) => {
   const loginHook = useTarat(login)
   
   useImperativeHandle(ref, () => ({
     hook: loginHook
   }))
 
-  const cls = classnames(s.row, {
-    show: !!loginHook?.errorTip()
-  })
+  const [loginType, setLoginType] = useState(props.type || LoginTypes.login)
 
   const alreadyLogin = loginHook.alreadyLogin()
 
   return (
-    <div className={s.login}>
-      <div className={s.title}>Welcome</div>
+    <div className={`${s.login} shadow rounded`}>
+      <div className="text-center mb-4">{props.title}</div>
       
       {alreadyLogin ? (
-        <>
-          <div className={s.row} >
-            账号：{loginHook.userData().name}
-          </div>
-          <div className={s.row} >
-            密码：{loginHook.userData().password}
-          </div>
-          <div className={s.footer}>
-            <div>
-              <button onClick={() => loginHook.logout()}>Logout</button>
-            </div>
-            <div>
-            </div>
-          </div>
-        </>
-      ) : 
-        <>
-          <div className={s.row} >
-            <input placeholder="username" onInput={e => {
-              loginHook.inputName(() => e.target.value)
-            }}  />
-          </div>
-          <div className={s.row} >
-            <input placeholder="password" onInput={e => {
-              loginHook.inputPassword(() => e.target.value)
-            }}  />
-          </div>
-          {loginHook?.errorTip() ? (
-            <div className={cls}>
-              {loginHook?.errorTip()}
-            </div>
-          ) : ''}
-          <div className={s.footer}>
-            <div>
-              <button onClick={() => loginHook.sign()}>Sign</button>
-              sign and auto login <input type="checkbox" checked={loginHook.signAndAutoLogin()} onChange={e => {
-                loginHook.signAndAutoLogin(() => e.target.checked)
-              }} />
-            </div>
-            <div>
-              <button onClick={() => loginHook.login()}>Login</button>
-            </div>
-          </div>
-        </>
-      }
+        'already login'
+      ) :  null}
+
+      {!alreadyLogin && loginType === LoginTypes.login ? <LoginFrame setLoginType={setLoginType} /> : '' }
+      {!alreadyLogin && loginType === LoginTypes.sign ? <SignFrame setLoginType={setLoginType} /> : '' }
+
+      <hr className="m-2" />
 
       <pre>
         <code>
+          loginType: {loginType} <br/>
           alreadyLogin(): {String(loginHook.alreadyLogin())} <br/>
           signAndAutoLogin(): {String(loginHook.signAndAutoLogin())} <br/>
           errorTip: {String(loginHook.errorTip())} <br/>
@@ -79,4 +136,4 @@ const LoginFrame = (props, ref) => {
   )
 }
 
-export default forwardRef(LoginFrame)
+export default forwardRef(LoginBox)
