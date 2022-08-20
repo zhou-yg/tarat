@@ -22,10 +22,11 @@ export function wrapCtx (ctx: any) {
   return {
     cookies: {
       set (name: any, value: any) {
+        console.log('[wrapCtx.cookies] name, value: ', name, value);
         return ctx.cookies.set(name, value)
       },
       get (name: any) {
-        console.log('[wrapCtx] get name: ', name);
+        console.log('[wrapCtx.cookies] get name: ', name);
         const val = ctx.cookies.get(name)
         return val
       }
@@ -75,8 +76,6 @@ export default function taratMiddleware (args: {
 
         runner.executeDriver(scope)
 
-        getPlugin('GlobalRunning').setCurrent(scope, null)
-
         await scope.ready()
 
         chain1.stop()
@@ -91,6 +90,8 @@ export default function taratMiddleware (args: {
         }
 
         await scope.ready()
+
+        getPlugin('GlobalRunning').setCurrent(scope, null)
 
         chain2.stop()
         chain2.print()

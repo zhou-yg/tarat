@@ -67,10 +67,6 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
   console.log('[before renderToString] first ');
   const html = renderToString(appEntry.root)
 
-  chain.stop()
-  chain.print()
-
-
   appEntry.cancelAdaptor()
   driver.pushListener = undefined
   cancelGlobalRunning()
@@ -82,6 +78,9 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
   await Promise.all(allRunedHook.map((scope) => {
     return scope.ready()
   }))
+  chain.stop()
+  chain.print()
+
   console.log('---- await first done ----')
 
   driver.switchToServerConsumeMode()
@@ -105,6 +104,8 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
   const css = []
   fs.existsSync(distEntryCSS) && css.push(distEntryCSS)
   fs.existsSync(distServerRoutesCSS) && css.push(distServerRoutesCSS)
+
+  console.log(`[${routerLocation}] is end \n ---`)
 
   return {
     driver,

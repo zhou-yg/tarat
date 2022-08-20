@@ -4,8 +4,8 @@ export function setCookies () {
 
   loadPlugin('cookie', {
     async set(s, k, value) {
-      // console.trace('[setCookies.set]: ', k, value);
-      // console.log('[setCookies.set]: ', getPlugin('GlobalRunning').getCurrent(s));
+      console.trace('[setCookies.set]: ', k, value);
+      console.log('[setCookies.set]: ', getPlugin('GlobalRunning').getCurrent(s), !!s);
       if (typeof value === 'string'){
         getPlugin('GlobalRunning').getCurrent(s)?.cookies.set(k, value)
       }

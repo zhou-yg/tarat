@@ -88,13 +88,13 @@ async function startCompile (c: IConfig) {
         logFrame(`[change] comipling ${chalk.green(cost())} sec`)
       })
     })
-    .on('add', () => {
+    .on('add', (path) => {
       logFrame(`[add] ${chalk.green('re-run compiling')}  from "${path}"`)
       readConfig({ cwd: c.cwd }).then(newConfig => {
         buildEverything(newConfig)
       })
     })
-    .on('unlink', () => {
+    .on('unlink', (path) => {
       logFrame(`[unlink] ${chalk.red('re-run compiling')}  from "${path}"`)
       readConfig({ cwd: c.cwd }).then(newConfig => {
         buildEverything(newConfig)
