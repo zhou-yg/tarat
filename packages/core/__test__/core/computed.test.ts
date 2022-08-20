@@ -87,6 +87,8 @@ describe('computed', () => {
       expect(result.s1()).toBe(1)
       expect(result.c1()).toBe(2)
       expect(result.c2()).toBe(3)
+      
+      expect(result.c1._hook.watchers.size).toBe(2)
 
       result.s1(v => v + 1)
       expect(result.s1()).toBe(1 + 1)

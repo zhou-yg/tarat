@@ -15,6 +15,9 @@ describe('chain', () => {
   afterEach(() => {
     stopReactiveChain()
   })
+  describe('init', () => {
+    
+  })
 
   it('init state -> 1 computed', () => {
     const runner = new Runner(mockBM.stateInComputed)

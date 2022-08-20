@@ -227,14 +227,15 @@ export function isGenerator(g: any) {
 }
 
 export function nextTick(fn: () => void) {
-  const p = Promise.resolve()
-  let run = true
-  p.then(() => {
-    if (run) {
-      fn()
-    }
-  })
-  return () => run = false
+  // const p = Promise.resolve()
+  // let run = true
+  // p.then(() => {
+  //   if (run) {
+  //     fn()
+  //   }
+  // })
+  let st = setTimeout(fn, 0)
+  return () => clearTimeout(st)
 }
 
 export type TContextData =

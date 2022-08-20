@@ -16,7 +16,8 @@ import {
   compose,
   connectModel,
   progress,
-  writeModel
+  writeModel,
+  prisma
 } from '../src/'
 import { loadPlugin } from '../src/plugin'
 
@@ -487,7 +488,7 @@ export function userModelComputedQuery() {
 }
 export function modelInComputed() {
   const targetName = state('')
-  const users = model<Array<{ id: number; name: string }>>(
+  const users = prisma<Array<{ id: number; name: string }>>(
     'item',
     () => ({
       where: {
@@ -579,6 +580,14 @@ export function nestedSimpleComputed() {
     c2
   }
 }
+Object.assign(nestedSimpleComputed, {
+  __names__: [
+    [0, 's1'],
+    [1, 'c1'],
+    [2, 'c2']
+  ]
+})
+
 
 export function onlyCache() {
   const c = cache<{ num: number }>('num', {

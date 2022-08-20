@@ -280,10 +280,10 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
     public scope: CurrentRunnerScope
   ) {
     super([], scope)
-    scope.addHook(this)
 
     if (getter) {
       this.queryWhereComputed = new Computed(getter, scope)
+      this.queryWhereComputed.name = `${this.name}.query`
       this.watcher.addDep(this.queryWhereComputed)
     }
 
@@ -340,7 +340,7 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
     if (!reactiveChain) {
       reactiveChain = currentReactiveChain
     }
-
+ 
     if (this.queryWhereComputed) {
       const newReactiveChain = reactiveChain?.add(this.queryWhereComputed)
       this.queryWhereComputed.run(newReactiveChain)
@@ -703,7 +703,6 @@ export class Cache<T> extends AsyncState<T | undefined> {
     public scope: CurrentRunnerScope
   ) {
     super(undefined, scope)
-    scope.addHook(this)
     this.getterKey = key // `tarat_cache_${scope.hookRunnerName}__${key}`
 
     if (this.options.source) {
@@ -737,9 +736,9 @@ export class Cache<T> extends AsyncState<T | undefined> {
     }
   }
   override get value(): T | undefined {
+    /** @TODO should use symbol for initial value */
     if (this._internalValue === undefined) {
-      const newReactiveChain = currentReactiveChain?.addCall(this)
-      this.executeQuery(newReactiveChain)
+      this.executeQuery(currentReactiveChain)
     }
     return super.value
   }
@@ -828,7 +827,6 @@ export const ComputedInitial = Symbol('ComputedInitial')
 export class Computed<T> extends AsyncState<T | Symbol> {
   batchRunCancel: () => void = () => {}
   watcher: Watcher<State<any>> = new Watcher<State<any>>(this)
-  firstRun = true
   // @TODO: maybe here need trigger async optional setting
   constructor(
     public getter:
@@ -839,18 +837,14 @@ export class Computed<T> extends AsyncState<T | Symbol> {
   ) {
     super(ComputedInitial, scope)
   }
-  // override update (
-  //   v: T,
-  //   patches?: IPatch[],
-  //   silent?: boolean,
-  //   reactiveChain?: ReactiveChain<T>
-  // ) {
-  //   super.update(v, patches, silent, reactiveChain)
-  //   if (this.firstRun && isUndef(v)) {
-  //     this.trigger(undefined, undefined, reactiveChain)
-  //     this.firstRun = false
-  //   }
-  // }
+
+  override get value(): T | Symbol {
+    if (this._internalValue === ComputedInitial) {
+      this.run(currentReactiveChain)
+    }
+    return super.value
+  }
+
   run(reactiveChain?: ReactiveChain) {
     pushComputed(this)
 
@@ -859,6 +853,7 @@ export class Computed<T> extends AsyncState<T | Symbol> {
     if (currentReactiveChain && reactiveChain) {
       currentReactiveChain = reactiveChain
     }
+
     // making sure the hook called by computed can register thier chain
     const r: T | Promise<T> | Generator<unknown, T> = this.getter(
       this._internalValue
@@ -1154,6 +1149,11 @@ export class ReactiveChain<T = any> {
   addCall(child: State<T> | InputCompute): ReactiveChain<T> {
     const childChain = this.add(child)
     childChain.type = 'call'
+    return childChain
+  }
+  addNotify(child: State<T> | InputCompute): ReactiveChain<T> {
+    const childChain = this.add(child)
+    childChain.type = 'notify'
     return childChain
   }
   addUpdate(child: State<T> | InputCompute): ReactiveChain<T> {
@@ -1961,9 +1961,7 @@ export class Runner<T extends Driver> {
     )
     currentRunnerScope = null
 
-    if (withInitialContext) {
-      scope.applyDepsMap()
-    }
+    scope.applyDepsMap()
     // do execute effect.maybe from model/cache
     scope.flushEffects()
 
@@ -1993,7 +1991,7 @@ export class Runner<T extends Driver> {
    * @TODO after init method refactor. shouldnt callHook through runner but scope
    */
   callHook(hookIndex: number, args: any[]) {
-    this.scope?.callHook(hookIndex, args)
+    return this.scope?.callHook(hookIndex, args)
   }
   // same above
   state() {
@@ -2224,29 +2222,31 @@ function updateState<T>(initialValue?: T) {
   }
   const timestamp =
     currentRunnerScope!.runnerContext.intialData![currentIndex]?.[2]
-  const internalState = new State(initialValue, currentRunnerScope)
+  const hook = new State(initialValue, currentRunnerScope)
   if (timestamp) {
-    internalState.modifiedTimstamp = timestamp
+    hook.modifiedTimstamp = timestamp
   }
 
-  const setterGetter = createStateSetterGetterFunc(internalState)
-  currentRunnerScope!.addHook(internalState)
+  const setterGetter = createStateSetterGetterFunc(hook)
+  currentRunnerScope!.addHook(hook)
+  currentReactiveChain?.add(hook)
 
   const newSetterGetter = Object.assign(setterGetter, {
-    _hook: internalState
+    _hook: hook
   })
 
   return newSetterGetter
 }
 
 function mountState<T>(initialValue?: T) {
-  const internalState = new State(initialValue, currentRunnerScope)
+  const hook = new State(initialValue, currentRunnerScope)
 
-  const setterGetter = createStateSetterGetterFunc(internalState)
-  currentRunnerScope!.addHook(internalState)
+  const setterGetter = createStateSetterGetterFunc(hook)
+  currentRunnerScope!.addHook(hook)
+  currentReactiveChain?.add(hook)
 
   const newSetterGetter = Object.assign(setterGetter, {
-    _hook: internalState
+    _hook: hook
   })
 
   return newSetterGetter
@@ -2277,6 +2277,10 @@ function updatePrisma<T extends any[]>(
   const hook = inServer
     ? new Prisma<T>(e, q, op, currentRunnerScope!)
     : new ClientPrisma<T>(e, q, op, currentRunnerScope!)
+
+  currentRunnerScope.addHook(hook)
+  currentReactiveChain?.add(hook)
+  
 
   if (receiveDataFromContext) {
     const initialValue: T =
@@ -2312,6 +2316,9 @@ function mountPrisma<T extends any[]>(
       ? new Prisma<T>(e, q, op, currentRunnerScope!)
       : new ClientPrisma<T>(e, q, op, currentRunnerScope!)
 
+  currentRunnerScope.addHook(hook)
+  currentReactiveChain?.add(hook)
+
   const setterGetter = createModelSetterGetterFunc<T>(hook)
   const newSetterGetter = Object.assign(setterGetter, {
     _hook: hook,
@@ -2328,6 +2335,8 @@ function mountWritePrisma<T>(source: { _hook: Model<T[]> }, q: () => T) {
       ? new WritePrisma(source, q, currentRunnerScope)
       : new ClientWritePrisma(source, q, currentRunnerScope)
   currentRunnerScope!.addHook(hook)
+  currentReactiveChain?.add(hook)
+
 
   const getter = () => {
     throw new Error('[writePrisma] cant get data from writePrisma')
@@ -2338,6 +2347,8 @@ function mountWritePrisma<T>(source: { _hook: Model<T[]> }, q: () => T) {
     update: hook.updateRow.bind(hook) as typeof hook.updateRow,
     remove: hook.removeRow.bind(hook) as typeof hook.removeRow
   })
+
+
 
   return newGetter
 }
@@ -2354,6 +2365,7 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
 
   /** @TODO cache maybe should has initial value */
   const hook = new Cache(key, options, currentRunnerScope!)
+  currentRunnerScope.addHook(hook);
 
   const initialValue: T =
     currentRunnerScope!.runnerContext.intialData![currentIndex]?.[1]
@@ -2375,7 +2387,7 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
 }
 function mountCache<T>(key: string, options: ICacheOptions<T>) {
   const hook = new Cache(key, options, currentRunnerScope!)
-
+  currentRunnerScope.addHook(hook);
   currentReactiveChain?.add(hook)
 
   const setterGetter = createCacheSetterGetterFunc(hook)
@@ -2417,9 +2429,7 @@ function updateComputed<T>(fn: any): any {
     hook.modifiedTimstamp = timestamp
   }
 
-  // const reactiveChain: ReactiveChain<T> | undefined =
-  //   currentReactiveChain?.add(hook)
-  // hook.run(reactiveChain)
+  currentReactiveChain?.add(hook)
 
   const getter = () => {
     currentReactiveChain?.addCall(hook)
@@ -2443,9 +2453,8 @@ function mountComputed<T>(fn: any): any {
   const hook = new Computed<T>(fn, currentRunnerScope)
   currentRunnerScope!.addHook(hook)
 
-  const reactiveChain: ReactiveChain<T> | undefined =
-    currentReactiveChain?.add(hook)
-  hook.run(reactiveChain)
+  currentReactiveChain?.add(hook)
+  // hook.run(reactiveChain)
 
   const getter = () => {
     currentReactiveChain?.addCall(hook)
@@ -2497,7 +2506,7 @@ export function prisma<T extends any[]>(
   if (!currentRunnerScope) {
     throw new Error('[model] must under a tarat runner')
   }
-  return currentHookFactory.model<T>(e, q, op)
+  return currentHookFactory.prisma<T>(e, q, op)
 }
 
 export function writePrisma<T>(source: { _hook: Model<T[]> }, q: () => T) {
@@ -2616,7 +2625,7 @@ export function inputComputeInServer<T extends any[]>(
 ): AsyncInputComputeFn<T> & { _hook: Hook }
 export function inputComputeInServer<T extends any[]>(
   func: InputComputeFn<T>
-): InputComputeFn<T> & { _hook: Hook }
+): AsyncInputComputeFn<T> & { _hook: Hook }
 export function inputComputeInServer(func: any) {
   if (!currentRunnerScope) {
     throw new Error('[inputComputeServer] must under a tarat runner')

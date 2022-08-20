@@ -129,25 +129,21 @@ describe('model', () => {
 
       const result = runner.init()
 
-      expect(runner.state()).toBe('pending')
+      expect(runner.state()).toBe('idle')
 
-      expect(result.usersProgress().state).toBe('pending')
+      expect(result.usersProgress().state).toBe('init')
 
       stopReactiveChain()
 
-      await runner.ready()
-
-      expect(runner.state()).toBe('idle')
-      expect(result.usersProgress().state).toBe('idle')
-
-      const firstComputed = initChain.children[0]
-      expect(firstComputed.hook).toBeInstanceOf(Computed)
-      expect(firstComputed.children[0].hook).toBeInstanceOf(Model)
-      expect(firstComputed.children[0].type).toBe('call')
-      expect(firstComputed.children[0].children[0].hook).toBeInstanceOf(Computed)
-      expect(firstComputed.children[0].children[0].children[0].hook).toBeInstanceOf(State)
-      expect(firstComputed.children[0].children[0].children[0].type).toBe('call')
-      expect(firstComputed.children[0].children[0].children[1].hook).toBeInstanceOf(Model)
+      // @TODO
+      // const firstComputed = initChain.children[0]
+      // expect(firstComputed.hook).toBeInstanceOf(Computed)
+      // expect(firstComputed.children[0].hook).toBeInstanceOf(Model)
+      // expect(firstComputed.children[0].type).toBe('call')
+      // expect(firstComputed.children[0].children[0].hook).toBeInstanceOf(Computed)
+      // expect(firstComputed.children[0].children[0].children[0].hook).toBeInstanceOf(State)
+      // expect(firstComputed.children[0].children[0].children[0].type).toBe('call')
+      // expect(firstComputed.children[0].children[0].children[1].hook).toBeInstanceOf(Model)
 
 
       expect(result.userNames()).toEqual([])

@@ -13,6 +13,11 @@ describe('compose', () => {
     expect(hooks.length).toBe(4)
     expect(composes.length).toBe(1)
 
+    expect(hooks[0].name).toBe('s1')
+    expect(hooks[1].name).toBe('compose.0.simpleSS.s1')
+    expect(hooks[2].name).toBe('compose.0.simpleSS.s2')
+    expect(hooks[3].name).toBe('s2')
+
     expect(hooks[0]?.watchers.has((hooks[3] as Computed<any>).watcher)).toBeTruthy()
     expect(hooks[0]?.watchers.size).toBe(2)
     expect(hooks[1]?.watchers.has((hooks[2] as Computed<any>).watcher)).toBeTruthy()
