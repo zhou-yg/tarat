@@ -352,7 +352,7 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
     return !!q
   }
   abstract executeQuery(reactiveChain?: ReactiveChain): Promise<void>
-  abstract exist(obj: Partial<T[0]>): Promise<boolean>
+  abstract exist(obj: Partial<T[0]>): Promise<T | undefined>
   abstract refresh(): Promise<void>
   abstract checkAndRefresh(): Promise<void>
   override async applyComputePatches(
@@ -374,17 +374,21 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
     reactiveChain?: ReactiveChain
   ): Promise<void>
 }
-export abstract class WriteModel<T> extends AsyncState<T | Symbol> {
+export abstract class WriteModel<T extends Object> extends AsyncState<T | Symbol> {
   abstract identifier: string
   entity: string = ''
   sourceModel?: Model<T[]>
 
   constructor(
     public sourceModelGetter: { _hook: Model<T[]> } | string,
-    public getData: () => T,
+    public getData: (() => T) | undefined,
     scope: CurrentRunnerScope
   ) {
     super(writeInitialSymbol, scope)
+
+    if (!getData) {
+      this.setGetter(() => ({} as T))
+    }
 
     if (typeof sourceModelGetter !== 'string') {
       this.sourceModel = sourceModelGetter._hook
@@ -462,7 +466,7 @@ export class Prisma<T extends any[]> extends Model<T> {
     try {
       // @TODO：要确保时序，得阻止旧的query数据更新
       const q = await this.getQueryWhere()
-      log('[Model.executeQuery] 1 q.entity, q.query: ', this.entity, q)
+      log(`[${this.name || ''} Model.executeQuery] 1 q.entity, q.query: `, this.entity, q)
       let result: T[] = []
       if (!!q) {
         if (this.queryTimeIndex <= currentQueryTimeIndex) {
@@ -471,27 +475,27 @@ export class Prisma<T extends any[]> extends Model<T> {
             this.entity,
             q
           )
-          log('[Model.executeQuery] 2 result: ', result)
+          log(`[${this.name || ''} Model.executeQuery] 2 result: `, result)
         }
       }
       if (this.queryTimeIndex <= currentQueryTimeIndex) {
         this.update(result, [], false, reactiveChain)
       }
     } catch (e) {
-      log('[Model.executeQuery] error')
+      log(`[${this.name || ''} Model.executeQuery] error`)
       console.error(e)
     } finally {
-      log('[Model.executeQuery] end')
+      log(`[${this.name || ''} Model.executeQuery] end`)
       end()
     }
   }
   async exist(obj: Partial<T[0]>) {
-    const result: T = await getPlugin('Model').find(
+    const result: T[] = await getPlugin('Model').find(
       this.identifier,
       this.entity,
       { where: obj }
     )
-    return result.length > 0
+    return result[0]
   }
   async refresh() {
     await this.executeQuery(currentReactiveChain?.add(this))
@@ -757,7 +761,7 @@ export class Cache<T> extends AsyncState<T | undefined> {
       if (this.queryTimeIndex > currentQueryTimeIndex) {
         return
       }
-      log('[Cache.executeQuery] valueInCache=', valueInCache)
+      log(`[${this.name || ''} Cache.executeQuery] valueInCache=`, valueInCache)
       if (valueInCache !== undefined) {
         super.update(valueInCache, [], false, reactiveChain)
       } else if (source) {
@@ -776,7 +780,7 @@ export class Cache<T> extends AsyncState<T | undefined> {
       log(`[Cache.executeQuery] error`)
       console.error(e)
     } finally {
-      log(`[Cache.executeQuery] end ${currentQueryTimeIndex}`)
+      log(`[${this.name || ''} Cache.executeQuery] end=${currentQueryTimeIndex}`)
       end()
     }
   }
@@ -801,6 +805,8 @@ export class Cache<T> extends AsyncState<T | undefined> {
         reactiveChain
       )
       await getPlugin('Cache').setValue(this.scope, this.getterKey, v, from)
+
+      log(`[${this.name} cache.update] end k=${this.getterKey} v=${v}`)
     }
   }
 }
@@ -2502,6 +2508,10 @@ export function writePrisma<T>(source: { _hook: Model<T[]> }, q: () => T) {
 }
 
 export function cache<T>(key: string, options: ICacheOptions<T>) {
+  if (!currentRunnerScope) {
+    throw new Error('[cache] must under a tarat runner')
+  }
+
   return currentHookFactory.cache<T>(key, options)
 }
 
