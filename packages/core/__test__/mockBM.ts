@@ -17,7 +17,8 @@ import {
   connectModel,
   progress,
   writeModel,
-  prisma
+  prisma,
+  writePrisma
 } from '../src/'
 import { loadPlugin } from '../src/plugin'
 
@@ -641,6 +642,49 @@ export function combineTwoState() {
     final
   }
 }
+
+export function hooksInOneLazy () {
+  const s1 = state(1)
+  const c1 = computed(() => s1())
+  const c2 = cache('c2', {
+    from: 'cookie'
+  })
+  const m1 = prisma('item', () => ({}), { immediate: false }) // 3
+  const rm1 = writePrisma(m1) // 4
+  const ic = inputCompute(() => {
+    s1(() => {
+      return 2
+    })
+  })
+
+  return {
+    s1, c1, c2, m1, rm1, ic
+  }
+}
+export function hooksInOneModelTrigger () {
+  const s1 = state(1)
+  const c1 = computed(() => s1())
+  const c2 = cache('c2', {
+    from: 'cookie'
+  })
+  const m1 = prisma('item') // 3
+  const rm1 = writePrisma(m1) // 4
+  const ic = inputCompute(() => {
+    s1(() => {
+      return 2
+    })
+  })
+
+  return {
+    s1, c1, c2, m1, rm1, ic
+  }
+}
+Object.assign(hooksInOneModelTrigger, {
+  __names__: [
+    [2, 'c2'],
+    [3, 'm1'],
+  ]
+})
 
 export function stateInComputed() {
   const s2 = state(1)

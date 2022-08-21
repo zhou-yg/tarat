@@ -5,6 +5,11 @@ import {
   State,
   Computed,
   InputCompute,
+  Model,
+  Cache,
+  WriteModel,
+  CurrentRunnerScope,
+  debuggerLog,
 } from '../../src/index'
 
 import * as mockBM from '../mockBM'
@@ -15,30 +20,95 @@ describe('chain', () => {
   afterEach(() => {
     stopReactiveChain()
   })
-  describe('init', () => {
-    
+  describe.only('init', () => {
+    it('all lazy hooks', () => {
+      const runner = new Runner(mockBM.hooksInOneLazy)
+
+      const chain = startdReactiveChain()
+  
+      runner.init()
+  
+      chain.stop()
+
+      expect(runner.state()).toBe('idle')
+      expect(chain.children.length).toBe(6)
+      expect(chain.children[0].hook).toBeInstanceOf(State)
+      expect(chain.children[1].hook).toBeInstanceOf(Computed)
+      expect(chain.children[2].hook).toBeInstanceOf(Cache)
+      expect(chain.children[3].hook).toBeInstanceOf(Model)
+      expect(chain.children[4].hook).toBeInstanceOf(WriteModel)
+      expect(chain.children[5].hook).toBeInstanceOf(InputCompute)
+    })
+    it('all lazy hooks, model trigger', () => {
+      const runner = new Runner(mockBM.hooksInOneModelTrigger)
+
+      const chain = startdReactiveChain()
+  
+      runner.init()
+  
+      chain.stop()
+      chain.print()
+
+      expect(runner.state()).toBe('pending')
+      expect(chain.children.length).toBe(7)
+
+      expect(chain.children[0].hook).toBeInstanceOf(State)
+      expect(chain.children[1].hook).toBeInstanceOf(Computed)
+      expect(chain.children[2].hook).toBeInstanceOf(Cache)
+      expect(chain.children[3].hook).toBeInstanceOf(Model)
+      expect(chain.children[4].hook).toBeInstanceOf(WriteModel)
+      expect(chain.children[5].hook).toBeInstanceOf(InputCompute)
+      //-- trigger
+      const triggerScopeChain = chain.children[6]
+      expect(triggerScopeChain.hook).toBeInstanceOf(CurrentRunnerScope)
+      expect(triggerScopeChain.children[0].hook).toBeInstanceOf(Model)
+      expect(triggerScopeChain.children[0].children[0].hook).toBeInstanceOf(Computed)
+    })
+    it('all lazy hooks, call hook', async () => {
+      const runner = new Runner(mockBM.hooksInOneLazy)
+
+      const chain = startdReactiveChain()
+  
+      runner.init()
+  
+      expect(runner.state()).toBe('idle')
+      expect(chain.children.length).toBe(6)
+
+      await runner.callHook(5, [])
+
+      expect(runner.state()).toBe('idle')
+      expect(chain.children.length).toBe(7)
+
+      chain.stop()
+      //-- trigger
+      const triggerScopeChain = chain.children[6]
+      expect(triggerScopeChain.hook).toBeInstanceOf(CurrentRunnerScope)
+      expect(triggerScopeChain.children[0].hook).toBeInstanceOf(InputCompute)
+      expect(triggerScopeChain.children[0].children[0].hook).toBeInstanceOf(State)
+    })
   })
 
-  it('init state -> 1 computed', () => {
-    const runner = new Runner(mockBM.stateInComputed)
-
-    const chain = startdReactiveChain()
-
-    const { s2, c1 } = runner.init()
-
-    stopReactiveChain()
-
-    // root
-    expect(chain.hook).toBe(undefined)
-    expect(chain.children.length).toBe(1)
-    // computed
-    expect(chain.children[0].hook).toBeInstanceOf(Computed)
-    expect(chain.children[0].newValue).toBe(2)
-    // state
-    expect(chain.children[0].children.length).toBe(1)
-    expect(chain.children[0].children[0].hook).toBeInstanceOf(State)
-    expect(chain.children[0].children[0].oldValue).toBe(1)
-    expect(chain.children[0].children[0].type).toBe('call')    
+  describe.only('call', () => {
+    it('init state -> 1 computed', () => {
+      const runner = new Runner(mockBM.stateInComputed)
+    
+      const { s2, c1 } = runner.init()      
+  
+      const chain = startdReactiveChain()
+      c1()
+      chain.stop()
+      // root
+      expect(chain.hook).toBe(undefined)
+      expect(chain.children.length).toBe(1)
+      // computed
+      expect(chain.children[0].hook).toBeInstanceOf(Computed)
+      // state
+      expect(chain.children[0].children.length).toBe(1)
+      expect(chain.children[0].children[0].hook).toBeInstanceOf(State)
+    })
+    it('model, cache', () => {
+      /** see in ./model.server.test.ts */
+    })
   })
   it ('state -> 1 computed', () => {
     const runner = new Runner(mockBM.stateInComputed)

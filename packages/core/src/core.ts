@@ -275,26 +275,26 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
   queryTimeIndex: number = 0
   constructor(
     public entity: string,
-    getter: (() => IModelQuery['query'] | undefined) | void = undefined,
+    getter: (() => IModelQuery['query'] | undefined) | undefined = undefined,
     public options: IModelOption = {},
     public scope: CurrentRunnerScope
   ) {
     super([], scope)
 
-    if (getter) {
-      this.queryWhereComputed = new Computed(getter, scope)
-      this.queryWhereComputed.name = `${this.name}.query`
-      this.watcher.addDep(this.queryWhereComputed)
+    if (!getter) {
+      getter = () => ({})
     }
+    this.queryWhereComputed = new Computed(getter!, scope)
+    this.watcher.addDep(this.queryWhereComputed)
 
     // default to immediate
     if (options.immediate || options.immediate === undefined) {
-      const reactiveChain: ReactiveChain<T> | undefined =
-        currentReactiveChain?.add(this)
-
       // do query after driver ready
-      scope.effect(() => {
-        this.query(reactiveChain)
+      scope.effect((reactiveChain?: ReactiveChain) => {
+        this.queryWhereComputed.name = `${this.name}.query`
+
+        const newReactiveChain: ReactiveChain<T> | undefined = reactiveChain?.add(this)
+        this.query(newReactiveChain)
       })
     }
   }
@@ -308,11 +308,15 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
     const newReactiveChain = reactiveChain?.add(this)
     this.executeQuery(newReactiveChain)
   }
-  async getQueryWhere(): Promise<IModelQuery['query'] | void> {
+  async getQueryWhere(reactiveChain?: ReactiveChain): Promise<IModelQuery['query'] | void> {
     if (this.queryWhereComputed.getterPromise) {
       await this.queryWhereComputed!.getterPromise
     }
-    const queryWhereValue = this.queryWhereComputed!.value
+
+    const queryWhereValue = ReactiveChain.withChain(reactiveChain, () => {
+      return this.queryWhereComputed!.value
+    })
+
     if (queryWhereValue) {
       if (queryWhereValue === ComputedInitial) {
         // queryWhereComputed hadnt run.
@@ -342,8 +346,7 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
     }
  
     if (this.queryWhereComputed) {
-      const newReactiveChain = reactiveChain?.add(this.queryWhereComputed)
-      this.queryWhereComputed.run(newReactiveChain)
+      this.queryWhereComputed.run(reactiveChain)
     }
   }
   async enableQuery() {
@@ -465,7 +468,7 @@ export class Prisma<T extends any[]> extends Model<T> {
     const end = this.startAsyncGetter()
     try {
       // @TODO：要确保时序，得阻止旧的query数据更新
-      const q = await this.getQueryWhere()
+      const q = await this.getQueryWhere(reactiveChain)
       log(`[${this.name || ''} Model.executeQuery] 1 q.entity, q.query: `, this.entity, q)
       let result: T[] = []
       if (!!q) {
@@ -617,8 +620,6 @@ export class WritePrisma<T> extends WriteModel<T> {
 
 export class ClientPrisma<T extends any[]> extends Prisma<T> {
   override async executeQuery() {
-    this.init = false
-
     const end = this.startAsyncGetter()
 
     const valid = await this.enableQuery()
@@ -636,9 +637,11 @@ export class ClientPrisma<T extends any[]> extends Prisma<T> {
       )
 
       const index = this.scope.hooks.indexOf(this)
-      const d = result.data[index]
-      if (d[1]) {
-        this.update(d[1])
+      if (result.data) {
+        const d = result.data[index]
+        if (d[1]) {
+          this.update(d[1])
+        }
       }
     }
 
@@ -839,8 +842,9 @@ export class Computed<T> extends AsyncState<T | Symbol> {
   }
 
   override get value(): T | Symbol {
+    const callChain = currentReactiveChain?.addCall(this)
     if (this._internalValue === ComputedInitial) {
-      this.run(currentReactiveChain)
+      this.run(callChain)
     }
     return super.value
   }
@@ -848,23 +852,18 @@ export class Computed<T> extends AsyncState<T | Symbol> {
   run(reactiveChain?: ReactiveChain) {
     pushComputed(this)
 
-    let oldCurrentReactiveChain: ReactiveChain | undefined =
-      currentReactiveChain
-    if (currentReactiveChain && reactiveChain) {
-      currentReactiveChain = reactiveChain
-    }
+    const innerReactiveChain = reactiveChain?.add(this)
 
     // making sure the hook called by computed can register thier chain
-    const r: T | Promise<T> | Generator<unknown, T> = this.getter(
-      this._internalValue
-    )
-    currentReactiveChain = oldCurrentReactiveChain
+    const r: T | Promise<T> | Generator<unknown, T> = ReactiveChain.withChain(innerReactiveChain, () => {
+      return this.getter(this._internalValue)
+    })
 
     popComputed()
     if (isPromise(r)) {
       const end = this.startAsyncGetter()
       ;(r as Promise<T>).then((asyncResult: T) => {
-        this.update(asyncResult, [], false, reactiveChain)
+        this.update(asyncResult, [], false, innerReactiveChain)
         end()
       })
     } else if (isGenerator(r)) {
@@ -876,26 +875,20 @@ export class Computed<T> extends AsyncState<T | Symbol> {
           () => popComputed()
         ) as Promise<T>
       ).then((asyncResult: T) => {
-        this.update(asyncResult, [], false, reactiveChain)
+        this.update(asyncResult, [], false, innerReactiveChain)
         end()
       })
     } else {
-      this.update(r as T, [], false, reactiveChain)
+      this.update(r as T, [], false, innerReactiveChain)
       /** @TODO this code need consider again.maybe need re-design */
       this.init = false
     }
   }
   notify(h?: Hook, p?: IPatch[], reactiveChain?: ReactiveChain) {
-    const newReactiveChain = reactiveChain?.add(this)
     /**
      * trigger synchronism
      */
-    this.run(newReactiveChain)
-
-    // this.batchRunCancel()
-    // this.batchRunCancel = nextTick(() => {
-    //   this.run()
-    // })
+    this.run(reactiveChain)
   }
 }
 let currentInputeCompute: InputCompute | null = null
@@ -910,7 +903,6 @@ export class InputCompute<P extends any[] = any> extends Hook {
     public scope: CurrentRunnerScope
   ) {
     super()
-    scope.addHook(this)
   }
   inputFuncStart() {}
   inputFuncEnd(reactiveChain?: ReactiveChain<P>) {
@@ -918,10 +910,7 @@ export class InputCompute<P extends any[] = any> extends Hook {
       currentInputeCompute = null
     }
 
-    const updateReactiveChain: ReactiveChain | undefined =
-      reactiveChain?.addUpdate(this)
-
-    this.scope.applyAllComputePatches(this, updateReactiveChain)
+    this.scope.applyAllComputePatches(this, reactiveChain)
     unFreeze({ _hook: this })
     this.emit(EHookEvents.afterCalling, this)
   }
@@ -934,7 +923,7 @@ export class InputCompute<P extends any[] = any> extends Hook {
 
     let preservedCurrentReactiveChain: ReactiveChain | undefined =
       currentReactiveChain
-    const newReactiveChain = currentReactiveChain?.add(this)
+    const newReactiveChain = currentReactiveChain?.addCall(this)
     currentReactiveChain = newReactiveChain
 
     if (!checkFreeze({ _hook: this })) {
@@ -1112,6 +1101,7 @@ export function stopReactiveChain() {
 /**
  * collect reactive chain for debug
  */
+type ChainChild<T> = CurrentRunnerScope<any> | State<T> | InputCompute<any>
 export class ReactiveChain<T = any> {
   name?: string
   index?: number
@@ -1121,10 +1111,19 @@ export class ReactiveChain<T = any> {
   children: ReactiveChain<T>[] = []
   type?: 'update' | 'notify' | 'call'
   async?: boolean
-  constructor(public hook?: State<T> | InputCompute) {
+  constructor(public hook?: ChainChild<T>) {
     if (hook instanceof State) {
       this.oldValue = hook._internalValue
     }
+  }
+  static withChain<T extends (...args: any[]) => any> (chain: ReactiveChain, fn: T): ReturnType<T> {
+    const oldCurrentReactiveChain = currentReactiveChain
+    currentReactiveChain = chain
+
+    const r = fn()
+
+    currentReactiveChain = oldCurrentReactiveChain
+    return r
   }
   stop() {
     stopReactiveChain()
@@ -1135,28 +1134,30 @@ export class ReactiveChain<T = any> {
       this.newValue = this.hook._internalValue
     }
   }
-  add(child: State<T> | InputCompute): ReactiveChain<T> {
+  add(child: ChainChild<T>): ReactiveChain<T> {
     const childChain = new ReactiveChain(child)
     this.children.push(childChain)
     if (currentRunnerScope) {
-      const index = currentRunnerScope.hooks.indexOf(child)
-      if (index > -1) {
-        childChain.index = index
+      if (child instanceof Hook) {
+        const index = currentRunnerScope.hooks.indexOf(child)
+        if (index > -1) {
+          childChain.index = index
+        }
       }
     }
     return childChain
   }
-  addCall(child: State<T> | InputCompute): ReactiveChain<T> {
+  addCall(child: ChainChild<T>): ReactiveChain<T> {
     const childChain = this.add(child)
     childChain.type = 'call'
     return childChain
   }
-  addNotify(child: State<T> | InputCompute): ReactiveChain<T> {
+  addNotify(child: ChainChild<T>): ReactiveChain<T> {
     const childChain = this.add(child)
     childChain.type = 'notify'
     return childChain
   }
-  addUpdate(child: State<T> | InputCompute): ReactiveChain<T> {
+  addUpdate(child: ChainChild<T>): ReactiveChain<T> {
     const childChain = this.add(child)
     childChain.type = 'update'
     return childChain
@@ -1424,6 +1425,7 @@ export class ModelEvent {
 }
 
 export class CurrentRunnerScope<T extends Driver = any> {
+  name?: string
   hooks: (Hook | undefined)[] = []
   composes: any[] = [] // store the compose execute resutl
 
@@ -1493,8 +1495,11 @@ export class CurrentRunnerScope<T extends Driver = any> {
     this.effectFuncArr.push(f)
   }
   flushEffects() {
-    this.effectFuncArr.forEach(f => f())
-    this.effectFuncArr = []
+    if (this.effectFuncArr.length) {
+      const reactiveChain = currentReactiveChain?.add(this)
+      this.effectFuncArr.forEach(f => f(reactiveChain))
+      this.effectFuncArr = []
+    }
   }
 
   /**
@@ -1502,17 +1507,18 @@ export class CurrentRunnerScope<T extends Driver = any> {
    * @TODO the executable hook maybe need a abstract base class
    */
   async callHook(hookIndex: number, args: any[]) {
+    log('[Scope.callHook] start')
     const hook = this.hooks[hookIndex]
     if (hook) {
       if (hook instanceof Model) {
         // console.log('callHook hookIndex=', hookIndex)
         // await (hook as Model<any>).query()
-      } else {
-        log('[Scope.callHook] start')
-        await (hook as InputCompute).run(...args)
-        log('[Scope.callHook] end')
+      } else if (hook instanceof InputCompute) {
+        currentReactiveChain = currentReactiveChain?.add(this)
+        await hook.run(...args)
       }
     }
+    log('[Scope.callHook] end')
   }
 
   /**
@@ -1577,8 +1583,8 @@ export class CurrentRunnerScope<T extends Driver = any> {
 
   applyDepsMap() {
     const deps = this.intialContextDeps
-    deps?.forEach(([name, hookIndex, deps]) => {
-      deps.forEach(triggerHookIndex => {
+    deps?.forEach(([name, hookIndex, getDeps]) => {
+      getDeps.forEach(triggerHookIndex => {
         let triggerHook: Hook | undefined | null
 
         if (Array.isArray(triggerHookIndex)) {
@@ -2334,9 +2340,9 @@ function mountWritePrisma<T>(source: { _hook: Model<T[]> }, q: () => T) {
     process.env.TARGET === 'server'
       ? new WritePrisma(source, q, currentRunnerScope)
       : new ClientWritePrisma(source, q, currentRunnerScope)
+  
   currentRunnerScope!.addHook(hook)
   currentReactiveChain?.add(hook)
-
 
   const getter = () => {
     throw new Error('[writePrisma] cant get data from writePrisma')
@@ -2432,7 +2438,6 @@ function updateComputed<T>(fn: any): any {
   currentReactiveChain?.add(hook)
 
   const getter = () => {
-    currentReactiveChain?.addCall(hook)
     return hook.value
   }
   const newGetter = Object.assign(getter, {
@@ -2457,7 +2462,6 @@ function mountComputed<T>(fn: any): any {
   // hook.run(reactiveChain)
 
   const getter = () => {
-    currentReactiveChain?.addCall(hook)
     return hook.value
   }
   const newGetter = Object.assign(getter, {
@@ -2509,7 +2513,7 @@ export function prisma<T extends any[]>(
   return currentHookFactory.prisma<T>(e, q, op)
 }
 
-export function writePrisma<T>(source: { _hook: Model<T[]> }, q: () => T) {
+export function writePrisma<T>(source: { _hook: Model<T[]> }, q?: () => T) {
   if (!currentRunnerScope) {
     throw new Error('[writePrisma] must under a tarat runner')
   }
@@ -2568,7 +2572,8 @@ function updateInputCompute(func: any) {
 }
 function mountInputCompute(func: any) {
   const hook = new InputCompute(func, currentRunnerScope)
-
+  currentRunnerScope.addHook(hook)
+  currentReactiveChain?.add(hook)
   const wrapFunc = (...args: any) => {
     return hook.run(...args)
   }
@@ -2608,7 +2613,8 @@ function updateInputComputeInServer(func: any) {
 
 function mountInputComputeInServer(func: any) {
   const hook = new InputComputeInServer(func, currentRunnerScope)
-
+  currentRunnerScope.addHook(hook)
+  currentReactiveChain?.add(hook)
   const wrapFunc = (...args: any) => {
     return hook.run(...args)
   }
