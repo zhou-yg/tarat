@@ -31,7 +31,8 @@ import {
   IModelPatch,
   IDataPatch,
   isDataPatch,
-  isModelPatch
+  isModelPatch,
+  shortValue
 } from './util'
 import EventEmitter from 'eventemitter3'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
@@ -131,6 +132,10 @@ enum EHookEvents {
 
 interface RecordInputComputePatches<T> {
   inputComputePatchesMap: Map<InputCompute, [T, IPatch[]]>
+}
+
+function getValueSilently (s: State) {
+  return s._internalValue
 }
 
 export class State<T = any> extends Hook {
@@ -293,7 +298,8 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
       scope.effect((reactiveChain?: ReactiveChain) => {
         this.queryWhereComputed.name = `${this.name}.query`
 
-        const newReactiveChain: ReactiveChain<T> | undefined = reactiveChain?.add(this)
+        const newReactiveChain: ReactiveChain<T> | undefined =
+          reactiveChain?.add(this)
         this.query(newReactiveChain)
       })
     }
@@ -305,10 +311,12 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
 
   notify(h?: Hook, p?: IPatch[], reactiveChain?: ReactiveChain) {
     log(`[${this.constructor.name}.executeQuery] withChain=${!!reactiveChain}`)
-    const newReactiveChain = reactiveChain?.add(this)
+    const newReactiveChain = reactiveChain?.addNotify(this)
     this.executeQuery(newReactiveChain)
   }
-  async getQueryWhere(reactiveChain?: ReactiveChain): Promise<IModelQuery['query'] | void> {
+  async getQueryWhere(
+    reactiveChain?: ReactiveChain
+  ): Promise<IModelQuery['query'] | void> {
     if (this.queryWhereComputed.getterPromise) {
       await this.queryWhereComputed!.getterPromise
     }
@@ -318,7 +326,7 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
     })
 
     if (queryWhereValue) {
-      if (queryWhereValue === ComputedInitial) {
+      if (queryWhereValue === ComputedInitialSymbol) {
         // queryWhereComputed hadnt run.
         this.query()
       } else {
@@ -328,8 +336,7 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
   }
   override get value(): T[] {
     if (this.init) {
-      const reactiveChain = currentReactiveChain?.addCall(this)
-      this.query(reactiveChain)
+      this.query(currentReactiveChain)
     }
     return super.value
   }
@@ -344,9 +351,9 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
     if (!reactiveChain) {
       reactiveChain = currentReactiveChain
     }
- 
+
     if (this.queryWhereComputed) {
-      this.queryWhereComputed.run(reactiveChain)
+      this.queryWhereComputed.tryModify(reactiveChain)
     }
   }
   async enableQuery() {
@@ -377,7 +384,9 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
     reactiveChain?: ReactiveChain
   ): Promise<void>
 }
-export abstract class WriteModel<T extends Object> extends AsyncState<T | Symbol> {
+export abstract class WriteModel<T extends Object> extends AsyncState<
+  T | Symbol
+> {
   abstract identifier: string
   entity: string = ''
   sourceModel?: Model<T[]>
@@ -469,7 +478,11 @@ export class Prisma<T extends any[]> extends Model<T> {
     try {
       // @TODO：要确保时序，得阻止旧的query数据更新
       const q = await this.getQueryWhere(reactiveChain)
-      log(`[${this.name || ''} Model.executeQuery] 1 q.entity, q.query: `, this.entity, q)
+      log(
+        `[${this.name || ''} Model.executeQuery] 1 q.entity, q.query: `,
+        this.entity,
+        q
+      )
       let result: T[] = []
       if (!!q) {
         if (this.queryTimeIndex <= currentQueryTimeIndex) {
@@ -692,7 +705,8 @@ export interface ICacheOptions<T> {
   defaultValue?: T
   from: TCacheFrom
 }
-export class Cache<T> extends AsyncState<T | undefined> {
+export const CacheInitialSymbol = Symbol('@@CacheInitialSymbol')
+export class Cache<T> extends AsyncState<T | Symbol> {
   getterKey: string
   watcher: Watcher = new Watcher(this)
   source: State<T> | undefined
@@ -705,7 +719,7 @@ export class Cache<T> extends AsyncState<T | undefined> {
     public options: ICacheOptions<T>,
     public scope: CurrentRunnerScope
   ) {
-    super(undefined, scope)
+    super(CacheInitialSymbol, scope)
     this.getterKey = key // `tarat_cache_${scope.hookRunnerName}__${key}`
 
     if (this.options.source) {
@@ -726,7 +740,7 @@ export class Cache<T> extends AsyncState<T | undefined> {
     if (hook && source && hook === source) {
       log('[Cache.notify] source changed')
       // not calling update prevent notify the watcher for current cache
-      this._internalValue = undefined
+      this._internalValue = CacheInitialSymbol
       /**
        * just clear value in cache not update directly
        * reason 1: for lazy
@@ -734,13 +748,13 @@ export class Cache<T> extends AsyncState<T | undefined> {
        */
       getPlugin('Cache').clearValue(this.scope, this.getterKey, from)
 
-      const newReactiveChain = reactiveChain?.add(this)
+      const newReactiveChain = reactiveChain?.addNotify(this)
       this.executeQuery(newReactiveChain)
     }
   }
-  override get value(): T | undefined {
+  override get value(): T | Symbol {
     /** @TODO should use symbol for initial value */
-    if (this._internalValue === undefined) {
+    if (this._internalValue === CacheInitialSymbol) {
       this.executeQuery(currentReactiveChain)
     }
     return super.value
@@ -782,13 +796,15 @@ export class Cache<T> extends AsyncState<T | undefined> {
       log(`[Cache.executeQuery] error`)
       console.error(e)
     } finally {
-      log(`[${this.name || ''} Cache.executeQuery] end=${currentQueryTimeIndex}`)
+      log(
+        `[${this.name || ''} Cache.executeQuery] end=${currentQueryTimeIndex}`
+      )
       end()
     }
   }
   // call by outer
   override async update(
-    v?: T,
+    v?: T | Symbol,
     patches?: IPatch[],
     silent?: boolean,
     reactiveChain?: ReactiveChain
@@ -826,7 +842,7 @@ export function setCurrentComputed(c: Computed<any>[]) {
   currentComputedStack = c
 }
 
-export const ComputedInitial = Symbol('ComputedInitial')
+export const ComputedInitialSymbol = Symbol('@@ComputedInitialSymbol')
 export class Computed<T> extends AsyncState<T | Symbol> {
   batchRunCancel: () => void = () => {}
   watcher: Watcher<State<any>> = new Watcher<State<any>>(this)
@@ -838,26 +854,27 @@ export class Computed<T> extends AsyncState<T | Symbol> {
       | FComputedFuncGenerator<T | Symbol>,
     scope?: CurrentRunnerScope
   ) {
-    super(ComputedInitial, scope)
+    super(ComputedInitialSymbol, scope)
   }
 
   override get value(): T | Symbol {
     const callChain = currentReactiveChain?.addCall(this)
-    if (this._internalValue === ComputedInitial) {
-      this.run(callChain)
+    if (this._internalValue === ComputedInitialSymbol) {
+      this.tryModify(callChain)
     }
     return super.value
   }
 
-  run(reactiveChain?: ReactiveChain) {
+  run(innerReactiveChain?: ReactiveChain) {
     pushComputed(this)
 
-    const innerReactiveChain = reactiveChain?.add(this)
-
     // making sure the hook called by computed can register thier chain
-    const r: T | Promise<T> | Generator<unknown, T> = ReactiveChain.withChain(innerReactiveChain, () => {
-      return this.getter(this._internalValue)
-    })
+    const r: T | Promise<T> | Generator<unknown, T> = ReactiveChain.withChain(
+      innerReactiveChain,
+      () => {
+        return this.getter(this._internalValue)
+      }
+    )
 
     popComputed()
     if (isPromise(r)) {
@@ -884,11 +901,14 @@ export class Computed<T> extends AsyncState<T | Symbol> {
       this.init = false
     }
   }
+  tryModify(reactiveChain?: ReactiveChain) {
+    this.run(reactiveChain?.add(this))
+  }
   notify(h?: Hook, p?: IPatch[], reactiveChain?: ReactiveChain) {
     /**
      * trigger synchronism
      */
-    this.run(reactiveChain)
+    this.run(reactiveChain?.addNotify(this))
   }
 }
 let currentInputeCompute: InputCompute | null = null
@@ -1092,6 +1112,7 @@ class InputComputeInServer<P extends any[]> extends AsyncInputCompute<P> {
 let currentReactiveChain: ReactiveChain | undefined = undefined
 export function startdReactiveChain(name: string = 'root') {
   currentReactiveChain = new ReactiveChain()
+  currentReactiveChain.isRoot = true
   currentReactiveChain.name = name
   return currentReactiveChain
 }
@@ -1101,22 +1122,33 @@ export function stopReactiveChain() {
 /**
  * collect reactive chain for debug
  */
-type ChainChild<T> = CurrentRunnerScope<any> | State<T> | InputCompute<any>
+type ChainTrigger<T> = CurrentRunnerScope<any> | State<T> | InputCompute<any>
 export class ReactiveChain<T = any> {
+  isRoot = false
+  allLeafCount = 0
+  order: number = 0
   name?: string
-  index?: number
+  hookIndex?: number
   oldValue: T | undefined
   newValue: T | undefined
   hasNewValue: boolean = false
   children: ReactiveChain<T>[] = []
   type?: 'update' | 'notify' | 'call'
   async?: boolean
-  constructor(public hook?: ChainChild<T>) {
+  constructor(
+    public parent?: ReactiveChain,
+    public hook?: ChainTrigger<T>
+  ) {
+    this.order = parent?.plusLeaf() || 0
+
     if (hook instanceof State) {
       this.oldValue = hook._internalValue
     }
   }
-  static withChain<T extends (...args: any[]) => any> (chain: ReactiveChain, fn: T): ReturnType<T> {
+  static withChain<T extends (...args: any[]) => any>(
+    chain: ReactiveChain,
+    fn: T
+  ): ReturnType<T> {
     const oldCurrentReactiveChain = currentReactiveChain
     currentReactiveChain = chain
 
@@ -1124,6 +1156,13 @@ export class ReactiveChain<T = any> {
 
     currentReactiveChain = oldCurrentReactiveChain
     return r
+  }
+  plusLeaf () {
+    if (this.isRoot) {
+      this.allLeafCount += 1
+      return this.allLeafCount
+    }
+    return this.parent.plusLeaf()
   }
   stop() {
     stopReactiveChain()
@@ -1134,62 +1173,71 @@ export class ReactiveChain<T = any> {
       this.newValue = this.hook._internalValue
     }
   }
-  add(child: ChainChild<T>): ReactiveChain<T> {
-    const childChain = new ReactiveChain(child)
+  add(trigger: ChainTrigger<T>): ReactiveChain<T> {
+    const childChain = new ReactiveChain(
+      this,
+      trigger,
+    )
     this.children.push(childChain)
+
     if (currentRunnerScope) {
-      if (child instanceof Hook) {
-        const index = currentRunnerScope.hooks.indexOf(child)
+      if (trigger instanceof Hook) {
+        const index = currentRunnerScope.hooks.indexOf(trigger)
         if (index > -1) {
-          childChain.index = index
+          childChain.hookIndex = index
         }
       }
     }
     return childChain
   }
-  addCall(child: ChainChild<T>): ReactiveChain<T> {
-    const childChain = this.add(child)
+  addCall(trigger: ChainTrigger<T>): ReactiveChain<T> {
+    const childChain = this.add(trigger)
     childChain.type = 'call'
     return childChain
   }
-  addNotify(child: ChainChild<T>): ReactiveChain<T> {
-    const childChain = this.add(child)
+  addNotify(trigger: ChainTrigger<T>): ReactiveChain<T> {
+    const childChain = this.add(trigger)
     childChain.type = 'notify'
     return childChain
   }
-  addUpdate(child: ChainChild<T>): ReactiveChain<T> {
+  addUpdate(child: ChainTrigger<T>): ReactiveChain<T> {
     const childChain = this.add(child)
     childChain.type = 'update'
     return childChain
   }
   print() {
     const preLink = '|--> '
-    const preProp = '|-- '
+    const preDec = '|-- '
     const preHasNextSpace = '|  '
     const preSpace = '   '
 
     function dfi(current: ReactiveChain) {
+      const isRunnerScope = current.hook instanceof CurrentRunnerScope
       let currentName = current.hook?.constructor.name || current.name || ''
+      if (isRunnerScope) {
+        currentName = `\x1b[32m${currentName}\x1b[0m`
+      }
       if (current.hook?.name) {
         currentName = `${currentName}(${current.hook?.name})`
-      } else if (isDef(current.index)) {
-        currentName = `${currentName}(${current.index})`
+      } else if (isDef(current.hookIndex)) {
+        currentName = `${currentName}(${current.hookIndex})`
       }
       if (current.type) {
         currentName = `${current.type}: ${currentName}`
       }
+      currentName = `\x1b[32m${current.order}\x1b[0m.${currentName}`
 
       const currentRows = [currentName]
-      if (current.oldValue === undefined) {
-        currentRows.push(`${preProp}cur=undef`)
+      if (shortValue(current.oldValue)) {
+        currentRows.push(`${preDec}cur=${shortValue(current.oldValue)}`)
       } else {
-        currentRows.push(`${preProp}cur=${JSON.stringify(current.oldValue)}`)
+        currentRows.push(`${preDec}cur=${JSON.stringify(current.oldValue)}`)
       }
       if (current.hasNewValue) {
-        if (current.newValue === undefined) {
-          currentRows.push(`${preProp}new=undef`)
+        if (shortValue(current.newValue)) {
+          currentRows.push(`${preDec}new=${shortValue(current.newValue)}`)
         } else {
-          currentRows.push(`${preProp}new=${JSON.stringify(current.newValue)}`)
+          currentRows.push(`${preDec}new=${JSON.stringify(current.newValue)}`)
         }
       }
 
@@ -1278,19 +1326,19 @@ export class RunnerContext<T extends Driver> {
         }
         // means: server -> client
         if (hook instanceof Model) {
-          return ['model', hook.value, hook.modifiedTimstamp]
+          return ['model', getValueSilently(hook), hook.modifiedTimstamp]
         }
         if (hook instanceof Computed) {
-          return ['computed', hook.value, hook.modifiedTimstamp]
+          return ['computed', getValueSilently(hook), hook.modifiedTimstamp]
         }
         if (hook instanceof Cache) {
-          return ['cache', hook.value, hook.modifiedTimstamp]
+          return ['cache', getValueSilently(hook), hook.modifiedTimstamp]
         }
         if (hook instanceof InputCompute) {
           return ['inputCompute']
         }
         if (hook instanceof State) {
-          return ['state', hook.value, hook.modifiedTimstamp]
+          return ['state', getValueSilently(hook), hook.modifiedTimstamp]
         }
       }
       return ['unserialized']
@@ -1699,7 +1747,8 @@ export class CurrentRunnerScope<T extends Driver = any> {
 
     if (hookModified.length) {
       hookModified.forEach(h => {
-        const newChildChain = reactiveChain?.add(h as State)
+        /** @TODO here appending new chain maybe in method of their self  */
+        const newChildChain = reactiveChain?.addUpdate(h as State)
         ;(h as State).applyComputePatches(currentInputCompute, newChildChain)
       })
     }
@@ -1907,9 +1956,9 @@ export function setGlobalModelEvent(me: ModelEvent | null) {
 
 export interface IRunnerOptions {
   // scope
-  beleiveContext: boolean;
+  beleiveContext: boolean
   updateCallbackSync?: boolean
-  // 
+  //
   runnerContext?: Symbol
 }
 
@@ -1917,12 +1966,9 @@ export class Runner<T extends Driver> {
   scope: CurrentRunnerScope<T>
   options: IRunnerOptions = {
     beleiveContext: false,
-    updateCallbackSync: false,
+    updateCallbackSync: false
   }
-  constructor(
-    public driver: T,
-    options?: IRunnerOptions
-  ) {
+  constructor(public driver: T, options?: IRunnerOptions) {
     Object.assign(this.options, options)
   }
 
@@ -2126,14 +2172,16 @@ function createStateSetterGetterFunc<SV>(s: State<SV>): {
         throw new Error('[change state] pass a function')
       }
     }
-    currentReactiveChain?.addCall(s)
+    if (currentReactiveChain) {
+      return ReactiveChain.withChain(currentReactiveChain.addCall(s), () => {
+        return s.value
+      })
+    }
     return s.value
   }
 }
 
-function createModelSetterGetterFunc<T extends any[]>(
-  m: Model<T>
-): {
+function createModelSetterGetterFunc<T extends any[]>(m: Model<T>): {
   (): T
   (paramter: IModifyFunction<T>): Promise<[T, IPatch[]]>
 } {
@@ -2158,6 +2206,11 @@ function createModelSetterGetterFunc<T extends any[]>(
       }
       return [result, patches]
     }
+    if (currentReactiveChain) {
+      return ReactiveChain.withChain(currentReactiveChain.addCall(m), () => {
+        return m.value
+      })
+    }
     return m.value
   }
 }
@@ -2173,8 +2226,7 @@ function createCacheSetterGetterFunc<SV>(c: Cache<SV>): {
         if (currentInputeCompute) {
           c.addComputePatches(result, patches)
         } else {
-          const reactiveChain: ReactiveChain<SV> | undefined =
-            currentReactiveChain?.addUpdate(c)
+          const reactiveChain = currentReactiveChain?.addUpdate(c)
           c.update(result, patches, false, reactiveChain)
         }
         return [result, patches]
@@ -2182,7 +2234,11 @@ function createCacheSetterGetterFunc<SV>(c: Cache<SV>): {
         throw new Error('[change cache] pass a function')
       }
     }
-    currentReactiveChain?.addCall(c)
+    if (currentReactiveChain) {
+      return ReactiveChain.withChain(currentReactiveChain.addCall(c), () => {
+        return c.value
+      })
+    }
     return c.value
   }
 }
@@ -2286,7 +2342,6 @@ function updatePrisma<T extends any[]>(
 
   currentRunnerScope.addHook(hook)
   currentReactiveChain?.add(hook)
-  
 
   if (receiveDataFromContext) {
     const initialValue: T =
@@ -2340,7 +2395,7 @@ function mountWritePrisma<T>(source: { _hook: Model<T[]> }, q: () => T) {
     process.env.TARGET === 'server'
       ? new WritePrisma(source, q, currentRunnerScope)
       : new ClientWritePrisma(source, q, currentRunnerScope)
-  
+
   currentRunnerScope!.addHook(hook)
   currentReactiveChain?.add(hook)
 
@@ -2353,8 +2408,6 @@ function mountWritePrisma<T>(source: { _hook: Model<T[]> }, q: () => T) {
     update: hook.updateRow.bind(hook) as typeof hook.updateRow,
     remove: hook.removeRow.bind(hook) as typeof hook.removeRow
   })
-
-
 
   return newGetter
 }
@@ -2371,7 +2424,7 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
 
   /** @TODO cache maybe should has initial value */
   const hook = new Cache(key, options, currentRunnerScope!)
-  currentRunnerScope.addHook(hook);
+  currentRunnerScope.addHook(hook)
 
   const initialValue: T =
     currentRunnerScope!.runnerContext.intialData![currentIndex]?.[1]
@@ -2393,7 +2446,7 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
 }
 function mountCache<T>(key: string, options: ICacheOptions<T>) {
   const hook = new Cache(key, options, currentRunnerScope!)
-  currentRunnerScope.addHook(hook);
+  currentRunnerScope.addHook(hook)
   currentReactiveChain?.add(hook)
 
   const setterGetter = createCacheSetterGetterFunc(hook)
@@ -2459,7 +2512,6 @@ function mountComputed<T>(fn: any): any {
   currentRunnerScope!.addHook(hook)
 
   currentReactiveChain?.add(hook)
-  // hook.run(reactiveChain)
 
   const getter = () => {
     return hook.value

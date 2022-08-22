@@ -1,4 +1,4 @@
-import { Runner, cloneDeep, getPlugin, IDiff, IHookContext, IQueryWhere, set, setEnv, debuggerLog } from '../../src/index'
+import { Runner, cloneDeep, getPlugin, IDiff, IHookContext, IQueryWhere, set, setEnv, debuggerLog, CacheInitialSymbol } from '../../src/index'
 
 import * as mockBM from '../mockBM'
 
@@ -16,7 +16,7 @@ describe('cache', () => {
 
       const cVal = result.c()
   
-      expect(cVal).toBe(undefined)
+      expect(cVal).toBe(CacheInitialSymbol)
     })
     it('update cache data', async () => {
       const runner = new Runner(mockBM.onlyCache)
@@ -64,7 +64,7 @@ describe('cache', () => {
         d.num = 1
       })
 
-      expect(result.c._hook._internalValue).toBe(undefined)
+      expect(result.c._hook._internalValue).toBe(CacheInitialSymbol)
   
       await runner.ready()
 

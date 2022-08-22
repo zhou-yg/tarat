@@ -754,3 +754,11 @@ export function makeBatchCallback<T extends (...prop: any[]) => any>(fn: T) {
     })
   }
 }
+export function shortValue (v: undefined | Symbol | any) {
+  if (v === undefined) {
+    return '@undef'
+  }
+  if (typeof v === 'symbol') {
+    return '@init'
+  }
+}

@@ -79,6 +79,7 @@ export function initModelConfig(obj: any = {}) {
     ...obj
   })
   const cacheMap = new Map<CurrentRunnerScope<any> | null, Map<string, any>>()
+  const cacheKVMap = new Map<CurrentRunnerScope<any> | null, Map<string, any>>()
   loadPlugin('cookie', {
     async get(scope, key) {
       return cacheMap.get(scope)?.get(key)
@@ -91,6 +92,20 @@ export function initModelConfig(obj: any = {}) {
     },
     clear() {
       cacheMap.clear()
+    }
+  })
+  loadPlugin('regularKV', {
+    async get(scope, key) {
+      return cacheKVMap.get(scope)?.get(key)
+    },
+    async set(scope, k, v) {
+      if (!cacheKVMap.get(scope)) {
+        cacheKVMap.set(scope, new Map())
+      }
+      cacheKVMap.get(scope)?.set(k, v)
+    },
+    clear() {
+      cacheKVMap.clear()
     }
   })
 }
@@ -589,7 +604,6 @@ Object.assign(nestedSimpleComputed, {
   ]
 })
 
-
 export function onlyCache() {
   const c = cache<{ num: number }>('num', {
     from: 'cookie'
@@ -643,7 +657,7 @@ export function combineTwoState() {
   }
 }
 
-export function hooksInOneLazy () {
+export function hooksInOneLazy() {
   const s1 = state(1)
   const c1 = computed(() => s1())
   const c2 = cache('c2', {
@@ -658,10 +672,15 @@ export function hooksInOneLazy () {
   })
 
   return {
-    s1, c1, c2, m1, rm1, ic
+    s1,
+    c1,
+    c2,
+    m1,
+    rm1,
+    ic
   }
 }
-export function hooksInOneModelTrigger () {
+export function hooksInOneModelTrigger() {
   const s1 = state(1)
   const c1 = computed(() => s1())
   const c2 = cache('c2', {
@@ -676,13 +695,18 @@ export function hooksInOneModelTrigger () {
   })
 
   return {
-    s1, c1, c2, m1, rm1, ic
+    s1,
+    c1,
+    c2,
+    m1,
+    rm1,
+    ic
   }
 }
 Object.assign(hooksInOneModelTrigger, {
   __names__: [
     [2, 'c2'],
-    [3, 'm1'],
+    [3, 'm1']
   ]
 })
 
@@ -706,19 +730,48 @@ export function stateInNestedComputed() {
     s2
   }
 }
+Object.assign(stateInNestedComputed, {
+  __names__: [
+    [0, 's1'],
+    [1, 'c1'],
+    [2, 'c2'],
+  ],
+  __deps__: [
+    ['h', 1, [0]],
+    ['h', 2, [1]]
+  ]
+})
+
+export function modelUseCache () {
+  const c1 = cache('modelUseCacheCount', { from: 'regularKV' })
+  const m1 = prisma('item', () => ({
+    where: {
+      c1: c1(),
+    },
+  }), {})
+
+  return { c1, m1 }
+}
+Object.assign(modelUseCache, {
+  __names__: [
+    [0, 'c1'],
+    [1, 'm1'],
+  ]
+})
+
 export function statesWithInputCompute() {
   const s1 = state(0)
   s1._hook.name = 's1'
   const s2 = state(1)
   s2._hook.name = 's2'
+  // 2
   const c1 = computed(() => s2() + 1)
   c1._hook.name = 'c1'
   const c2 = computed(() => c1() + 1)
   c2._hook.name = 'c2'
-
   const c3 = computed(() => s1() + 1)
   c3._hook.name = 'c3'
-
+  // 5
   const ic = inputCompute(() => {
     s1(v => v + 1)
     s2(v => v + 1)
@@ -732,6 +785,15 @@ export function statesWithInputCompute() {
     ic
   }
 }
+Object.assign(statesWithInputCompute, {
+  __deps__: [
+    ['h', 2, [1]],
+    ['h', 3, [2]],
+    ['h', 4, [0]],
+    ['h', 5, [], [0, 1]]
+  ]
+})
+
 
 export function simpleSS() {
   const s1 = state(0)

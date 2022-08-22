@@ -54,7 +54,7 @@ export interface IModelQuery {
   query: IQueryWhere
 }
 
-export type TCacheFrom = 'cookie' // | 'redis' | 'localStorage' | 'sessionStorage'
+export type TCacheFrom = 'cookie' | 'regularKV' // | 'redis' | 'localStorage' | 'sessionStorage'
 
 export interface IRunningContext {
   cookies: {
@@ -106,6 +106,11 @@ const plugins: {
     getCurrent(scope: CurrentRunnerScope): IRunningContext | null
   }
   cookie?: {
+    get<T>(scope: CurrentRunnerScope, k: string): Promise<T | undefined>
+    set<T>(scope: CurrentRunnerScope, k: string, value: T): Promise<void>
+    clear(scope: CurrentRunnerScope, k: string): void
+  }
+  regularKV?: {
     get<T>(scope: CurrentRunnerScope, k: string): Promise<T | undefined>
     set<T>(scope: CurrentRunnerScope, k: string, value: T): Promise<void>
     clear(scope: CurrentRunnerScope, k: string): void
