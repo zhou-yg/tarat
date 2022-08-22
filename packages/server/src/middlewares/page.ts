@@ -12,6 +12,7 @@ import { renderToString } from 'react-dom/server'
 import { RenderDriver, renderWithDriverContext, DriverContext } from 'tarat-connect'
 import React, { createElement } from "react";
 import { matchRoute } from "../config/routes";
+import chalk from 'chalk'
 
 const templateFile = './pageTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -83,6 +84,8 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
 
   console.log('---- await first done ----')
 
+  const st = Date.now()
+
   driver.switchToServerConsumeMode()
 
   const chain2 = startdReactiveChain('[renderWithDriverContext second]')
@@ -101,11 +104,13 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
   chain2.stop()
   chain2.print()
 
+  const cost = Date.now() - st
+
   const css = []
   fs.existsSync(distEntryCSS) && css.push(distEntryCSS)
   fs.existsSync(distServerRoutesCSS) && css.push(distServerRoutesCSS)
 
-  console.log(`[${routerLocation}] is end \n ---`)
+  console.log(`[${routerLocation}] is end. second rendering cost ${chalk.blue(cost)} ms \n ---`)
 
   return {
     driver,
