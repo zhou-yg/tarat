@@ -665,9 +665,11 @@ export function hooksInOneLazy() {
   })
   const m1 = prisma('item', () => ({}), { immediate: false }) // 3
   const rm1 = writePrisma(m1) // 4
-  const ic = inputCompute(() => {
+  const ic = inputCompute(function *() {
+    yield Promise.resolve()
+    const v = s1()
     s1(() => {
-      return 2
+      return v + 1
     })
   })
 

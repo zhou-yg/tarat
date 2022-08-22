@@ -81,6 +81,7 @@ describe('chain', () => {
       expect(chain.children.length).toBe(7)
 
       chain.stop()
+      // chain.print()
       //-- trigger
       const triggerScopeChain = chain.children[6]
       expect(triggerScopeChain.hook).toBeInstanceOf(CurrentRunnerScope)

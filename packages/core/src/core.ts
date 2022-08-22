@@ -950,9 +950,6 @@ export class InputCompute<P extends any[] = any> extends Hook {
     if (!checkFreeze({ _hook: this })) {
       const funcResult = this.getter(...args)
 
-      if (newReactiveChain) {
-        newReactiveChain.async = isPromise(funcResult)
-      }
       currentReactiveChain = preservedCurrentReactiveChain
 
       log(
@@ -962,17 +959,22 @@ export class InputCompute<P extends any[] = any> extends Hook {
       )
       // use generator
       if (isGenerator(funcResult)) {
+        let generatorPreservedCurrentReactiveChain: ReactiveChain | undefined
         await runGenerator(
           funcResult as Generator<void>,
           () => {
             if (!currentInputeCompute) {
               currentInputeCompute = this
             }
+            generatorPreservedCurrentReactiveChain = currentReactiveChain
+            currentReactiveChain = newReactiveChain
           },
           () => {
+            // tip: inputCompute supporting nestly compose other inputCompute
             if (currentInputeCompute === this) {
               currentInputeCompute = null
             }
+            currentReactiveChain = generatorPreservedCurrentReactiveChain
           }
         )
         return this.inputFuncEnd(newReactiveChain)
@@ -1015,9 +1017,6 @@ class InputComputeInServer<P extends any[]> extends AsyncInputCompute<P> {
     this.emit(EHookEvents.beforeCalling, this)
     if (!checkFreeze({ _hook: this })) {
       const newReactiveChain = currentReactiveChain?.add(this)
-      if (newReactiveChain) {
-        newReactiveChain.async = true
-      }
 
       const context = this.scope.createActionContext(this, args)
       const result = await getPlugin('Context').postComputeToServer(context)
@@ -1135,7 +1134,6 @@ export class ReactiveChain<T = any> {
   hasNewValue: boolean = false
   children: ReactiveChain<T>[] = []
   type?: 'update' | 'notify' | 'call'
-  async?: boolean
   constructor(public parent?: ReactiveChain, public hook?: ChainTrigger<T>) {
     this.order = parent?.plusLeaf() || 0
 
