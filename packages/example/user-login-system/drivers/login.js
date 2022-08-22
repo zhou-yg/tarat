@@ -10,7 +10,11 @@ import {
 } from "tarat-core";
 import { nanoid } from "nanoid";
 
+export const DEFAULT_AVATAR = "/default-user-icon.jpeg";
+
 export default function login() {
+  const avatar = state(DEFAULT_AVATAR);
+
   const password = state();
 
   const name = state();
@@ -37,6 +41,7 @@ export default function login() {
     data: {
       name: name(),
       password: password(),
+      avatar: avatar(),
     },
   }));
 
@@ -63,7 +68,8 @@ export default function login() {
 
   const userDataByCookie = model("user", (prev) => {
     const ss = sessionStore();
-    if (ss & (ss.length > 0)) {
+    console.log("[userDataByCookie] ss: ", ss);
+    if (ss && ss.length > 0) {
       return {
         where: {
           id: ss[0].userId,
@@ -197,38 +203,39 @@ export default function login() {
 const autoParser = {
   login: {
     names: [
-      [0, "password"],
-      [1, "name"],
-      [2, "inputName"],
-      [3, "inputPassword"],
-      [4, "repeatPassword"],
-      [5, "userDataByInput"],
-      [6, "writeUserData"],
-      [7, "signAndAutoLogin"],
-      [8, "cookieId"],
-      [9, "sessionStore"],
-      [10, "writeSessionStore"],
-      [11, "userDataByCookie"],
-      [12, "userData"],
-      [13, "alreadyLogin"],
-      [14, "errorTip1"],
-      [15, "errorTip2"],
-      [16, "sign"],
-      [17, "login2"],
-      [18, "logout"],
+      [0, "avatar"],
+      [1, "password"],
+      [2, "name"],
+      [3, "inputName"],
+      [4, "inputPassword"],
+      [5, "repeatPassword"],
+      [6, "userDataByInput"],
+      [7, "writeUserData"],
+      [8, "signAndAutoLogin"],
+      [9, "cookieId"],
+      [10, "sessionStore"],
+      [11, "writeSessionStore"],
+      [12, "userDataByCookie"],
+      [13, "userData"],
+      [14, "alreadyLogin"],
+      [15, "errorTip1"],
+      [16, "errorTip2"],
+      [17, "sign"],
+      [18, "login2"],
+      [19, "logout"],
     ],
     deps: [
-      ["h", 5, [1, 0]],
-      ["h", 6, [5, 1, 0], [5, 1, 0]],
-      ["h", 9, [8]],
-      ["h", 10, [9], [9]],
-      ["h", 11, [9]],
-      ["h", 12, [11, 5]],
-      ["h", 13, [12]],
-      ["h", 14, [1, 0, 12, 4]],
-      ["h", 16, [2, 3, 6, 7], [5, 17, 15]],
-      ["h", 17, [2, 3], [5, 1, 0, 10, 8, 15]],
-      ["h", 18, [8, 9], [8, 1, 0, 10]],
+      ["h", 6, [2, 1]],
+      ["h", 7, [6, 2, 1, 0], [6, 2, 1, 0]],
+      ["h", 10, [9]],
+      ["h", 11, [10], [10]],
+      ["h", 12, [10]],
+      ["h", 13, [12, 6]],
+      ["h", 14, [13]],
+      ["h", 15, [2, 1, 13, 5]],
+      ["h", 17, [3, 4, 7, 8], [6, 18, 16]],
+      ["h", 18, [3, 4], [6, 2, 1, 11, 9, 16]],
+      ["h", 19, [9, 10], [9, 2, 1, 11]],
     ],
   },
 };
