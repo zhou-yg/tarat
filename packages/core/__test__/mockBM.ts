@@ -734,7 +734,7 @@ Object.assign(stateInNestedComputed, {
   __names__: [
     [0, 's1'],
     [1, 'c1'],
-    [2, 'c2'],
+    [2, 'c2']
   ],
   __deps__: [
     ['h', 1, [0]],
@@ -742,20 +742,24 @@ Object.assign(stateInNestedComputed, {
   ]
 })
 
-export function modelUseCache () {
+export function modelUseCache() {
   const c1 = cache('modelUseCacheCount', { from: 'regularKV' })
-  const m1 = prisma('item', () => ({
-    where: {
-      c1: c1(),
-    },
-  }), {})
+  const m1 = prisma(
+    'item',
+    () => ({
+      where: {
+        c1: c1()
+      }
+    }),
+    {}
+  )
 
   return { c1, m1 }
 }
 Object.assign(modelUseCache, {
   __names__: [
     [0, 'c1'],
-    [1, 'm1'],
+    [1, 'm1']
   ]
 })
 
@@ -793,7 +797,6 @@ Object.assign(statesWithInputCompute, {
     ['h', 5, [], [0, 1]]
   ]
 })
-
 
 export function simpleSS() {
   const s1 = state(0)

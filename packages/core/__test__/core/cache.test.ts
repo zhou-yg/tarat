@@ -16,7 +16,7 @@ describe('cache', () => {
 
       const cVal = result.c()
   
-      expect(cVal).toBe(CacheInitialSymbol)
+      expect(cVal).toBe(undefined)
     })
     it('update cache data', async () => {
       const runner = new Runner(mockBM.onlyCache)

@@ -134,7 +134,7 @@ interface RecordInputComputePatches<T> {
   inputComputePatchesMap: Map<InputCompute, [T, IPatch[]]>
 }
 
-function getValueSilently (s: State) {
+function getValueSilently(s: State) {
   return s._internalValue
 }
 
@@ -757,7 +757,8 @@ export class Cache<T> extends AsyncState<T | Symbol> {
     if (this._internalValue === CacheInitialSymbol) {
       this.executeQuery(currentReactiveChain)
     }
-    return super.value
+    const v = super.value
+    return v === CacheInitialSymbol ? undefined : v
   }
   async executeQuery(reactiveChain?: ReactiveChain) {
     this.queryTimeIndex++
@@ -1135,10 +1136,7 @@ export class ReactiveChain<T = any> {
   children: ReactiveChain<T>[] = []
   type?: 'update' | 'notify' | 'call'
   async?: boolean
-  constructor(
-    public parent?: ReactiveChain,
-    public hook?: ChainTrigger<T>
-  ) {
+  constructor(public parent?: ReactiveChain, public hook?: ChainTrigger<T>) {
     this.order = parent?.plusLeaf() || 0
 
     if (hook instanceof State) {
@@ -1157,7 +1155,7 @@ export class ReactiveChain<T = any> {
     currentReactiveChain = oldCurrentReactiveChain
     return r
   }
-  plusLeaf () {
+  plusLeaf() {
     if (this.isRoot) {
       this.allLeafCount += 1
       return this.allLeafCount
@@ -1174,10 +1172,7 @@ export class ReactiveChain<T = any> {
     }
   }
   add(trigger: ChainTrigger<T>): ReactiveChain<T> {
-    const childChain = new ReactiveChain(
-      this,
-      trigger,
-    )
+    const childChain = new ReactiveChain(this, trigger)
     this.children.push(childChain)
 
     if (currentRunnerScope) {
@@ -2181,7 +2176,9 @@ function createStateSetterGetterFunc<SV>(s: State<SV>): {
   }
 }
 
-function createModelSetterGetterFunc<T extends any[]>(m: Model<T>): {
+function createModelSetterGetterFunc<T extends any[]>(
+  m: Model<T>
+): {
   (): T
   (paramter: IModifyFunction<T>): Promise<[T, IPatch[]]>
 } {
