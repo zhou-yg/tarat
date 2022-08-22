@@ -14,11 +14,12 @@ export const DEFAULT_AVATAR = "/default-user-icon.jpeg";
 
 export default function login() {
   const avatar = state(DEFAULT_AVATAR);
-
   const password = state();
-
   const name = state();
 
+  const enableEdit = state(false);
+
+  const inputAvatar = state();
   const inputName = state();
   const inputPassword = state();
   const repeatPassword = state();
@@ -38,11 +39,9 @@ export default function login() {
     }
   });
   const writeUserData = writePrisma(userDataByInput, () => ({
-    data: {
-      name: name(),
-      password: password(),
-      avatar: avatar(),
-    },
+    name: name(),
+    password: password(),
+    avatar: avatar(),
   }));
 
   const signAndAutoLogin = state(false);
@@ -183,10 +182,40 @@ export default function login() {
     }
   });
 
+  const openEdit = inputCompute(() => {
+    const ud = userData();
+    inputAvatar(() => ud.avatar);
+    inputName(() => ud.name);
+    inputPassword(() => ud.password);
+    enableEdit(() => true);
+  });
+  const closeEdit = inputCompute(() => {
+    inputAvatar(() => "");
+    inputName(() => "");
+    inputPassword(() => "");
+    enableEdit(() => false);
+  });
+
+  const updateInfo = inputComputeInServer(function* () {
+    // name(() => inputName());
+    // password(() => inputPassword());
+    // avatar(() => inputAvatar());
+    yield writeUserData.update(userData().id, {
+      name: inputName(),
+      password: inputPassword(),
+      avatar: inputAvatar(),
+    });
+  });
+
   return {
     alreadyLogin,
+    enableEdit,
+    openEdit,
+    closeEdit,
     name,
     password,
+    avatar,
+    inputAvatar,
     inputName,
     inputPassword,
     repeatPassword,
@@ -196,6 +225,7 @@ export default function login() {
     sign,
     login,
     logout,
+    updateInfo,
   };
 }
 
@@ -206,36 +236,44 @@ const autoParser = {
       [0, "avatar"],
       [1, "password"],
       [2, "name"],
-      [3, "inputName"],
-      [4, "inputPassword"],
-      [5, "repeatPassword"],
-      [6, "userDataByInput"],
-      [7, "writeUserData"],
-      [8, "signAndAutoLogin"],
-      [9, "cookieId"],
-      [10, "sessionStore"],
-      [11, "writeSessionStore"],
-      [12, "userDataByCookie"],
-      [13, "userData"],
-      [14, "alreadyLogin"],
-      [15, "errorTip1"],
-      [16, "errorTip2"],
-      [17, "sign"],
-      [18, "login2"],
-      [19, "logout"],
+      [3, "enableEdit"],
+      [4, "inputAvatar"],
+      [5, "inputName"],
+      [6, "inputPassword"],
+      [7, "repeatPassword"],
+      [8, "userDataByInput"],
+      [9, "writeUserData"],
+      [10, "signAndAutoLogin"],
+      [11, "cookieId"],
+      [12, "sessionStore"],
+      [13, "writeSessionStore"],
+      [14, "userDataByCookie"],
+      [15, "userData"],
+      [16, "alreadyLogin"],
+      [17, "errorTip1"],
+      [18, "errorTip2"],
+      [19, "sign"],
+      [20, "login2"],
+      [21, "logout"],
+      [22, "openEdit"],
+      [23, "closeEdit"],
+      [24, "updateInfo"],
     ],
     deps: [
-      ["h", 6, [2, 1]],
-      ["h", 7, [6, 2, 1, 0], [6, 2, 1, 0]],
-      ["h", 10, [9]],
-      ["h", 11, [10], [10]],
-      ["h", 12, [10]],
-      ["h", 13, [12, 6]],
-      ["h", 14, [13]],
-      ["h", 15, [2, 1, 13, 5]],
-      ["h", 17, [3, 4, 7, 8], [6, 18, 16]],
-      ["h", 18, [3, 4], [6, 2, 1, 11, 9, 16]],
-      ["h", 19, [9, 10], [9, 2, 1, 11]],
+      ["h", 8, [2, 1]],
+      ["h", 9, [8, 2, 1, 0], [8, 2, 1, 0]],
+      ["h", 12, [11]],
+      ["h", 13, [12], [12]],
+      ["h", 14, [12]],
+      ["h", 15, [14, 8]],
+      ["h", 16, [15]],
+      ["h", 17, [2, 1, 15, 7]],
+      ["h", 19, [5, 6, 9, 10], [8, 20, 18]],
+      ["h", 20, [5, 6], [8, 2, 1, 13, 11, 18]],
+      ["h", 21, [11, 12], [11, 2, 1, 13]],
+      ["h", 22, [15], [4, 5, 6, 3]],
+      ["h", 23, [], [4, 5, 6, 3]],
+      ["h", 24, [15, 5, 6, 4], [9]],
     ],
   },
 };

@@ -11,9 +11,11 @@ export default function User () {
   console.log('notLogin: ', progress.state, loginHook.alreadyLogin(), '=>', notLogin);
   
   return (
-    <div className="h-screen flex items-center justify-center" >
+    <div className="bg-slate-100 h-screen flex justify-center" >
       {notLogin ? <Navigate to="/login" replace={true} /> : ''}
-      <UserInfo />
+      <div className="mt-6">
+        <UserInfo />
+      </div>
     </div>
   )
 }
