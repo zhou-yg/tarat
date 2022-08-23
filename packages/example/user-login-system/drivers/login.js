@@ -205,6 +205,7 @@ export default function login() {
       password: inputPassword(),
       avatar: inputAvatar(),
     });
+    closeEdit();
   });
 
   return {
@@ -273,7 +274,7 @@ const autoParser = {
       ["h", 21, [11, 12], [11, 2, 1, 13]],
       ["h", 22, [15], [4, 5, 6, 3]],
       ["h", 23, [], [4, 5, 6, 3]],
-      ["h", 24, [15, 5, 6, 4], [9]],
+      ["h", 24, [15, 5, 6, 4, 23], [9]],
     ],
   },
 };
