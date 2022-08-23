@@ -107,17 +107,18 @@ export default function login() {
    * 1.http error
    */
   const errorTip1 = computed(async () => {
-    if (name() && password() && !userData()) {
-      return "invalid password";
+    const inputNameVal = inputName();
+    const inputPasswordVal = inputPassword();
+    const repeatPasswordVal = repeatPassword();
+
+    if (repeatPasswordVal && repeatPasswordVal !== inputPasswordVal) {
+      return "twice inputting passwords don't match";
     }
-    if (repeatPassword() && repeatPassword() !== password()) {
-      return "input same password twice";
+    if (inputNameVal === "") {
+      return '"username" is required';
     }
-    if (name() === "") {
-      return "must input name";
-    }
-    if (password() === "") {
-      return "must input password";
+    if (inputPasswordVal === "") {
+      return '"password" is required';
     }
     return "";
   });
@@ -134,10 +135,13 @@ export default function login() {
       password: inputPasswordVal,
     });
     if (!r) {
-      yield writeUserData.create();
+      yield writeUserData.create({
+        name: inputNameVal,
+        password: inputPasswordVal,
+      });
 
       if (signAndAutoLogin()) {
-        yield login(inputNameVal, inputPasswordVal);
+        yield login();
       }
     } else {
       errorTip2(() => "user already exist");
@@ -165,7 +169,7 @@ export default function login() {
 
       cookieId(() => nid);
     } else {
-      errorTip2(() => `invalid password with "${inputNameVal}"`);
+      errorTip2(() => `invalid password with name "${inputNameVal}"`);
     }
   });
 
@@ -268,8 +272,8 @@ const autoParser = {
       ["h", 14, [12]],
       ["h", 15, [14, 8]],
       ["h", 16, [15]],
-      ["h", 17, [2, 1, 15, 7]],
-      ["h", 19, [5, 6, 9, 10], [8, 20, 18]],
+      ["h", 17, [5, 6, 7]],
+      ["h", 19, [5, 6, 10, 20], [8, 9, 18]],
       ["h", 20, [5, 6], [8, 2, 1, 13, 11, 18]],
       ["h", 21, [11, 12], [11, 2, 1, 13]],
       ["h", 22, [15], [4, 5, 6, 3]],

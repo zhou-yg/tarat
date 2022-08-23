@@ -6,9 +6,8 @@ import classnames from 'classnames'
 
 const SignFrame = (props) => {
   const loginHook = useTarat(login)
-  const cls = classnames(s.row, {
-    show: !!loginHook?.errorTip()
-  })
+
+  const errorContent = loginHook?.errorTip()
 
   return (
     <div>
@@ -24,18 +23,21 @@ const SignFrame = (props) => {
       </div>
       <div className={s.row + ' p-2'} >
         <input placeholder="confirm password" onInput={e => {
-          loginHook.inputPassword(() => e.target.value)
+          loginHook.repeatPassword(() => e.target.value)
         }} className="border-x border-y"  />
       </div>
-      {loginHook?.errorTip() ? (
-        <div className={cls}>
-          {loginHook?.errorTip()}
+      {errorContent ? (
+        <div className="p-2 text-red-400">
+          {errorContent}
         </div>
       ) : ''}
       <div className="p-2">
         <button
-          className="border-x border-y p-2 w-full rounded hover:text-white hover:bg-black"
-          onClick={() => loginHook.login()}>Sign</button>
+          disabled={!!errorContent}
+          className={`
+            border-x border-y p-2 w-full rounded ${!!errorContent ? 'bg-gray-200 cursor-not-allowed' : 'hover:text-white hover:bg-black'}
+          `}
+          onClick={() => loginHook.sign()}>Sign</button>
       </div>
       <div className="p-2 flex justify-between items-center">
         <span className="flex items-center">
@@ -44,9 +46,10 @@ const SignFrame = (props) => {
             loginHook.signAndAutoLogin(() => e.target.checked)
           }}  className="ml-1 relative top-px"/>
         </span>
-        <button onClick={() => {
-          props.setLoginType(LoginTypes.login)
-        }} className="hover:underline underline-offset-2">goto login &gt;</button>
+        <button
+          onClick={() => {
+            props.setLoginType(LoginTypes.login)
+          }} className="hover:underline underline-offset-2">goto login &gt;</button>
       </div>
     </div>
   )
@@ -54,9 +57,6 @@ const SignFrame = (props) => {
 
 const LoginFrame = (props) => {
   const loginHook = useTarat(login)
-  const cls = classnames(s.row, {
-    show: !!loginHook?.errorTip()
-  })
 
   return (
     <div>
@@ -71,7 +71,7 @@ const LoginFrame = (props) => {
         }} className="border-x border-y"  />
       </div>
       {loginHook?.errorTip() ? (
-        <div className={cls}>
+        <div className="p-2 text-red-500">
           {loginHook?.errorTip()}
         </div>
       ) : ''}
