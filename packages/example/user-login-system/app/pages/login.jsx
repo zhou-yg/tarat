@@ -18,11 +18,13 @@ export default () => {
   console.log('alreadyLogin: ', progress.state, loginHook.alreadyLogin(), '=>', alreadyLogin);
 
   return (
-    <div className="w-full h-screen bg-slate-100 flex items-center justify-center">
+    <div className="w-full h-screen bg-slate-100 flex justify-center">
       {alreadyLogin ? <Navigate to="/user/info" replace={true} /> : ''}
-      <Login title={
-        <h2 className="text-xl">LOGIN EXAMPLE</h2>
-      } type="login" />
+      <div className="mt-6">
+        <Login title={
+          <h2 className="text-xl">LOGIN EXAMPLE</h2>
+        } type="login" />
+      </div>
     </div>
   )
 }
