@@ -1,4 +1,4 @@
-import { Runner, cloneDeep, IHookContext } from '../../src/index'
+import { Runner, cloneDeep, IHookContext, startdReactiveChain } from '../../src/index'
 
 import * as mockBM from '../mockBM'
 
@@ -11,6 +11,28 @@ describe('inputCompute', () => {
     ic1()
     expect(s1()).toBe(2)
   })
+
+  it('multi apply with nested inputCompute', async () => {
+    const runner = new Runner(mockBM.nestedIC)
+
+    const { s1, s2, ic2 } = runner.init()
+
+    const chain = startdReactiveChain()
+
+    const r = ic2()
+
+    expect(s1()).toBe(0)
+    expect(s2()).toBe(1)
+
+    await r
+    
+    chain.stop()
+    // chain.print()
+
+    expect(s1()).toBe(1)
+    expect(s2()).toBe(2)
+  })
+
   it('change state in inputCompute', async () => {
     const runner = new Runner(mockBM.changeStateInputCompute)
 

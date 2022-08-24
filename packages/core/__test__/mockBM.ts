@@ -270,17 +270,31 @@ export function basicInputCompute () {
 export function nestedIC () {
   const s1 = state(0)
   const s2 = state(0)
-  const ic1 = inputCompute(() => {
+  const ic1 = inputCompute(async () => {
     s1(v => v + 1)
   })
-  const ic2 = inputCompute(() => {
+  const ic2 = inputCompute(function * () {
     s2(v => v + 1)
 
-    ic1()
+    yield ic1()
 
     s2(v => v + 1)
   })
+
+  return {
+    ic2,
+    s1,
+    s2,
+  }
 }
+Object.assign(nestedIC, {
+  __names__: [
+    [0, 's1'],
+    [1, 's2'],
+    [2, 'ic1'],
+    [3, 'ic2'],
+  ]
+})
 
 export function changeMultiByInputCompute() {
   const s1 = state({ num: 0 })

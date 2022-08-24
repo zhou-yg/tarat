@@ -912,7 +912,21 @@ export class Computed<T> extends AsyncState<T | Symbol> {
     this.run(reactiveChain?.addNotify(this))
   }
 }
+/**
+ * control global InputCompute while running 
+ */
 let currentInputeCompute: InputCompute | null = null
+const inputComputeStack: InputCompute[] = []
+
+function pushInputComputeStack (ic: InputCompute) {
+  inputComputeStack.push(ic)
+  currentInputeCompute = ic
+}
+function popInputComputeStack () {
+  currentInputeCompute = inputComputeStack[inputComputeStack.length - 2]
+  return inputComputeStack.pop()
+}
+
 
 export class InputCompute<P extends any[] = any> extends Hook {
   constructor(
@@ -926,15 +940,15 @@ export class InputCompute<P extends any[] = any> extends Hook {
     super()
   }
   inputFuncStart() {}
-  inputFuncEnd(reactiveChain?: ReactiveChain<P>) {
-    if (currentInputeCompute === this) {
-      currentInputeCompute = null
-    }
-
-    this.scope.applyAllComputePatches(this, reactiveChain)
+  commitComputePatches (reactiveChain?: ReactiveChain):(void | Promise<void>)[] {
+    return this.scope.applyAllComputePatches(this, reactiveChain)
+  }
+  inputFuncEnd(reactiveChain?: ReactiveChain) {
+    this.commitComputePatches(reactiveChain)
     unFreeze({ _hook: this })
     this.emit(EHookEvents.afterCalling, this)
   }
+  
   async run(...args: any): Promise<void> {
     this.emit(EHookEvents.beforeCalling, this)
     const isFreeze = checkFreeze({ _hook: this })
@@ -943,55 +957,74 @@ export class InputCompute<P extends any[] = any> extends Hook {
     }
     
     // confirm：the composed inputCompute still running under the parent inputCompute
-    if (!currentInputeCompute) {
-      currentInputeCompute = this
+    // if (!currentInputeCompute) {
+    //   currentInputeCompute = this
+    // }
+    
+    // means that current IC is nested in other IC.
+    if (currentInputeCompute) {
+      const r = currentInputeCompute.commitComputePatches(currentReactiveChain)
+      if (r.some(p => isPromise(p))) {
+        await Promise.all(r)
+      }
     }
 
-      const newReactiveChain = currentReactiveChain?.addCall(this)
-      const funcResult = ReactiveChain.withChain(newReactiveChain, () => {
-        return this.getter(...args)
-      })
+    pushInputComputeStack(this)
 
-      log(
-        '[InputCompute.run]',
-        `isGen=${isGenerator(funcResult)}`,
-        `isP=${isPromise(funcResult)}`
-      )
-      // use generator
-      if (isGenerator(funcResult)) {
-        let generatorPreservedCurrentReactiveChain: ReactiveChain | undefined
-        await runGenerator(
-          funcResult as Generator<void>,
-          () => {
-            if (!currentInputeCompute) {
-              currentInputeCompute = this
-            }
-            generatorPreservedCurrentReactiveChain = currentReactiveChain
-            currentReactiveChain = newReactiveChain
-          },
-          () => {
-            // tip: inputCompute supporting nestly compose other inputCompute
-            if (currentInputeCompute === this) {
-              currentInputeCompute = null
-            }
-            currentReactiveChain = generatorPreservedCurrentReactiveChain
-          }
-        )
-        return this.inputFuncEnd(newReactiveChain)
-      } else if (isPromise(funcResult)) {
-        // end compute context in advance
+    const newReactiveChain = currentReactiveChain?.addCall(this)
+    const funcResult = ReactiveChain.withChain(newReactiveChain, () => {
+      return this.getter(...args)
+    })
 
-        if (currentInputeCompute === this) {
-          currentInputeCompute = null
+    popInputComputeStack()
+
+    // if (currentInputeCompute === this) {
+    //   currentInputeCompute = null
+    // }
+
+    log(
+      '[InputCompute.run]',
+      `isGen=${isGenerator(funcResult)}`,
+      `isP=${isPromise(funcResult)}`
+    )
+    // use generator
+    if (isGenerator(funcResult)) {
+      let generatorPreservedCurrentReactiveChain: ReactiveChain | undefined
+      await runGenerator(
+        funcResult as Generator<void>,
+        // enter: start/resume
+        () => {
+          // if (!currentInputeCompute) {
+          //   currentInputeCompute = this
+          // }
+          pushInputComputeStack(this)
+
+          generatorPreservedCurrentReactiveChain = currentReactiveChain
+          currentReactiveChain = newReactiveChain
+        },
+        // leave: stop/suspend 
+        () => {
+          // tip: inputCompute supporting nestly compose other inputCompute
+          // if (currentInputeCompute === this) {
+          //   currentInputeCompute = null
+          // }
+          popInputComputeStack()
+
+          currentReactiveChain = generatorPreservedCurrentReactiveChain
         }
-        await funcResult
-
-        return this.inputFuncEnd(newReactiveChain)
-      }
-      if (currentInputeCompute === this) {
-        currentInputeCompute = null
-      }
+      )
       return this.inputFuncEnd(newReactiveChain)
+    } else if (isPromise(funcResult)) {
+      // end compute context in advance
+
+      await funcResult
+
+      return this.inputFuncEnd(newReactiveChain)
+    }
+    if (currentInputeCompute === this) {
+      currentInputeCompute = null
+    }
+    return this.inputFuncEnd(newReactiveChain)
   }
 }
 
@@ -1016,7 +1049,7 @@ class InputComputeInServer<P extends any[]> extends AsyncInputCompute<P> {
 
     this.emit(EHookEvents.beforeCalling, this)
     if (!checkFreeze({ _hook: this })) {
-      const newReactiveChain = currentReactiveChain?.add(this)
+      currentReactiveChain?.add(this)
 
       const context = this.scope.createActionContext(this, args)
       const result = await getPlugin('Context').postComputeToServer(context)
@@ -1731,7 +1764,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
   applyAllComputePatches(
     currentInputCompute: InputCompute,
     reactiveChain?: ReactiveChain
-  ) {
+  ): (void | Promise<void>)[] {
     const hookModified = this.hooks.filter(h => {
       if (h && (h as State).inputComputePatchesMap) {
         return (h as State).inputComputePatchesMap.get(currentInputCompute)
@@ -1739,10 +1772,10 @@ export class CurrentRunnerScope<T extends Driver = any> {
     })
 
     if (hookModified.length) {
-      hookModified.forEach(h => {
+      return hookModified.map(h => {
         /** @TODO here appending new chain maybe in method of their self  */
         const newChildChain = reactiveChain?.addUpdate(h as State)
-        ;(h as State).applyComputePatches(currentInputCompute, newChildChain)
+        return (h as State).applyComputePatches(currentInputCompute, newChildChain)
       })
     }
   }
