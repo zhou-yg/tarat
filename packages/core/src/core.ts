@@ -936,21 +936,21 @@ export class InputCompute<P extends any[] = any> extends Hook {
     this.emit(EHookEvents.afterCalling, this)
   }
   async run(...args: any): Promise<void> {
+    this.emit(EHookEvents.beforeCalling, this)
+    const isFreeze = checkFreeze({ _hook: this })
+    if (isFreeze) {
+      return
+    }
+    
     // confirm：the composed inputCompute still running under the parent inputCompute
     if (!currentInputeCompute) {
       currentInputeCompute = this
     }
-    this.emit(EHookEvents.beforeCalling, this)
 
-    let preservedCurrentReactiveChain: ReactiveChain | undefined =
-      currentReactiveChain
-    const newReactiveChain = currentReactiveChain?.addCall(this)
-    currentReactiveChain = newReactiveChain
-
-    if (!checkFreeze({ _hook: this })) {
-      const funcResult = this.getter(...args)
-
-      currentReactiveChain = preservedCurrentReactiveChain
+      const newReactiveChain = currentReactiveChain?.addCall(this)
+      const funcResult = ReactiveChain.withChain(newReactiveChain, () => {
+        return this.getter(...args)
+      })
 
       log(
         '[InputCompute.run]',
@@ -988,10 +988,10 @@ export class InputCompute<P extends any[] = any> extends Hook {
 
         return this.inputFuncEnd(newReactiveChain)
       }
-    }
-    currentReactiveChain = preservedCurrentReactiveChain
-
-    return this.inputFuncEnd(newReactiveChain)
+      if (currentInputeCompute === this) {
+        currentInputeCompute = null
+      }
+      return this.inputFuncEnd(newReactiveChain)
   }
 }
 

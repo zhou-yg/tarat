@@ -1,6 +1,8 @@
 import {
   after,
   Runner,
+  startdReactiveChain,
+  stopReactiveChain,
 } from '../../src/'
 
 import * as mockBM from '../mockBM'
@@ -49,13 +51,18 @@ describe('effect', () => {
     expect(result.markBefore).toEqual({ value: 0 })
     expect(runner.scope.hooks.length).toBe(2)
 
+    const chain = startdReactiveChain()
+
     const plusValue = 2
     result.addNum(plusValue)
 
     await mockBM.wait()
 
+    chain.stop()
+
     expect(result.num()).toBe(initNum + plusValue)
     expect(result.markBefore).toEqual({ value: 1 })
+
     expect(onRunnerUpdate).toHaveBeenCalledTimes(1)  
   })
 

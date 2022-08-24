@@ -169,14 +169,17 @@ export function oneEffect(arg: { a: number; s1Changed: Function }) {
 }
 export function beforeWithFreeze(v: number) {
   const num = state(v)
+  num._hook.name = 'beforeWithFreeze.num'
 
   const markBefore = { value: 0 }
 
   const addNum = inputCompute(v => {
+    // console.log('beforeWithFreeze.addNum')
     num(d => {
       return d + v
     })
   })
+  addNum._hook.name = 'beforeWithFreeze.addNum'
 
   before(() => {
     markBefore.value++
@@ -194,14 +197,16 @@ export function beforeWithFreeze(v: number) {
 }
 export function effectAfter(v: number) {
   const num = state(v)
-
+  num._hook.name = 'effectAfter.num'
   const markBefore = { value: 0 }
 
   const addNum = inputCompute(v => {
+    // console.log('effectAfter.addNum')
     num(d => {
       return d + v
     })
   })
+  addNum._hook.name = 'effectAfter.addNum'
 
   after(() => {
     markBefore.value++
@@ -247,6 +252,34 @@ export function changeStateInputCompute(obj1: { num1: number }, num2: number) {
     ...ps,
     changeS1
   }
+}
+
+export function basicInputCompute () {
+  const s1 = state(0)
+  const ic1 = inputCompute(() => {
+    s1(v => v + 1)
+    s1(v => v + 1)
+  })
+
+  return {
+    s1,
+    ic1
+  }
+}
+
+export function nestedIC () {
+  const s1 = state(0)
+  const s2 = state(0)
+  const ic1 = inputCompute(() => {
+    s1(v => v + 1)
+  })
+  const ic2 = inputCompute(() => {
+    s2(v => v + 1)
+
+    ic1()
+
+    s2(v => v + 1)
+  })
 }
 
 export function changeMultiByInputCompute() {

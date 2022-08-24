@@ -3,6 +3,14 @@ import { Runner, cloneDeep, IHookContext } from '../../src/index'
 import * as mockBM from '../mockBM'
 
 describe('inputCompute', () => {
+  it('basic continous plus', () => {
+    const runner = new Runner(mockBM.basicInputCompute)
+    const { s1, ic1 } = runner.init()
+
+    expect(s1()).toBe(0)
+    ic1()
+    expect(s1()).toBe(2)
+  })
   it('change state in inputCompute', async () => {
     const runner = new Runner(mockBM.changeStateInputCompute)
 
