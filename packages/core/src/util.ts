@@ -6,6 +6,7 @@ import type {
   IQueryWhere
 } from './plugin'
 import co from './lib/co'
+import { Hook } from './core'
 export const isArray = Array.isArray
 /* copy from immer's common.ts  */
 export type AnyObject = { [key: string]: any }
@@ -761,4 +762,74 @@ export function shortValue(v: undefined | Symbol | any) {
   if (typeof v === 'symbol') {
     return '@init'
   }
+}
+
+export function getRelatedIndexes (index:number[] | number, contextDeps: THookDeps) {
+  const indexArr = [].concat(index)
+
+  let preventDeath = 0
+
+  const waitHookIndexSet = new Set(indexArr)
+  const reachedHookIndexSet = new Set<number>()
+
+  const deps = new Set<number>(indexArr)
+
+  if (waitHookIndexSet.size > 0) {
+    for (const currentHookIndex of waitHookIndexSet) {
+      if (preventDeath++ > 1e4 || reachedHookIndexSet.has(currentHookIndex)) {
+        continue
+      }
+      reachedHookIndexSet.add(currentHookIndex)
+
+      contextDeps?.forEach(([name, hi, getD, setD]) => {
+        if (hi === currentHookIndex) {
+          // setD: to find who use hook in setD
+          setD?.forEach(numOrArr => {
+            let num: number = -1
+            if (Array.isArray(numOrArr)) {
+              const [type, composeIndex, variableName] = numOrArr
+              if (type === 'c') {
+                throw new Error('[getRelatedIndexes] 1 not support compose.transform it to hook index before calling')
+              }
+            } else {
+              num = numOrArr
+            }
+            if (num > -1) {
+              waitHookIndexSet.add(num)
+              deps.add(num)
+              contextDeps?.forEach(([name, relationHI, getD2]) => {
+                if (getD2.includes(num)) {
+                  deps.add(relationHI)
+                  waitHookIndexSet.add(relationHI)
+                }
+              })
+            }
+          })
+          // getD: to find the hook directly
+          getD?.forEach(numOrArr => {
+            let num: number = -1
+            if (Array.isArray(numOrArr)) {
+              const [type, composeIndex, variableName] = numOrArr
+              if (type === 'c') {
+                throw new Error('[getRelatedIndexes] 2 not support compose.transform it to hook index before calling')
+              }
+            } else {
+              num = numOrArr
+            }
+            if (num > -1) {
+              waitHookIndexSet.add(num)
+              deps.add(num)
+              // contextDeps?.forEach(([name, relationHI, getD2]) => {
+              //   if (getD2.includes(num)) {
+              //     deps.add(relationHI)
+              //     waitHookIndexSet.add(relationHI)
+              //   }
+              // })
+            }
+          })
+        }
+      })
+    }
+  }
+  return deps
 }

@@ -254,7 +254,7 @@ export function changeStateInputCompute(obj1: { num1: number }, num2: number) {
   }
 }
 
-export function basicInputCompute () {
+export function basicInputCompute() {
   const s1 = state(0)
   const ic1 = inputCompute(() => {
     s1(v => v + 1)
@@ -267,13 +267,13 @@ export function basicInputCompute () {
   }
 }
 
-export function nestedIC () {
+export function nestedIC() {
   const s1 = state(0)
   const s2 = state(0)
   const ic1 = inputCompute(async () => {
     s1(v => v + 1)
   })
-  const ic2 = inputCompute(function * () {
+  const ic2 = inputCompute(function* () {
     s2(v => v + 1)
 
     yield ic1()
@@ -284,7 +284,7 @@ export function nestedIC () {
   return {
     ic2,
     s1,
-    s2,
+    s2
   }
 }
 Object.assign(nestedIC, {
@@ -292,7 +292,7 @@ Object.assign(nestedIC, {
     [0, 's1'],
     [1, 's2'],
     [2, 'ic1'],
-    [3, 'ic2'],
+    [3, 'ic2']
   ]
 })
 

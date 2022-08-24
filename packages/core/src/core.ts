@@ -32,7 +32,8 @@ import {
   IDataPatch,
   isDataPatch,
   isModelPatch,
-  shortValue
+  shortValue,
+  getRelatedIndexes
 } from './util'
 import EventEmitter from 'eventemitter3'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
@@ -554,6 +555,7 @@ export class WritePrisma<T> extends WriteModel<T> {
   identifier = 'prisma'
   async executeModelPath(ps: IModelPatch[]) {
     const arr = ps.map(p => {
+      currentReactiveChain?.addCall(this, p.op)
       switch (p.op) {
         case 'create':
           return getPlugin('Model').create(
@@ -1162,6 +1164,7 @@ export class ReactiveChain<T = any> {
   order: number = 0
   name?: string
   hookIndex?: number
+  hookKey?: string
   oldValue: T | undefined
   newValue: T | undefined
   hasNewValue: boolean = false
@@ -1202,8 +1205,9 @@ export class ReactiveChain<T = any> {
       this.newValue = this.hook._internalValue
     }
   }
-  add(trigger: ChainTrigger<T>): ReactiveChain<T> {
+  add(trigger: ChainTrigger<T>, key?: string): ReactiveChain<T> {
     const childChain = new ReactiveChain(this, trigger)
+    childChain.hookKey = key
     this.children.push(childChain)
 
     if (currentRunnerScope) {
@@ -1216,8 +1220,8 @@ export class ReactiveChain<T = any> {
     }
     return childChain
   }
-  addCall(trigger: ChainTrigger<T>): ReactiveChain<T> {
-    const childChain = this.add(trigger)
+  addCall(trigger: ChainTrigger<T>, key?: string): ReactiveChain<T> {
+    const childChain = this.add(trigger, key)
     childChain.type = 'call'
     return childChain
   }
@@ -1244,7 +1248,7 @@ export class ReactiveChain<T = any> {
         currentName = `\x1b[32m${currentName}\x1b[0m`
       }
       if (current.hook?.name) {
-        currentName = `${currentName}(${current.hook?.name})`
+        currentName = `${currentName}(${current.hook?.name}${current.hookKey ? '.' + current.hookKey : ''})`
       } else if (isDef(current.hookIndex)) {
         currentName = `${currentName}(${current.hookIndex})`
       }
@@ -1501,7 +1505,7 @@ export class ModelEvent {
 export class CurrentRunnerScope<T extends Driver = any> {
   name?: string
   hooks: (Hook | undefined)[] = []
-  composes: any[] = [] // store the compose execute resutl
+  composes: Record<string, any>[] = [] // store the compose execute resutl
 
   outerListeners: Function[] = []
   stateChangeCallbackRunning = false
@@ -1510,10 +1514,6 @@ export class CurrentRunnerScope<T extends Driver = any> {
   watcher: Watcher<Hook> = new Watcher(this)
   // static parsed result
   initialHooksSet?: Set<number>
-
-  // initialArgList: any[] = []
-  // intialContextData: IHookContext['data'] | null = null
-  // hookRunnerName = ''
 
   reactiveChainStack: ReactiveChain[] = []
 
@@ -1786,81 +1786,38 @@ export class CurrentRunnerScope<T extends Driver = any> {
    * 1.getD -> getD -> getD
    * 2.setD in who's getD -> getD
    */
-  getRelatedHookIndexes(hookIndex: number) {
-    let preventDeath = 0
-
-    const waitHookIndexSet = new Set([hookIndex])
-    const reachedHookIndexSet = new Set<number>()
-
-    const deps = new Set<number>()
-
-    if (waitHookIndexSet.size > 0) {
-      for (const currentHookIndex of waitHookIndexSet) {
-        if (preventDeath++ > 1e4 || reachedHookIndexSet.has(currentHookIndex)) {
-          break
-        }
-        reachedHookIndexSet.add(currentHookIndex)
-
-        this.intialContextDeps?.forEach(([name, hi, getD, setD]) => {
-          if (hi === currentHookIndex) {
-            // setD: to find who use hook in setD
-            setD?.forEach(numOrArr => {
-              let num: number = -1
-              if (Array.isArray(numOrArr)) {
-                const [type, composeIndex, variableName] = numOrArr
-                if (type === 'c') {
-                  const setterGetterFunc: { _hook: Hook } | undefined =
-                    this.composes[composeIndex]?.[variableName]
-                  if (setterGetterFunc?._hook) {
-                    num = this.hooks.indexOf(setterGetterFunc._hook)
-                  }
-                }
-              } else {
-                num = numOrArr
-              }
-              if (num > -1) {
-                waitHookIndexSet.add(num)
-                deps.add(num)
-                this.intialContextDeps?.forEach(([name, relationHI, getD2]) => {
-                  if (getD2.includes(num)) {
-                    deps.add(relationHI)
-                    waitHookIndexSet.add(relationHI)
-                  }
-                })
-              }
-            })
-            // getD: to find the hook directly
-            getD?.forEach(numOrArr => {
-              let num: number = -1
-              if (Array.isArray(numOrArr)) {
-                const [type, composeIndex, variableName] = numOrArr
-                if (type === 'c') {
-                  const setterGetterFunc: { _hook: Hook } | undefined =
-                    this.composes[composeIndex]?.[variableName]
-                  if (setterGetterFunc?._hook) {
-                    num = this.hooks.indexOf(setterGetterFunc._hook)
-                  }
-                }
-              } else {
-                num = numOrArr
-              }
-              if (num > -1) {
-                waitHookIndexSet.add(num)
-                deps.add(num)
-                this.intialContextDeps?.forEach(([name, relationHI, getD2]) => {
-                  if (getD2.includes(num)) {
-                    deps.add(relationHI)
-                    waitHookIndexSet.add(relationHI)
-                  }
-                })
-              }
-            })
-          }
-        })
-      }
+  getRelatedHookIndexes(hookIndex: number):Set<number> {
+    if (!this.intialContextDeps) {
+      return new Set()
     }
+    const hookIndexDeps: THookDeps = this.intialContextDeps.map(([name, hi, getD, setD]) => {
+      const [newGetD, newSetD] = [getD, setD].map(depencies => {
+        return depencies?.map(numOrArr => {
+          if (Array.isArray(numOrArr) && numOrArr[0] === 'c') {
+            const [_, composeIndex, variableName] = numOrArr
+            const setterGetterFunc: { _hook: Hook } | undefined =
+            this.composes[composeIndex]?.[variableName]
+            if (setterGetterFunc?._hook) {
+              return this.hooks.indexOf(setterGetterFunc._hook)
+            }
+          }
+          return numOrArr
+        }).filter(v => v !== undefined)
+      })
+      return [name, hi, newGetD, newSetD]
+    })
 
-    return deps
+    const isModel = this.hooks[hookIndex] instanceof Model
+    if (isModel) {
+      const indexArr: number[] = []
+      hookIndexDeps.forEach(([_, i, get, set]) => {
+        if (get.includes(hookIndex)) {
+          indexArr.push(i)
+        }
+      })
+      return getRelatedIndexes(indexArr, hookIndexDeps)
+    }
+    return getRelatedIndexes(hookIndex, hookIndexDeps)
   }
 
   createBaseContext() {

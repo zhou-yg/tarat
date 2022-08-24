@@ -1,5 +1,4 @@
 import { IDiff, IHookContext } from './util'
-import type Cookies from 'cookies'
 import { CurrentRunnerScope } from './core'
 
 export type IModelCreateData =
@@ -58,8 +57,8 @@ export type TCacheFrom = 'cookie' | 'regularKV' // | 'redis' | 'localStorage' | 
 
 export interface IRunningContext {
   cookies: {
-    set: (name: string, value?: string | null, opts?: Cookies.SetOption) => void
-    get: (name: string, opts?: Cookies.GetOption) => string | undefined
+    set: (name: string, value?: string | null, opts?: any) => void
+    get: (name: string, opts?: any) => string | undefined
   }
 }
 

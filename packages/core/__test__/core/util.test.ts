@@ -1,4 +1,4 @@
-import { calculateDiff, checkQueryWhere } from '../../src/index'
+import { calculateDiff, checkQueryWhere, getRelatedIndexes, THookDeps } from '../../src/index'
 import { produceWithPatches, enablePatches } from 'immer'
 
 enablePatches()
@@ -486,5 +486,64 @@ describe('util', () => {
       d: [undefined, 2]
     })
     expect([r1, r3, r5]).toEqual([false, false, false])
+  })
+  describe('getRelatedIndexes', () => {
+    it ('simple', () => {
+      const depMaps: THookDeps = [
+        ['h', 2, [0]]
+      ]
+      const deps = getRelatedIndexes(2, depMaps)
+      expect(deps).toEqual(new Set([2, 0]))
+    })
+    it ('double get chain', () => {
+      const depMaps: THookDeps = [
+        ['h', 1, [0]],
+        ['h', 2, [1]]
+      ]
+      const deps = getRelatedIndexes(2, depMaps)
+      expect(deps).toEqual(new Set([2, 0, 1]))
+    })
+    it ('root -> get -> set', () => {
+      const depMaps: THookDeps = [
+        ['h', 1, [], [0]],
+        ['h', 2, [1]]
+      ]
+      const deps = getRelatedIndexes(2, depMaps)
+      expect(deps).toEqual(new Set([2, 0, 1]))
+    })
+    it ('root -> get -> set -> set', () => {
+      const depMaps: THookDeps = [
+        ['h', 1, [], [0]],
+        ['h', 2, [], [1]],
+        ['h', 3, [2]],
+      ]
+      const deps = getRelatedIndexes(3, depMaps)
+      expect(deps).toEqual(new Set([3, 2, 1, 0]))
+    })
+    it ('root -> get -> set -> get', () => {
+      const depMaps: THookDeps = [
+        ['h', 1, [0], []],
+        ['h', 2, [], [1]],
+        ['h', 3, [2]],
+      ]
+      const deps = getRelatedIndexes(3, depMaps)
+      expect(deps).toEqual(new Set([3, 2, 1, 0]))
+    })
+    it('root -> has same dep (get)', () => {
+      const depMaps: THookDeps = [
+        ['h', 2, [1], []],
+        ['h', 3, [1], []],
+      ]
+      const deps = getRelatedIndexes(3, depMaps)
+      expect(deps).toEqual(new Set([3, 1]))
+    })
+    it('root -> has same dep (set)', () => {
+      const depMaps: THookDeps = [
+        ['h', 2, [1], []],
+        ['h', 3, [], [1]],
+      ]
+      const deps = getRelatedIndexes(3, depMaps)
+      expect(deps).toEqual(new Set([3, 2, 1]))
+    })
   })
 })
