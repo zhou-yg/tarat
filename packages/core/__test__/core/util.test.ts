@@ -1,4 +1,4 @@
-import { calculateDiff, checkQueryWhere, getRelatedIndexes, THookDeps } from '../../src/index'
+import { calculateDiff, checkQueryWhere, constructDataGraph, dataGrachTraverse, DataGraphNode, getRelatedIndexes, THookDeps } from '../../src/index'
 import { produceWithPatches, enablePatches } from 'immer'
 
 enablePatches()
@@ -544,6 +544,116 @@ describe('util', () => {
       ]
       const deps = getRelatedIndexes(3, depMaps)
       expect(deps).toEqual(new Set([3, 2, 1]))
+    })
+    it.only('root -> has same dep (set)', () => {
+      const depMaps: THookDeps = [
+        ["h", 10, [9, 5, 6, 4], [9, 5, 6, 4]],
+        ["h", 12, [11]],
+        ["h", 13, [12], [12]],
+        ["h", 14, [12]],
+        ["h", 15, [14]],
+        ["h", 16, [15]],
+        ["h", 17, [5, 6, 7]],
+        ["h", 19, [5, 6, 10, 8, 20], [9, 18]],
+        ["h", 20, [5, 6], [9, 2, 1, 13, 11, 18]],
+        ["h", 21, [11, 12], [11, 2, 1, 13]],
+        ["h", 22, [15], [4, 5, 6, 3]],
+        ["h", 23, [], [4, 5, 6, 3]],
+        ["h", 24, [15, 5, 6, 4, 23], [10]],
+        ]
+      const deps = getRelatedIndexes(21, depMaps)
+      console.log('deps: ', deps);
+    })
+  })
+  describe.only('constructDataGraph', () => {
+    it('simple single chain', () => {
+      const depMaps: THookDeps = [
+        ['h', 2, [1], []],
+        ['h', 3, [], [1]],
+      ]
+      const rootNodes = constructDataGraph(depMaps)
+      const arr = [...rootNodes]
+  
+      expect(arr[0].id).toBe(3)
+      expect(rootNodes.size).toEqual(1)
+
+      const check = jest.fn((id) => {
+        expect(id).toBe(3)
+      })
+
+      dataGrachTraverse(arr, (n, a) => {
+        if (n.id === 1) {
+          check(a[a.length - 1].id)
+        }
+      })
+      expect(check).toBeCalledTimes(1)
+      
+      const allChildren = arr[0].getAllChildren()
+      const childrenArr = [...allChildren]
+      expect(childrenArr.length).toBe(2)
+      expect(childrenArr[0].id).toBe(1)
+      expect(childrenArr[1].id).toBe(2)
+    })
+    it('multi roots', () => {
+      const depMaps: THookDeps = [
+        ['h', 2, [1], []],
+        ['h', 3, [], [1]],
+        ['h', 4, [], [1]],
+      ]
+      const rootNodes = constructDataGraph(depMaps)
+      const arr = [...rootNodes]
+  
+      expect(arr[0].id).toEqual(3)
+      expect(arr[1].id).toEqual(4)
+      expect(rootNodes.size).toEqual(2)
+
+      const check = jest.fn((id) => {
+        expect([3, 4]).toContain(id)
+      })
+
+      dataGrachTraverse(arr, (n, a) => {
+        if (n.id === 1) {
+          check(a[a.length - 1].id)
+        }
+      })
+      expect(check).toBeCalledTimes(2)
+
+    })
+    it('multi roots multi child', () => {
+      const depMaps: THookDeps = [
+        ['h', 2, [1], []],
+        ['h', 3, [], [1]],
+        ['h', 5, [1], []],
+        ['h', 4, [], [1]],
+      ]
+      const rootNodes = constructDataGraph(depMaps)
+      const arr = [...rootNodes]
+  
+      expect(arr[0].id).toEqual(3)
+      expect(arr[1].id).toEqual(4)
+      expect(rootNodes.size).toEqual(2)
+
+      expect(arr[0].id).toEqual(3)
+      expect(arr[1].id).toEqual(4)
+      expect(rootNodes.size).toEqual(2)
+
+      const check = jest.fn((id) => {
+        expect([1]).toContain(id)
+      })
+
+      dataGrachTraverse(arr, (n, a) => {
+        if (n.id === 2) {
+          check(a[a.length - 1].id)
+        }
+      })
+      expect(check).toBeCalledTimes(2)
+  
+      const allChildren = arr[0].getAllChildren()
+      const childrenArr = [...allChildren]
+      expect(childrenArr.length).toBe(3)
+      expect(childrenArr[0].id).toBe(1)
+      expect(childrenArr[1].id).toBe(2)
+      expect(childrenArr[2].id).toBe(5)
     })
   })
 })

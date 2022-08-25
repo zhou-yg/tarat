@@ -764,6 +764,86 @@ export function shortValue(v: undefined | Symbol | any) {
   }
 }
 
+export class DataGraphNode {
+  children = new Set<DataGraphNode>()
+  constructor (public id:number) {}
+  addChild (n: DataGraphNode) {
+    this.children.add(n)
+  }
+  getAllChildren () {
+    const r = new Set(this.children)
+    this.children.forEach(c => {
+      const cc = c.getAllChildren()
+      cc.forEach(n =>{
+        r.add(n)
+      })
+    })
+
+    return r
+  }
+}
+export  function dataGrachTraverse (source: DataGraphNode | DataGraphNode[], callback: (n: DataGraphNode, ancestors: DataGraphNode[]) => boolean | void) {
+  
+  function task (current: DataGraphNode, ancestors: DataGraphNode[] = []) {
+    const r = callback(current, ancestors)
+    if (r === false) {
+      return false
+    }
+    for (const v of current.children) {
+      const r = task(v, ancestors.concat(current))
+      if (r === false) {
+        break
+      }
+    }
+  }
+  [].concat(source).forEach(s => {
+    task(s)
+  })
+}
+
+export function constructDataGraph (contextDeps: THookDeps) {
+  const nodesMap = new Map<number, DataGraphNode>()
+  const hasParentIds = new Set<number>()
+  contextDeps.forEach(([_, id, get, set]) => {
+    const current = new DataGraphNode(id)
+    nodesMap.set(id, current)
+
+    get?.forEach((idOrArr) => {
+      if (Array.isArray(idOrArr)) {
+        throw new Error('[getRelatedIndexes] 1 not support compose. transform it to hook index before calling')
+      } else {
+        let parent = nodesMap.get(idOrArr)
+        if (!parent) {
+          parent = new DataGraphNode(idOrArr)
+          nodesMap.set(idOrArr, parent)
+        }
+        hasParentIds.add(current.id)
+        parent.addChild(current)
+      }
+    })
+    set?.forEach((idOrArr) => {
+      if (Array.isArray(idOrArr)) {
+        throw new Error('[getRelatedIndexes] 1 not support compose. transform it to hook index before calling')
+      } else {
+        let child = nodesMap.get(idOrArr)
+        if (!child) {
+          child = new DataGraphNode(idOrArr)
+          nodesMap.set(idOrArr, child)
+        }
+        hasParentIds.add(child.id)
+        current.addChild(child)
+      }
+    })
+  })
+  const rootNodes = new Set<DataGraphNode>()
+  for (const [id, n] of nodesMap){
+    if (!hasParentIds.has(id)) {
+      rootNodes.add(n)
+    }
+  }
+  return rootNodes
+}
+
 export function getRelatedIndexes (index:number[] | number, contextDeps: THookDeps) {
   const indexArr = [].concat(index)
 
