@@ -2,8 +2,8 @@
   "name": "tarat-signal",
   "version": "0.0.9",
   "description": "useHook serverless framework",
-  "main": "./dist/index.server.js",
-  "module": "./dist/index.server.mjs",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "watch-unit": "jest --watch -- __test__/core/context.test.ts",
