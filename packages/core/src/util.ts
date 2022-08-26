@@ -847,15 +847,13 @@ function isDependenceChain(ancestors: DataGraphNode[]) {
   return false
 }
 
-function findDenpendenciesUntilIC (ancestors: DataGraphNode[]) {
+function findDenpendenciesUntilIC(ancestors: DataGraphNode[]) {
   if (ancestors.length >= 2) {
     let r = new Set<DataGraphNode>()
     for (let index = ancestors.length - 1; index > 0; index--) {
       const last = ancestors[index]
       const prevLast = ancestors[index - 1]
-      if (
-        prevLast.watchers.has(last)
-      ) {
+      if (prevLast.watchers.has(last)) {
         r.add(prevLast)
       } else {
         break
