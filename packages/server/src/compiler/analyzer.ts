@@ -13,7 +13,11 @@ import type {
 } from 'estree'
 
 import type { THookDeps } from 'tarat-core'
-import { hasSourceHookFactoryNames, hookFactoryNames } from 'tarat-core'
+import {
+  hasSourceHookFactoryNames,
+  hookFactoryNames,
+  initiativeComputeHookFactoryNames
+} from 'tarat-core'
 
 const composeName = 'compose'
 
@@ -23,6 +27,11 @@ const composeName = 'compose'
 function isHookCaller (node: CallExpression) {
   return node.type === 'CallExpression' && 
     (node.callee.type === 'Identifier' && hookFactoryNames.includes(node.callee.name))
+}
+
+function isWritor (node: CallExpression) {
+  return node.type === 'CallExpression' && 
+    (node.callee.type === 'Identifier' && initiativeComputeHookFactoryNames.includes(node.callee.name))
 }
 
 function isComposeCaller (node: CallExpression) {
@@ -129,8 +138,7 @@ function collectHookVaraibles (BMNode: TBMNode) {
                         }
                         break
                       case 'RestElement':
-                        throw new Error('to be supported')
-                        break
+                        throw new Error('[ObjectPattern.RestElement] doesnt supported')
                     }
                   })
                   break
@@ -214,6 +222,7 @@ function findParentCallerHook (ancestor: acorn.Node[]) {
 type TOriginDepsMap = Map<number, {
   get: Set<THookDeps[0][2][0]>,
   set: Set<THookDeps[0][2][0]>,
+  ic: boolean // if is like "inputCompute" pattern
 }>
 function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
   const depsMap: TOriginDepsMap = new Map
@@ -259,7 +268,8 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
             if (!deps) {
               deps = {
                 get: new Set(),
-                set: new Set()
+                set: new Set(),
+                ic: isWritor(parentCaller.sourceHook),
               }
               depsMap.set(parentCaller.hookIndex, deps)
             }
@@ -305,12 +315,16 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
               if (!deps) {
                 deps = {
                   get: new Set(),
-                  set: new Set()
+                  set: new Set(),
+                  ic: isWritor(parentCaller.sourceHook),
                 }
                 depsMap.set(parentCaller.hookIndex, deps)
               }
-              deps.set.add(hook.hookIndex)
-              deps.get.add(hook.hookIndex)
+              if (deps.ic) {
+                deps.set.add(hook.hookIndex)
+              } else {
+                deps.get.add(hook.hookIndex)
+              }
             }
           }
         }
@@ -325,7 +339,7 @@ function convertDepsToJSON(m: TOriginDepsMap) {
 
   for (const [k, v] of m.entries()) {
     const r: THookDeps[0] = [
-      'h',
+      v.ic ? 'ic' : 'h',
       k,
       [...v.get],
     ]

@@ -21,7 +21,7 @@ describe('parser', () => {
     })
   })
 
-  it ('parse with inputServer', () => {
+  it('parse with inputServer', () => {
     const BM = 'inputCompute.js'
     const code = mockUtil.readMock(BM)
 
@@ -36,7 +36,7 @@ describe('parser', () => {
         ],
         deps: [
           ['h', 1, [0]],
-          ['h', 2, [1, 0], [0]]
+          ['ic', 2, [1, 0], [0]]
         ]
       }
     })    
@@ -76,7 +76,7 @@ describe('parser', () => {
 
     expect(deps.composeWithSS2.deps).toEqual(
       [
-        ['h', 1, [], [0]],
+        ['ic', 1, [], [0]],
         ['h', 2, [
           0,
           ['c', 0, 's1'],
@@ -103,8 +103,8 @@ describe('parser', () => {
         ],
         deps: [
           ['h', 1, [0]],
-          ['h', 2, [1], [1]],
-          ['h', 3, [2]],
+          ['ic', 2, [], [1]],
+          ['ic', 3, [2]],
         ]
       }
     })
