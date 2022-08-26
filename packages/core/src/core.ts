@@ -967,7 +967,7 @@ export class InputCompute<P extends any[] = any> extends Hook {
     // means that current IC is nested in other IC.
     if (currentInputeCompute) {
       const r = currentInputeCompute.commitComputePatches(currentReactiveChain)
-      if (r.some(p => isPromise(p))) {
+      if (r?.some(p => isPromise(p))) {
         await Promise.all(r)
       }
     }
@@ -1767,7 +1767,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
   applyAllComputePatches(
     currentInputCompute: InputCompute,
     reactiveChain?: ReactiveChain
-  ): (void | Promise<void>)[] {
+  ): (void | Promise<void>)[] | undefined {
     const hookModified = this.hooks.filter(h => {
       if (h && (h as State).inputComputePatchesMap) {
         return (h as State).inputComputePatchesMap.get(currentInputCompute)
@@ -2133,7 +2133,12 @@ export const updateHookFactory = {
 export const hookFactoryNames = Object.keys(mountHookFactory)
 /** @TODO need refact code to auto export these hooks */
 export const hasSourceHookFactoryNames = ['cache', 'writeModel', 'writePrisma']
-export const initiativeComputeHookFactoryNames = ['inputCompute', 'inputComputeInServer', 'writePrisma', 'writeModel']
+export const initiativeComputeHookFactoryNames = [
+  'inputCompute',
+  'inputComputeInServer',
+  'writePrisma',
+  'writeModel'
+]
 
 export let currentHookFactory: {
   state: typeof mountState

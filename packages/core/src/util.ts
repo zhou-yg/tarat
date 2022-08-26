@@ -847,13 +847,32 @@ function isDependenceChain(ancestors: DataGraphNode[]) {
   return false
 }
 
+function findDenpendenciesUntilIC (ancestors: DataGraphNode[]) {
+  if (ancestors.length >= 2) {
+    let r = new Set<DataGraphNode>()
+    for (let index = ancestors.length - 1; index > 0; index--) {
+      const last = ancestors[index]
+      const prevLast = ancestors[index - 1]
+      if (
+        prevLast.watchers.has(last)
+      ) {
+        r.add(prevLast)
+      } else {
+        break
+      }
+    }
+    return r
+  }
+}
+
 export function getDependencies(rootNodes: Set<DataGraphNode>, id: number) {
   const dependencies = new Set<DataGraphNode>()
   dataGrachTraverse([...rootNodes], (n, a) => {
     if (n.id === id) {
     }
-    if (n.id === id && isDependenceChain(a.concat(n))) {
-      a.forEach(dn => {
+    if (n.id === id) {
+      const deps = findDenpendenciesUntilIC(a.concat(n))
+      deps?.forEach(dn => {
         dependencies.add(dn)
       })
     }
@@ -897,11 +916,11 @@ export function getExecutionFlow(rootNodes: Set<DataGraphNode>, id: number) {
       }
     })
   })
-  
+
   return new Set([...dependencies, ...allTargets, ...executionFlow])
 }
 
-function getTypeFromContextDeps (contextDeps: THookDeps, index: number) {
+function getTypeFromContextDeps(contextDeps: THookDeps, index: number) {
   const r = contextDeps.find(v => v[1] === index)
   return r?.[0] || 'h'
 }

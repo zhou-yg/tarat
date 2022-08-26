@@ -703,7 +703,7 @@ describe('util', () => {
       const deps = getRelatedIndexes(3, depMaps)
       expect(deps).toEqual(new Set([3, 1, 2]))
     })
-    it('complex', () => {
+    it('complex 1', () => {
       const depMaps: THookDeps = [
         ["ic", 10, [5, 6, 4], [9, 5, 6, 4]],
         ["h", 12, [11]],
@@ -722,6 +722,29 @@ describe('util', () => {
       const deps = getRelatedIndexes(21, depMaps)
       expect(deps).toEqual(new Set([
         21, 11, 12, 1, 2, 13,
+        14, 15, 16 // by 12
+      ]))
+    })
+    it('complex 2', () => {
+      const depMaps: THookDeps = [
+        ["ic", 10, [5, 6, 4], [9, 5, 6, 4]],
+        ["h", 12, [11]],
+        ["ic", 13, [], [12]],
+        ["h", 14, [12]],
+        ["h", 15, [14]],
+        ["h", 16, [15]],
+        ["h", 17, [5, 6, 7]],
+        ["ic", 19, [5, 6, 10, 8, 20], [9, 18]],
+        ["ic", 20, [5, 6], [9, 2, 1, 13, 11, 18]],
+        ["ic", 21, [11, 12], [11, 2, 1, 13]],
+        ["ic", 22, [15], [4, 5, 6, 3]],
+        ["ic", 23, [], [4, 5, 6, 3]],
+        ["ic", 24, [15, 5, 6, 4, 23], [10]],
+      ]
+      const deps = getRelatedIndexes(20, depMaps)
+      expect(deps).toEqual(new Set([
+        20, 5, 6, 9, 2, 1, 13, 11, 18,
+        12, // by 13
         14, 15, 16 // by 12
       ]))
     })
