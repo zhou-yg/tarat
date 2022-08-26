@@ -52,7 +52,6 @@ function getMemberExpressionKeys (m: MemberExpression, keys: string[] = []): str
         break
       default:
         console.error('[getMemberExpressionKeys] unexpect node type', (m as any))
-        // throw new Error('[getMemberExpressionKeys] unexpect node type')
         break
     }
   }
@@ -246,7 +245,7 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
           }
           lastCalleeName = calleeName
           break
-        // scene: "xxx.callee()" or "otherComposeHookResult.xxxCallee()"
+        // scene: "aaa.bbb.callee()" or "otherComposeHookResult.xxxCallee()"
         case 'MemberExpression':
           const calleeKeys = getMemberExpressionKeys(callee)
           existSourceInScope = get(scope, calleeKeys.slice(0, -1))?.sourceHook as CallExpression
@@ -276,6 +275,10 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
 
             switch (v1?.type) {
               case 'hook':
+                /**
+                 * @TODO
+                 * consider a case that calling writePrisma.remove() hasnt arguments but should set in "set"
+                 */
                 if (hasArguments) {
                   deps.set.add(v1.hookIndex)
                 } else {

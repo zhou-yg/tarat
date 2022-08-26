@@ -24,27 +24,16 @@ export default function login() {
   const inputPassword = state();
   const repeatPassword = state();
 
-  const userDataByInput = model("user", (prev) => {
-    if (name() && password()) {
-      return {
-        where: {
-          name: name(), // maybe be unique?
-          password: password(),
-        },
-        select: {
-          id: true,
-          name: true,
-        },
-      };
-    }
+  const signAndAutoLogin = state(true);
+
+  const userDataByInput = model("user", (prev) => {}, {
+    immediate: false,
   });
   const writeUserData = writePrisma(userDataByInput, () => ({
-    name: name(),
-    password: password(),
-    avatar: avatar(),
+    name: inputName(),
+    password: inputPassword(),
+    avatar: inputAvatar(),
   }));
-
-  const signAndAutoLogin = state(false);
 
   const cookieId = cache("userDataKey", { from: "cookie" }); // just run in server because by it depends 'cookie'
 
@@ -76,19 +65,13 @@ export default function login() {
       };
     }
   });
-  /* 11 */
   const userData = computed(() => {
     const u1 = userDataByCookie();
     if (u1?.length > 0) {
       return u1[0];
     }
-    const u2 = userDataByInput();
-    if (u2?.length > 0) {
-      return u2[0];
-    }
   });
 
-  /* 12 */
   const alreadyLogin = computed(() => {
     const ud = userData();
     return !!ud;
@@ -135,10 +118,7 @@ export default function login() {
       password: inputPasswordVal,
     });
     if (!r) {
-      yield writeUserData.create({
-        name: inputNameVal,
-        password: inputPasswordVal,
-      });
+      yield writeUserData.create();
 
       if (signAndAutoLogin()) {
         yield login();
@@ -246,9 +226,9 @@ const autoParser = {
       [5, "inputName"],
       [6, "inputPassword"],
       [7, "repeatPassword"],
-      [8, "userDataByInput"],
-      [9, "writeUserData"],
-      [10, "signAndAutoLogin"],
+      [8, "signAndAutoLogin"],
+      [9, "userDataByInput"],
+      [10, "writeUserData"],
       [11, "cookieId"],
       [12, "sessionStore"],
       [13, "writeSessionStore"],
@@ -265,20 +245,19 @@ const autoParser = {
       [24, "updateInfo"],
     ],
     deps: [
-      ["h", 8, [2, 1]],
-      ["h", 9, [8, 2, 1, 0], [8, 2, 1, 0]],
+      ["ic", 10, [5, 6, 4], [9, 5, 6, 4]],
       ["h", 12, [11]],
-      ["h", 13, [12], [12]],
+      ["ic", 13, [], [12]],
       ["h", 14, [12]],
-      ["h", 15, [14, 8]],
+      ["h", 15, [14]],
       ["h", 16, [15]],
       ["h", 17, [5, 6, 7]],
-      ["h", 19, [5, 6, 10, 20], [8, 9, 18]],
-      ["h", 20, [5, 6], [8, 2, 1, 13, 11, 18]],
-      ["h", 21, [11, 12], [11, 2, 1, 13]],
-      ["h", 22, [15], [4, 5, 6, 3]],
-      ["h", 23, [], [4, 5, 6, 3]],
-      ["h", 24, [15, 5, 6, 4, 23], [9]],
+      ["ic", 19, [5, 6, 10, 8, 20], [9, 18]],
+      ["ic", 20, [5, 6], [9, 2, 1, 13, 11, 18]],
+      ["ic", 21, [11, 12], [11, 2, 1, 13]],
+      ["ic", 22, [15], [4, 5, 6, 3]],
+      ["ic", 23, [], [4, 5, 6, 3]],
+      ["ic", 24, [15, 5, 6, 4, 23], [10]],
     ],
   },
 };

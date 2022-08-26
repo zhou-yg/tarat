@@ -17,12 +17,12 @@ const SignFrame = (props) => {
         }} className="border-x border-y"  />
       </div>
       <div className={s.row + ' p-2'} >
-        <input placeholder="password" onInput={e => {
+        <input placeholder="password" onBlur={e => {
           loginHook.inputPassword(() => e.target.value)
         }} className="border-x border-y"  />
       </div>
       <div className={s.row + ' p-2'} >
-        <input placeholder="confirm password" onInput={e => {
+        <input placeholder="confirm password" onBlur={e => {
           loginHook.repeatPassword(() => e.target.value)
         }} className="border-x border-y"  />
       </div>
