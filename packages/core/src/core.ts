@@ -915,20 +915,19 @@ export class Computed<T> extends AsyncState<T | Symbol> {
   }
 }
 /**
- * control global InputCompute while running 
+ * control global InputCompute while running
  */
 let currentInputeCompute: InputCompute | null = null
 const inputComputeStack: InputCompute[] = []
 
-function pushInputComputeStack (ic: InputCompute) {
+function pushInputComputeStack(ic: InputCompute) {
   inputComputeStack.push(ic)
   currentInputeCompute = ic
 }
-function popInputComputeStack () {
+function popInputComputeStack() {
   currentInputeCompute = inputComputeStack[inputComputeStack.length - 2]
   return inputComputeStack.pop()
 }
-
 
 export class InputCompute<P extends any[] = any> extends Hook {
   constructor(
@@ -942,7 +941,9 @@ export class InputCompute<P extends any[] = any> extends Hook {
     super()
   }
   inputFuncStart() {}
-  commitComputePatches (reactiveChain?: ReactiveChain):(void | Promise<void>)[] {
+  commitComputePatches(
+    reactiveChain?: ReactiveChain
+  ): (void | Promise<void>)[] {
     return this.scope.applyAllComputePatches(this, reactiveChain)
   }
   inputFuncEnd(reactiveChain?: ReactiveChain) {
@@ -950,19 +951,19 @@ export class InputCompute<P extends any[] = any> extends Hook {
     unFreeze({ _hook: this })
     this.emit(EHookEvents.afterCalling, this)
   }
-  
+
   async run(...args: any): Promise<void> {
     this.emit(EHookEvents.beforeCalling, this)
     const isFreeze = checkFreeze({ _hook: this })
     if (isFreeze) {
       return
     }
-    
+
     // confirm：the composed inputCompute still running under the parent inputCompute
     // if (!currentInputeCompute) {
     //   currentInputeCompute = this
     // }
-    
+
     // means that current IC is nested in other IC.
     if (currentInputeCompute) {
       const r = currentInputeCompute.commitComputePatches(currentReactiveChain)
@@ -1004,7 +1005,7 @@ export class InputCompute<P extends any[] = any> extends Hook {
           generatorPreservedCurrentReactiveChain = currentReactiveChain
           currentReactiveChain = newReactiveChain
         },
-        // leave: stop/suspend 
+        // leave: stop/suspend
         () => {
           // tip: inputCompute supporting nestly compose other inputCompute
           // if (currentInputeCompute === this) {
@@ -1248,7 +1249,9 @@ export class ReactiveChain<T = any> {
         currentName = `\x1b[32m${currentName}\x1b[0m`
       }
       if (current.hook?.name) {
-        currentName = `${currentName}(${current.hook?.name}${current.hookKey ? '.' + current.hookKey : ''})`
+        currentName = `${currentName}(${current.hook?.name}${
+          current.hookKey ? '.' + current.hookKey : ''
+        })`
       } else if (isDef(current.hookIndex)) {
         currentName = `${currentName}(${current.hookIndex})`
       }
@@ -1775,7 +1778,10 @@ export class CurrentRunnerScope<T extends Driver = any> {
       return hookModified.map(h => {
         /** @TODO here appending new chain maybe in method of their self  */
         const newChildChain = reactiveChain?.addUpdate(h as State)
-        return (h as State).applyComputePatches(currentInputCompute, newChildChain)
+        return (h as State).applyComputePatches(
+          currentInputCompute,
+          newChildChain
+        )
       })
     }
   }
@@ -1786,26 +1792,30 @@ export class CurrentRunnerScope<T extends Driver = any> {
    * 1.getD -> getD -> getD
    * 2.setD in who's getD -> getD
    */
-  getRelatedHookIndexes(hookIndex: number):Set<number> {
+  getRelatedHookIndexes(hookIndex: number): Set<number> {
     if (!this.intialContextDeps) {
       return new Set()
     }
-    const hookIndexDeps: THookDeps = this.intialContextDeps.map(([name, hi, getD, setD]) => {
-      const [newGetD, newSetD] = [getD, setD].map(depencies => {
-        return depencies?.map(numOrArr => {
-          if (Array.isArray(numOrArr) && numOrArr[0] === 'c') {
-            const [_, composeIndex, variableName] = numOrArr
-            const setterGetterFunc: { _hook: Hook } | undefined =
-            this.composes[composeIndex]?.[variableName]
-            if (setterGetterFunc?._hook) {
-              return this.hooks.indexOf(setterGetterFunc._hook)
-            }
-          }
-          return numOrArr
-        }).filter(v => v !== undefined)
-      })
-      return [name, hi, newGetD, newSetD]
-    })
+    const hookIndexDeps: THookDeps = this.intialContextDeps.map(
+      ([name, hi, getD, setD]) => {
+        const [newGetD, newSetD] = [getD, setD].map(dependencies => {
+          return dependencies
+            ?.map(numOrArr => {
+              if (Array.isArray(numOrArr) && numOrArr[0] === 'c') {
+                const [_, composeIndex, variableName] = numOrArr
+                const setterGetterFunc: { _hook: Hook } | undefined =
+                  this.composes[composeIndex]?.[variableName]
+                if (setterGetterFunc?._hook) {
+                  return this.hooks.indexOf(setterGetterFunc._hook)
+                }
+              }
+              return numOrArr
+            })
+            .filter(v => v !== undefined)
+        })
+        return [name, hi, newGetD, newSetD]
+      }
+    )
 
     const isModel = this.hooks[hookIndex] instanceof Model
     if (isModel) {
@@ -2123,6 +2133,7 @@ export const updateHookFactory = {
 export const hookFactoryNames = Object.keys(mountHookFactory)
 /** @TODO need refact code to auto export these hooks */
 export const hasSourceHookFactoryNames = ['cache', 'writeModel', 'writePrisma']
+export const initiativeComputeHookFactoryNames = ['inputCompute', 'inputComputeInServer', 'writePrisma', 'writeModel']
 
 export let currentHookFactory: {
   state: typeof mountState

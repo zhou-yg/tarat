@@ -285,7 +285,7 @@ export interface IHookContext {
 
 export type THookDeps = Array<
   [
-    'h',
+    'h' | 'ic',
     number,
     (number | ['c', number, string])[], // get
     (number | ['c', number, string])[]? // set
@@ -765,78 +765,196 @@ export function shortValue(v: undefined | Symbol | any) {
 }
 
 export class DataGraphNode {
-  children = new Set<DataGraphNode>()
-  constructor (public id:number) {}
-  addChild (n: DataGraphNode) {
-    this.children.add(n)
+  // state deps
+  watchers = new Set<DataGraphNode>()
+  // ic operate
+  targets = new Set<DataGraphNode>()
+  constructor(public id: number, public type: THookDeps[0][0]) {}
+  addWatcher(n: DataGraphNode) {
+    this.watchers.add(n)
   }
-  getAllChildren () {
-    const r = new Set(this.children)
+  addTarget(n: DataGraphNode) {
+    this.targets.add(n)
+  }
+  get children() {
+    return new Set<DataGraphNode>([...this.watchers, ...this.targets])
+  }
+  getAllChildren(all: Set<DataGraphNode> = new Set()): Set<DataGraphNode> {
     this.children.forEach(c => {
-      const cc = c.getAllChildren()
-      cc.forEach(n =>{
-        r.add(n)
-      })
+      if (!all.has(c)) {
+        all.add(c)
+        c.getAllChildren(all)
+      }
     })
 
-    return r
+    return all
+  }
+  getAllWatchers(all: Set<DataGraphNode> = new Set()) {
+    this.watchers.forEach(c => {
+      if (!all.has(c)) {
+        all.add(c)
+        c.getAllWatchers(all)
+      }
+    })
+
+    return all
   }
 }
-export  function dataGrachTraverse (source: DataGraphNode | DataGraphNode[], callback: (n: DataGraphNode, ancestors: DataGraphNode[]) => boolean | void) {
-  
-  function task (current: DataGraphNode, ancestors: DataGraphNode[] = []) {
+export function dataGrachTraverse(
+  source: DataGraphNode | DataGraphNode[],
+  callback: (n: DataGraphNode, ancestors: DataGraphNode[]) => boolean | void
+) {
+  function task(current: DataGraphNode, ancestors: DataGraphNode[] = []) {
     const r = callback(current, ancestors)
     if (r === false) {
       return false
     }
-    for (const v of current.children) {
-      const r = task(v, ancestors.concat(current))
+    for (const v1 of current.watchers) {
+      // prevent traverse circle
+      if (ancestors.includes(v1)) {
+        continue
+      }
+      const r = task(v1, ancestors.concat(current))
+      if (r === false) {
+        break
+      }
+    }
+    for (const v2 of current.targets) {
+      // prevent traverse circle
+      if (ancestors.includes(v2)) {
+        continue
+      }
+      const r = task(v2, ancestors.concat(current))
       if (r === false) {
         break
       }
     }
   }
-  [].concat(source).forEach(s => {
+  ;[].concat(source).forEach(s => {
     task(s)
   })
 }
 
-export function constructDataGraph (contextDeps: THookDeps) {
+function isDependenceChain(ancestors: DataGraphNode[]) {
+  let r = true
+  if (ancestors.length >= 2) {
+    ancestors.reduce((p, n) => {
+      r = r && p.watchers.has(n)
+      return n
+    })
+    return r
+  }
+  return false
+}
+
+export function getDependencies(rootNodes: Set<DataGraphNode>, id: number) {
+  const dependencies = new Set<DataGraphNode>()
+  dataGrachTraverse([...rootNodes], (n, a) => {
+    if (n.id === id) {
+    }
+    if (n.id === id && isDependenceChain(a.concat(n))) {
+      a.forEach(dn => {
+        dependencies.add(dn)
+      })
+    }
+  })
+  return dependencies
+}
+export function getExecutionFlow(rootNodes: Set<DataGraphNode>, id: number) {
+  const dependencies = getDependencies(rootNodes, id)
+  const executionFlow = new Set<DataGraphNode>()
+  const allTargets = new Set<DataGraphNode>()
+
+  // demonstrate: ic depends other ic
+  dependencies.forEach(n => {
+    if (n.targets.size > 0) {
+      n.targets.forEach(tn => {
+        allTargets.add(tn)
+      })
+    }
+  })
+  dataGrachTraverse([...rootNodes], (n, a) => {
+    if (n.id === id) {
+      if (n.targets.size) {
+        n.targets.forEach(tn => {
+          allTargets.add(tn)
+        })
+      } else {
+        n.watchers.forEach(tn => {
+          // the watcher shouldn't be "ic"
+          if (tn.targets.size === 0 && tn.type === 'h') {
+            allTargets.add(tn)
+          }
+        })
+      }
+    }
+  })
+
+  allTargets.forEach(tn => {
+    tn.getAllWatchers().forEach(cn => {
+      if (cn.targets.size === 0 && cn.type === 'h') {
+        executionFlow.add(cn)
+      }
+    })
+  })
+  
+  return new Set([...dependencies, ...allTargets, ...executionFlow])
+}
+
+function getTypeFromContextDeps (contextDeps: THookDeps, index: number) {
+  const r = contextDeps.find(v => v[1] === index)
+  return r?.[0] || 'h'
+}
+
+export function constructDataGraph(contextDeps: THookDeps) {
   const nodesMap = new Map<number, DataGraphNode>()
   const hasParentIds = new Set<number>()
-  contextDeps.forEach(([_, id, get, set]) => {
-    const current = new DataGraphNode(id)
-    nodesMap.set(id, current)
+  contextDeps.forEach(([hookType, id, get, set]) => {
+    let current = nodesMap.get(id)
+    if (!current) {
+      current = new DataGraphNode(id, hookType)
+      nodesMap.set(id, current)
+    }
 
-    get?.forEach((idOrArr) => {
+    get?.forEach(idOrArr => {
       if (Array.isArray(idOrArr)) {
-        throw new Error('[getRelatedIndexes] 1 not support compose. transform it to hook index before calling')
+        throw new Error(
+          '[getRelatedIndexes] 1 not support compose. transform it to hook index before calling'
+        )
       } else {
         let parent = nodesMap.get(idOrArr)
         if (!parent) {
-          parent = new DataGraphNode(idOrArr)
+          parent = new DataGraphNode(
+            idOrArr,
+            getTypeFromContextDeps(contextDeps, idOrArr)
+          )
           nodesMap.set(idOrArr, parent)
         }
         hasParentIds.add(current.id)
-        parent.addChild(current)
+        parent.addWatcher(current)
       }
     })
-    set?.forEach((idOrArr) => {
+    set?.forEach(idOrArr => {
       if (Array.isArray(idOrArr)) {
-        throw new Error('[getRelatedIndexes] 1 not support compose. transform it to hook index before calling')
+        throw new Error(
+          '[getRelatedIndexes] 1 not support compose. transform it to hook index before calling'
+        )
       } else {
         let child = nodesMap.get(idOrArr)
         if (!child) {
-          child = new DataGraphNode(idOrArr)
+          child = new DataGraphNode(
+            idOrArr,
+            getTypeFromContextDeps(contextDeps, idOrArr)
+          )
           nodesMap.set(idOrArr, child)
         }
         hasParentIds.add(child.id)
-        current.addChild(child)
+        current.addTarget(child)
       }
     })
   })
   const rootNodes = new Set<DataGraphNode>()
-  for (const [id, n] of nodesMap){
+  for (const [id, n] of nodesMap) {
     if (!hasParentIds.has(id)) {
       rootNodes.add(n)
     }
@@ -844,72 +962,21 @@ export function constructDataGraph (contextDeps: THookDeps) {
   return rootNodes
 }
 
-export function getRelatedIndexes (index:number[] | number, contextDeps: THookDeps) {
+export function getRelatedIndexes(
+  index: number[] | number,
+  contextDeps: THookDeps
+) {
   const indexArr = [].concat(index)
-
-  let preventDeath = 0
-
-  const waitHookIndexSet = new Set(indexArr)
-  const reachedHookIndexSet = new Set<number>()
 
   const deps = new Set<number>(indexArr)
 
-  if (waitHookIndexSet.size > 0) {
-    for (const currentHookIndex of waitHookIndexSet) {
-      if (preventDeath++ > 1e4 || reachedHookIndexSet.has(currentHookIndex)) {
-        continue
-      }
-      reachedHookIndexSet.add(currentHookIndex)
+  const rootNodes = constructDataGraph(contextDeps)
 
-      contextDeps?.forEach(([name, hi, getD, setD]) => {
-        if (hi === currentHookIndex) {
-          // setD: to find who use hook in setD
-          setD?.forEach(numOrArr => {
-            let num: number = -1
-            if (Array.isArray(numOrArr)) {
-              const [type, composeIndex, variableName] = numOrArr
-              if (type === 'c') {
-                throw new Error('[getRelatedIndexes] 1 not support compose.transform it to hook index before calling')
-              }
-            } else {
-              num = numOrArr
-            }
-            if (num > -1) {
-              waitHookIndexSet.add(num)
-              deps.add(num)
-              contextDeps?.forEach(([name, relationHI, getD2]) => {
-                if (getD2.includes(num)) {
-                  deps.add(relationHI)
-                  waitHookIndexSet.add(relationHI)
-                }
-              })
-            }
-          })
-          // getD: to find the hook directly
-          getD?.forEach(numOrArr => {
-            let num: number = -1
-            if (Array.isArray(numOrArr)) {
-              const [type, composeIndex, variableName] = numOrArr
-              if (type === 'c') {
-                throw new Error('[getRelatedIndexes] 2 not support compose.transform it to hook index before calling')
-              }
-            } else {
-              num = numOrArr
-            }
-            if (num > -1) {
-              waitHookIndexSet.add(num)
-              deps.add(num)
-              // contextDeps?.forEach(([name, relationHI, getD2]) => {
-              //   if (getD2.includes(num)) {
-              //     deps.add(relationHI)
-              //     waitHookIndexSet.add(relationHI)
-              //   }
-              // })
-            }
-          })
-        }
-      })
-    }
-  }
+  indexArr.forEach(index => {
+    getExecutionFlow(rootNodes, index).forEach(n => {
+      deps.add(n.id)
+    })
+  })
+
   return deps
 }

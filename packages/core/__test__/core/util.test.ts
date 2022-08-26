@@ -487,85 +487,9 @@ describe('util', () => {
     })
     expect([r1, r3, r5]).toEqual([false, false, false])
   })
-  describe('getRelatedIndexes', () => {
-    it ('simple', () => {
-      const depMaps: THookDeps = [
-        ['h', 2, [0]]
-      ]
-      const deps = getRelatedIndexes(2, depMaps)
-      expect(deps).toEqual(new Set([2, 0]))
-    })
-    it ('double get chain', () => {
-      const depMaps: THookDeps = [
-        ['h', 1, [0]],
-        ['h', 2, [1]]
-      ]
-      const deps = getRelatedIndexes(2, depMaps)
-      expect(deps).toEqual(new Set([2, 0, 1]))
-    })
-    it ('root -> get -> set', () => {
-      const depMaps: THookDeps = [
-        ['h', 1, [], [0]],
-        ['h', 2, [1]]
-      ]
-      const deps = getRelatedIndexes(2, depMaps)
-      expect(deps).toEqual(new Set([2, 0, 1]))
-    })
-    it ('root -> get -> set -> set', () => {
-      const depMaps: THookDeps = [
-        ['h', 1, [], [0]],
-        ['h', 2, [], [1]],
-        ['h', 3, [2]],
-      ]
-      const deps = getRelatedIndexes(3, depMaps)
-      expect(deps).toEqual(new Set([3, 2, 1, 0]))
-    })
-    it ('root -> get -> set -> get', () => {
-      const depMaps: THookDeps = [
-        ['h', 1, [0], []],
-        ['h', 2, [], [1]],
-        ['h', 3, [2]],
-      ]
-      const deps = getRelatedIndexes(3, depMaps)
-      expect(deps).toEqual(new Set([3, 2, 1, 0]))
-    })
-    it('root -> has same dep (get)', () => {
-      const depMaps: THookDeps = [
-        ['h', 2, [1], []],
-        ['h', 3, [1], []],
-      ]
-      const deps = getRelatedIndexes(3, depMaps)
-      expect(deps).toEqual(new Set([3, 1]))
-    })
-    it('root -> has same dep (set)', () => {
-      const depMaps: THookDeps = [
-        ['h', 2, [1], []],
-        ['h', 3, [], [1]],
-      ]
-      const deps = getRelatedIndexes(3, depMaps)
-      expect(deps).toEqual(new Set([3, 2, 1]))
-    })
-    it.only('root -> has same dep (set)', () => {
-      const depMaps: THookDeps = [
-        ["h", 10, [9, 5, 6, 4], [9, 5, 6, 4]],
-        ["h", 12, [11]],
-        ["h", 13, [12], [12]],
-        ["h", 14, [12]],
-        ["h", 15, [14]],
-        ["h", 16, [15]],
-        ["h", 17, [5, 6, 7]],
-        ["h", 19, [5, 6, 10, 8, 20], [9, 18]],
-        ["h", 20, [5, 6], [9, 2, 1, 13, 11, 18]],
-        ["h", 21, [11, 12], [11, 2, 1, 13]],
-        ["h", 22, [15], [4, 5, 6, 3]],
-        ["h", 23, [], [4, 5, 6, 3]],
-        ["h", 24, [15, 5, 6, 4, 23], [10]],
-        ]
-      const deps = getRelatedIndexes(21, depMaps)
-      console.log('deps: ', deps);
-    })
-  })
-  describe.only('constructDataGraph', () => {
+
+
+  describe('constructDataGraph', () => {
     it('simple single chain', () => {
       const depMaps: THookDeps = [
         ['h', 2, [1], []],
@@ -575,6 +499,7 @@ describe('util', () => {
       const arr = [...rootNodes]
   
       expect(arr[0].id).toBe(3)
+      expect(arr[0].targets.size).toBe(1)
       expect(rootNodes.size).toEqual(1)
 
       const check = jest.fn((id) => {
@@ -604,7 +529,11 @@ describe('util', () => {
       const arr = [...rootNodes]
   
       expect(arr[0].id).toEqual(3)
+      expect(arr[0].targets.size).toEqual(1)
+      expect([...arr[0].targets][0].id).toEqual(1)
       expect(arr[1].id).toEqual(4)
+      expect(arr[1].targets.size).toEqual(1)
+      expect([...arr[1].targets][0].id).toEqual(1)
       expect(rootNodes.size).toEqual(2)
 
       const check = jest.fn((id) => {
@@ -655,5 +584,147 @@ describe('util', () => {
       expect(childrenArr[1].id).toBe(2)
       expect(childrenArr[2].id).toBe(5)
     })
+    it('dependencies circle', () => {
+      const depMaps: THookDeps = [
+        ['h', 1, [2], [3]],
+        ['h', 2, [3], []],
+        ['h', 4, [], [3]],
+      ]
+      const rootNodes = constructDataGraph(depMaps)
+      const arr = [...rootNodes]
+      const cd = jest.fn((n: DataGraphNode, a: DataGraphNode[]) => {
+
+      })
+      dataGrachTraverse(arr, cd)
+
+      expect(cd).toHaveBeenCalledTimes(4)
+    })
   })
+
+  describe('getRelatedIndexes', () => {
+    it('simple', () => {
+      const depMaps: THookDeps = [
+        ['h', 2, [0]]
+      ]
+      const deps = getRelatedIndexes(2, depMaps)
+      expect(deps).toEqual(new Set([2, 0]))
+    })
+    it('nested ic by inputCompute(i=2)', () => {
+      const depMaps: THookDeps = [
+        ['h', 1, [5], [6]],
+        ['h', 2, [1,3], [4]],
+      ]
+      const deps = getRelatedIndexes(2, depMaps)
+      expect(deps).toEqual(new Set([5,1,2,3,4,6]))
+    })
+    it('nested ic by inputCompute(i=1)', () => {
+      const depMaps: THookDeps = [
+        ['h', 1, [5], [6]],
+        ['h', 2, [1,3], [4]],
+      ]
+      const deps = getRelatedIndexes(1, depMaps)
+      expect(deps).toEqual(new Set([5,1,6]))
+    })
+    it('nested ic by model(i=1)', () => {
+      const depMaps: THookDeps = [
+        ['h', 1, [5]],
+        ['h', 6, [1]],
+        ['h', 2, [1,3], [4]],
+      ]
+      const deps = getRelatedIndexes(1, depMaps)
+      expect(deps).toEqual(new Set([5,1,6]))
+    })
+    it('nested ic by inputCompute(i=2)', () => {
+      const depMaps: THookDeps = [
+        ['h', 1, [5]],
+        ['h', 6, [1]],
+        ['h', 2, [1,3], [4]],
+      ]
+      const deps = getRelatedIndexes(2, depMaps)
+      expect(deps).toEqual(new Set([5,1,3,2,4]))
+    })
+    it('nested ic without target', () => {
+      const depMaps: THookDeps = [
+        ['ic', 1, [3, 4], []],
+        ['ic', 2, [1], []],
+        ['ic', 6, [2], [5]]
+      ]
+      const deps = getRelatedIndexes(1, depMaps)
+      expect(deps).toEqual(new Set([1, 3, 4]))
+    })
+    it('double get chain', () => {
+      const depMaps: THookDeps = [
+        ['h', 1, [0]],
+        ['h', 2, [1]]
+      ]
+      const deps = getRelatedIndexes(2, depMaps)
+      expect(deps).toEqual(new Set([0, 1, 2]))
+    })
+    it('root -> get -> set', () => {
+      const depMaps: THookDeps = [
+        ['ic', 1, [], [0]],
+        ['h', 2, [1]]
+      ]
+      const deps = getRelatedIndexes(2, depMaps)
+      expect(deps).toEqual(new Set([2, 1, 0]))
+    })
+    it('(bad case) root -> get -> set -> set', () => {
+      // bad case
+      const depMaps: THookDeps = [
+        ['h', 1, [], [0]],
+        ['h', 2, [], [1]],
+        ['h', 3, [2]],
+      ]
+      const deps = getRelatedIndexes(3, depMaps)
+      expect(deps).toEqual(new Set([3, 2, 1]))
+    })
+    it ('root -> get -> set -> get', () => {
+      const depMaps: THookDeps = [
+        ['h', 0, [1], []],
+        ['h', 2, [], [1]],
+        ['h', 3, [2]],
+      ]
+      const deps = getRelatedIndexes(3, depMaps)
+      expect(deps).toEqual(new Set([3, 2, 1, 0]))
+    })
+    it('root -> has same dep (get)', () => {
+      const depMaps: THookDeps = [
+        ['h', 2, [1], []],
+        ['h', 3, [1], []],
+      ]
+      const deps = getRelatedIndexes(3, depMaps)
+      expect(deps).toEqual(new Set([3, 1]))
+    })
+    it('root -> has same dep (set)', () => {
+      const depMaps: THookDeps = [
+        ['h', 2, [1], []],
+        ['h', 3, [], [1]],
+      ]
+      const deps = getRelatedIndexes(3, depMaps)
+      expect(deps).toEqual(new Set([3, 1, 2]))
+    })
+    it('complex', () => {
+      const depMaps: THookDeps = [
+        ["ic", 10, [5, 6, 4], [9, 5, 6, 4]],
+        ["h", 12, [11]],
+        ["ic", 13, [], [12]],
+        ["h", 14, [12]],
+        ["h", 15, [14]],
+        ["h", 16, [15]],
+        ["h", 17, [5, 6, 7]],
+        ["ic", 19, [5, 6, 10, 8, 20], [9, 18]],
+        ["ic", 20, [5, 6], [9, 2, 1, 13, 11, 18]],
+        ["ic", 21, [11, 12], [11, 2, 1, 13]],
+        ["ic", 22, [15], [4, 5, 6, 3]],
+        ["ic", 23, [], [4, 5, 6, 3]],
+        ["ic", 24, [15, 5, 6, 4, 23], [10]],  
+      ]
+      const deps = getRelatedIndexes(21, depMaps)
+      expect(deps).toEqual(new Set([
+        21, 11, 12, 1, 2, 13,
+        14, 15, 16 // by 12
+      ]))
+    })
+  })
+
 })
