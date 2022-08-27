@@ -16,6 +16,7 @@ import getPort, { makeRange as portNumbers } from "get-port";
 
 import pureDevCache from "./middlewares/pureDevCache";
 import { getAddress, getDefeaultRoute, logFrame } from "./util";
+import path, { join } from "path";
 
 export function setupBasicServer (c: IConfig) {
   const app = new Koa()
@@ -79,9 +80,17 @@ export async function createDevServer (c: IConfig) {
       // }
     ],
     resolve: {
-      alias: {
-        'tarat-core': 'tarat-core/dist/index.client.js'
-      }
+      extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx', '.json'],
+      alias: [
+        {
+          find: 'tarat-core',
+          replacement: 'tarat-core/dist/index.client.js',
+        },
+        {
+          find: /^drivers\/(\w+)\.\w+$/,
+          replacement: join(c.devCacheDirectory, c.driversDirectory, c.esmDirectory, '$1.js'),
+        }
+      ]
     }
   })
 

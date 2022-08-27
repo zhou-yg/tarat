@@ -82,10 +82,10 @@ export function generateHookDeps (c: IConfig) {
   const sourceCodeDir = path.join(c.cwd, c.driversDirectory)
 
   fs.readdirSync(driversDir).forEach(f => {
-    const file = path.join(driversDir, f)
+    const compiledFile = path.join(driversDir, f)
     const name = f.replace(/\.js$/, '')
     if (/\.js$/.test(f)) {
-      const code = fs.readFileSync(file).toString()
+      const code = fs.readFileSync(compiledFile).toString()
 
       const deps = parseDeps(code)      
 
@@ -94,18 +94,18 @@ export function generateHookDeps (c: IConfig) {
         tryMkdir(devDriversDir)
       }
 
-      // js output: generate deps.js
-      fs.writeFileSync(path.join(c.pointFiles.outputDriversDir, `${name}.deps.js`), prettier.format(
-        `export default ${JSON.stringify(deps, null, 2)}`
-      ))
-
       // json in tarat: generate deps.json
       fs.writeFileSync(path.join(c.pointFiles.outputDriversDir, `${name}.deps.json`), (JSON.stringify(deps)))
       // fs.writeFileSync(path.join(driversDir, `${name}.deps.json`), (JSON.stringify(deps)))
     
       // modify original hook file
       const sourceFile = path.join(sourceCodeDir, `${name}${c.ts ? '.ts' : '.js'}`)
-      injectDeps(c, sourceFile)
+      injectDeps(c, compiledFile)
+
+      const cjsOutputFile = path.join(c.pointFiles.outputDriversCJSDir, `${name}.js`)
+      const outputFile = path.join(c.pointFiles.outputDriversDir, `${name}.js`)
+      injectDeps(c, cjsOutputFile)
+      injectDeps(c, outputFile)
     }
   })
 }
