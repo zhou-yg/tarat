@@ -49,3 +49,13 @@ function unit () {
 主要是围绕page route tree 入口的编译
 
 产出一个独立的ssr entry 纯js
+
+## code splitting
+
+在inputComputeInServer中，这个funciton中已经明确会run in server了，所以在其函数内部可能会依赖一些 server only library
+
+这份代码也无法作为client端执行
+
+总结一下：凡是涉及自定义function调用的，都必须明确是否InServer
+
+同时在编译层面，涉及到InServer的都必须编译出2份产物：client / server，作为运行时的执行代码
