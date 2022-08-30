@@ -118,3 +118,6 @@ dist/
 
 .tarat
 .taratBuild
+
+packages/example/*/models/customPrismaClient/
+packages/core/__test__/database/autoPrisma
