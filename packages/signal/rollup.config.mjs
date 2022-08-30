@@ -3,6 +3,7 @@ import dts from "rollup-plugin-dts"
 import replace from '@rollup/plugin-replace';
 // import { nodeResolve } from '@rollup/plugin-node-resolve';
 
+/** @type {import('rollup').RollupOptions} */ 
 export default [
   {
     plugins: [
@@ -13,6 +14,9 @@ export default [
       replace({
       }),
     ],
+    treeshake: {
+      moduleSideEffects: false
+    },
     input: 'src/index.ts',
     output: {
       file: 'dist/index.js',
