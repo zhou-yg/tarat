@@ -17,6 +17,7 @@
     "schema": "./models/schema.prisma"
   },
   "devDependencies": {
+    "@babel/preset-react": "^7.18.6",
     "@types/lodash": "^4.14.182",
     "@types/node": "^18.6.2",
     "@types/react": "^18.0.15",

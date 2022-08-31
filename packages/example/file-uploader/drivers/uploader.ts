@@ -9,7 +9,7 @@ async function uploadFile (f: Buffer | File) {
 
 }
 
-export default function todo () {
+export default function uploader () {
   // only in browser
   const inputFile = state(0)
 

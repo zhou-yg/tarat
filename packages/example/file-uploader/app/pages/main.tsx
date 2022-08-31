@@ -1,7 +1,7 @@
 import React from 'react'
 
-import Todos from '../../views/todos'
+import Uploader from '@/views/uploader'
 
 export default function Main () {
-  return (<Todos />)
+  return (<Uploader />)
 }
