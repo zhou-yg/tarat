@@ -1,22 +1,6 @@
 import { loadPlugin, ModelEvent, setGlobalModelEvent } from 'tarat-core'
 import { setHookAdaptor } from './adaptor'
-
-const undefTag = '__tarat_undefined_placehodler_tag__'
-
-export function stringifyWithUndef(data: object) {
-  return JSON.stringify(data, (k, v) => {
-    return v === undefined ? undefTag : v
-  })
-}
-
-export function parseWithUndef(str: string) {
-  return JSON.parse(str, (k, v) => {
-    if (v === undefTag) {
-      return undefined
-    }
-    return v
-  })
-}
+import { parseWithUndef, stringifyWithUndef } from './utils'
 
 export function clientRuntime(c: {
   framework: any

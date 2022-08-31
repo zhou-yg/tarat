@@ -7,8 +7,6 @@ import * as path from 'path'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'
 import { setCookies, setPrisma, setRunning, setER  } from '../plugins/'
-import { buildDrivers } from '../compiler/prebuild'
-import { loadJSON } from '../util'
 
 function matchHookName (path: string) {
   const arr = path.split('/').filter(Boolean)

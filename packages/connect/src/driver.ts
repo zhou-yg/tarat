@@ -1,4 +1,10 @@
-import { BM, CurrentRunnerScope, IHookContext, ReactiveChain, Runner } from 'tarat-core'
+import {
+  BM,
+  CurrentRunnerScope,
+  IHookContext,
+  ReactiveChain,
+  Runner
+} from 'tarat-core'
 import React, { createElement, createContext } from 'react'
 
 import { setHookAdaptor } from './adaptor'
@@ -28,7 +34,7 @@ export class RenderDriver {
 
   consumeCache: Map<string, IHookContext[] | undefined> = new Map()
 
-  fromContextMap (contextMap: Record<string, IHookContext[]>) {
+  fromContextMap(contextMap: Record<string, IHookContext[]>) {
     Object.keys(contextMap).forEach(bmName => {
       this.consumeCache.set(bmName, contextMap[bmName])
     })
@@ -55,9 +61,7 @@ export class RenderDriver {
     }
     let r = this.consumeCache.get(name)
     if (!r) {
-      r = this.BMValuesMap.get(name)?.map(s =>
-        s.createInputComputeContext()
-      )
+      r = this.BMValuesMap.get(name)?.map(s => s.createInputComputeContext())
       this.consumeCache.set(name, r)
     }
 

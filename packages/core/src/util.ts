@@ -685,15 +685,6 @@ export function getEnv() {
   }
 }
 
-export function traverseValues(target: any, callback: (v: any) => void) {
-  map(target, v => {
-    callback(v)
-    if (likeObject(v)) {
-      traverseValues(v, callback)
-    }
-  })
-}
-
 export let enableLog: boolean = false
 export function log(pre: string, ...rest: any[]) {
   if (enableLog) {

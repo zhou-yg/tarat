@@ -135,7 +135,7 @@ export function readDrivers(dir: string) {
       if (exportDefaultNames) {
         if (exportDefaultNames[1] !== name && exportDefaultNames[1] !== `function ${name}`) {
           logFrame(
-            `The default export must equal to it's file name.
+            `The default export name mismatch file name
             export default name is ${chalk.red(exportDefaultNames[1])}
             file name is ${chalk.green(name)}`
           )

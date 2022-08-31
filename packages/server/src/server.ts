@@ -20,12 +20,14 @@ import path, { join } from "path";
 
 export function setupBasicServer (c: IConfig) {
   const app = new Koa()
+  app.use(koaBody({
+    multipart: true
+  }))
+  app.use(cors())
+  app.use(staticServe(c.publicDirectory))
   app.use(async (ctx, next) => {
     await next()
   })
-  app.use(koaBody())
-  app.use(cors())
-  app.use(staticServe(c.publicDirectory))
 
   return app
 }
@@ -56,7 +58,6 @@ async function startApp(app: Application, c: IConfig) {
 export async function createDevServer (c: IConfig) {  
   const app = setupBasicServer(c)
 
-    
   app.use(pureDevCache({
     config: c
   }))
