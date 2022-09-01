@@ -23,10 +23,10 @@ import {
 } from '../src/'
 import { loadPlugin } from '../src/plugin'
 
-function injectExternalDescription (f: Function, arr: [any, any]) {
+function injectExternalDescription(f: Function, arr: [any, any]) {
   Object.assign(f, {
     __names__: arr[0],
-    __deps__: arr[1],
+    __deps__: arr[1]
   })
 }
 
@@ -924,20 +924,14 @@ Object.assign(composeWithSS2, {
   ]
 })
 
-
-export function simpleComputedInServer () {
+export function simpleComputedInServer() {
   const s1 = state(0)
   const c = computedInServer(() => {
     return s1()
   })
-  return { c } 
+  return { c }
 }
 injectExternalDescription(simpleComputedInServer, [
-  [
-    0, 's1',
-    1, 'c',
-  ],
-  [
-    ['h', 1, [0]]
-  ]
+  [0, 's1', 1, 'c'],
+  [['h', 1, [0]]]
 ])

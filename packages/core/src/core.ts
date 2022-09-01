@@ -917,22 +917,22 @@ export class Computed<T> extends AsyncState<T | Symbol> {
 }
 
 export class ClientComputed<T> extends Computed<T> {
-  override run () {
+  override run() {
     const end = this.startAsyncGetter()
     const context = this.scope.createActionContext(this)
     log('[ComputedInServer.run] before post')
-    getPlugin('Context').postComputeToServer(
-      context
-    ).then((result: IHookContext) => {
-      const index = this.scope.hooks.indexOf(this)
-      if (result.data) {
-        const d = result.data[index]
-        if (d.length >= 2) {
-          this.update(d[1])
+    getPlugin('Context')
+      .postComputeToServer(context)
+      .then((result: IHookContext) => {
+        const index = this.scope.hooks.indexOf(this)
+        if (result.data) {
+          const d = result.data[index]
+          if (d.length >= 2) {
+            this.update(d[1])
+          }
         }
-      }
-      end()
-    })
+        end()
+      })
   }
 }
 
@@ -1580,10 +1580,6 @@ export class CurrentRunnerScope<T extends Driver = any> {
         }
       })
       this.initialHooksSet = s
-      // const s = this.getRelatedHookIndexes(runnerContext.triggerHookIndex)
-      // if (s.size !== 0) {
-      //   this.initialHooksSet = s
-      // }
     }
   }
 
@@ -1612,9 +1608,10 @@ export class CurrentRunnerScope<T extends Driver = any> {
     const hook = this.hooks[hookIndex]
     if (hook) {
       if (hook instanceof Model) {
-        // console.log('callHook hookIndex=', hookIndex)
-        // await (hook as Model<any>).query()
-      } else if (hook instanceof InputCompute || hook instanceof Computed) {
+      } else if (hook instanceof Computed) {
+        currentReactiveChain = currentReactiveChain?.add(this)
+        hook.run(currentReactiveChain)
+      } else if (hook instanceof InputCompute) {
         currentReactiveChain = currentReactiveChain?.add(this)
         await hook.run(...args)
       }
@@ -2298,7 +2295,7 @@ function createUnaccessModelGetter<T extends any[]>(
   return newF
 }
 
-function updateValidation () {
+function updateValidation() {
   const { hooks, initialHooksSet } = currentRunnerScope!
   const currentIndex = hooks.length
   const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
@@ -2308,7 +2305,6 @@ function updateValidation () {
     currentIndex
   }
 }
-
 
 function updateState<T>(initialValue?: T) {
   const { valid, currentIndex } = updateValidation()
@@ -2576,9 +2572,10 @@ function updateComputedInServer<T>(fn: any): any {
   const timestamp =
     currentRunnerScope!.runnerContext.initialData![currentIndex]?.[2]
 
-  const hook = process.env.TARGET === 'server'
-    ? new Computed<T>(fn, currentRunnerScope)
-    : new ClientComputed<T>(fn, currentRunnerScope);
+  const hook =
+    process.env.TARGET === 'server'
+      ? new Computed<T>(fn, currentRunnerScope)
+      : new ClientComputed<T>(fn, currentRunnerScope)
 
   currentRunnerScope!.addHook(hook)
   /** @TODO: update computed won't trigger */
@@ -2609,9 +2606,10 @@ function mountComputedInServer<T>(
   fn: FComputedFunc<T>
 ): (() => T) & { _hook: Computed<T> }
 function mountComputedInServer<T>(fn: any): any {
-  const hook = process.env.TARGET === 'server' 
-    ? new Computed<T>(fn, currentRunnerScope)
-    : new ClientComputed<T>(fn, currentRunnerScope)
+  const hook =
+    process.env.TARGET === 'server'
+      ? new Computed<T>(fn, currentRunnerScope)
+      : new ClientComputed<T>(fn, currentRunnerScope)
   currentRunnerScope!.addHook(hook)
 
   currentReactiveChain?.add(hook)
@@ -2722,7 +2720,6 @@ export function computedInServer<T>(fn: any): any {
   }
   return currentHookFactory.computedInServer<T>(fn)
 }
-
 
 type InputComputeFn<T extends any[]> = (...arg: T) => void
 type AsyncInputComputeFn<T extends any[]> = (...arg: T) => Promise<void>
