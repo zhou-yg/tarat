@@ -58,6 +58,8 @@ async function startApp(app: Application, c: IConfig) {
 
     ${allList}
   `)
+
+  return app
 }
 
 export async function createDevServer (c: IConfig) {  
@@ -127,5 +129,7 @@ export async function createServer(c: IConfig) {
     pages: c.pages,
   })) 
 
-  startApp(app, c)
+  await startApp(app, c)
+
+  return app
 }
