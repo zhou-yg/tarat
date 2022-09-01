@@ -2,14 +2,17 @@ import {
   IHookContext, Runner, getPlugin, IDiff, debuggerLog, startdReactiveChain,
   stopReactiveChain
 } from 'tarat-core'
-import { parseWithUndef } from 'tarat-connect'
-import * as path from 'path'
+import { parseWithUndef, stringifyWithUndef } from 'tarat-connect'
+import { join } from 'path'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'
 import { setCookies, setPrisma, setRunning, setER  } from '../plugins/'
+import { buildDrivers } from '../compiler/prebuild'
+import { loadJSON } from '../util'
+import { filterFileType } from './unserialize'
 
-function matchHookName (path: string) {
-  const arr = path.split('/').filter(Boolean)
+function matchHookName (p: string) {
+  const arr = p.split('/').filter(Boolean)
   return {
     pre: arr[0],
     driverName: arr[1]
@@ -50,7 +53,8 @@ export default function taratMiddleware (args: {
   }
 
   return async (ctx, next) => {
-    const { pre, driverName } = matchHookName(ctx.request.path)
+    const { path, body } = ctx.request
+    const { pre, driverName } = matchHookName(path)
     if (pre === apiPre && ctx.request.method === 'POST') {      
       const hookConfig = drivers.find(h => h.name === driverName)
       if (hookConfig) {
@@ -58,10 +62,10 @@ export default function taratMiddleware (args: {
         const driver = config.drivers.find(d => d.name === driverName)
 
         // driver has double nested output structure
-        const BMPath = path.join(pointFiles.outputDriversDir, config.cjsDirectory, driver.relativeDir, `${driverName}.js`)
+        const BMPath = join(pointFiles.outputDriversDir, config.cjsDirectory, driver.relativeDir, `${driverName}.js`)
         const BM = require(BMPath)
 
-        const c: IHookContext = parseWithUndef(ctx.request.body)
+        const c: IHookContext = typeof body === 'string' ? parseWithUndef(body) : body;
 
         let runner = new Runner(BM.default)
         
@@ -95,12 +99,11 @@ export default function taratMiddleware (args: {
         chain2.print()
 
         const context = scope.createPatchContext()
-        
-        ctx.body = JSON.stringify(context);
+        const contextWithoutFile = filterFileType(context)
+        ctx.body = stringifyWithUndef(contextWithoutFile);
 
         (runner as any) = null;
         (scope as any) = null;
-
 
         console.log(`[${driverName}] is end \n ---`)
       } else {

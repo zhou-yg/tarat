@@ -49,18 +49,29 @@ export function serializeJSON(obj: Record<string, any>) {
   traverse(obj, (kArr, value) => {
     hasBinary = hasBinary || isBinaryType(value)
   })
+  console.log('hasBinary: ', hasBinary)
   // transform it to FormData
   if (hasBinary) {
+    const fileKeysMap: Array<[(string | number)[], File]> = []
     traverse(obj, (kArr, value) => {
       if (isBinaryType(value)) {
-        set(obj, kArr, BINARY_FILE_TYPE_PLACEHOLDER)
-        const binaryTempKey = kArr.join(BINARY_FILE_KEY_SPLIT_CHAR)
-        set(obj, binaryTempKey, value)
+        fileKeysMap.push([kArr, value])
       }
     })
+    fileKeysMap.forEach(([kArr, value]) => {
+      set(obj, kArr, BINARY_FILE_TYPE_PLACEHOLDER)
+      const binaryTempKey = kArr.join(BINARY_FILE_KEY_SPLIT_CHAR)
+      obj[binaryTempKey] = value
+    })
+
     const fd = new FormData()
+
     Object.entries(obj).forEach(([k, v]) => {
-      fd.append(k, v)
+      if (isBinaryType(v)) {
+        fd.append(k, v)
+      } else {
+        fd.append(k, stringifyWithUndef(v))
+      }
     })
     return fd
   }

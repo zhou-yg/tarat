@@ -1,6 +1,6 @@
-import { get, set } from 'tarat-core'
+import { get, IHookContext, set } from 'tarat-core'
 import Application from 'koa'
-import { BINARY_FILE_KEY_SPLIT_CHAR, BINARY_FILE_TYPE_PLACEHOLDER } from 'tarat-connect'
+import { BINARY_FILE_KEY_SPLIT_CHAR, BINARY_FILE_TYPE_PLACEHOLDER, parseWithUndef } from 'tarat-connect'
 function hasAnyFiles (req: Application.ExtendableContext['request'] & { body: any, files: any }) {
   return req.files && Object.keys(req.files).length > 0
 }
@@ -33,18 +33,41 @@ export class SimulateBrowserFile implements PersistentFile {
 
 export function unserializeObjToJSON (obj: Record<string, any>) {
   Object.entries(obj).forEach(([k, v]) => {
+    if (!(v instanceof SimulateBrowserFile)) {
+      obj[k] = parseWithUndef(v)
+    }
+  })
+  Object.entries(obj).forEach(([k, v]) => {
     if (v instanceof SimulateBrowserFile) {
       const kArr = k.split(BINARY_FILE_KEY_SPLIT_CHAR)
-      const v = get(obj, kArr)
-      if (v === BINARY_FILE_TYPE_PLACEHOLDER) {
+      const placeholderValue = get(obj, kArr)
+      if (placeholderValue === BINARY_FILE_TYPE_PLACEHOLDER) {
         set(obj, kArr, v)
         delete obj[k]
       }
     }
   })
+  return obj
 }
 
-export function unserialize (): Application.Middleware {
+/**
+ * prevent File from sending to client side
+ */
+export function filterFileType (c: IHookContext): IHookContext {
+
+  const data = c.data.map(v => {
+    if (v[1] instanceof SimulateBrowserFile) {
+      return ['unserialized']
+    }
+    return v
+  })
+  console.log('data: ', data);
+  return Object.assign({}, c, {
+    data
+  })
+}
+
+export default function unserializeWithFile (): Application.Middleware {
   return async (ctx, next) => {
     const valid = hasAnyFiles(ctx.request as any)
     if (valid) {
@@ -53,7 +76,7 @@ export function unserialize (): Application.Middleware {
         body[k] = new SimulateBrowserFile(v)
       })
       
-      const newBody = unserializeObjToJSON(body);
+      const newBody = unserializeObjToJSON({...body});
       (ctx.request as any).body = newBody
     }
     await next()

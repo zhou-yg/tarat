@@ -1,6 +1,6 @@
 import { loadPlugin, ModelEvent, setGlobalModelEvent } from 'tarat-core'
 import { setHookAdaptor } from './adaptor'
-import { parseWithUndef, stringifyWithUndef } from './utils'
+import { serializeJSON, parseWithUndef, stringifyWithUndef } from './utils'
 
 export function clientRuntime(c: {
   framework: any
@@ -51,7 +51,7 @@ export function clientRuntime(c: {
     async postComputeToServer(c) {
       const newContext = await fetch(`${hostConfig}/${c.name}`, {
         method: 'POST',
-        body: stringifyWithUndef(c)
+        body: serializeJSON(c)
       })
         .then(r => r.text())
         .then(parseWithUndef)
@@ -61,7 +61,7 @@ export function clientRuntime(c: {
     async postQueryToServer(c) {
       const newContext = await fetch(`${hostConfig}/${c.name}`, {
         method: 'POST',
-        body: stringifyWithUndef(c)
+        body: serializeJSON(c)
       })
         .then(r => r.text())
         .then(parseWithUndef)

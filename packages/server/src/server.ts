@@ -7,6 +7,7 @@ import e2k from 'express-to-koa'
 import chalk from 'chalk'
 import taratRunner from "./middlewares/taratRunner";
 import page from "./middlewares/page";
+import unserializeWithFile from "./middlewares/unserialize";
 
 import { createServer as createViteServer } from "vite";
 import tsconfigPaths from 'vite-tsconfig-paths'
@@ -28,6 +29,7 @@ export function setupBasicServer (c: IConfig) {
   app.use(async (ctx, next) => {
     await next()
   })
+  app.use(unserializeWithFile())
 
   return app
 }
@@ -95,7 +97,7 @@ export async function createDevServer (c: IConfig) {
           replacement: 'tarat-core/dist/index.client.js',
         },
         {
-          find: /^drivers\/(\w+)\.\w+$/,
+          find: /^\/drivers\/(\w+)\.\w+$/,
           replacement: join(c.devCacheDirectory, c.driversDirectory, c.esmDirectory, '$1.js'),
         }
       ]
