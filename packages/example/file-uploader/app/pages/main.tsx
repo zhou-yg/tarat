@@ -1,7 +1,11 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 
 import Uploader from '@/views/uploader'
 
 export default function Main () {
-  return (<Uploader />)
+  return (
+    <div>
+      <Uploader />
+    </div>
+  )
 }

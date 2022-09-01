@@ -174,7 +174,7 @@ function getEntryFile (c: IConfig) {
   }
 }
 function upperFirst (s: string) {
-  s = s.replace(/\:/g, '_')
+  s = s.replace(/\:|-/g, '_')
   return s ? (s[0].toUpperCase() + s.substring(1)) : ''
 }
 

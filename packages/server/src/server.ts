@@ -40,18 +40,23 @@ async function startApp(app: Application, c: IConfig) {
 
   app.listen(port)
 
-  const defaultView = getDefeaultRoute(c.pages)
-
+  // const defaultView = getDefeaultRoute(c.pages)
 
   let address = getAddress()
   
-  if (address) {
-    address = `ip: ${chalk.green(`http://${address}:${port}/${defaultView}`)}`
-  }
+  const allList = c.pages.map(v => {
+    return `
+      ${v.name}:
+      localhost: ${chalk.green(`http://localhost:${port}/${v.name}`)}
+      ${address ? `ip: ${chalk.green(`http://${address}:${port}/${v.name}`)}` : ''  }
+    `
+  }).join('\n')
+
+
   logFrame(`
-    Tarat App Server started at:
-      localhost: ${chalk.green(`http://localhost:${port}/${defaultView}`)}
-      ${address || ''}
+    Tarat App Server started at
+
+    ${allList}
   `)
 }
 
