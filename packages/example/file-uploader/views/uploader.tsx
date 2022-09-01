@@ -1,20 +1,20 @@
 import { useTarat } from 'tarat-connect'
 import React, { useState } from 'react'
+import uploaderHook from '@/drivers/uploader'
 
 const Uploader = () => {
 
+  const uploader = useTarat(uploaderHook)
+
+  const f = uploader.inputFile()
+
   return (
     <div>
+      {f ? `name: ${f.name}` : ''} <br/>
       <input type="file" defaultValue="" onChange={e => {
-        // console.log('e: ', e.target.value, typeof e.target.value);
-        // console.log('e: ', e.target.files, typeof e.target.files[0], e.target.files[0] instanceof File);
-        const fd = new FormData()
-        fd.append('myFile', e.target.files[0])
-        fd.append('fileName', e.target.files[0].name)
-        fetch('/', {
-          method: 'POST',
-          body: fd
-        })
+        const f = e.target.files[0]
+        console.log('f: ', f);
+        uploader.inputFile(() => f)
       }} />
     </div>
   )

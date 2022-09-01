@@ -1,6 +1,7 @@
 import {
   computed,
   state,
+  computedInServer,
 } from 'tarat-core'
 
 import axios from 'axios'
@@ -11,17 +12,19 @@ async function uploadFile (f: Buffer | File) {
 
 export default function uploader () {
   // only in browser
-  const inputFile = state(0)
+  const inputFile = state<{ name: string }>()
 
-  const OSSLink = computed(function * () {
+  const OSSLink = computedInServer(function * () {
     const file = inputFile()
     if (file) {
-      
+      return 'a'
     }
+    return 'b'
   })
   
 
   return {
-    
+    inputFile,
+    OSSLink
   }
 }
