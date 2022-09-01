@@ -18,9 +18,17 @@ import {
   progress,
   writeModel,
   prisma,
-  writePrisma
+  writePrisma,
+  computedInServer
 } from '../src/'
 import { loadPlugin } from '../src/plugin'
+
+function injectExternalDescription (f: Function, arr: [any, any]) {
+  Object.assign(f, {
+    __names__: arr[0],
+    __deps__: arr[1],
+  })
+}
 
 initModelConfig()
 
@@ -120,7 +128,7 @@ export function useSimpleServerMiddleware(bm: BM) {
       if (c.index) {
         await serverRunner.callHook(c.index, c.args)
       }
-      const context = serverRunner.scope.createInputComputeContext()
+      const context = serverRunner.scope.createActionContext()
 
       process.env.TARGET = ''
 
@@ -915,3 +923,21 @@ Object.assign(composeWithSS2, {
     [2, 's33']
   ]
 })
+
+
+export function simpleComputedInServer () {
+  const s1 = state(0)
+  const c = computedInServer(() => {
+    return s1()
+  })
+  return { c } 
+}
+injectExternalDescription(simpleComputedInServer, [
+  [
+    0, 's1',
+    1, 'c',
+  ],
+  [
+    ['h', 1, [0]]
+  ]
+])

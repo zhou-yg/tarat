@@ -654,7 +654,7 @@ export class ClientPrisma<T extends any[]> extends Prisma<T> {
       const index = this.scope.hooks.indexOf(this)
       if (result.data) {
         const d = result.data[index]
-        if (d[1]) {
+        if (d.length >= 2) {
           this.update(d[1])
         }
       }
@@ -865,7 +865,8 @@ export class Computed<T> extends AsyncState<T | Symbol> {
     if (this._internalValue === ComputedInitialSymbol) {
       this.tryModify(callChain)
     }
-    return super.value
+    const v = super.value
+    return v === ComputedInitialSymbol ? undefined : v
   }
 
   run(innerReactiveChain?: ReactiveChain) {
@@ -914,6 +915,27 @@ export class Computed<T> extends AsyncState<T | Symbol> {
     this.run(reactiveChain?.addNotify(this))
   }
 }
+
+export class ClientComputed<T> extends Computed<T> {
+  override run () {
+    const end = this.startAsyncGetter()
+    const context = this.scope.createActionContext(this)
+    log('[ComputedInServer.run] before post')
+    getPlugin('Context').postComputeToServer(
+      context
+    ).then((result: IHookContext) => {
+      const index = this.scope.hooks.indexOf(this)
+      if (result.data) {
+        const d = result.data[index]
+        if (d.length >= 2) {
+          this.update(d[1])
+        }
+      }
+      end()
+    })
+  }
+}
+
 /**
  * control global InputCompute while running
  */
@@ -1312,7 +1334,7 @@ export enum EScopeState {
 export class RunnerContext<T extends Driver> {
   // snapshot
   initialArgList: Parameters<T>
-  intialData: IHookContext['data'] | null = null
+  initialData: IHookContext['data'] | null = null
 
   // action
   triggerHookIndex?: number
@@ -1330,7 +1352,7 @@ export class RunnerContext<T extends Driver> {
     this.initialArgList = initialContext ? initialContext.initialArgList : args
     this.withInitialContext = !!initialContext
     if (initialContext) {
-      this.intialData = initialContext['data']
+      this.initialData = initialContext['data']
 
       this.triggerHookIndex = initialContext.index
       this.triggerHookName = initialContext.indexName
@@ -1540,17 +1562,19 @@ export class CurrentRunnerScope<T extends Driver = any> {
       })
     )
   }
-
+  /**
+   * copy context value into scope for updateXXX hook
+   */
   initializeHookSet() {
     const { runnerContext, intialContextDeps } = this
     if (
       runnerContext.triggerHookIndex !== undefined &&
       typeof runnerContext.triggerHookIndex === 'number' &&
-      runnerContext.intialData.length > 0
+      runnerContext.initialData.length > 0
     ) {
       /** @TODO belive deps calculation from client.it's maybe dangerous' */
       const s = new Set<number>([runnerContext.triggerHookIndex])
-      runnerContext.intialData.forEach((d, i) => {
+      runnerContext.initialData.forEach((d, i) => {
         if (d[0] !== 'unserialized') {
           s.add(i)
         }
@@ -1590,7 +1614,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
       if (hook instanceof Model) {
         // console.log('callHook hookIndex=', hookIndex)
         // await (hook as Model<any>).query()
-      } else if (hook instanceof InputCompute) {
+      } else if (hook instanceof InputCompute || hook instanceof Computed) {
         currentReactiveChain = currentReactiveChain?.add(this)
         await hook.run(...args)
       }
@@ -2115,6 +2139,7 @@ export const mountHookFactory = {
   writeModel: writeModel,
   cache: mountCache,
   computed: mountComputed,
+  computedInServer: mountComputedInServer,
   inputCompute: mountInputCompute,
   inputComputeInServer: mountInputComputeInServer
 }
@@ -2126,6 +2151,7 @@ export const updateHookFactory = {
   writePrisma: mountWritePrisma,
   cache: updateCache,
   computed: updateComputed,
+  computedInServer: updateComputedInServer,
   inputCompute: updateInputCompute,
   inputComputeInServer: updateInputComputeInServer
 }
@@ -2147,6 +2173,7 @@ export let currentHookFactory: {
   writePrisma: typeof mountWritePrisma
   cache: typeof mountCache
   computed: typeof mountComputed
+  computedInServer: typeof mountComputedInServer
   inputCompute: typeof mountInputCompute
   inputComputeInServer: typeof mountInputComputeInServer
 } = mountHookFactory
@@ -2271,20 +2298,30 @@ function createUnaccessModelGetter<T extends any[]>(
   return newF
 }
 
-function updateState<T>(initialValue?: T) {
+function updateValidation () {
   const { hooks, initialHooksSet } = currentRunnerScope!
   const currentIndex = hooks.length
   const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
 
+  return {
+    valid,
+    currentIndex
+  }
+}
+
+
+function updateState<T>(initialValue?: T) {
+  const { valid, currentIndex } = updateValidation()
+
   initialValue =
-    currentRunnerScope!.runnerContext.intialData![currentIndex]?.[1]
+    currentRunnerScope!.runnerContext.initialData![currentIndex]?.[1]
   // undefined means this hook wont needed in this progress
   if (!valid) {
     currentRunnerScope!.addHook(undefined)
     return createUnaccessGetter<T>(currentIndex)
   }
   const timestamp =
-    currentRunnerScope!.runnerContext.intialData![currentIndex]?.[2]
+    currentRunnerScope!.runnerContext.initialData![currentIndex]?.[2]
   const hook = new State(initialValue, currentRunnerScope)
   if (timestamp) {
     hook.modifiedTimstamp = timestamp
@@ -2320,9 +2357,7 @@ function updatePrisma<T extends any[]>(
   q?: () => IModelQuery['query'] | undefined,
   op?: IModelOption
 ) {
-  const { hooks, initialHooksSet } = currentRunnerScope!
-  const currentIndex = hooks.length
-  const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
+  const { valid, currentIndex } = updateValidation()
 
   if (!valid) {
     currentRunnerScope!.addHook(undefined)
@@ -2346,9 +2381,9 @@ function updatePrisma<T extends any[]>(
 
   if (receiveDataFromContext) {
     const initialValue: T =
-      currentRunnerScope!.runnerContext.intialData![currentIndex]?.[1]
+      currentRunnerScope!.runnerContext.initialData![currentIndex]?.[1]
     const timestamp =
-      currentRunnerScope!.runnerContext.intialData![currentIndex]?.[2]
+      currentRunnerScope!.runnerContext.initialData![currentIndex]?.[2]
     hook.init = false
     hook._internalValue = initialValue || []
     if (timestamp) {
@@ -2414,9 +2449,7 @@ function mountWritePrisma<T>(source: { _hook: Model<T[]> }, q: () => T) {
 }
 
 function updateCache<T>(key: string, options: ICacheOptions<T>) {
-  const { hooks, initialHooksSet } = currentRunnerScope!
-  const currentIndex = hooks.length
-  const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
+  const { valid, currentIndex } = updateValidation()
 
   if (!valid) {
     currentRunnerScope!.addHook(undefined)
@@ -2428,9 +2461,9 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
   currentRunnerScope.addHook(hook)
 
   const initialValue: T =
-    currentRunnerScope!.runnerContext.intialData![currentIndex]?.[1]
+    currentRunnerScope!.runnerContext.initialData![currentIndex]?.[1]
   const timestamp =
-    currentRunnerScope!.runnerContext.intialData![currentIndex]?.[2]
+    currentRunnerScope!.runnerContext.initialData![currentIndex]?.[2]
 
   if (initialValue !== undefined) {
     hook._internalValue = initialValue
@@ -2467,18 +2500,16 @@ function updateComputed<T>(
   fn: FComputedFunc<T>
 ): (() => T) & { _hook: Computed<T> }
 function updateComputed<T>(fn: any): any {
-  const { hooks, initialHooksSet } = currentRunnerScope!
-  const currentIndex = hooks.length
-  const valid = !initialHooksSet || initialHooksSet.has(currentIndex)
+  const { valid, currentIndex } = updateValidation()
 
   if (!valid) {
     currentRunnerScope!.addHook(undefined)
     return createUnaccessGetter<T>(currentIndex)
   }
   const initialValue: T =
-    currentRunnerScope!.runnerContext.intialData![currentIndex]?.[1]
+    currentRunnerScope!.runnerContext.initialData![currentIndex]?.[1]
   const timestamp =
-    currentRunnerScope!.runnerContext.intialData![currentIndex]?.[2]
+    currentRunnerScope!.runnerContext.initialData![currentIndex]?.[2]
 
   const hook = new Computed<T>(fn, currentRunnerScope)
   currentRunnerScope!.addHook(hook)
@@ -2510,6 +2541,77 @@ function mountComputed<T>(
 ): (() => T) & { _hook: Computed<T> }
 function mountComputed<T>(fn: any): any {
   const hook = new Computed<T>(fn, currentRunnerScope)
+  currentRunnerScope!.addHook(hook)
+
+  currentReactiveChain?.add(hook)
+
+  const getter = () => {
+    return hook.value
+  }
+  const newGetter = Object.assign(getter, {
+    _hook: hook
+  })
+  return newGetter
+}
+
+function updateComputedInServer<T>(
+  fn: FComputedFuncGenerator<T>
+): (() => T) & { _hook: Computed<T> }
+function updateComputedInServer<T>(
+  fn: FComputedFuncAsync<T>
+): (() => T) & { _hook: Computed<T> }
+function updateComputedInServer<T>(
+  fn: FComputedFunc<T>
+): (() => T) & { _hook: Computed<T> }
+function updateComputedInServer<T>(fn: any): any {
+  const { valid, currentIndex } = updateValidation()
+
+  if (!valid) {
+    currentRunnerScope!.addHook(undefined)
+    return createUnaccessGetter<T>(currentIndex)
+  }
+
+  const initialValue: T =
+    currentRunnerScope!.runnerContext.initialData![currentIndex]?.[1]
+  const timestamp =
+    currentRunnerScope!.runnerContext.initialData![currentIndex]?.[2]
+
+  const hook = process.env.TARGET === 'server'
+    ? new Computed<T>(fn, currentRunnerScope)
+    : new ClientComputed<T>(fn, currentRunnerScope);
+
+  currentRunnerScope!.addHook(hook)
+  /** @TODO: update computed won't trigger */
+  hook._internalValue = initialValue
+  hook.init = false
+  if (timestamp) {
+    hook.modifiedTimstamp = timestamp
+  }
+
+  currentReactiveChain?.add(hook)
+
+  const getter = () => {
+    return hook.value
+  }
+  const newGetter = Object.assign(getter, {
+    _hook: hook
+  })
+  return newGetter
+}
+
+function mountComputedInServer<T>(
+  fn: FComputedFuncGenerator<T>
+): (() => T) & { _hook: Computed<T> }
+function mountComputedInServer<T>(
+  fn: FComputedFuncAsync<T>
+): (() => T) & { _hook: Computed<T> }
+function mountComputedInServer<T>(
+  fn: FComputedFunc<T>
+): (() => T) & { _hook: Computed<T> }
+function mountComputedInServer<T>(fn: any): any {
+  const hook = process.env.TARGET === 'server' 
+    ? new Computed<T>(fn, currentRunnerScope)
+    : new ClientComputed<T>(fn, currentRunnerScope)
   currentRunnerScope!.addHook(hook)
 
   currentReactiveChain?.add(hook)
@@ -2604,6 +2706,23 @@ export function computed<T>(fn: any): any {
   }
   return currentHookFactory.computed<T>(fn)
 }
+
+export function computedInServer<T>(
+  fn: FComputedFuncGenerator<T>
+): (() => T) & { _hook: Computed<T> }
+export function computedInServer<T>(
+  fn: FComputedFuncAsync<T>
+): (() => T) & { _hook: Computed<T> }
+export function computedInServer<T>(
+  fn: FComputedFunc<T>
+): (() => T) & { _hook: Computed<T> }
+export function computedInServer<T>(fn: any): any {
+  if (!currentRunnerScope) {
+    throw new Error('[computed] must under a tarat runner')
+  }
+  return currentHookFactory.computedInServer<T>(fn)
+}
+
 
 type InputComputeFn<T extends any[]> = (...arg: T) => void
 type AsyncInputComputeFn<T extends any[]> = (...arg: T) => Promise<void>
