@@ -99,6 +99,7 @@ export default function taratMiddleware (args: {
         chain2.print()
 
         const context = scope.createPatchContext()
+        /* @TODO: stringifyWithUndef prevent sending server File to browser */
         const contextWithoutFile = filterFileType(context)
         ctx.body = stringifyWithUndef(contextWithoutFile);
 

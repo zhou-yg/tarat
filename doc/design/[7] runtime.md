@@ -149,3 +149,28 @@ run(mydriverFunction)
 
 CurrentRunnerScope = null
 ```
+
+## 逻辑自身
+
+在碰到File之前一直以为逻辑（数据+指令）是能够无缝跨端的
+
+> reasoning：因为在认知里是一直通过http JSON 或 form-data 协议传输的，所以在认知里就没有意识到不同端的数据特性，尤其是前后端。基于后端思维也是，二进制数据是在各个后端是通用，所以也没有意识到这个问题
+
+File的特殊点在于2个：
+- c/s 不兼容，需要转换
+- 体积大，需要考虑性能问题，不能随意传输 like context 
+  - 示例：File在 c -> s -> c 的流程里就是 waste bandwidth
+
+File及围绕File产生的逻辑，都只能仅限于client，只有在特定 inputCompute之后，才需要 send to server
+
+如果是这样就必须有一个block to split client logic and server logic，但是这样就证明了前后端一体化是错误的
+
+但是基于感性的认知描述：获得文件先上传CDN获得URL后再保存到DB，这个过程又显然可以是c/s无关
+
+这其中的边界就在于这个特殊的”数据“
+- 存储
+  - 仅限于 client，只有在特定”时机“才同步，如同cache的隔离特性
+- 转换
+  - 需要JSON一样，能够在两端抹平，具备相同的读写行为
+
+
