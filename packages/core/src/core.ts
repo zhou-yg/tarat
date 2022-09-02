@@ -375,13 +375,14 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
       this.inputComputePatchesMap.delete(ic)
       const patches = exist[1].filter(isDataPatch) as IDataPatch[]
       const newValue = applyPatches(this._internalValue, patches)
-      await this.updateWithPatches(newValue, patches, reactiveChain)
+      await this.updateWithPatches(newValue, patches, false, reactiveChain)
     }
   }
 
   abstract updateWithPatches(
     v: T[],
     patches: IPatch[],
+    silent: boolean,
     reactiveChain?: ReactiveChain
   ): Promise<void>
 }
@@ -520,12 +521,13 @@ export class Prisma<T extends any[]> extends Model<T> {
   async updateWithPatches(
     v: T[],
     patches: IDataPatch[],
+    silent: boolean,
     reactiveChain?: ReactiveChain
   ) {
     const oldValue = this._internalValue
     if (!this.options.pessimisticUpdate) {
       log('[Model.updateWithPatches] update internal v=', v)
-      this.update(v, patches, false, reactiveChain)
+      this.update(v, patches, silent, reactiveChain)
     }
 
     const end = this.startAsyncGetter()
@@ -805,10 +807,17 @@ export class Cache<T> extends AsyncState<T | Symbol> {
       end()
     }
   }
-  // call by outer
+  /**
+   * call by outer
+   * @param v new value
+   * @param patches new value with patches
+   * @param silent update value wont notify watcher
+   * @param reactiveChain
+   */
   override async update(
     v?: T | Symbol,
     patches?: IPatch[],
+
     silent?: boolean,
     reactiveChain?: ReactiveChain
   ) {
@@ -833,6 +842,13 @@ export class Cache<T> extends AsyncState<T | Symbol> {
 }
 
 let currentComputedStack: Computed<any>[] = []
+
+/**
+ * check if running inside a computed
+ */
+function underComputed () {
+  return currentComputedStack.length > 0
+}
 
 function pushComputed(c: Computed<any>) {
   currentComputedStack.push(c)
@@ -2083,7 +2099,7 @@ export function internalProxy<T>(
   _internalValue: T,
   path: (string | number)[] = []
 ): T {
-  if (currentComputedStack.length > 0) {
+  if (underComputed()) {
     last(currentComputedStack).watcher.addDep(source, path)
     if (_internalValue && likeObject(_internalValue)) {
       const copyValue = shallowCopy(_internalValue)
@@ -2188,7 +2204,9 @@ function createStateSetterGetterFunc<SV>(s: State<SV>): {
         } else {
           const reactiveChain: ReactiveChain<SV> | undefined =
             currentReactiveChain?.addUpdate(s)
-          s.update(result, patches, false, reactiveChain)
+
+          const isUnderComputed = underComputed()
+          s.update(result, patches, isUnderComputed, reactiveChain)
         }
         return [result, patches]
       } else {
@@ -2226,8 +2244,10 @@ function createModelSetterGetterFunc<T extends any[]>(
         m.addComputePatches(result, patches)
       } else {
         const reactiveChain: ReactiveChain<T> | undefined =
-          currentReactiveChain?.addUpdate(m)
-        m.updateWithPatches(result, patches, reactiveChain)
+          currentReactiveChain?.addUpdate(m);
+        
+        const isUnderComputed = underComputed()
+        m.updateWithPatches(result, patches, isUnderComputed, reactiveChain)
       }
       return [result, patches]
     }
@@ -2252,7 +2272,9 @@ function createCacheSetterGetterFunc<SV>(c: Cache<SV>): {
           c.addComputePatches(result, patches)
         } else {
           const reactiveChain = currentReactiveChain?.addUpdate(c)
-          c.update(result, patches, false, reactiveChain)
+
+          const isUnderComputed = underComputed()
+          c.update(result, patches, isUnderComputed, reactiveChain)
         }
         return [result, patches]
       } else {
