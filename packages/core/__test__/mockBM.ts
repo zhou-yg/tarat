@@ -623,6 +623,17 @@ export function generatorComputed(v1: number, v2: number) {
   return { s, c }
 }
 
+export function setterInComputed() {
+  const s1 = state(0)
+  const c1 = computed(() => {
+    if (s1() === 0) {
+      s1(v => v + 1)
+    }
+    return s1()
+  })
+  return { s1, c1 }
+}
+
 export function computedWithArray() {
   const arr = state(new Array(5).fill('_').map((_, i) => ({ num: i })))
   const guard = state(2)

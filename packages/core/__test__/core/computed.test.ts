@@ -128,6 +128,17 @@ describe('computed', () => {
       expect(result.s._hook.watchers.has(runner.scope.watcher)).toBe(true)
       expect(result.s._hook.watchers.has(result.c._hook.watcher)).toBe(true)
     })
+    it('change state inside of computed',async () => {
+      const runner = new Runner(mockBM.setterInComputed)
+      const { s1, c1 } = runner.init()
+
+      const v1 = s1()
+      expect(v1).toBe(0)
+
+      const v2 = c1()
+      expect(v2).toBe(1)
+      expect(s1()).toBe(1)
+    })
   })
   describe('update computed', () => {
     // it ('use primitive state, getter still run again', () => {
