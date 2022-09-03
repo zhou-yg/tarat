@@ -722,7 +722,7 @@ describe('util', () => {
       const deps = getRelatedIndexes(21, depMaps)
       expect(deps).toEqual(new Set([
         21, 11, 12, 1, 2, 13,
-        14, 15, 16 // by 12
+        14, 15, 16 // by 11 ->  12
       ]))
     })
     it('complex 2', () => {

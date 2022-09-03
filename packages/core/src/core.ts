@@ -257,18 +257,36 @@ type PartialGetter<T> = {
 
 type TGetterData<T> = () => PartialGetter<T>
 
-class AsyncState<T> extends State<T> {
+interface AsyncHook<T> {
+  init: boolean
+  getterPromise: Promise<T> | null  
+  startAsyncGetter: () => { end: () => void, valid: () => boolean }
+  pending: boolean
+}
+
+class AsyncState<T> extends State<T> implements AsyncHook<T>{
   init = true
   getterPromise: Promise<T> | null = null
+  asyncCount = 0
   startAsyncGetter() {
+    this.asyncCount++
+    const currentCount = this.asyncCount
     this.init = false
     let resolve: Function
     this.getterPromise = new Promise(r => (resolve = r))
 
-    return () => {
-      resolve()
-      this.getterPromise = null
+    return {
+      end: () => {
+        resolve()
+        this.getterPromise = null
+      },
+      valid: () => {
+        return this.asyncCount <= currentCount
+      }
     }
+  }
+  get pending () {
+    return !!this.getterPromise
   }
 }
 
@@ -277,8 +295,6 @@ export const writeInitialSymbol = Symbol.for('@@writePrismaInitial')
 export abstract class Model<T extends any[]> extends AsyncState<T[]> {
   queryWhereComputed: Computed<IModelQuery['query'] | void> | null = null
   watcher: Watcher = new Watcher(this)
-  // just update latest query
-  queryTimeIndex: number = 0
   constructor(
     public entity: string,
     getter: (() => IModelQuery['query'] | undefined) | undefined = undefined,
@@ -426,9 +442,13 @@ export abstract class WriteModel<T extends Object> extends AsyncState<
     if (exist) {
       this.inputComputePatchesMap.delete(ic)
       const patches = exist[1].filter(isModelPatch) as IModelPatch[]
-      const end = this.startAsyncGetter()
+      const {end, valid} = this.startAsyncGetter()
 
       await this.executeModelPath(patches)
+      if (!valid()) {
+        return
+      }
+
       this.scope.modelPatchEvents.pushPatch(this, patches)
       // TIP: must refresh after patch recording to make sure the modified time of model > patch time
 
@@ -473,13 +493,14 @@ export const writePrismaInitialSymbol = Symbol.for('@@writePrismaInitial')
 export class Prisma<T extends any[]> extends Model<T> {
   identifier = 'prisma'
   async executeQuery(reactiveChain?: ReactiveChain) {
-    this.queryTimeIndex++
-    let currentQueryTimeIndex = this.queryTimeIndex
-
-    const end = this.startAsyncGetter()
+    const {end, valid} = this.startAsyncGetter()
     try {
       // @TODO：要确保时序，得阻止旧的query数据更新
       const q = await this.getQueryWhere(reactiveChain)
+      if (!valid()) {
+        return
+      }
+
       log(
         `[${this.name || ''} Model.executeQuery] 1 q.entity, q.query: `,
         this.entity,
@@ -487,7 +508,7 @@ export class Prisma<T extends any[]> extends Model<T> {
       )
       let result: T[] = []
       if (!!q) {
-        if (this.queryTimeIndex <= currentQueryTimeIndex) {
+        if (valid()) {
           result = await getPlugin('Model').find(
             this.identifier,
             this.entity,
@@ -496,7 +517,7 @@ export class Prisma<T extends any[]> extends Model<T> {
           log(`[${this.name || ''} Model.executeQuery] 2 result: `, result)
         }
       }
-      if (this.queryTimeIndex <= currentQueryTimeIndex) {
+      if (valid()) {
         this.update(result, [], false, reactiveChain)
       }
     } catch (e) {
@@ -504,7 +525,9 @@ export class Prisma<T extends any[]> extends Model<T> {
       console.error(e)
     } finally {
       log(`[${this.name || ''} Model.executeQuery] end`)
-      end()
+      if(valid()) {
+        end()
+      }
     }
   }
   async exist(obj: Partial<T[0]>) {
@@ -530,7 +553,7 @@ export class Prisma<T extends any[]> extends Model<T> {
       this.update(v, patches, silent, reactiveChain)
     }
 
-    const end = this.startAsyncGetter()
+    const {end} = this.startAsyncGetter()
 
     const { entity } = this
     try {
@@ -637,7 +660,7 @@ export class WritePrisma<T> extends WriteModel<T> {
 
 export class ClientPrisma<T extends any[]> extends Prisma<T> {
   override async executeQuery() {
-    const end = this.startAsyncGetter()
+    const {end} = this.startAsyncGetter()
 
     const valid = await this.enableQuery()
 
@@ -715,8 +738,6 @@ export class Cache<T> extends AsyncState<T | Symbol> {
   watcher: Watcher = new Watcher(this)
   source: State<T> | undefined
   getterPromise: Promise<any> | null = null
-  // for only update latest value
-  queryTimeIndex = 0
 
   constructor(
     key: string,
@@ -765,13 +786,11 @@ export class Cache<T> extends AsyncState<T | Symbol> {
     return v === CacheInitialSymbol ? undefined : v
   }
   async executeQuery(reactiveChain?: ReactiveChain) {
-    this.queryTimeIndex++
-    let currentQueryTimeIndex = this.queryTimeIndex
 
     const { from } = this.options
     const { source } = this
 
-    const end = this.startAsyncGetter()
+    const {end, valid} = this.startAsyncGetter()
 
     try {
       const valueInCache = await getPlugin('Cache').getValue<T>(
@@ -779,7 +798,7 @@ export class Cache<T> extends AsyncState<T | Symbol> {
         this.getterKey,
         from
       )
-      if (this.queryTimeIndex > currentQueryTimeIndex) {
+      if (!valid()) {
         return
       }
       log(`[${this.name || ''} Cache.executeQuery] valueInCache=`, valueInCache)
@@ -802,9 +821,11 @@ export class Cache<T> extends AsyncState<T | Symbol> {
       console.error(e)
     } finally {
       log(
-        `[${this.name || ''} Cache.executeQuery] end=${currentQueryTimeIndex}`
+        `[${this.name || ''} Cache.executeQuery]`
       )
-      end()
+      if (valid()) {
+        end()
+      }
     }
   }
   /**
@@ -898,13 +919,15 @@ export class Computed<T> extends AsyncState<T | Symbol> {
 
     popComputed()
     if (isPromise(r)) {
-      const end = this.startAsyncGetter()
+      const {end, valid} = this.startAsyncGetter()
       ;(r as Promise<T>).then((asyncResult: T) => {
-        this.update(asyncResult, [], false, innerReactiveChain)
-        end()
+        if (valid()) {
+          this.update(asyncResult, [], false, innerReactiveChain)
+          end()
+        }
       })
     } else if (isGenerator(r)) {
-      const end = this.startAsyncGetter()
+      const {end, valid} = this.startAsyncGetter()
       ;(
         runGenerator(
           r as Generator,
@@ -912,8 +935,10 @@ export class Computed<T> extends AsyncState<T | Symbol> {
           () => popComputed()
         ) as Promise<T>
       ).then((asyncResult: T) => {
-        this.update(asyncResult, [], false, innerReactiveChain)
-        end()
+        if (valid()) {
+          this.update(asyncResult, [], false, innerReactiveChain)
+          end()
+        }
       })
     } else {
       this.update(r as T, [], false, innerReactiveChain)
@@ -934,20 +959,22 @@ export class Computed<T> extends AsyncState<T | Symbol> {
 
 export class ClientComputed<T> extends Computed<T> {
   override run() {
-    const end = this.startAsyncGetter()
+    const {end, valid} = this.startAsyncGetter()
     const context = this.scope.createActionContext(this)
     log('[ComputedInServer.run] before post')
     getPlugin('Context')
       .postComputeToServer(context)
       .then((result: IHookContext) => {
-        const index = this.scope.hooks.indexOf(this)
-        if (result.data) {
-          const d = result.data[index]
-          if (d.length >= 2) {
-            this.update(d[1])
+        if (valid()) {
+          const index = this.scope.hooks.indexOf(this)
+          if (result.data) {
+            const d = result.data[index]
+            if (d.length >= 2) {
+              this.update(d[1])
+            }
           }
+          end()
         }
-        end()
       })
   }
 }
@@ -1069,24 +1096,35 @@ export class InputCompute<P extends any[] = any> extends Hook {
   }
 }
 
-class AsyncInputCompute<T extends any[]> extends InputCompute<T> {
+class AsyncInputCompute<T extends any[]> extends InputCompute<T> implements AsyncHook<T> {
   init = true
   getterPromise: Promise<T> | null = null
+  asyncCount: number = 0
   startAsyncGetter() {
+    this.asyncCount++
+    let currentCount = this.asyncCount
     this.init = false
     let resolve: Function
     this.getterPromise = new Promise(r => (resolve = r))
 
-    return () => {
-      resolve()
-      this.getterPromise = null
+    return {
+      end: () => {
+        resolve()
+        this.getterPromise = null
+      },
+      valid: () => {
+        return this.asyncCount <= currentCount
+      }
     }
+  }
+  get pending(): boolean {
+    return !!this.getterPromise
   }
 }
 
 class InputComputeInServer<P extends any[]> extends AsyncInputCompute<P> {
   async run(...args: any[]) {
-    const end = this.startAsyncGetter()
+    const {end, valid} = this.startAsyncGetter()
 
     this.emit(EHookEvents.beforeCalling, this)
     if (!checkFreeze({ _hook: this })) {
@@ -1094,11 +1132,14 @@ class InputComputeInServer<P extends any[]> extends AsyncInputCompute<P> {
 
       const context = this.scope.createActionContext(this, args)
       const result = await getPlugin('Context').postComputeToServer(context)
-      this.scope.applyContextFromServer(result)
+      if (valid()) {
+        this.scope.applyContextFromServer(result)
+      }
     }
-    this.inputFuncEnd()
-
-    end()
+    if (valid()) {
+      this.inputFuncEnd()
+      end()
+    }
   }
 }
 
@@ -2948,7 +2989,7 @@ export function progress<T = any>(getter: {
   return () => ({
     state: hook.init
       ? EScopeState.init
-      : hook.getterPromise
+      : hook.pending
       ? EScopeState.pending
       : EScopeState.idle
   })

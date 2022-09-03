@@ -337,7 +337,7 @@ export function changeStateInputComputeServer(
   const { s1, s2 } = ps
 
   const changeS1 = inputComputeInServer((v: number) => {
-    s1((draft: any) => {
+    s1((draft) => {
       draft.num1 = v
     })
   })

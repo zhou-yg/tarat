@@ -269,9 +269,10 @@ export interface IHookContext {
   // snapshot
   initialArgList: any
   data: Array<
-    | [TContextData, any | IDataPatch[], number]
+    | [TContextData, Promise<any>, number]
     | [TContextData, null]
     | [TContextData]
+    | [TContextData, any, number]
   >
   name: string
   // action
