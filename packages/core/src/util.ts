@@ -859,8 +859,6 @@ export function getDependencies(rootNodes: Set<DataGraphNode>, id: number) {
   const dependencies = new Set<DataGraphNode>()
   dataGrachTraverse([...rootNodes], (n, a) => {
     if (n.id === id) {
-    }
-    if (n.id === id) {
       const deps = findDenpendenciesUntilIC(a.concat(n))
       deps?.forEach(dn => {
         dependencies.add(dn)
@@ -869,12 +867,47 @@ export function getDependencies(rootNodes: Set<DataGraphNode>, id: number) {
   })
   return dependencies
 }
+
+export function getExecutionResultFlow(rootNodes: Set<DataGraphNode>, id: number) {
+  const executionFlow = new Set<DataGraphNode>()
+  const allTargets = new Set<DataGraphNode>()
+
+  dataGrachTraverse([...rootNodes], (n, a) => {
+    if (n.id === id) {
+      if (n.targets.size) {
+        n.targets.forEach(tn => {
+          allTargets.add(tn)
+        })
+      } else {
+        n.watchers.forEach(tn => {
+          // the watcher shouldn't be "ic"
+          if (tn.targets.size === 0 && tn.type === 'h') {
+            allTargets.add(tn)
+          }
+        })
+      }
+    }
+  })
+
+  allTargets.forEach(tn => {
+    tn.getAllWatchers().forEach(cn => {
+      if (cn.targets.size === 0 && cn.type === 'h') {
+        executionFlow.add(cn)
+      }
+    })
+  })
+
+  return new Set([...allTargets, ...executionFlow])
+}
+
 export function getExecutionFlow(rootNodes: Set<DataGraphNode>, id: number) {
   const dependencies = getDependencies(rootNodes, id)
   const executionFlow = new Set<DataGraphNode>()
   const allTargets = new Set<DataGraphNode>()
 
-  // demonstrate: ic depends other ic
+  /**
+   * demonstrate: ic depends other ic
+   * */
   dependencies.forEach(n => {
     if (n.targets.size > 0) {
       n.targets.forEach(tn => {
@@ -882,6 +915,11 @@ export function getExecutionFlow(rootNodes: Set<DataGraphNode>, id: number) {
       })
     }
   })
+
+  /**
+   * what different with "getExecutionResultFlow" ?
+   * dependencies will influence allTargets
+   */
   dataGrachTraverse([...rootNodes], (n, a) => {
     if (n.id === id) {
       if (n.targets.size) {
@@ -983,6 +1021,24 @@ export function getRelatedIndexes(
 
   indexArr.forEach(index => {
     getExecutionFlow(rootNodes, index).forEach(n => {
+      deps.add(n.id)
+    })
+  })
+
+  return deps
+}
+export function getTailRelatedIndexes(
+  index: number[] | number,
+  contextDeps: THookDeps
+) {
+  const indexArr = [].concat(index)
+
+  const deps = new Set<number>(indexArr)
+
+  const rootNodes = constructDataGraph(contextDeps)
+
+  indexArr.forEach(index => {
+    getExecutionResultFlow(rootNodes, index).forEach(n => {
       deps.add(n.id)
     })
   })

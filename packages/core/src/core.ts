@@ -33,7 +33,8 @@ import {
   isDataPatch,
   isModelPatch,
   shortValue,
-  getRelatedIndexes
+  getRelatedIndexes,
+  getTailRelatedIndexes
 } from './util'
 import EventEmitter from 'eventemitter3'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
@@ -129,10 +130,6 @@ enum EHookEvents {
   change = 'change',
   beforeCalling = 'beforeCalling',
   afterCalling = 'afterCalling'
-}
-
-interface RecordInputComputePatches<T> {
-  inputComputePatchesMap: Map<InputCompute, [T, IPatch[]]>
 }
 
 function getValueSilently(s: State) {
@@ -1128,9 +1125,15 @@ class InputComputeInServer<P extends any[]> extends AsyncInputCompute<P> {
 
     this.emit(EHookEvents.beforeCalling, this)
     if (!checkFreeze({ _hook: this })) {
-      currentReactiveChain?.add(this)
 
-      const context = this.scope.createActionContext(this, args)
+      /**
+       * only icInServer need confirm all related dependencies ready
+       * because IC just be manual (by User or System)
+       */
+      await this.scope.readyReleated(this)
+
+      currentReactiveChain?.add(this)
+      const context = this.scope.createShallowActionContext(this, args)
       const result = await getPlugin('Context').postComputeToServer(context)
       if (valid()) {
         this.scope.applyContextFromServer(result)
@@ -1623,7 +1626,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
    * copy context value into scope for updateXXX hook
    */
   initializeHookSet() {
-    const { runnerContext, intialContextDeps } = this
+    const { runnerContext } = this
     if (
       runnerContext.triggerHookIndex !== undefined &&
       typeof runnerContext.triggerHookIndex === 'number' &&
@@ -1864,16 +1867,8 @@ export class CurrentRunnerScope<T extends Driver = any> {
     }
   }
 
-  /**
-   * get all related hook index according to curernet hookIndex
-   * design logic:
-   * 1.getD -> getD -> getD
-   * 2.setD in who's getD -> getD
-   */
-  getRelatedHookIndexes(hookIndex: number): Set<number> {
-    if (!this.intialContextDeps) {
-      return new Set()
-    }
+  // transform compose deps to number index that will be convinient for next steps
+  hookNumberIndexDeps () {
     const hookIndexDeps: THookDeps = this.intialContextDeps.map(
       ([name, hi, getD, setD]) => {
         const [newGetD, newSetD] = [getD, setD].map(dependencies => {
@@ -1894,8 +1889,28 @@ export class CurrentRunnerScope<T extends Driver = any> {
         return [name, hi, newGetD, newSetD]
       }
     )
+    return hookIndexDeps
+  }
 
-    const isModel = this.hooks[hookIndex] instanceof Model
+  /**
+   * get all related hook index according to passived hookIndex
+   * design logic:
+   * 1.getD -> getD -> getD
+   * 2.setD in who's getD -> getD
+   */
+  getRelatedHookIndexes(hookIndex: number): Set<number> {
+    if (!this.intialContextDeps) {
+      return new Set()
+    }
+
+    const hookIndexDeps = this.hookNumberIndexDeps()
+    /**
+     * for the special performance case: 
+     * query on any async and client state eg: Client Model, ClientCache, ComputedInServer
+     *  that will batch notify all watchers of it and
+     *  doing these all operations in single request
+     */
+    const isModel = this.hooks[hookIndex] instanceof AsyncState
     if (isModel) {
       const indexArr: number[] = []
       hookIndexDeps.forEach(([_, i, get, set]) => {
@@ -1907,10 +1922,49 @@ export class CurrentRunnerScope<T extends Driver = any> {
     }
     return getRelatedIndexes(hookIndex, hookIndexDeps)
   }
+  getShallowRelatedHookIndexes(hookIndex: number): Set<number> {
+    if (!this.intialContextDeps) {
+      return new Set()
+    }
+    const hookIndexDeps = this.hookNumberIndexDeps()
+
+    const indexArr: Set<number> = new Set()
+    hookIndexDeps.forEach(([_, i, get, set]) => {
+      if (i === hookIndex) {
+        get?.forEach(n => {
+          if (typeof n === 'number') {
+            indexArr.add(n)
+          }
+        })
+        set?.forEach(n => {
+          if (typeof n === 'number') {
+            indexArr.add(n)
+          }
+        })
+      }
+    })
+
+    const tailIndexes = getTailRelatedIndexes(hookIndex, hookIndexDeps)
+    tailIndexes.forEach(n => {
+      indexArr.add(n)
+    })
+
+    return indexArr
+  }
 
   createBaseContext() {
     const { hooks } = this
     return this.runnerContext.serializeBase(hooks)
+  }
+  getRelatedIndexesByHook (h: Hook, excludeSelf?: boolean) {
+    const { hooks } = this
+    const hookIndex = h ? hooks.indexOf(h) : -1
+
+    let deps = this.getRelatedHookIndexes(hookIndex)
+    if (excludeSelf) {
+      deps.delete(hookIndex)
+    }
+    return deps
   }
   /**
    * as a resonse while receive a input context
@@ -1933,6 +1987,22 @@ export class CurrentRunnerScope<T extends Driver = any> {
     let deps = new Set<number>()
     if (h) {
       deps = this.getRelatedHookIndexes(hookIndex)
+    }
+
+    return this.runnerContext.serializeAction(
+      hooks,
+      hookIndex,
+      args || [],
+      deps
+    )
+  }
+  createShallowActionContext(h?: Hook, args?: any[]): IHookContext {
+    const { hooks } = this
+    const hookIndex = h ? hooks.indexOf(h) : -1
+
+    let deps = new Set<number>()
+    if (h) {
+      deps = this.getShallowRelatedHookIndexes(hookIndex)
     }
 
     return this.runnerContext.serializeAction(
@@ -1978,13 +2048,19 @@ export class CurrentRunnerScope<T extends Driver = any> {
 
     return notReadyHooks.length === 0 ? EScopeState.idle : EScopeState.pending
   }
-
-  ready(): Promise<void> {
+  readyReleated(h: Hook) {
+    const hi = this.getRelatedIndexesByHook(h, true)
+    return this.ready(hi)
+  }
+  ready(specifies?: Set<number>): Promise<void> {
     const asyncHooks = this.hooks.filter(
-      h =>
-        (h && Reflect.has(h, 'getterPromise')) ||
-        h instanceof AsyncInputCompute ||
-        h instanceof AsyncState
+      (h, i) =>
+        (specifies ? specifies.has(i) : true) && 
+        (
+          (h && Reflect.has(h, 'getterPromise')) ||
+          h instanceof AsyncInputCompute ||
+          h instanceof AsyncState
+        )
     ) as unknown as (AsyncInputCompute<any> | AsyncState<any>)[]
 
     let readyResolve: () => void
