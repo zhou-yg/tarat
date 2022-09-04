@@ -1037,6 +1037,22 @@ export function getTailRelatedIndexes(
 
   const rootNodes = constructDataGraph(contextDeps)
 
+  // add direct dependencies
+  contextDeps.forEach(([_, i, get, set]) => {
+    if (i === index) {
+      get?.forEach(n => {
+        if (typeof n === 'number') {
+          deps.add(n)
+        }
+      })
+      set?.forEach(n => {
+        if (typeof n === 'number') {
+          deps.add(n)
+        }
+      })
+    }
+  })
+
   indexArr.forEach(index => {
     getExecutionResultFlow(rootNodes, index).forEach(n => {
       deps.add(n.id)

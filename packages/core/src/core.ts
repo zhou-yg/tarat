@@ -1928,28 +1928,9 @@ export class CurrentRunnerScope<T extends Driver = any> {
     }
     const hookIndexDeps = this.hookNumberIndexDeps()
 
-    const indexArr: Set<number> = new Set()
-    hookIndexDeps.forEach(([_, i, get, set]) => {
-      if (i === hookIndex) {
-        get?.forEach(n => {
-          if (typeof n === 'number') {
-            indexArr.add(n)
-          }
-        })
-        set?.forEach(n => {
-          if (typeof n === 'number') {
-            indexArr.add(n)
-          }
-        })
-      }
-    })
-
     const tailIndexes = getTailRelatedIndexes(hookIndex, hookIndexDeps)
-    tailIndexes.forEach(n => {
-      indexArr.add(n)
-    })
 
-    return indexArr
+    return tailIndexes
   }
 
   createBaseContext() {

@@ -1,4 +1,4 @@
-import { calculateDiff, checkQueryWhere, constructDataGraph, dataGrachTraverse, DataGraphNode, get, getRelatedIndexes, set, THookDeps } from '../../src/index'
+import { calculateDiff, checkQueryWhere, constructDataGraph, dataGrachTraverse, DataGraphNode, get, getRelatedIndexes, getTailRelatedIndexes, set, THookDeps } from '../../src/index'
 import { produceWithPatches, enablePatches } from 'immer'
 
 enablePatches()
@@ -747,6 +747,19 @@ describe('util', () => {
         12, // by 13
         14, 15, 16 // by 12
       ]))
+    })
+  })
+
+  describe('getShallowRelatedIndexes', () => {
+    it('simple', () => {
+      const depMaps: THookDeps = [
+        ['h', 1, [0]],
+        ['ic', 2, [1], [3,4]],
+        ['h', 4, [6]],
+        ['h', 5, [3]],
+      ]
+      const deps = getTailRelatedIndexes(2, depMaps)
+      expect(deps).toEqual(new Set([2, 1, 3, 4, 5]))
     })
   })
 
