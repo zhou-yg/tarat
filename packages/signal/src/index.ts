@@ -4,8 +4,9 @@ import { writeFileSync } from 'fs'
 function pushContext () {
   writeFileSync('./a.js', '123')
 }
-export function popContext () {
+export function popContext (v: number) {
   // pushContext()
+  pushContext()
 }
 
 export function signal () {
