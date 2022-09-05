@@ -6,6 +6,7 @@
   "scripts": {
     "init": "pnpm install && npm run prisma:dev",
     "dev": "tarat dev",
+    "build": "tarat build",
     "p:dev": "prisma migrate dev && prisma generate",
     "p:gen": "prisma generate",
     "p:deploy": "prisma migrate deploy",
@@ -30,6 +31,11 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.14.182",
-    "less": "^4.1.2"
+    "immer": "^9.0.14",
+    "less": "^4.1.2",
+    "tslib": "^2.4.0"
+  },
+  "peerDependencies": {
+    "immer": "^9.0.14"
   }
 }

@@ -264,6 +264,7 @@ importers:
       '@prisma/client': ^3.15.1
       '@types/lodash': ^4.14.182
       '@types/react-dom': ^18.0.5
+      immer: ^9.0.14
       less: ^4.1.2
       lodash: ^4.17.21
       prisma: ^3.15.1
@@ -273,6 +274,7 @@ importers:
       tarat-connect: workspace:*
       tarat-core: workspace:*
       tarat-server: workspace:*
+      tslib: ^2.4.0
     dependencies:
       '@prisma/client': 3.15.1_prisma@3.15.1
       '@types/react-dom': 18.0.6
@@ -286,7 +288,9 @@ importers:
       tarat-server: link:../../server
     devDependencies:
       '@types/lodash': 4.14.182
+      immer: 9.0.14
       less: 4.1.3
+      tslib: 2.4.0
 
   packages/example/user-comments:
     specifiers:

@@ -18,6 +18,7 @@
     "wu": "sh scripts/compiler-unit.sh",
     "test-unit": "jest",
     "test-ci": "TEST=CI jest",
+    "build:examples": "node scripts/build-all-examples.mjs",
     "build": "rm -rf dist/ && node scripts/build.mjs",
     "build:dev": "rollup --config rollup.config.mjs",
     "build:watch": "npm run build && rollup --config rollup.config.mjs --watch",

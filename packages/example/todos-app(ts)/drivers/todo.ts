@@ -6,12 +6,6 @@ import {
   computed
 } from 'tarat-core'
 
-import deps from './todo.deps.js'
-
-Object.assign(todo, {
-  __deps__: deps.todo
-})
-
 function newTodoItem(description: string): { status: 'done' | 'undone', description: string } {
   return {
     status: 'undone',
