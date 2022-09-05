@@ -22,6 +22,7 @@ import { emptyDirectory, loadJSON, logFrame, traverseDir } from "../util";
 import chalk from "chalk";
 import { cp } from "shelljs";
 import { Identifier, ImportDeclaration, Program } from 'estree';
+import { traverse, last } from '../util';
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -391,10 +392,12 @@ const esbuildRemoveUnused: esbuild.Plugin  = {
 
 /**
  * make sure hook will import the same module type
- * @param sourceFile 
- * @param format 
  */
-export function replaceImportDriverPath (sourceFile: string, format: esbuild.Format) {
+export function replaceImportDriverPath (
+  sourceFile: string,
+  format: esbuild.Format,
+  env: 'client' | 'server',
+) {
   const reg = /from (?:'|")([\w\/-]+)(?:'|")/
   const reg2 = /require\((?:'|")([\w\/-]+)(?:'|")/
 
@@ -403,7 +406,7 @@ export function replaceImportDriverPath (sourceFile: string, format: esbuild.For
   const r2 = code.match(reg2)
   const importModule = r?.[1] || r2?.[1]
   if (importModule && /\/drivers\/[\w-]+$/.test(importModule)) {
-    const importModuleWithFormat = importModule.replace(/(\/drivers)\/([\w-]+)$/, `$1/${format}/$2`)
+    const importModuleWithFormat = importModule.replace(/(\/drivers)\/([\w-]+)$/, `$1/${env}/${format}/$2`)
     const newCode = code.replace(importModule, importModuleWithFormat)
     fs.writeFileSync(sourceFile, newCode)
   } 
@@ -427,17 +430,28 @@ export function removeUnusedImports(sourceFile: string) {
   const removeImportRange: [number, number][] = []
   if (ast.type === 'Program') {
     ast.body.forEach((n) => {
-      if (n.type === 'ImportDeclaration') {      
-        const w2 = n.specifiers.map(s => s.local.name)
-        let r = false
-        walk.simple(ast as any, {
-          Identifier (n: any) {
-            r = r || w2.includes((n as Identifier).name)
+      switch (n.type) {
+        case 'ImportDeclaration':
+          {
+            const w2 = n.specifiers.map(s => s.local.name)
+            let r = false
+            walk.simple(ast as any, {
+              Identifier (n: any) {
+                r = r || w2.includes((n as Identifier).name)
+              },
+              ExportNamedDeclaration (n: any) {
+                traverse(n, (pathArr: string[], value: Identifier) => {
+                  if (value.type === 'Identifier' && last(pathArr) === 'local') {
+                    r = r || w2.includes(value.name)
+                  }
+                })    
+              }
+            })
+            if (!r) {
+              removeImportRange.push([n.start, n.end])
+            }  
           }
-        })
-        if (!r) {
-          removeImportRange.push([n.start, n.end])
-        }
+          break
       }
     })
   }
@@ -455,7 +469,12 @@ export function removeUnusedImports(sourceFile: string) {
 }
 
 
-async function esbuildDrivers (c: IConfig, outputDir: string, format: esbuild.Format) {
+async function esbuildDrivers (
+  c: IConfig,
+  outputDir: string, 
+  format: esbuild.Format,
+  env?: 'client' | 'server',
+) {
   const { drivers } = c
   let includingTs = false
   const points: string[] = []
@@ -479,8 +498,7 @@ async function esbuildDrivers (c: IConfig, outputDir: string, format: esbuild.Fo
     outdir: outputDir,
     platform: 'node',
     format,
-    treeShaking: true,
-    ignoreAnnotations: true
+    // treeShaking: true,
   }
 
   // check tsconfig
@@ -488,15 +506,15 @@ async function esbuildDrivers (c: IConfig, outputDir: string, format: esbuild.Fo
     buildOptions.tsconfig = getTSConfigPath(c)
   }
 
-  emptyDirectory(outputDir)
-
   await esbuild.build(buildOptions)
 
   if (fs.existsSync(outputDir)) {
     traverseDir(outputDir, (obj) => {
       if (!obj.isDir) {
         removeUnusedImports(obj.path)
-        replaceImportDriverPath(obj.path, format)
+        if (env) {
+          // replaceImportDriverPath(obj.path, format, env)
+        }
       }
     })
   }
@@ -554,30 +572,39 @@ export async function driversType(c: IConfig, outputDir: string) {
  */
 export async function buildDrivers (c: IConfig) {
   const {
-    outputDriversESMDir,
-    outputDriversCJSDir,
-    outputDriversDir
+    outputClientDriversDir,
+    outputServerDriversDir,
+    outputDriversDir,
   } = c.pointFiles
-
+  const {
+    esmDirectory,
+    cjsDirectory
+  } = c
 
   // 1.must build source dir first prevent to traverse below children dir 
-  await esbuildDrivers(c, outputDriversDir, c.esmDirectory)
+  await esbuildDrivers(c, outputDriversDir, 'esm')
   // 2.run after source building
   await Promise.all([
-    esbuildDrivers(c, outputDriversCJSDir, c.cjsDirectory),
-    esbuildDrivers(c, outputDriversESMDir, c.esmDirectory),
+    // cjs
+    esbuildDrivers(c, path.join(outputClientDriversDir, cjsDirectory), 'cjs'),
+    esbuildDrivers(c, path.join(outputServerDriversDir, cjsDirectory), 'cjs'),
+    // esm
+    esbuildDrivers(c, path.join(outputClientDriversDir, esmDirectory), 'esm'),
+    esbuildDrivers(c, path.join(outputServerDriversDir, esmDirectory), 'esm'),
   ])
 
   if (c.ts) {
     try {
       const files = await driversType(c, outputDriversDir)
       files.forEach(({ name, destFile, relativePath }) => {
-        ['cjs', 'esm'].forEach(format => {
-          const dir = path.join(outputDriversDir, format, relativePath)
-          if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir)
-          }
-          cp(destFile, dir)
+        [cjsDirectory, esmDirectory].forEach(formatDir => {
+          [outputClientDriversDir, outputServerDriversDir].forEach(envDir => {
+            const dir = path.join(outputDriversDir, envDir, formatDir, relativePath)
+            if (!fs.existsSync(dir)) {
+              fs.mkdirSync(dir)
+            }
+            cp(destFile, dir)
+          })
         })
       })
     } catch (e) {

@@ -39,4 +39,12 @@ function aFunc() {
 }
 bb()
 const d = cc.aa.bb`,
+  withExport: `
+import d2 from './a'
+import d3 from './b'
+export { d2 as default }`,
+  withExport2: `
+import d3 from './b'
+import d2 from './a'
+export default { d2 }`
 }

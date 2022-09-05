@@ -10,7 +10,9 @@ export function loadJSON (f: string) {
 }
 
 export function emptyDirectory (dir: string) {
-  rimraf.sync(dir)
+  if (fs.existsSync(dir)) {
+    rimraf.sync(dir)
+  }
 
   fs.mkdirSync(dir)
 }
@@ -34,11 +36,6 @@ export function getDefeaultRoute (pages: IViewConfig[]) {
   })
 
   return root.name === 'index' ? '' : root.name
-}
-
-
-export function last<T extends any[]>(arr: T) {
-  return arr[arr.length - 1]
 }
 
 export function logFrame (content: string, length = 100) {
@@ -114,4 +111,29 @@ export function time (sec = true) {
     const v = Date.now() - st
     return sec ? Math.floor(v / 1000) : v
   }
+}
+
+export function __aa () {
+
+}
+
+export function traverse(
+  target: Record<string, any>,
+  callback: (arrPath: string[], value: any) => void,
+  parentKeys?: string[]
+) {
+  if (!parentKeys) {
+    parentKeys = []
+  }
+  Object.entries(target).forEach(([key, value]) => {
+    const currentKeys = parentKeys.concat(key)
+    value && callback(currentKeys, value)
+    if (typeof value === 'object' && value) {
+      traverse(value, callback, currentKeys)
+    }
+  })
+}
+
+export function last<T> (arr: T[]):T {
+  return arr[arr.length - 1]
 }

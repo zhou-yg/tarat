@@ -20,7 +20,8 @@ describe('esbuild driver', () => {
   })
 
   it('remove unused in driver', () => {
-    removeUnusedImports('./imports.js')
+    const file = './imports.js'
+    removeUnusedImports(file)
 
     const r = `
 
@@ -33,6 +34,25 @@ function aFunc() {
 }
 bb()
 const d = cc.aa.bb`
-    expect(readFileSync('./imports.js').toString()).toBe(r)
+    expect(readFileSync(file).toString()).toBe(r)
+  })
+
+  it('remove export', () => {
+    const file = './withExport.js'
+    removeUnusedImports(file)
+    const r = `
+import d2 from './a'
+
+export { d2 as default }`
+    expect(readFileSync(file).toString()).toBe(r)
+  })
+  it('remove export', () => {
+    const file = './withExport2.js'
+    removeUnusedImports(file)
+    const r = `
+
+import d2 from './a'
+export default { d2 }`
+    expect(readFileSync(file).toString()).toBe(r)
   })
 })
