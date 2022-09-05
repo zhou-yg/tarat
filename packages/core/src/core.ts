@@ -2267,15 +2267,29 @@ export const updateHookFactory = {
   inputComputeInServer: updateInputComputeInServer
 }
 
-export const hookFactoryNames = Object.keys(mountHookFactory)
+export const hookFactoryFeatures = {
+  /**
+   * all hooks name list
+   */
+  all: Object.keys(mountHookFactory),
+  /**
+   * need other hook as data source
+   */
+  withSource: ['cache', 'writeModel', 'writePrisma'],
+  /**
+   * manual calling by User or System
+   */
+  initiativeCompute: ['inputCompute', 'inputComputeInServer', 'writePrisma', 'writeModel'],  
+  /**
+   * only compatibility with server
+   */
+  serverOnly: ['inputComputeInServer', 'computedInServer', 'model', 'prisma']
+}
 /** @TODO need refact code to auto export these hooks */
-export const hasSourceHookFactoryNames = ['cache', 'writeModel', 'writePrisma']
-export const initiativeComputeHookFactoryNames = [
-  'inputCompute',
-  'inputComputeInServer',
-  'writePrisma',
-  'writeModel'
-]
+export const hookFactoryNames = hookFactoryFeatures.all
+export const hasSourceHookFactoryNames = hookFactoryFeatures.withSource
+export const initiativeComputeHookFactoryNames = hookFactoryFeatures.initiativeCompute
+
 
 export let currentHookFactory: {
   state: typeof mountState
