@@ -1,5 +1,4 @@
 import acorn, { parse as acornParse } from 'acorn'
-
 import * as walk from 'acorn-walk'
 import { set, get } from 'lodash'
 import type {
@@ -384,7 +383,7 @@ function generateBMDepMaps (BMNode: TBMNode) {
 /**
  * BM defination: the function including above hook factory method.
  */
-function matchBMFunction (ast:acorn.Node) {
+function matchBMFunction (ast: ReturnType<typeof acornParse>) {
   const BMNodes: ([acorn.Node, string])[] = []
   function func(parentFuncNode: acorn.Node, s:any, ancestor: any[]) {
     let found = false
@@ -415,7 +414,7 @@ function matchBMFunction (ast:acorn.Node) {
     })
   }
 
-  walk.ancestor(ast, {
+  walk.ancestor(ast as any, {
     FunctionDeclaration: func,
     ArrowFunctionExpression: func,
   })

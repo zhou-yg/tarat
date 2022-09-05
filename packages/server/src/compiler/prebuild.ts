@@ -1,8 +1,10 @@
+import acorn, { parse as acornParse } from 'acorn'
+import * as walk from 'acorn-walk'
 import { IConfig, IViewConfig } from "../config";
 import * as fs from 'fs'
 import * as path from 'path'
 import { compile } from 'ejs'
-import { InputOptions, ModuleFormat, OutputOptions, Plugin, rollup, RollupBuild } from 'rollup' 
+import { AcornNode, InputOptions, ModuleFormat, OutputOptions, Plugin, rollup, RollupBuild } from 'rollup' 
 import resolve from '@rollup/plugin-node-resolve';
 import { babel  } from '@rollup/plugin-babel';
 import json from '@rollup/plugin-json'
@@ -19,6 +21,7 @@ import dts from "rollup-plugin-dts"
 import { emptyDirectory, loadJSON, logFrame, traverseDir } from "../util";
 import chalk from "chalk";
 import { cp } from "shelljs";
+import { Identifier, ImportDeclaration, Program } from 'estree';
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -356,19 +359,101 @@ export async function buildEntryServer (c: IConfig) {
   }
 }
 
-function esbuildHookPathAlias () {
-  const p: esbuild.Plugin = {
-    name: 'hookPathAlias',
-    setup (build) {
-      build.onResolve({
-        filter: /\/drivers\/\w+/,
-      }, args => {
-        return { path: args.path }
-      })
-    }
+const esbuildExternalAll: esbuild.Plugin  = {
+  name: 'tarat-external-all',
+  setup(build) {
+    // build.onResolve({ filter: /^[^.\/]|^\.[^.\/]|^\.\.[^\/]/ }, args => {
+    //   return { path: args.path, external: true }
+    // })
+    build.onResolve({ filter: /()/ }, args => {
+      console.log('args: ', args);
+      if (args.kind !== 'entry-point') {
+        return { path: args.path, external: true }
+      }
+    })
   }
-  return p
 }
+const esbuildRemoveUnused: esbuild.Plugin  = {
+  name: 'tarat-remove-unused',
+  setup(build) {
+    // build.onResolve({ filter: /^[^.\/]|^\.[^.\/]|^\.\.[^\/]/ }, args => {
+    //   return { path: args.path, external: true }
+    // })
+    build.onLoad({ filter: /()/ }, async args => {
+      console.log('args: ', args);
+      return {
+
+      }
+    })
+  }
+}
+
+
+/**
+ * make sure hook will import the same module type
+ * @param sourceFile 
+ * @param format 
+ */
+export function replaceImportDriverPath (sourceFile: string, format: esbuild.Format) {
+  const reg = /from (?:'|")([\w\/-]+)(?:'|")/
+  const reg2 = /require\((?:'|")([\w\/-]+)(?:'|")/
+
+  const code = fs.readFileSync(sourceFile).toString()
+  const r = code.match(reg)
+  const r2 = code.match(reg2)
+  const importModule = r?.[1] || r2?.[1]
+  if (importModule && /\/drivers\/[\w-]+$/.test(importModule)) {
+    const importModuleWithFormat = importModule.replace(/(\/drivers)\/([\w-]+)$/, `$1/${format}/$2`)
+    const newCode = code.replace(importModule, importModuleWithFormat)
+    fs.writeFileSync(sourceFile, newCode)
+  } 
+}
+
+/**
+ * under ESM remove all unused imports and directly import
+ * ```
+ * import 'foo'
+ * import XX from 'foo'
+ * import XX, { a } from 'foo'
+ * import { a } from 'foo'
+ * import * as XX from 'foo'
+ * ```
+ * @param sourceFile 
+ */
+export function removeUnusedImports(sourceFile: string) {
+  const code = fs.readFileSync(sourceFile).toString()
+
+  const ast = acornParse(code, { sourceType: 'module', ecmaVersion: 'latest' });
+  const removeImportRange: [number, number][] = []
+  if (ast.type === 'Program') {
+    ast.body.forEach((n) => {
+      if (n.type === 'ImportDeclaration') {      
+        const w2 = n.specifiers.map(s => s.local.name)
+        let r = false
+        walk.simple(ast as any, {
+          Identifier (n: any) {
+            r = r || w2.includes((n as Identifier).name)
+          }
+        })
+        if (!r) {
+          removeImportRange.push([n.start, n.end])
+        }
+      }
+    })
+  }
+
+  let gap = 0
+  let newCode = code
+  removeImportRange.forEach(([st, ed]) => {
+    newCode = 
+      newCode.substring(0, st - gap) + 
+      newCode.substring(ed - gap);
+    gap += ed - st
+  })
+
+  fs.writeFileSync(sourceFile, newCode)
+}
+
 
 async function esbuildDrivers (c: IConfig, outputDir: string, format: esbuild.Format) {
   const { drivers } = c
@@ -394,6 +479,8 @@ async function esbuildDrivers (c: IConfig, outputDir: string, format: esbuild.Fo
     outdir: outputDir,
     platform: 'node',
     format,
+    treeShaking: true,
+    ignoreAnnotations: true
   }
 
   // check tsconfig
@@ -408,20 +495,8 @@ async function esbuildDrivers (c: IConfig, outputDir: string, format: esbuild.Fo
   if (fs.existsSync(outputDir)) {
     traverseDir(outputDir, (obj) => {
       if (!obj.isDir) {
-        // make sure hook will import the same module type
-        const reg = /from (?:'|")([\w\/-]+)(?:'|")/
-        const reg2 = /require\((?:'|")([\w\/-]+)(?:'|")/
-        const sourceFile = obj.path
-
-        const code = fs.readFileSync(sourceFile).toString()
-        const r = code.match(reg)
-        const r2 = code.match(reg2)
-        const importModule = r?.[1] || r2?.[1]
-        if (importModule && /\/drivers\/[\w-]+$/.test(importModule)) {
-          const importModuleWithFormat = importModule.replace(/(\/drivers)\/([\w-]+)$/, `$1/${format}/$2`)
-          const newCode = code.replace(importModule, importModuleWithFormat)
-          fs.writeFileSync(sourceFile, newCode)
-        }
+        removeUnusedImports(obj.path)
+        replaceImportDriverPath(obj.path, format)
       }
     })
   }

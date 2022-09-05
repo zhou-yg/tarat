@@ -25,3 +25,18 @@ export async function startTestServer () {
 
   return app
 }
+
+
+export const driverFilesMap = {
+  imports: `
+import 'foo'
+import XX from 'foo'
+import BB, { aa } from 'foo'
+import { bb } from 'foo'
+import * as CC from 'foo'
+function aFunc() {  
+  aa()
+}
+bb()
+const d = cc.aa.bb`,
+}
