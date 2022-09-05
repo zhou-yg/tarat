@@ -77,7 +77,17 @@ export function injectDeps (c: IConfig, targetFile: string) {
 
 /** @TODO 1.integrated to the vite.plugin 2.upgrade to typescript */
 export function generateHookDeps (c: IConfig) {
-  const driversDir = c.pointFiles.outputDriversESMDir
+  const {
+    outputClientDriversDir,
+    outputServerDriversDir,
+    outputDriversDir,
+  } = c.pointFiles
+  const {
+    esmDirectory,
+    cjsDirectory
+  } = c
+
+  const driversDir = outputDriversDir
  
   const sourceCodeDir = path.join(c.cwd, c.driversDirectory)
 
@@ -96,16 +106,20 @@ export function generateHookDeps (c: IConfig) {
 
       // json in tarat: generate deps.json
       fs.writeFileSync(path.join(c.pointFiles.outputDriversDir, `${name}.deps.json`), (JSON.stringify(deps)))
-      // fs.writeFileSync(path.join(driversDir, `${name}.deps.json`), (JSON.stringify(deps)))
     
       // modify original hook file
-      const sourceFile = path.join(sourceCodeDir, `${name}${c.ts ? '.ts' : '.js'}`)
-      injectDeps(c, compiledFile)
+      injectDeps(c, compiledFile);
 
-      const cjsOutputFile = path.join(c.pointFiles.outputDriversCJSDir, `${name}.js`)
-      const outputFile = path.join(c.pointFiles.outputDriversDir, `${name}.js`)
-      injectDeps(c, cjsOutputFile)
-      injectDeps(c, outputFile)
+      [outputClientDriversDir, outputServerDriversDir].forEach(envDir => {
+        [esmDirectory, cjsDirectory].forEach(formatDir => {
+
+          const cjsOutputFile = path.join(envDir, formatDir, `${name}.js`)
+          injectDeps(c, cjsOutputFile)
+
+          // const outputFile = path.join(c.pointFiles.outputDriversDir, `${name}.js`)
+          // injectDeps(c, outputFile)
+        })
+      })
     }
   })
 }

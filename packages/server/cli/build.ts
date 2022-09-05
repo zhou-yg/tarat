@@ -4,6 +4,8 @@ import * as path from 'path'
 import * as fs from 'fs'
 import { cp } from "shelljs"
 import {
+  composeSchema,
+  composeDriver,
   readConfig,
   buildClientRoutes,
   buildViews,
@@ -26,6 +28,9 @@ export default async (cwd: string) => {
 
   prepareDir(config)
 
+  composeSchema(config)
+  composeDriver(config)
+
   if (fs.existsSync(path.join(cwd, config.modelsDirectory, config.targetSchemaPrisma))) {
     cp(
       path.join(cwd, config.modelsDirectory, config.targetSchemaPrisma),
@@ -46,12 +51,12 @@ export default async (cwd: string) => {
   const cost2 = time()
 
   await Promise.all([
-    buildClientRoutes(config).then(() => {
-      logFrame((`build ${chalk.green('clientRoutes')} end. cost ${chalk.green(cost2())} seconds`))    
-    }),
-    buildViews(config).then(() => {
-      logFrame((`build ${chalk.green('views')} end. cost ${chalk.green(cost2())} seconds`))    
-    }),
+    // buildClientRoutes(config).then(() => {
+    //   logFrame((`build ${chalk.green('clientRoutes')} end. cost ${chalk.green(cost2())} seconds`))    
+    // }),
+    // buildViews(config).then(() => {
+    //   logFrame((`build ${chalk.green('views')} end. cost ${chalk.green(cost2())} seconds`))    
+    // }),
   ])
 
   logFrame((`build end. cost ${chalk.green(allCost())} seconds`))

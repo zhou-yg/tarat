@@ -498,7 +498,7 @@ async function esbuildDrivers (
     outdir: outputDir,
     platform: 'node',
     format,
-    // treeShaking: true,
+    treeShaking: true,
   }
 
   // check tsconfig
@@ -513,7 +513,7 @@ async function esbuildDrivers (
       if (!obj.isDir) {
         removeUnusedImports(obj.path)
         if (env) {
-          // replaceImportDriverPath(obj.path, format, env)
+          replaceImportDriverPath(obj.path, format, env)
         }
       }
     })
@@ -586,11 +586,11 @@ export async function buildDrivers (c: IConfig) {
   // 2.run after source building
   await Promise.all([
     // cjs
-    esbuildDrivers(c, path.join(outputClientDriversDir, cjsDirectory), 'cjs'),
-    esbuildDrivers(c, path.join(outputServerDriversDir, cjsDirectory), 'cjs'),
+    esbuildDrivers(c, path.join(outputClientDriversDir, cjsDirectory), 'cjs', 'client'),
+    esbuildDrivers(c, path.join(outputServerDriversDir, cjsDirectory), 'cjs', 'server'),
     // esm
-    esbuildDrivers(c, path.join(outputClientDriversDir, esmDirectory), 'esm'),
-    esbuildDrivers(c, path.join(outputServerDriversDir, esmDirectory), 'esm'),
+    esbuildDrivers(c, path.join(outputClientDriversDir, esmDirectory), 'esm', 'client'),
+    esbuildDrivers(c, path.join(outputServerDriversDir, esmDirectory), 'esm', 'server'),
   ])
 
   if (c.ts) {

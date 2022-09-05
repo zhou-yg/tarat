@@ -55,36 +55,18 @@ model User {
   createdAt  DateTime @default(now())
   modifiedAt DateTime @default(now())
 
-  name      String
-  password  String
-  markdowns Markdown[]
-  topics    Topic[]
-  comments  Comment[]
+  name     String    @unique
+  password String
+  avatar   String?
+  topics   Topic[]
+  comments Comment[]
 }
 
 model SessionStore {
   id         Int      @id @default(autoincrement())
   createdAt  DateTime @default(now())
   modifiedAt DateTime @default(now())
-  name       String
-  password   String
-  fromIndex  String // paltform unique cookie id
-}
 
-model Markdown {
-  id         Int      @id @default(autoincrement())
-  createdAt  DateTime @default(now())
-  modifiedAt DateTime @default(now())
-
-  content String // equal sqlite.TEXT 
-  user    User   @relation(fields: [author], references: [id])
-  author  String @unique
-}
-
-model MarkdownX {
-  id         Int      @id @default(autoincrement())
-  createdAt  DateTime @default(now())
-  modifiedAt DateTime @default(now())
-
-  content String // equal sqlite.TEXT 
+  fromIndex String // paltform unique cookie id
+  userId    String
 }

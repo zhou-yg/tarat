@@ -31,6 +31,8 @@ export const defaultConfig = () => ({
   appServer: 'server',
   appClient: 'client',
   appClientChunk: 'chunks',
+  clientDriverDir: 'client',
+  serverDriverDir: 'server',
   cjsDirectory: 'cjs',
   esmDirectory: 'esm',
 
@@ -185,8 +187,8 @@ function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) 
     outputDriversDir: path.join(outputDir, config.driversDirectory),
     outputViewsDir: path.join(outputDir, config.viewsDirectory),
     // place compiled drivers "esm" file
-    outputDriversESMDir: path.join(outputDir, config.driversDirectory, config.esmDirectory),
-    outputDriversCJSDir: path.join(outputDir, config.driversDirectory, config.cjsDirectory),
+    outputClientDriversDir: path.join(outputDir, config.driversDirectory, config.clientDriverDir),
+    outputServerDriversDir: path.join(outputDir, config.driversDirectory, config.serverDriverDir),
     // prisma
     outputModelsDir: path.join(outputDir, config.modelsDirectory),
     outputModelSchema: path.join(outputDir, config.modelsDirectory, config.targetSchemaPrisma),

@@ -7,9 +7,10 @@ import {
   readConfig,
   createDevServer,
   composeSchema,
+  composeDriver,
   buildEntryServer, buildDrivers, buildRoutes,
   generateHookDeps,
-  emptyDirectory, logFrame, tryMkdir, composeDriver, time
+  emptyDirectory, logFrame, tryMkdir, time
 } from "../src/";
 
 export async function buildEverything (c: IConfig) {
@@ -17,12 +18,12 @@ export async function buildEverything (c: IConfig) {
   const cost = time()
 
   await Promise.all([
-    buildRoutes(c).then(() => {
-      logFrame(`build routes end. cost ${chalk.green(cost())} sec`)
-    }),
-    buildEntryServer(c).then(() => {
-      logFrame(`build entryServer end. cost ${chalk.green(cost())} sec`)
-    }),
+    // buildRoutes(c).then(() => {
+    //   logFrame(`build routes end. cost ${chalk.green(cost())} sec`)
+    // }),
+    // buildEntryServer(c).then(() => {
+    //   logFrame(`build entryServer end. cost ${chalk.green(cost())} sec`)
+    // }),
     buildDrivers(c).then(() => {
       logFrame(`build drivers end. cost ${chalk.green(cost())} sec`)
     })
@@ -36,7 +37,13 @@ export function prepareDir (c: IConfig) {
 
   // normal
   tryMkdir(c.pointFiles.outputDriversDir)
-  tryMkdir(c.pointFiles.outputDriversESMDir)
+  tryMkdir(c.pointFiles.outputClientDriversDir)
+  tryMkdir(c.pointFiles.outputServerDriversDir)
+
+  tryMkdir(path.join(c.pointFiles.outputClientDriversDir, c.esmDirectory))
+  tryMkdir(path.join(c.pointFiles.outputServerDriversDir, c.cjsDirectory))
+  tryMkdir(c.pointFiles.outputServerDriversDir)
+
   tryMkdir(c.pointFiles.outputViewsDir)
   tryMkdir(c.pointFiles.outputModelsDir)
   tryMkdir(c.pointFiles.outputViewsDir)

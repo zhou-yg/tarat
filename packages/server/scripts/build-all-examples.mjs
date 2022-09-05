@@ -25,7 +25,7 @@ async function runAll (p) {
     }
   }))
   
-  console.log('---- \n run all end')
+  console.log('----\nrun all end')
 }
 
 runAll(
