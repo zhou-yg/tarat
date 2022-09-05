@@ -3,11 +3,11 @@ import {
   state,
   computedInServer,
 } from 'tarat-core'
-
 import axios from 'axios'
 
 async function uploadFile (f: Buffer | File) {
-
+  /* @__PURE__ */
+  const a = axios.get
 }
 
 export default function uploader () {

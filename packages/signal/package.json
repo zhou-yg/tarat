@@ -41,6 +41,8 @@
     "@rollup/plugin-replace": "^4.0.0",
     "@rollup/plugin-typescript": "^6.1.0",
     "@types/node": "^18.6.2",
+    "acorn": "^8.7.1",
+    "acorn-walk": "^8.2.0",
     "rollup": "^2.74.1",
     "rollup-plugin-typescript2": "^0.31.2"
   }

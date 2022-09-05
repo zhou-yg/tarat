@@ -399,6 +399,7 @@ importers:
       '@types/express-to-koa': ^1.0.0
       '@types/koa': ^2.13.5
       '@types/koa__cors': ^3.3.0
+      '@types/koa-bodyparser': ^4.3.7
       '@types/koa-static': ^4.0.2
       '@types/lodash': ^4.14.182
       '@types/node': ^18.6.2
@@ -503,6 +504,7 @@ importers:
       '@types/ejs': 3.1.1
       '@types/express-to-koa': 1.0.0
       '@types/koa__cors': 3.3.0
+      '@types/koa-bodyparser': 4.3.7
       '@types/koa-static': 4.0.2
       '@types/lodash': 4.14.182
       '@types/react': 18.0.15
@@ -521,6 +523,8 @@ importers:
       '@rollup/plugin-replace': ^4.0.0
       '@rollup/plugin-typescript': ^6.1.0
       '@types/node': ^18.6.2
+      acorn: ^8.7.1
+      acorn-walk: ^8.2.0
       immer: ^9.0.14
       rollup: ^2.74.1
       rollup-plugin-dts: ^4.2.2
@@ -535,6 +539,8 @@ importers:
       '@rollup/plugin-replace': 4.0.0_rollup@2.77.3
       '@rollup/plugin-typescript': 6.1.0_3keby64tsz2dfz2qzugmc5hqae
       '@types/node': 18.6.2
+      acorn: 8.7.1
+      acorn-walk: 8.2.0
       rollup: 2.77.3
       rollup-plugin-typescript2: 0.31.2_ezpbzq4q5y4l7zmzmelnlub2ey
 
@@ -2331,6 +2337,12 @@ packages:
   /@types/keygrip/1.0.2:
     resolution: {integrity: sha512-GJhpTepz2udxGexqos8wgaBx4I/zWIDPh/KOGEwAqtuGDkOUJu5eFvwmdBX4AmB8Odsr+9pHCQqiAqDL/yKMKw==}
 
+  /@types/koa-bodyparser/4.3.7:
+    resolution: {integrity: sha512-21NhEp7LjZm4zbNV5alHHmrNY4J+S7B8lYTO6CzRL8ShTMnl20Gd14dRgVhAxraLaW5iZMofox+BycbuiDvj2Q==}
+    dependencies:
+      '@types/koa': 2.13.5
+    dev: true
+
   /@types/koa-compose/3.2.5:
     resolution: {integrity: sha512-B8nG/OoE1ORZqCkBVsup/AKcvjdgoHnfi4pZMn5UwAPCbhk/96xyv284eBYW8JlQbQ7zDmnpFr68I/40mFoIBQ==}
     dependencies:
@@ -2596,7 +2608,6 @@ packages:
   /acorn-walk/8.2.0:
     resolution: {integrity: sha512-k+iyHEuPgSw6SbuDpGQM+06HQUa04DZ3o+F6CSzXMvvI5KMvnaEqXe+YVe555R9nn6GPt404fos4wcgpw12SDA==}
     engines: {node: '>=0.4.0'}
-    dev: false
 
   /acorn/5.7.4:
     resolution: {integrity: sha512-1D++VG7BhrtvQpNbBzovKNc1FLGGEE/oGe7b9xJm/RFHMBeUaUGpluV9RLjZa47YFdPcDAenEYuq9pQPcMdLJg==}
@@ -2613,7 +2624,6 @@ packages:
     resolution: {integrity: sha512-Xx54uLJQZ19lKygFXOWsscKUbsBZW0CPykPhVQdhIeIwrbPmJzqeASDInc8nKBnp/JT6igTs82qPXz069H8I/A==}
     engines: {node: '>=0.4.0'}
     hasBin: true
-    dev: false
 
   /agent-base/6.0.2:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
