@@ -5,10 +5,10 @@ import {
 describe('serialize', () => {
   let app
   beforeAll(async () => {
-    app = await startTestServer()
+    // app = await startTestServer()
   })
   afterAll(() => {
-    app!.close()
+    // app!.close()
   })
 
   it('send to server', async () => {

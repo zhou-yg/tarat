@@ -5,19 +5,14 @@ import {
 } from 'tarat-core'
 import axios from 'axios'
 
-async function uploadFile (f: Buffer | File) {
-  /* @__PURE__ */
-  const a = axios.get
-}
-
-export default function uploader () {
+export default function uploader<T> () {
   // only in browser
   const inputFile = state<{ name: string }>()
 
   const OSSLink = computedInServer(function * () {
     const file = inputFile()
     if (file) {
-      return 'a'
+      return axios.get
     }
     return 'b'
   })

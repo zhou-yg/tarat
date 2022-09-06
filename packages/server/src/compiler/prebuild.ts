@@ -1,9 +1,10 @@
 import acorn, { parse as acornParse } from 'acorn'
+import { hookFactoryFeatures } from 'tarat-core'
 import * as walk from 'acorn-walk'
 import { IConfig, IViewConfig } from "../config";
 import * as fs from 'fs'
 import * as path from 'path'
-import { compile } from 'ejs'
+import { compile, name } from 'ejs'
 import { AcornNode, InputOptions, ModuleFormat, OutputOptions, Plugin, rollup, RollupBuild } from 'rollup' 
 import resolve from '@rollup/plugin-node-resolve';
 import { babel  } from '@rollup/plugin-babel';
@@ -21,7 +22,7 @@ import dts from "rollup-plugin-dts"
 import { emptyDirectory, loadJSON, logFrame, traverseDir } from "../util";
 import chalk from "chalk";
 import { cp } from "shelljs";
-import { Identifier, ImportDeclaration, Program } from 'estree';
+import { ArrowFunctionExpression, CallExpression, FunctionExpression, Identifier, ImportDeclaration, Program } from 'estree';
 import { traverse, last } from '../util';
 import aliasDriverRollupPlugin from './plugins/rollup-plugin-alias-driver';
 
@@ -472,7 +473,124 @@ export function removeUnusedImports(sourceFile: string) {
 
   fs.writeFileSync(sourceFile, newCode)
 }
+/**
+ * clear function body making it to be blank function
+ */
+// function clearFunctionBody(sourceFile: string, format: esbuild.Format, names: string[]) {
+//   const code = fs.readFileSync(sourceFile).toString()
 
+//   const ast = acornParse(code, {
+//     sourceType: format === 'esm' ? 'module' : 'script',
+//     ecmaVersion: 'latest'
+//   })
+
+//   function handlerCallback(
+//     n: acorn.ExtendNode<FunctionExpression> | acorn.ExtendNode<ArrowFunctionExpression>,
+//     a: CallExpression[]
+//   ) {
+//     const parent = a[a.length - 2]
+//     if (!parent.callee) {
+//       console.log('parent: ', parent, n);
+//     }
+//     if (
+//       parent &&
+//       parent.callee.type === 'Identifier' &&
+//       names.includes(parent.callee.name)
+//     ) {
+//       console.log(n)
+//     }        
+//   }
+
+//   walk.ancestor(ast as any, {
+//     FunctionExpression: handlerCallback as any,
+//     ArrowFunctionExpression: handlerCallback as any
+//   })
+// }
+export const clearedFunctionBodyPlaceholder = `() => { /*! can not invoked in current runtime */ }`
+export function clearFunctionBody(code: string, names: string[]) {
+
+  const bodyRangeArr: [number, number][] = []
+
+  function matchBody (si: number) {
+    const stack: string[] = []
+    let st = null
+    let current = si
+
+    let ignoreUnderGenerics = false
+
+    while(current < code.length) {
+      const char = code[current]
+      current++
+
+      if (char === '<') {
+        ignoreUnderGenerics = true
+      } else if (char === '>') {
+        ignoreUnderGenerics = false
+      }
+
+      if (ignoreUnderGenerics) {
+        continue
+      }
+
+      if (char === '(') {
+        stack.push(char)
+        if (st === null) {
+          st = current
+        }
+      } else if (char === ')') {
+        stack.pop()
+        if (stack.length === 0) {
+          bodyRangeArr.push([st, current - 1])
+          break
+        }
+      }
+    }
+  }
+
+  names.forEach(name => {
+    const len = name.length
+    let i = 0
+    for (;i<code.length;i++) {
+      const word = code.substring(i, i + len)
+      if (word === name) {
+        if (['<', '('].includes(code[i + len])) {
+          matchBody(i + len)
+        }
+      }
+    }
+  })
+
+  let gap = 0
+  let newCode = code
+  bodyRangeArr.forEach(([st, ed]) => {
+    newCode = 
+      newCode.substring(0, st - gap) + 
+      clearedFunctionBodyPlaceholder +
+      newCode.substring(ed - gap);
+    gap += ed - st + clearedFunctionBodyPlaceholder.length
+  })
+
+  return newCode
+}
+
+function clearFunctionBodyEsbuildPlugin (names: string[]): esbuild.Plugin {
+
+  return {
+    name: 'clear tarat runtime function body',
+    setup(build) {
+      build.onLoad({ filter: /drivers\// }, args => {
+        const code = fs.readFileSync(args.path).toString()
+
+        const newCode = clearFunctionBody(code, names)
+
+        return {
+          contents: newCode,
+          loader: /\.ts$/.test(args.path) ? 'ts' : 'js'
+        }
+      })
+    },
+  }
+}
 
 async function esbuildDrivers (
   c: IConfig,
@@ -504,6 +622,12 @@ async function esbuildDrivers (
     platform: 'node',
     format,
     treeShaking: true,
+    plugins: []
+  }
+  if (env === 'client') {
+    buildOptions.plugins.push(
+      clearFunctionBodyEsbuildPlugin(hookFactoryFeatures.serverOnly)
+    )
   }
 
   // check tsconfig

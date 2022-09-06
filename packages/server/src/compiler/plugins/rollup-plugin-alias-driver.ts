@@ -43,7 +43,6 @@ export default function aliasDriverRollupPlugin (c: IConfig, env: 'server' | 'cl
           .replace(/\.ts$/, '.js')
         
         const r2 = await this.resolve(aliasSource, importer, { skipSelf: true, ...options })
-        console.log('r2: ', r2);
         return r2
       }
     },
