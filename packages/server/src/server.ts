@@ -8,6 +8,7 @@ import chalk from 'chalk'
 import taratRunner from "./middlewares/taratRunner";
 import page from "./middlewares/page";
 import unserializeWithFile from "./middlewares/unserialize";
+import aliasDriverRollupPlugin from './compiler/plugins/rollup-plugin-alias-driver';
 
 import { createServer as createViteServer } from "vite";
 import tsconfigPaths from 'vite-tsconfig-paths'
@@ -80,14 +81,7 @@ export async function createDevServer (c: IConfig) {
     server:{ middlewareMode: 'ssr' },
     plugins: [
       tsconfigPaths(),
-      // {
-      //   ...rollupPlugintaratRuntime(c),
-      //   enforce: 'pre',
-      // }      
-      // {
-      //   ...rollupPluginBMDeps(c),
-      //   enforce: 'pre'
-      // }
+      { ...aliasDriverRollupPlugin(c, 'client'), enforce: 'pre' },
     ],
     resolve: {
       extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx', '.json'],
@@ -96,10 +90,10 @@ export async function createDevServer (c: IConfig) {
           find: 'tarat-core',
           replacement: 'tarat-core/dist/index.client.js',
         },
-        {
-          find: /^\/drivers\/(\w+)\.\w+$/,
-          replacement: join(c.devCacheDirectory, c.driversDirectory, c.esmDirectory, '$1.js'),
-        }
+        // {
+        //   find: /^\/drivers\/(\w+)\.\w+$/,
+        //   replacement: join(c.pointFiles.outputClientDir, c.driversDirectory, c.esmDirectory, '$1.js'),
+        // }
       ]
     }
   })

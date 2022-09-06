@@ -28,11 +28,12 @@ export const defaultConfig = () => ({
 
   devCacheDirectory: '.tarat', // in cwd
   buildDirectory: 'dist', // in cwd
-  appServer: 'server',
-  appClient: 'client',
+
+  clientDir: 'client',
+  serverDir: 'server',
+
   appClientChunk: 'chunks',
-  clientDriverDir: 'client',
-  serverDriverDir: 'server',
+
   cjsDirectory: 'cjs',
   esmDirectory: 'esm',
 
@@ -174,31 +175,30 @@ export interface IConfig extends IReadConfigResult{
 }
 
 function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) {
+  const outputClientDir = path.join(outputDir, config.clientDir)
+  const outputServerDir = path.join(outputDir, config.serverDir)
 
-  const outputAppDir = path.join(outputDir, config.appDirectory)
+  const outputAppServerDir = path.join(outputServerDir, config.appDirectory)
+  const outputAppClientDir = path.join(outputClientDir, config.appDirectory)
 
-  const outputAppServerDir = path.join(outputAppDir, config.appServer)
-  const outputAppClientDir = path.join(outputAppDir, config.appClient)
 
   return {
-    outputDir, // includings 3 types: normal, app/server, app/client
-    /** normal */
-    // place compiled drivers/views "cjs" file
-    outputDriversDir: path.join(outputDir, config.driversDirectory),
-    outputViewsDir: path.join(outputDir, config.viewsDirectory),
-    // place compiled drivers "esm" file
-    outputClientDriversDir: path.join(outputDir, config.driversDirectory, config.clientDriverDir),
-    outputServerDriversDir: path.join(outputDir, config.driversDirectory, config.serverDriverDir),
+    outputDir, 
+    outputClientDir,
+    outputServerDir,
     // prisma
     outputModelsDir: path.join(outputDir, config.modelsDirectory),
     outputModelSchema: path.join(outputDir, config.modelsDirectory, config.targetSchemaPrisma),
     modelEnhanceFile: path.join(cwd, config.modelsDirectory, config.modelEnhance),
     modelTargetFile: path.join(cwd, config.modelsDirectory, config.targetSchemaPrisma),
-    
-    outputAppDir,
+    // views
+    outputViewsDir: path.join(outputDir, config.viewsDirectory),
+    outputDriversDir: path.join(outputDir, config.driversDirectory),
+
+    /** server */
+
+    // app
     outputAppServerDir,
-    outputAppClientDir,
-    /** app/server */
     // router
     autoGenerateServerRoutes: path.join(outputAppServerDir, `${config.routesServer}${config.ts ? '.tsx' : '.jsx'}`),    
     distServerRoutes: path.join(outputAppServerDir, `${config.routesServer}.js`),
@@ -206,16 +206,19 @@ function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) 
     // entry
     distEntryJS: path.join(outputAppServerDir, `${config.entryServer}.js`),
     distEntryCSS: path.join(outputAppServerDir, `${config.entryServer}.css`),
-    serverEntyTSX: path.join(outputAppServerDir, `${config.entryServer}.tsx`),
-    serverEntyJSX: path.join(outputAppServerDir, `${config.entryServer}.jsx`),
+    // drivers
+    outputServerDriversDir: path.join(outputServerDir, config.driversDirectory),
 
+    /** client */
 
-    /** app/client */
-    // client side route doesnt need compiled, it will be auto compiled in vite
+    // app
+    outputAppClientDir,
+    // router
     autoGenerateClientRoutes: path.join(outputAppClientDir, `${config.routes}${config.ts ? '.tsx' : '.jsx'}`),
     clientRoutes: path.join(outputAppClientDir, 'index.js'),
     clientRoutesCSS: path.join(outputAppClientDir, 'index.css'),
-    clientChunksDir: path.join(outputAppClientDir, config.appClientChunk, `${config.routes}${config.ts ? '.tsx' : '.jsx'}`),
+    // drivers
+    outputClientDriversDir: path.join(outputClientDir, config.driversDirectory),
   }
 }
 

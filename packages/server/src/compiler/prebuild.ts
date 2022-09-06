@@ -23,6 +23,7 @@ import chalk from "chalk";
 import { cp } from "shelljs";
 import { Identifier, ImportDeclaration, Program } from 'estree';
 import { traverse, last } from '../util';
+import aliasDriverRollupPlugin from './plugins/rollup-plugin-alias-driver';
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -114,12 +115,14 @@ export function getPlugins (input: {
   css: string | boolean,
   mode: 'dev' | 'build',
   target?: 'browser' | 'node' | 'unit',
-  alias?: { [k: string]: string }
+  alias?: { [k: string]: string },
+  runtime?: 'server' | 'client'
 }, c: IConfig) {
-  const { alias, css, mode, target = 'node' } = input
+  const { runtime, alias, css, mode, target = 'node' } = input
 
+  console.log('runtime: ', runtime);
   const plugins = [
-    // analyze(),
+    runtime ? aliasDriverRollupPlugin(c, runtime) : undefined,
     replace({
       preventAssignment: true,
       'process.env.NODE_ENV': mode === 'build' ? '"production"' : '"development"'
@@ -258,7 +261,7 @@ function implicitImportPath (path: string, ts: boolean) {
   return path
 }
 
-export async function buildRoutes(c: IConfig) {
+export async function buildServerRoutes(c: IConfig) {
 
   const {
     outputDir,
@@ -308,7 +311,8 @@ export async function buildRoutes(c: IConfig) {
 
   const myPlugins = getPlugins({
     css: distServerRoutesCSS,
-    mode: 'dev'
+    mode: 'dev',
+    runtime: 'server'
   }, c)
   /**
    * compile routes.server to js
@@ -341,7 +345,8 @@ export async function buildEntryServer (c: IConfig) {
         input: r.file,
         plugins: getPlugins({
           mode: 'dev',
-          css: distEntryCss
+          css: distEntryCss,
+          runtime: 'server'
         }, c),
       },
       output: {
@@ -406,7 +411,7 @@ export function replaceImportDriverPath (
   const r2 = code.match(reg2)
   const importModule = r?.[1] || r2?.[1]
   if (importModule && /\/drivers\/[\w-]+$/.test(importModule)) {
-    const importModuleWithFormat = importModule.replace(/(\/drivers)\/([\w-]+)$/, `$1/${env}/${format}/$2`)
+    const importModuleWithFormat = importModule.replace(/\/(drivers)\/([\w-]+)$/, `/${env}/$1/${format}/$2`)
     const newCode = code.replace(importModule, importModuleWithFormat)
     fs.writeFileSync(sourceFile, newCode)
   } 

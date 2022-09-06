@@ -7,7 +7,6 @@ import { ViteDevServer } from "vite";
 import { fileURLToPath } from 'url'
 import { CurrentRunnerScope, debuggerLog, getPlugin, IHookContext, Runner, startdReactiveChain, stopReactiveChain } from "tarat-core";
 import { wrapCtx } from "./taratRunner";
-import { buildEntryServer, buildRoutes } from "../compiler/prebuild";
 import { renderToString } from 'react-dom/server'
 import { RenderDriver, renderWithDriverContext, DriverContext } from 'tarat-connect'
 import React, { createElement } from "react";

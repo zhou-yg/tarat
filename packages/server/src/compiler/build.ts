@@ -20,7 +20,8 @@ export async function buildClientRoutes (c: IConfig) {
     target: 'browser',
     alias: {
       'tarat-core': 'tarat-core/dist/index.client.js',
-    }
+    },
+    runtime: 'client'
   }, c)
 
   const pkg = loadJSON(path.join(c.cwd, 'package.json'))

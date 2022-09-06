@@ -8,7 +8,7 @@ import {
   createDevServer,
   composeSchema,
   composeDriver,
-  buildEntryServer, buildDrivers, buildRoutes,
+  buildEntryServer, buildDrivers, buildServerRoutes,
   generateHookDeps,
   emptyDirectory, logFrame, tryMkdir, time
 } from "../src/";
@@ -17,41 +17,39 @@ export async function buildEverything (c: IConfig) {
   
   const cost = time()
 
+  await buildDrivers(c).then(() => {
+    generateHookDeps(c)
+    logFrame(`build drivers end. cost ${chalk.green(cost())} sec`)
+  })
+
+  // must executeafter driver building
   await Promise.all([
-    buildRoutes(c).then(() => {
+    buildServerRoutes(c).then(() => {
       logFrame(`build routes end. cost ${chalk.green(cost())} sec`)
     }),
-    buildDrivers(c).then(() => {
-      generateHookDeps(c)
-      logFrame(`build drivers end. cost ${chalk.green(cost())} sec`)
+    buildEntryServer(c).then(() => {
+      logFrame(`build entryServer end. cost ${chalk.green(cost())} sec`)
     })
   ])
-  // must executeafter driver building
-  await buildEntryServer(c).then(() => {
-    logFrame(`build entryServer end. cost ${chalk.green(cost())} sec`)
-  })
 }
 
 export function prepareDir (c: IConfig) {
   emptyDirectory(c.pointFiles.outputDir)
 
-  // normal
-  tryMkdir(c.pointFiles.outputDriversDir)
-  tryMkdir(c.pointFiles.outputClientDriversDir)
-  tryMkdir(c.pointFiles.outputServerDriversDir)
+  Object.entries(c.pointFiles).forEach(([name, path]) => {
+    if (/Dir$/.test(name)) {
+      tryMkdir(path)
+    }
+  })
+  // append
+  tryMkdir(path.join(c.pointFiles.outputDriversDir, c.esmDirectory))
+  tryMkdir(path.join(c.pointFiles.outputDriversDir, c.cjsDirectory))
 
   tryMkdir(path.join(c.pointFiles.outputClientDriversDir, c.esmDirectory))
-  tryMkdir(path.join(c.pointFiles.outputServerDriversDir, c.cjsDirectory))
-  tryMkdir(c.pointFiles.outputServerDriversDir)
+  tryMkdir(path.join(c.pointFiles.outputClientDriversDir, c.cjsDirectory))
 
-  tryMkdir(c.pointFiles.outputViewsDir)
-  tryMkdir(c.pointFiles.outputModelsDir)
-  tryMkdir(c.pointFiles.outputViewsDir)
-  
-  // app
-  tryMkdir(c.pointFiles.outputAppDir)
-  tryMkdir(c.pointFiles.outputAppServerDir)
-  tryMkdir(c.pointFiles.outputAppClientDir)
+  tryMkdir(path.join(c.pointFiles.outputServerDriversDir, c.esmDirectory))
+  tryMkdir(path.join(c.pointFiles.outputServerDriversDir, c.cjsDirectory))
 }
 
 

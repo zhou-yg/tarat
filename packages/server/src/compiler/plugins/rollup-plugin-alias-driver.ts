@@ -4,36 +4,48 @@ import { Plugin } from 'vite'
 import { IConfig } from '../../config'
 import { loadJSON } from '../../util'
 
-function checkHook (pre: string, id: string) {
-  return /\.(j|t)s$/.test(id) && id.startsWith(pre)
+function isDriver (path: string, tag: string) {
+  const pathArr = path.split('/')
+  
+  return pathArr.includes(tag)
 }
 
-export default function taratBMRollupPlugin (c: IConfig): Plugin {
-  const cwd = c.cwd
+export default function aliasDriverRollupPlugin (c: IConfig, env: 'server' | 'client'): Plugin {
+  const {
+    cwd,
+    esmDirectory,
+    driversDirectory
+  } = c
+  const {
+    outputClientDir,
+    outputServerDir
+  } = c.pointFiles
+
+  const envDriverOutputDir = env === 'server' ? outputServerDir : outputClientDir
+
+  const defaultFormat = esmDirectory
+
   return {
     name: 'tarat-alias-driver',
-    async resolveId (source: string, importer?: string, options?: any): Promise<any> {
-      console.log('source: ', source);
-    },
-    load (id: string) {
-      // if (id?.endsWith(taratRuntimeEntryFlag)) {
-      //   const originalId = id.slice(0, -taratRuntimeEntryFlag.length)
+    async resolveId (source: string, importer: string, options) {
 
-      //   const parsed = path.parse(originalId)
-      //   const depsJSONPath = path.join(c.pointFiles.outputDevDir, c.driversDirectory, `${parsed.name}.deps.json`)
+      if (!importer) {
+        return null
+      }
+      if (isDriver(source, driversDirectory)) {
+        const resolution = await this.resolve(source, importer, { skipSelf: true, ...options })
+        if (!resolution || resolution.external) {
+          return resolution
+        }
+        const aliasSource = resolution.id
+          .replace(cwd, envDriverOutputDir)
+          .replace(new RegExp(`\\/${driversDirectory}\\/`), `/${driversDirectory}/${defaultFormat}/`)
+          .replace(/\.ts$/, '.js')
         
-      //   if (fs.existsSync(depsJSONPath)) {
-      //     const depsJSON = loadJSON(depsJSONPath)
-      //     let code = template(
-      //       originalId,
-      //       JSON.stringify(depsJSON),
-      //     )
-      //     return code
-      //   } else {
-      //     throw new Error(`[taratBMPlugin] "${parsed.name}" not found deps json by "${depsJSONPath}",
-      //       please check the "tarat dev" output`)
-      //   } 
-      // }
+        const r2 = await this.resolve(aliasSource, importer, { skipSelf: true, ...options })
+        console.log('r2: ', r2);
+        return r2
+      }
     },
   }
 }
