@@ -18,18 +18,18 @@ export async function buildEverything (c: IConfig) {
   const cost = time()
 
   await Promise.all([
-    // buildRoutes(c).then(() => {
-    //   logFrame(`build routes end. cost ${chalk.green(cost())} sec`)
-    // }),
-    // buildEntryServer(c).then(() => {
-    //   logFrame(`build entryServer end. cost ${chalk.green(cost())} sec`)
-    // }),
+    buildRoutes(c).then(() => {
+      logFrame(`build routes end. cost ${chalk.green(cost())} sec`)
+    }),
     buildDrivers(c).then(() => {
+      generateHookDeps(c)
       logFrame(`build drivers end. cost ${chalk.green(cost())} sec`)
     })
   ])
-
-  generateHookDeps(c)
+  // must executeafter driver building
+  await buildEntryServer(c).then(() => {
+    logFrame(`build entryServer end. cost ${chalk.green(cost())} sec`)
+  })
 }
 
 export function prepareDir (c: IConfig) {

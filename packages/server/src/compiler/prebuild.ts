@@ -599,7 +599,7 @@ export async function buildDrivers (c: IConfig) {
       files.forEach(({ name, destFile, relativePath }) => {
         [cjsDirectory, esmDirectory].forEach(formatDir => {
           [outputClientDriversDir, outputServerDriversDir].forEach(envDir => {
-            const dir = path.join(outputDriversDir, envDir, formatDir, relativePath)
+            const dir = path.join(envDir, formatDir, relativePath)
             if (!fs.existsSync(dir)) {
               fs.mkdirSync(dir)
             }
