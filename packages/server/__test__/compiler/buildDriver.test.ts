@@ -143,8 +143,7 @@ export default function uploader<T> () {
     inputFile,
     OSSLink
   }
-}
-      `
+}`
       const r = `
 import {
   computed,
@@ -167,8 +166,7 @@ export default function uploader<T> () {
     inputFile,
     OSSLink
   }
-}
-      `
+}`
       const r0 = clearFunctionBody(code,  [ 'inputComputeInServer', 'computedInServer', 'model', 'prisma' ])
       expect(r0).toBe(r)
     })
