@@ -421,6 +421,7 @@ importers:
       chokidar: ^3.5.3
       ejs: ^3.1.8
       esbuild: ^0.14.43
+      esbuild-plugin-alias: ^0.2.1
       execa: 6.x.x
       exit-hook: 2.x.x
       express-to-koa: ^2.0.0
@@ -475,6 +476,7 @@ importers:
       chokidar: 3.5.3
       ejs: 3.1.8
       esbuild: 0.14.43
+      esbuild-plugin-alias: 0.2.1
       execa: 6.1.0
       exit-hook: 2.2.1
       express-to-koa: 2.0.0
@@ -3932,6 +3934,10 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /esbuild-plugin-alias/0.2.1:
+    resolution: {integrity: sha512-jyfL/pwPqaFXyKnj8lP8iLk6Z0m099uXR45aSN8Av1XD4vhvQutxxPzgA2bTcAwQpa1zCXDcWOlhFgyP3GKqhQ==}
+    dev: false
 
   /esbuild-sunos-64/0.14.43:
     resolution: {integrity: sha512-DgxSi9DaHReL9gYuul2rrQCAapgnCJkh3LSHPKsY26zytYppG0HgkgVF80zjIlvEsUbGBP/GHQzBtrezj/Zq1Q==}

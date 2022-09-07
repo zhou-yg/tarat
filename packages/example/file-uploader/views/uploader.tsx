@@ -9,10 +9,13 @@ const Uploader = () => {
   const f = uploader.inputFile()
   const OSSLink = uploader.OSSLink()
 
+  const isImg = /\.(png|jpg)$/.test(OSSLink?.link)
+
   return (
     <div>
       <p>
-      {f && OSSLink ? <a href={OSSLink} >{f.name}</a> : ''}
+      {!isImg && f && OSSLink ? <a href={OSSLink.link} target="_blank" >{f.name}</a> : ''}
+      {isImg && f && OSSLink ? <img src={OSSLink.link} width="200" ></img> : ''}
       </p>
       <br/ >
       <input type="file" defaultValue="" onChange={e => {

@@ -2,10 +2,13 @@ import {
   computed,
   state,
   computedInServer,
+  prisma,
+  writePrisma,
 } from 'tarat-core'
 import axios from 'axios'
 import * as fs from 'fs'
 import * as path from 'path'
+import * as indexes from '@/models/indexes'
 
 export default function uploader<T> () {
   // only in browser
@@ -14,6 +17,7 @@ export default function uploader<T> () {
     _writeStream: WritableStream
   }>()
 
+  // save in local
   const OSSLink = computedInServer(function * () {
     const file = inputFile()
     if (file) {
@@ -28,12 +32,24 @@ export default function uploader<T> () {
           .on('close', () => resolve(0))
           .on('error', () => { throw new Error('copy file to public dir fail') })
       })
-      return `/${file.originalFilename}`
+      return {
+        name: file.newFilename,
+        link: `/${file.originalFilename}`
+      }
     }
-    return 'b'
+  })
+
+  const fileStorage = prisma<{ name: string; link: string }[]>(indexes.StorageItem)
+  const writeFileStroage = writePrisma(fileStorage, () => ({
+    ...(OSSLink() || {}),
+  }))
+
+  const createStorage = computedInServer(function * () {
+    yield writeFileStroage.create()
   })
   
   return {
+    createStorage,
     inputFile,
     OSSLink
   }

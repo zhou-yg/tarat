@@ -121,3 +121,5 @@ dist/
 
 packages/example/*/models/customPrismaClient/
 packages/core/__test__/database/autoPrisma
+
+packages/example/file-uploader/public

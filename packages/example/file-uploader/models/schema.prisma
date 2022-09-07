@@ -9,11 +9,11 @@ generator client {
   previewFeatures = ["fullTextSearch", "fullTextIndex"]
 }
 
-model TodoItem {
+model StorageItem {
   id          Int      @id @default(autoincrement())
   createdAt   DateTime @default(now())
   modifiedAt  DateTime @default(now())
 
-  status      String?
-  description String?
+  name String
+  link String
 }
