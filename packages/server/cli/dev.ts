@@ -81,6 +81,21 @@ async function startCompile (c: IConfig) {
       pollInterval: 100,
     },
   })
+  const watcher2 = chokidar.watch([
+    path.join(c.cwd, c.modelsDirectory, c.targetSchemaPrisma)
+  ], {
+    persistent: true,
+    ignoreInitial: true,
+    awaitWriteFinish: {
+      stabilityThreshold: 100,
+      pollInterval: 100,
+    },
+  })
+  watcher2.on('change', path => {
+    buildModelIndexes(c).then(() => {
+      logFrame(`build modelIndexes end. cost ${chalk.green(cost())} sec`)
+    })  
+  })
 
   watcher
     .on('error', console.error)
@@ -109,6 +124,8 @@ async function startCompile (c: IConfig) {
         buildEverything(newConfig)
       })
     })
+  
+    const watchSchema = chokidar.watch([])
 
   
   exitHook(() => {
