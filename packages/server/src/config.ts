@@ -40,7 +40,7 @@ export const defaultConfig = () => ({
   modelEnhance: 'model.enhance.json',
   prismaModelPart: 'part.prisma', // postfix
   targetSchemaPrisma: 'schema.prisma',
-
+  schemaIndexes: 'indexes',
 
   // server side
   apiPre: '_hook',

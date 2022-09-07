@@ -6,6 +6,7 @@ import {
 
 import { readFileSync, unlinkSync, writeFileSync } from 'fs'
 import { driverFilesMap } from '../mockUtil'
+import { hookFactoryFeatures } from 'tarat-core'
 
 describe('esbuild driver result', () => {
 
@@ -99,7 +100,19 @@ describe('esbuild driver result', () => {
       }`
       const r0 = removeFunctionBody(code, ['computedInServer'])
       expect(r0).toBe(r)
-    })  
+    })
+    it('prisma second param', () => {
+      const code = `
+        const m = prisma('xx', () => {
+          return {}
+        }, [])
+      `
+      const r = `
+        const m = prisma('xx',${removedFunctionBodyPlaceholder}, [])
+      `
+      const r0 = removeFunctionBody(code, hookFactoryFeatures.serverOnly)
+      expect(r0).toBe(r)
+    })
     it('generate with complex generics', () => {
       const code = `
         const inputFile = state<{ name: string }>()
@@ -118,31 +131,43 @@ describe('esbuild driver result', () => {
       const r0 = removeFunctionBody(code, ['computedInServer'])
       expect(r0).toBe(r)
     })
-    it('real case', () => {
+    it('real case2', () => {
       const code = `
 import {
   computed,
   state,
   computedInServer,
+  prisma,
 } from 'tarat-core'
 import axios from 'axios'
-
-async function uploadFile (f: Buffer | File) {
-  /* @__PURE__ */
-  const a = axios.get
-}
+import * as fs from 'fs'
+import * as path from 'path'
 
 export default function uploader<T> () {
   // only in browser
-  const inputFile = state<{ name: string }>()
-
+  const inputFile = state<{
+    name: string, filepath?: string, newFilename?: string, originalFilename?: string
+    _writeStream: WritableStream
+  }>()
+  // save in local
   const OSSLink = computedInServer(function * () {
     const file = inputFile()
     if (file) {
-      return 'a'
+      const publicDir = path.join(process.cwd(), 'public')
+      const destFile = path.join(publicDir, file.originalFilename)
+      if (!fs.existsSync(publicDir)) {
+        fs.mkdirSync(publicDir)
+      }
+      yield new Promise(resolve => {
+        fs.createReadStream(file.filepath)
+          .pipe(fs.createWriteStream(destFile))
+          .on('close', () => resolve(0))
+          .on('error', () => { throw new Error('copy file to public dir fail') })
+      })
+      return /file.originalFilename
     }
-    return 'b'
   })
+  const fileStorage = prisma('fileStorage')
   return {
     inputFile,
     OSSLink
@@ -153,19 +178,21 @@ import {
   computed,
   state,
   computedInServer,
+  prisma,
 } from 'tarat-core'
 import axios from 'axios'
-
-async function uploadFile (f: Buffer | File) {
-  /* @__PURE__ */
-  const a = axios.get
-}
+import * as fs from 'fs'
+import * as path from 'path'
 
 export default function uploader<T> () {
   // only in browser
-  const inputFile = state<{ name: string }>()
-
+  const inputFile = state<{
+    name: string, filepath?: string, newFilename?: string, originalFilename?: string
+    _writeStream: WritableStream
+  }>()
+  // save in local
   const OSSLink = computedInServer(${removedFunctionBodyPlaceholder})
+  const fileStorage = prisma('fileStorage')
   return {
     inputFile,
     OSSLink

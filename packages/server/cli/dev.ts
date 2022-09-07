@@ -10,12 +10,16 @@ import {
   composeDriver,
   buildEntryServer, buildDrivers, buildServerRoutes,
   generateHookDeps,
-  emptyDirectory, logFrame, tryMkdir, time
+  emptyDirectory, logFrame, tryMkdir, time, buildModelIndexes
 } from "../src/";
 
 export async function buildEverything (c: IConfig) {
   
   const cost = time()
+
+  await buildModelIndexes(c).then(() => {
+    logFrame(`build modelIndexes end. cost ${chalk.green(cost())} sec`)
+  })
 
   await buildDrivers(c).then(() => {
     generateHookDeps(c)

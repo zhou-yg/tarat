@@ -1,3 +1,4 @@
+import * as prismaInternals from '@prisma/internals'
 import acorn, { parse as acornParse } from 'acorn'
 import { hookFactoryFeatures } from 'tarat-core'
 import * as walk from 'acorn-walk'
@@ -367,36 +368,6 @@ export async function buildEntryServer (c: IConfig) {
   }
 }
 
-const esbuildExternalAll: esbuild.Plugin  = {
-  name: 'tarat-external-all',
-  setup(build) {
-    // build.onResolve({ filter: /^[^.\/]|^\.[^.\/]|^\.\.[^\/]/ }, args => {
-    //   return { path: args.path, external: true }
-    // })
-    build.onResolve({ filter: /()/ }, args => {
-      console.log('args: ', args);
-      if (args.kind !== 'entry-point') {
-        return { path: args.path, external: true }
-      }
-    })
-  }
-}
-const esbuildRemoveUnused: esbuild.Plugin  = {
-  name: 'tarat-remove-unused',
-  setup(build) {
-    // build.onResolve({ filter: /^[^.\/]|^\.[^.\/]|^\.\.[^\/]/ }, args => {
-    //   return { path: args.path, external: true }
-    // })
-    build.onLoad({ filter: /()/ }, async args => {
-      console.log('args: ', args);
-      return {
-
-      }
-    })
-  }
-}
-
-
 /**
  * make sure hook will import the same module type
  */
@@ -651,3 +622,20 @@ export async function buildDrivers (c: IConfig) {
   }
 }
 
+export async function buildModelIndexes(c: IConfig) {
+  if (c.model.engine === 'prisma') {
+    const schemaFile = path.join(c.cwd, c.modelsDirectory, c.targetSchemaPrisma)
+    const schemaIndexesFile = path.join(c.cwd, c.modelsDirectory, c.schemaIndexes + (c.ts ? '.ts' : '.js'))
+    if (fs.existsSync(schemaFile)) {
+      const model = await prismaInternals.getDMMF({
+        datamodel: fs.readFileSync(schemaFile).toString()
+      })
+      const models = model.datamodel.models
+      const indexesStr = models.map(m => {
+        return `export const ${m.name} = "${m.name}"`
+      }).join('\n')
+
+      fs.writeFileSync(schemaIndexesFile, prettier.format(indexesStr))
+    }
+  }
+}

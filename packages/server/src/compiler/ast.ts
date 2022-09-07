@@ -50,22 +50,32 @@ export function removeFunctionBody(code: string, names: string[]) {
     [SyntaxKind.CallExpression]: (n: CallExpression, a) => {
       const calleeName = n.expression.getText(sourceFile)
       // console.log('n: ', n);
-      // console.log('n2: ', code.substring(n.pos, n.end));
-      if (names.includes(calleeName) && n.arguments[0]) {
-        const { pos, end  } = n.arguments[0]
-        bodyRangeArr.push([pos, end]);
+      if (names.includes(calleeName) && n.arguments.length) {
+        // console.log('n2: ', code.substring(n.pos, n.end));
+        n.arguments.forEach(n => {
+          switch (n.kind) {
+            case SyntaxKind.ArrowFunction:
+            case SyntaxKind.FunctionExpression:
+              const { pos, end  } = n
+              bodyRangeArr.push([pos, end]);
+              break
+            case SyntaxKind.Identifier:
+              /** @TODO: Identifier maybe a function variable. should climb current scope */
+              break
+          }
+        })
       }
     }
   })
 
   let gap = 0
   let newCode = code
-  bodyRangeArr.forEach(([st, ed]) => {
+  bodyRangeArr.forEach(([st, ed], i) => {
     newCode = 
       newCode.substring(0, st - gap) + 
       removedFunctionBodyPlaceholder +
       newCode.substring(ed - gap);
-    gap += ed - st + removedFunctionBodyPlaceholder.length
+    gap += ed - st - removedFunctionBodyPlaceholder.length
   })
   return newCode
 }
