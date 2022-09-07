@@ -2,7 +2,7 @@ import * as path from 'path'
 import * as fs from 'fs'
 import l from 'lodash'
 import { readViews } from './config/routes'
-import { isFileEmpty, logFrame } from './util'
+import { isFileEmpty, loadJSON, logFrame } from './util'
 import chalk from 'chalk'
 import { findDependencies } from './config/deps'
 const { merge } = l
@@ -251,6 +251,8 @@ export async function readConfig (arg: {
     merge(config, configInFile)
   }
 
+  const pacakgeJSON = loadJSON(path.join(cwd, 'package.json'))
+
   const viewsDirectory = path.join(cwd, config.viewsDirectory)
   const driversDirectory = path.join(cwd, config.driversDirectory)
   const appDirectory = path.join(cwd, config.appDirectory)
@@ -285,6 +287,7 @@ export async function readConfig (arg: {
 
   return {
     ...config,
+    pacakgeJSON,
     isProd,
     entryCSS,
     pointFiles,

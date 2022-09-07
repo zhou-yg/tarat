@@ -27,6 +27,7 @@ import { ArrowFunctionExpression, CallExpression, FunctionExpression, Identifier
 import { traverse, last } from '../util';
 import aliasDriverRollupPlugin from './plugins/rollup-plugin-alias-driver';
 import { removeFunctionBody } from './ast';
+import esbuildAliasPlugin from 'esbuild-plugin-alias';
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -130,9 +131,12 @@ export function getPlugins (input: {
       preventAssignment: true,
       'process.env.NODE_ENV': mode === 'build' ? '"production"' : '"development"'
     }),
-    alias ? rollupAlias({
-      entries: alias
-    }): undefined,
+    rollupAlias({
+      entries: {
+        '@': c.cwd,
+        ...(alias || {}),
+      }
+    }),
     json(),
     commonjs(),
     resolve({
@@ -457,6 +461,7 @@ function clearFunctionBodyEsbuildPlugin (names: string[]): esbuild.Plugin {
   return {
     name: 'clear tarat runtime function body',
     setup(build) {
+      /** @TODO should match more explicit */
       build.onLoad({ filter: /drivers\// }, args => {
         const code = fs.readFileSync(args.path).toString()
 
@@ -470,6 +475,22 @@ function clearFunctionBodyEsbuildPlugin (names: string[]): esbuild.Plugin {
     },
   }
 }
+
+function aliasAtCodeToCwd (c: IConfig): esbuild.Plugin {
+  return {
+    name: 'aliasAtCodeToCwd',
+    setup(build) {
+      build.onLoad({ filter: /drivers\// }, args => {
+        const code = fs.readFileSync(args.path).toString()
+        const newCode2 = code.replace(/@\//, c.cwd + '/')
+        return {
+          contents: newCode2,
+          loader: /\.ts$/.test(args.path) ? 'ts' : 'js'
+        }
+      });
+    },
+  };
+};
 
 async function esbuildDrivers (
   c: IConfig,
@@ -496,12 +517,19 @@ async function esbuildDrivers (
 
   const buildOptions: esbuild.BuildOptions = {
     entryPoints: points,
-    bundle: false,
+    bundle: true,
     outdir: outputDir,
     platform: 'node',
     format,
     treeShaking: true,
-    plugins: []
+    external: [
+      ...Object.keys(c.pacakgeJSON.dependencies || {}),
+      ...Object.keys(c.pacakgeJSON.devDependencies || {}),
+      ...Object.keys(c.pacakgeJSON.peerDependencies || {})
+    ],
+    plugins: [
+      aliasAtCodeToCwd(c)
+    ],
   }
   if (env === 'client') {
     buildOptions.plugins.push(
