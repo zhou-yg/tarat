@@ -7,10 +7,14 @@ const Uploader = () => {
   const uploader = useTarat(uploaderHook)
 
   const f = uploader.inputFile()
+  const OSSLink = uploader.OSSLink()
 
   return (
     <div>
-      {f ? `name: ${f.name}` : ''} <br/>
+      <p>
+      {f && OSSLink ? <a href={OSSLink} >{f.name}</a> : ''}
+      </p>
+      <br/ >
       <input type="file" defaultValue="" onChange={e => {
         const f = e.target.files[0]
         console.log('f: ', f);
