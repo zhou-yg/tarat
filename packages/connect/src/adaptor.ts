@@ -24,12 +24,12 @@ export function useTarat<T extends HasParamFunc, U extends Parameters<T>>(
   driver: T,
   ...args: U extends [] ? [] : U
 ): ReturnType<T>
-export function useTarat(driver: any, args?: any): any {
+export function useTarat(driver: Driver, ...args: any[]): any {
   switch (hookAdaptorType) {
     case 'react':
       return useReactHook(hookAdaptorRuntime, driver, args)
-    case 'axii':
-      return useAxiiHook(hookAdaptorRuntime, driver, args)
+    // case 'axii':
+    //   return useAxiiHook(hookAdaptorRuntime, driver, args)
     default:
       throw new Error('[useTarat] must specific a UI framework like react')
   }

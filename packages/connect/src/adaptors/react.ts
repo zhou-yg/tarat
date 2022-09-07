@@ -1,4 +1,4 @@
-import { Runner, BM, Driver, EScopeState, CurrentRunnerScope } from 'tarat-core'
+import { Runner, Driver, EScopeState, CurrentRunnerScope } from 'tarat-core'
 import type { IHookContext } from 'tarat-core'
 import { DriverContext, RenderDriver } from '../driver'
 import { unstable_serialize } from 'swr'
@@ -33,12 +33,12 @@ export function useReactProgress<T extends Driver> (react: any, result: ReturnTy
   }
 }
 
-interface ICacheDriver<T extends BM> {
+interface ICacheDriver<T extends Driver> {
   scope: CurrentRunnerScope<T>
   result: ReturnType<T>
 }
 
-export function useReactHook<T extends BM>(react: any, hook: T, ...args: any) {
+export function useReactHook<T extends Driver>(react: any, hook: T, args: Parameters<T>) {
   const init = react.useRef(null) as { current: ICacheDriver<T> | null }
   const driver: RenderDriver = react.useContext(DriverContext)
 
