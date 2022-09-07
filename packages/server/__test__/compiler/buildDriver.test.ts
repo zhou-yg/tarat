@@ -1,7 +1,7 @@
 import {
   removeUnusedImports,
-  clearFunctionBody,
-  clearedFunctionBodyPlaceholder
+  removedFunctionBodyPlaceholder,
+  removeFunctionBody
 } from '../../src'
 
 import { readFileSync, unlinkSync, writeFileSync } from 'fs'
@@ -67,9 +67,9 @@ describe('esbuild driver result', () => {
       `
       const r = `
         const inputFile = state<{ name: string }>()
-        const OSSLink = computedInServer(${clearedFunctionBodyPlaceholder})
+        const OSSLink = computedInServer(${removedFunctionBodyPlaceholder})
       `
-      const r0 = clearFunctionBody(code, ['computedInServer'])
+      const r0 = removeFunctionBody(code, ['computedInServer'])
       expect(r0).toBe(r)
     })  
     it('generate function', () => {
@@ -80,20 +80,24 @@ describe('esbuild driver result', () => {
         })`
       const r = `
         const inputFile = state<{ name: string }>()
-        const OSSLink = computedInServer(${clearedFunctionBodyPlaceholder})`
-      const r0 = clearFunctionBody(code, ['computedInServer'])
+        const OSSLink = computedInServer(${removedFunctionBodyPlaceholder})`
+      const r0 = removeFunctionBody(code, ['computedInServer'])
       expect(r0).toBe(r)
     })  
     it('generate with generics', () => {
       const code = `
+      function XX<T = any> () {
         const inputFile = state<{ name: string }>()
-        const OSSLink = computedInServer<any ? () => void : string<T>>(function * () {
+        const OSSLink = computedInServer<T extends any[] ? string : () => void>(function * (a: S) {
           const file = inputFile()
-        })`
+        })
+      }`
       const r = `
+      function XX<T = any> () {
         const inputFile = state<{ name: string }>()
-        const OSSLink = computedInServer<any ? () => void : string<T>>(${clearedFunctionBodyPlaceholder})`
-      const r0 = clearFunctionBody(code, ['computedInServer'])
+        const OSSLink = computedInServer<T extends any[] ? string : () => void>(${removedFunctionBodyPlaceholder})
+      }`
+      const r0 = removeFunctionBody(code, ['computedInServer'])
       expect(r0).toBe(r)
     })  
     it('generate with complex generics', () => {
@@ -109,9 +113,9 @@ describe('esbuild driver result', () => {
       const r = `
         const inputFile = state<{ name: string }>()
         const OSSLink3 = computedInServer<T extends object? (number) : (string) >
-        (${clearedFunctionBodyPlaceholder})
+        (${removedFunctionBodyPlaceholder})
       `
-      const r0 = clearFunctionBody(code, ['computedInServer'])
+      const r0 = removeFunctionBody(code, ['computedInServer'])
       expect(r0).toBe(r)
     })
     it('real case', () => {
@@ -161,13 +165,27 @@ export default function uploader<T> () {
   // only in browser
   const inputFile = state<{ name: string }>()
 
-  const OSSLink = computedInServer(${clearedFunctionBodyPlaceholder})
+  const OSSLink = computedInServer(${removedFunctionBodyPlaceholder})
   return {
     inputFile,
     OSSLink
   }
 }`
-      const r0 = clearFunctionBody(code,  [ 'inputComputeInServer', 'computedInServer', 'model', 'prisma' ])
+      const r0 = removeFunctionBody(code,  [ 'inputComputeInServer', 'computedInServer', 'model', 'prisma' ])
+      expect(r0).toBe(r)
+    })
+  })
+  describe('esbuild driver:remove function body by ast', () => {
+    it('simple', () => {
+      const code = `
+        const inputFile = state<{ name: string }>()
+        const OSSLink = computedInServer(() => a() + 1)
+      `
+      const r = `
+        const inputFile = state<{ name: string }>()
+        const OSSLink = computedInServer(${removedFunctionBodyPlaceholder})
+      `
+      const r0 = removeFunctionBody(code, ['computedInServer'])
       expect(r0).toBe(r)
     })
   })

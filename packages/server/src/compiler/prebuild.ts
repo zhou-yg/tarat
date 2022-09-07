@@ -25,6 +25,7 @@ import { cp } from "shelljs";
 import { ArrowFunctionExpression, CallExpression, FunctionExpression, Identifier, ImportDeclaration, Program } from 'estree';
 import { traverse, last } from '../util';
 import aliasDriverRollupPlugin from './plugins/rollup-plugin-alias-driver';
+import { removeFunctionBody } from './ast';
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -480,73 +481,6 @@ export function removeUnusedImports(sourceFile: string) {
   fs.writeFileSync(sourceFile, newCode)
 }
 
-export const clearedFunctionBodyPlaceholder = `() => { /*! can not invoked in current runtime */ }`
-export function clearFunctionBody(code: string, names: string[]) {
-
-  const bodyRangeArr: [number, number][] = []
-
-  function matchBody (si: number) {
-    const stack: string[] = []
-    let st = null
-    let current = si
-
-    let ignoreUnderGenerics = false
-
-    while(current < code.length) {
-      const char = code[current]
-      current++
-
-      if (char === '<') {
-        ignoreUnderGenerics = true
-      } else if (char === '>') {
-        ignoreUnderGenerics = false
-      }
-
-      if (ignoreUnderGenerics) {
-        continue
-      }
-
-      if (char === '(') {
-        stack.push(char)
-        if (st === null) {
-          st = current
-        }
-      } else if (char === ')') {
-        stack.pop()
-        if (stack.length === 0) {
-          bodyRangeArr.push([st, current - 1])
-          break
-        }
-      }
-    }
-  }
-
-  names.forEach(name => {
-    const len = name.length
-    let i = 0
-    for (;i<code.length;i++) {
-      const word = code.substring(i, i + len)
-      if (word === name) {
-        if (['<', '('].includes(code[i + len])) {
-          matchBody(i + len)
-        }
-      }
-    }
-  })
-
-  let gap = 0
-  let newCode = code
-  bodyRangeArr.forEach(([st, ed]) => {
-    newCode = 
-      newCode.substring(0, st - gap) + 
-      clearedFunctionBodyPlaceholder +
-      newCode.substring(ed - gap);
-    gap += ed - st + clearedFunctionBodyPlaceholder.length
-  })
-
-  return newCode
-}
-
 function clearFunctionBodyEsbuildPlugin (names: string[]): esbuild.Plugin {
 
   return {
@@ -555,10 +489,10 @@ function clearFunctionBodyEsbuildPlugin (names: string[]): esbuild.Plugin {
       build.onLoad({ filter: /drivers\// }, args => {
         const code = fs.readFileSync(args.path).toString()
 
-        const newCode = clearFunctionBody(code, names)
+        const newCode2 = removeFunctionBody(code, names)
 
         return {
-          contents: newCode,
+          contents: newCode2,
           loader: /\.ts$/.test(args.path) ? 'ts' : 'js'
         }
       })
