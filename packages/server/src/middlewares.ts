@@ -1,8 +1,8 @@
 /**
  * a middleware mode for existed Koa Server
  */
-import taratRunner from "./middlewares/taratRunner";
-import { defaultConfig, IDefaultConfig, readDrivers } from "./config";
+// import taratRunner from "./middlewares/runner";
+// import { defaultConfig, IDefaultConfig, readDrivers } from "./config";
 
 // type IMiddleConfig = {
 //   driversDirectory: string,

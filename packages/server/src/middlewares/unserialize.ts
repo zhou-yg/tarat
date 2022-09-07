@@ -61,7 +61,6 @@ export function filterFileType (c: IHookContext): IHookContext {
     }
     return v
   })
-  console.log('data: ', data);
   return Object.assign({}, c, {
     data
   })
@@ -72,6 +71,7 @@ export default function unserializeWithFile (): Application.Middleware {
     const valid = hasAnyFiles(ctx.request as any)
     if (valid) {
       const { body, files } = ctx.request as any
+      console.log('files: ', files);
       Object.entries(files).forEach(([k, v]: [string, PersistentFile]) => {
         body[k] = new SimulateBrowserFile(v)
       })

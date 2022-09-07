@@ -5,7 +5,7 @@ import Koa from 'koa'
 import staticServe from 'koa-static'
 import e2k from 'express-to-koa'
 import chalk from 'chalk'
-import taratRunner from "./middlewares/taratRunner";
+import taratRunner from "./middlewares/runner";
 import page from "./middlewares/page";
 import unserializeWithFile from "./middlewares/unserialize";
 import aliasDriverRollupPlugin from './compiler/plugins/rollup-plugin-alias-driver';

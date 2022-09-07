@@ -432,7 +432,13 @@ export function replaceImportDriverPath (
 export function removeUnusedImports(sourceFile: string) {
   const code = fs.readFileSync(sourceFile).toString()
 
-  const ast = acornParse(code, { sourceType: 'module', ecmaVersion: 'latest' });
+  let ast: ReturnType<typeof acornParse>
+  try {
+    ast = acornParse(code, { sourceType: 'module', ecmaVersion: 'latest' });
+  } catch (e) {
+    console.error(`[removeUnusedImports] acorn parse error`, e)
+    return
+  }
   const removeImportRange: [number, number][] = []
   if (ast.type === 'Program') {
     ast.body.forEach((n) => {
@@ -473,39 +479,7 @@ export function removeUnusedImports(sourceFile: string) {
 
   fs.writeFileSync(sourceFile, newCode)
 }
-/**
- * clear function body making it to be blank function
- */
-// function clearFunctionBody(sourceFile: string, format: esbuild.Format, names: string[]) {
-//   const code = fs.readFileSync(sourceFile).toString()
 
-//   const ast = acornParse(code, {
-//     sourceType: format === 'esm' ? 'module' : 'script',
-//     ecmaVersion: 'latest'
-//   })
-
-//   function handlerCallback(
-//     n: acorn.ExtendNode<FunctionExpression> | acorn.ExtendNode<ArrowFunctionExpression>,
-//     a: CallExpression[]
-//   ) {
-//     const parent = a[a.length - 2]
-//     if (!parent.callee) {
-//       console.log('parent: ', parent, n);
-//     }
-//     if (
-//       parent &&
-//       parent.callee.type === 'Identifier' &&
-//       names.includes(parent.callee.name)
-//     ) {
-//       console.log(n)
-//     }        
-//   }
-
-//   walk.ancestor(ast as any, {
-//     FunctionExpression: handlerCallback as any,
-//     ArrowFunctionExpression: handlerCallback as any
-//   })
-// }
 export const clearedFunctionBodyPlaceholder = `() => { /*! can not invoked in current runtime */ }`
 export function clearFunctionBody(code: string, names: string[]) {
 
