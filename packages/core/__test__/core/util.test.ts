@@ -1,4 +1,16 @@
-import { calculateDiff, checkQueryWhere, constructDataGraph, dataGrachTraverse, DataGraphNode, get, getRelatedIndexes, getTailRelatedIndexes, set, THookDeps } from '../../src/index'
+import {
+  calculateDiff,
+  checkQueryWhere,
+  constructDataGraph,
+  dataGrachTraverse,
+  DataGraphNode,
+  get,
+  getPrevNodes,
+  mapGraph,
+  mapGraphSetToIds,
+  set,
+  THookDeps
+} from '../../src/index'
 import { produceWithPatches, enablePatches } from 'immer'
 
 enablePatches()
@@ -20,7 +32,7 @@ describe('util', () => {
             num0: 0,
             num1: 1
           },
-          currentFieldPath: '',
+          currentFieldPath: ''
         }
       ])
       expect(diff.create).toEqual([])
@@ -48,7 +60,7 @@ describe('util', () => {
               num2: 2
             }
           },
-          currentFieldPath: 'child',
+          currentFieldPath: 'child'
         }
       ])
       expect(diff.remove).toEqual([])
@@ -71,14 +83,14 @@ describe('util', () => {
         {
           source: {
             num: 0,
-            num1: 1  
+            num1: 1
           },
           value: {
             num0: 1,
             num1: null
           },
-          
-          currentFieldPath: 'child',
+
+          currentFieldPath: 'child'
         }
       ])
       expect(diff.create).toEqual([])
@@ -97,7 +109,7 @@ describe('util', () => {
           value: {
             num: null
           },
-          currentFieldPath: '',
+          currentFieldPath: ''
         }
       ])
       expect(diff.create).toEqual([])
@@ -119,7 +131,7 @@ describe('util', () => {
           value: {
             num: '0'
           },
-          currentFieldPath: 'child',
+          currentFieldPath: 'child'
         }
       ])
     })
@@ -141,12 +153,12 @@ describe('util', () => {
             num0: 0,
             num1: 1
           },
-          currentFieldPath: '',
+          currentFieldPath: ''
         }
       ])
       expect(diff.create).toEqual([
         {
-          source: origin,          
+          source: origin,
           value: {
             num2: 2
           },
@@ -155,7 +167,7 @@ describe('util', () => {
       ])
       expect(diff.remove).toEqual([])
     })
-    it ('array nested object', () => {
+    it('array nested object', () => {
       const origin = [{ num0: null, child: { num0: null } }]
       const [r, patches] = produceWithPatches(origin, (d: any) => {
         const { child } = d[0]
@@ -171,7 +183,7 @@ describe('util', () => {
             num0: 0,
             num1: 1
           },
-          currentFieldPath: 'child',
+          currentFieldPath: 'child'
         }
       ])
       expect(diff.create).toEqual([])
@@ -192,9 +204,9 @@ describe('util', () => {
         {
           source: origin[0].child,
           value: {
-            num2: 2,
+            num2: 2
           },
-          currentFieldPath: 'child',
+          currentFieldPath: 'child'
         }
       ])
       expect(diff.remove).toEqual([])
@@ -203,7 +215,7 @@ describe('util', () => {
       const origin = [
         { num0: null, child: [{ num0: 1 }] },
         { num0: 1 },
-        { num0: 2 },
+        { num0: 2 }
       ]
       const [r, patches] = produceWithPatches(origin, (d: any) => {
         d.splice(1, 1)
@@ -216,9 +228,9 @@ describe('util', () => {
         {
           source: origin,
           value: {
-            num0: 1,
+            num0: 1
           },
-          currentFieldPath: '',
+          currentFieldPath: ''
         }
       ])
     })
@@ -226,7 +238,7 @@ describe('util', () => {
       const origin = [
         { num0: null, child: [{ num0: 1 }] },
         { num0: 1 },
-        { num0: 2 },
+        { num0: 2 }
       ]
       const [r, patches] = produceWithPatches(origin, (d: any) => {
         d.shift()
@@ -239,7 +251,7 @@ describe('util', () => {
         {
           source: origin,
           value: { num0: null, child: [{ num0: 1 }] },
-          currentFieldPath: '',
+          currentFieldPath: ''
         }
       ])
     })
@@ -247,7 +259,7 @@ describe('util', () => {
       const origin = [
         { num0: null, child: [{ num0: 1 }] },
         { num0: 1 },
-        { num0: 2 },
+        { num0: 2 }
       ]
       const [r, patches] = produceWithPatches(origin, (d: any) => {
         d.pop()
@@ -260,7 +272,7 @@ describe('util', () => {
         {
           source: origin,
           value: { num0: 2 },
-          currentFieldPath: '',
+          currentFieldPath: ''
         }
       ])
     })
@@ -268,7 +280,7 @@ describe('util', () => {
       const origin = [
         { num0: null, child: [{ num0: 1 }] },
         { num0: 1 },
-        { num0: 2 },
+        { num0: 2 }
       ]
       const [r, patches] = produceWithPatches(origin, (d: any) => {
         d.splice(1, 2)
@@ -281,16 +293,16 @@ describe('util', () => {
         {
           source: origin,
           value: {
-            num0: 1,
+            num0: 1
           },
-          currentFieldPath: '',
+          currentFieldPath: ''
         },
         {
           source: origin,
           value: {
-            num0: 2,
+            num0: 2
           },
-          currentFieldPath: '',
+          currentFieldPath: ''
         }
       ])
     })
@@ -315,12 +327,12 @@ describe('util', () => {
         {
           source: origin,
           value: origin[0],
-          currentFieldPath: '',
+          currentFieldPath: ''
         },
         {
           source: origin,
           value: origin[1],
-          currentFieldPath: '',
+          currentFieldPath: ''
         }
       ])
     })
@@ -343,9 +355,9 @@ describe('util', () => {
         {
           source: origin[0],
           value: {
-            num0: 0,
+            num0: 0
           },
-          currentFieldPath: '',
+          currentFieldPath: ''
         }
       ])
       expect(diff.create).toEqual([])
@@ -353,16 +365,16 @@ describe('util', () => {
         {
           source: origin,
           value: {
-            num0: 1,
+            num0: 1
           },
-          currentFieldPath: '',
+          currentFieldPath: ''
         },
         {
           source: origin,
           value: {
-            num0: 2,
+            num0: 2
           },
-          currentFieldPath: '',
+          currentFieldPath: ''
         }
       ])
     })
@@ -370,7 +382,7 @@ describe('util', () => {
       const origin = [
         { num0: null, child: [{ num0: 1 }, { num0: 2 }, { num0: 3 }] },
         { num0: 1 },
-        { num0: 2 },
+        { num0: 2 }
       ]
       const [r, patches] = produceWithPatches(origin, (d: any) => {
         d[0].child.splice(1, 1)
@@ -383,9 +395,9 @@ describe('util', () => {
         {
           source: origin[0].child,
           value: {
-            num0: 2,
+            num0: 2
           },
-          currentFieldPath: 'child',
+          currentFieldPath: 'child'
         }
       ])
     })
@@ -393,7 +405,7 @@ describe('util', () => {
       const origin = [
         { num0: null, child: [{ num0: 1 }, { num0: 2 }, { num0: 2 }] },
         { num0: 1 },
-        { num0: 2 },
+        { num0: 2 }
       ]
       const [r, patches] = produceWithPatches(origin, (d: any) => {
         d[0].child.shift()
@@ -406,18 +418,14 @@ describe('util', () => {
         {
           source: origin[0].child,
           value: {
-            num0: 1,
+            num0: 1
           },
-          currentFieldPath: 'child',
+          currentFieldPath: 'child'
         }
       ])
     })
     it('array remove all', () => {
-      const origin = [
-        { num0: null },
-        { num0: 1 },
-        { num0: 2 },
-      ]
+      const origin = [{ num0: null }, { num0: 1 }, { num0: 2 }]
       const [r, patches] = produceWithPatches(origin, (d: any) => {
         d.splice(0, d.length)
       })
@@ -429,18 +437,18 @@ describe('util', () => {
         {
           source: origin,
           value: { num0: null },
-          currentFieldPath: '',
+          currentFieldPath: ''
         },
         {
           source: origin,
           value: { num0: 1 },
-          currentFieldPath: '',
+          currentFieldPath: ''
         },
         {
           source: origin,
           value: { num0: 2 },
-          currentFieldPath: '',
-        },
+          currentFieldPath: ''
+        }
       ])
     })
   })
@@ -487,280 +495,56 @@ describe('util', () => {
     })
     expect([r1, r3, r5]).toEqual([false, false, false])
   })
-
-
   describe('constructDataGraph', () => {
-    it('simple single chain', () => {
-      const depMaps: THookDeps = [
-        ['h', 2, [1], []],
-        ['h', 3, [], [1]],
+    it('simple', () => {
+      const deps:THookDeps = [
+        ['ic', 0, [1,2], [3,4,5]],
+        ['ic', 3, [5,6], [7]],
+        ['h', 8, [7]]
       ]
-      const rootNodes = constructDataGraph(depMaps)
-      const arr = [...rootNodes]
-  
-      expect(arr[0].id).toBe(3)
-      expect(arr[0].targets.size).toBe(1)
-      expect(rootNodes.size).toEqual(1)
+      const rootNodes = constructDataGraph(deps)
+      const rootMaps = mapGraph(rootNodes)
 
-      const check = jest.fn((id) => {
-        expect(id).toBe(3)
-      })
+      const n = rootMaps.get(1).getAllChildren()
+      expect(mapGraphSetToIds(n)).toEqual(new Set([0, 3,4,5,7, 8]))
 
-      dataGrachTraverse(arr, (n, a) => {
-        if (n.id === 1) {
-          check(a[a.length - 1].id)
-        }
-      })
-      expect(check).toBeCalledTimes(1)
-      
-      const allChildren = arr[0].getAllChildren()
-      const childrenArr = [...allChildren]
-      expect(childrenArr.length).toBe(2)
-      expect(childrenArr[0].id).toBe(1)
-      expect(childrenArr[1].id).toBe(2)
+      const n2 = rootMaps.get(2).getAllChildren()
+      expect(mapGraphSetToIds(n2)).toEqual(new Set([0, 3,4,5,7, 8]))
+
+      const n6 = rootMaps.get(6).getAllChildren()
+      expect(mapGraphSetToIds(n6)).toEqual(new Set([3, 7, 8]))
+
+      const prevNodes1 = getPrevNodes(rootNodes, { id: 1 })
+      expect(mapGraphSetToIds(prevNodes1)).toEqual(new Set([]))
+
+      const prevNodes0 = getPrevNodes(rootNodes, { id: 0 })
+      expect(mapGraphSetToIds(prevNodes0)).toEqual(new Set([1, 2]))
+
+      const prevNodes8 = getPrevNodes(rootNodes, { id: 8 })
+      expect(mapGraphSetToIds(prevNodes8)).toEqual(new Set([7, 3, 5, 6, 0, 1, 2]))
     })
-    it('multi roots', () => {
-      const depMaps: THookDeps = [
-        ['h', 2, [1], []],
-        ['h', 3, [], [1]],
-        ['h', 4, [], [1]],
+    it('h called ic', () => {
+      const deps:THookDeps = [
+        ['h', 0, [1], [2]],
+        ['ic', 2, [3, 4], [5]],
+        ['h', 6, [0]],
+        ['h', 7, [5]],
       ]
-      const rootNodes = constructDataGraph(depMaps)
-      const arr = [...rootNodes]
-  
-      expect(arr[0].id).toEqual(3)
-      expect(arr[0].targets.size).toEqual(1)
-      expect([...arr[0].targets][0].id).toEqual(1)
-      expect(arr[1].id).toEqual(4)
-      expect(arr[1].targets.size).toEqual(1)
-      expect([...arr[1].targets][0].id).toEqual(1)
-      expect(rootNodes.size).toEqual(2)
+      const rootNodes = constructDataGraph(deps)
+      const rootMaps = mapGraph(rootNodes)
 
-      const check = jest.fn((id) => {
-        expect([3, 4]).toContain(id)
-      })
+      const n = rootMaps.get(1).getAllChildren()
+      expect(mapGraphSetToIds(n)).toEqual(new Set([0, 6, 2, 5, 7]))
 
-      dataGrachTraverse(arr, (n, a) => {
-        if (n.id === 1) {
-          check(a[a.length - 1].id)
-        }
-      })
-      expect(check).toBeCalledTimes(2)
-
-    })
-    it('multi roots multi child', () => {
-      const depMaps: THookDeps = [
-        ['h', 2, [1], []],
-        ['h', 3, [], [1]],
-        ['h', 5, [1], []],
-        ['h', 4, [], [1]],
-      ]
-      const rootNodes = constructDataGraph(depMaps)
-      const arr = [...rootNodes]
-  
-      expect(arr[0].id).toEqual(3)
-      expect(arr[1].id).toEqual(4)
-      expect(rootNodes.size).toEqual(2)
-
-      expect(arr[0].id).toEqual(3)
-      expect(arr[1].id).toEqual(4)
-      expect(rootNodes.size).toEqual(2)
-
-      const check = jest.fn((id) => {
-        expect([1]).toContain(id)
-      })
-
-      dataGrachTraverse(arr, (n, a) => {
-        if (n.id === 2) {
-          check(a[a.length - 1].id)
-        }
-      })
-      expect(check).toBeCalledTimes(2)
-  
-      const allChildren = arr[0].getAllChildren()
-      const childrenArr = [...allChildren]
-      expect(childrenArr.length).toBe(3)
-      expect(childrenArr[0].id).toBe(1)
-      expect(childrenArr[1].id).toBe(2)
-      expect(childrenArr[2].id).toBe(5)
-    })
-    it('dependencies circle', () => {
-      const depMaps: THookDeps = [
-        ['h', 1, [2], [3]],
-        ['h', 2, [3], []],
-        ['h', 4, [], [3]],
-      ]
-      const rootNodes = constructDataGraph(depMaps)
-      const arr = [...rootNodes]
-      const cd = jest.fn((n: DataGraphNode, a: DataGraphNode[]) => {
-
-      })
-      dataGrachTraverse(arr, cd)
-
-      expect(cd).toHaveBeenCalledTimes(4)
+      const n3 = rootMaps.get(3).getAllChildren()
+      expect(mapGraphSetToIds(n3)).toEqual(new Set([2, 5, 7]))
     })
   })
 
   describe('getRelatedIndexes', () => {
-    it('simple', () => {
-      const depMaps: THookDeps = [
-        ['h', 2, [0]]
-      ]
-      const deps = getRelatedIndexes(2, depMaps)
-      expect(deps).toEqual(new Set([2, 0]))
-    })
-    it('nested ic by inputCompute(i=2)', () => {
-      const depMaps: THookDeps = [
-        ['h', 1, [5], [6]],
-        ['h', 2, [1,3], [4]],
-      ]
-      const deps = getRelatedIndexes(2, depMaps)
-      expect(deps).toEqual(new Set([5,1,2,3,4,6]))
-    })
-    it('nested ic by inputCompute(i=1)', () => {
-      const depMaps: THookDeps = [
-        ['h', 1, [5], [6]],
-        ['h', 2, [1,3], [4]],
-      ]
-      const deps = getRelatedIndexes(1, depMaps)
-      expect(deps).toEqual(new Set([5,1,6]))
-    })
-    it('nested ic by model(i=1)', () => {
-      const depMaps: THookDeps = [
-        ['h', 1, [5]],
-        ['h', 6, [1]],
-        ['h', 2, [1,3], [4]],
-      ]
-      const deps = getRelatedIndexes(1, depMaps)
-      expect(deps).toEqual(new Set([5,1,6]))
-    })
-    it('nested ic by inputCompute(i=2)', () => {
-      const depMaps: THookDeps = [
-        ['h', 1, [5]],
-        ['h', 6, [1]],
-        ['h', 2, [1,3], [4]],
-      ]
-      const deps = getRelatedIndexes(2, depMaps)
-      expect(deps).toEqual(new Set([5,1,3,2,4]))
-    })
-    it('nested ic without target', () => {
-      const depMaps: THookDeps = [
-        ['ic', 1, [3, 4], []],
-        ['ic', 2, [1], []],
-        ['ic', 6, [2], [5]]
-      ]
-      const deps = getRelatedIndexes(1, depMaps)
-      expect(deps).toEqual(new Set([1, 3, 4]))
-    })
-    it('double get chain', () => {
-      const depMaps: THookDeps = [
-        ['h', 1, [0]],
-        ['h', 2, [1]]
-      ]
-      const deps = getRelatedIndexes(2, depMaps)
-      expect(deps).toEqual(new Set([0, 1, 2]))
-    })
-    it('root -> get -> set', () => {
-      const depMaps: THookDeps = [
-        ['ic', 1, [], [0]],
-        ['h', 2, [1]]
-      ]
-      const deps = getRelatedIndexes(2, depMaps)
-      expect(deps).toEqual(new Set([2, 1, 0]))
-    })
-    it('(bad case) root -> get -> set -> set', () => {
-      // bad case
-      const depMaps: THookDeps = [
-        ['h', 1, [], [0]],
-        ['h', 2, [], [1]],
-        ['h', 3, [2]],
-      ]
-      const deps = getRelatedIndexes(3, depMaps)
-      expect(deps).toEqual(new Set([3, 2, 1]))
-    })
-    it ('root -> get -> set -> get', () => {
-      const depMaps: THookDeps = [
-        ['h', 0, [1], []],
-        ['h', 2, [], [1]],
-        ['h', 3, [2]],
-      ]
-      const deps = getRelatedIndexes(3, depMaps)
-      expect(deps).toEqual(new Set([3, 2, 1, 0]))
-    })
-    it('root -> has same dep (get)', () => {
-      const depMaps: THookDeps = [
-        ['h', 2, [1], []],
-        ['h', 3, [1], []],
-      ]
-      const deps = getRelatedIndexes(3, depMaps)
-      expect(deps).toEqual(new Set([3, 1]))
-    })
-    it('root -> has same dep (set)', () => {
-      const depMaps: THookDeps = [
-        ['h', 2, [1], []],
-        ['h', 3, [], [1]],
-      ]
-      const deps = getRelatedIndexes(3, depMaps)
-      expect(deps).toEqual(new Set([3, 1, 2]))
-    })
-    it('complex 1', () => {
-      const depMaps: THookDeps = [
-        ["ic", 10, [5, 6, 4], [9, 5, 6, 4]],
-        ["h", 12, [11]],
-        ["ic", 13, [], [12]],
-        ["h", 14, [12]],
-        ["h", 15, [14]],
-        ["h", 16, [15]],
-        ["h", 17, [5, 6, 7]],
-        ["ic", 19, [5, 6, 10, 8, 20], [9, 18]],
-        ["ic", 20, [5, 6], [9, 2, 1, 13, 11, 18]],
-        ["ic", 21, [11, 12], [11, 2, 1, 13]],
-        ["ic", 22, [15], [4, 5, 6, 3]],
-        ["ic", 23, [], [4, 5, 6, 3]],
-        ["ic", 24, [15, 5, 6, 4, 23], [10]],  
-      ]
-      const deps = getRelatedIndexes(21, depMaps)
-      expect(deps).toEqual(new Set([
-        21, 11, 12, 1, 2, 13,
-        14, 15, 16 // by 11 ->  12
-      ]))
-    })
-    it('complex 2', () => {
-      const depMaps: THookDeps = [
-        ["ic", 10, [5, 6, 4], [9, 5, 6, 4]],
-        ["h", 12, [11]],
-        ["ic", 13, [], [12]],
-        ["h", 14, [12]],
-        ["h", 15, [14]],
-        ["h", 16, [15]],
-        ["h", 17, [5, 6, 7]],
-        ["ic", 19, [5, 6, 10, 8, 20], [9, 18]],
-        ["ic", 20, [5, 6], [9, 2, 1, 13, 11, 18]],
-        ["ic", 21, [11, 12], [11, 2, 1, 13]],
-        ["ic", 22, [15], [4, 5, 6, 3]],
-        ["ic", 23, [], [4, 5, 6, 3]],
-        ["ic", 24, [15, 5, 6, 4, 23], [10]],
-      ]
-      const deps = getRelatedIndexes(20, depMaps)
-      expect(deps).toEqual(new Set([
-        20, 5, 6, 9, 2, 1, 13, 11, 18,
-        12, // by 13
-        14, 15, 16 // by 12
-      ]))
-    })
   })
 
   describe('getShallowRelatedIndexes', () => {
-    it('simple', () => {
-      const depMaps: THookDeps = [
-        ['h', 1, [0]],
-        ['ic', 2, [1], [3,4]],
-        ['h', 4, [6]],
-        ['h', 5, [3]],
-      ]
-      const deps = getTailRelatedIndexes(2, depMaps)
-      expect(deps).toEqual(new Set([2, 1, 3, 4, 5]))
-    })
   })
 
   describe('set/get', () => {

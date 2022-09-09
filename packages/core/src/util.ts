@@ -757,35 +757,33 @@ export function shortValue(v: undefined | Symbol | any) {
 }
 
 export class DataGraphNode {
-  // state deps
-  watchers = new Set<DataGraphNode>()
-  // ic operate
-  targets = new Set<DataGraphNode>()
+  // relation types
+  toGet = new Set<DataGraphNode>()
+  toSet = new Set<DataGraphNode>()
+  toCall = new Set<DataGraphNode>()
+
   constructor(public id: number, public type: THookDeps[0][0]) {}
-  addWatcher(n: DataGraphNode) {
-    this.watchers.add(n)
+  addToGet(n: DataGraphNode) {
+    this.toGet.add(n)
   }
-  addTarget(n: DataGraphNode) {
-    this.targets.add(n)
+  addToSet(n: DataGraphNode) {
+    this.toSet.add(n)
+  }
+  addToCall(n: DataGraphNode) {
+    this.toCall.add(n)
   }
   get children() {
-    return new Set<DataGraphNode>([...this.watchers, ...this.targets])
+    return new Set<DataGraphNode>([
+      ...this.toGet,
+      ...this.toSet,
+      ...this.toCall
+    ])
   }
   getAllChildren(all: Set<DataGraphNode> = new Set()): Set<DataGraphNode> {
     this.children.forEach(c => {
       if (!all.has(c)) {
         all.add(c)
         c.getAllChildren(all)
-      }
-    })
-
-    return all
-  }
-  getAllWatchers(all: Set<DataGraphNode> = new Set()) {
-    this.watchers.forEach(c => {
-      if (!all.has(c)) {
-        all.add(c)
-        c.getAllWatchers(all)
       }
     })
 
@@ -801,22 +799,12 @@ export function dataGrachTraverse(
     if (r === false) {
       return false
     }
-    for (const v1 of current.watchers) {
+    for (const v1 of current.children) {
       // prevent traverse circle
       if (ancestors.includes(v1)) {
         continue
       }
       const r = task(v1, ancestors.concat(current))
-      if (r === false) {
-        break
-      }
-    }
-    for (const v2 of current.targets) {
-      // prevent traverse circle
-      if (ancestors.includes(v2)) {
-        continue
-      }
-      const r = task(v2, ancestors.concat(current))
       if (r === false) {
         break
       }
@@ -827,25 +815,13 @@ export function dataGrachTraverse(
   })
 }
 
-function isDependenceChain(ancestors: DataGraphNode[]) {
-  let r = true
-  if (ancestors.length >= 2) {
-    ancestors.reduce((p, n) => {
-      r = r && p.watchers.has(n)
-      return n
-    })
-    return r
-  }
-  return false
-}
-
-function findDenpendenciesUntilIC(ancestors: DataGraphNode[]) {
+function findReactiveDenpendencies(ancestors: DataGraphNode[]) {
   if (ancestors.length >= 2) {
     let r = new Set<DataGraphNode>()
     for (let index = ancestors.length - 1; index > 0; index--) {
       const last = ancestors[index]
       const prevLast = ancestors[index - 1]
-      if (prevLast.watchers.has(last)) {
+      if (prevLast.toGet.has(last)) {
         r.add(prevLast)
       } else {
         break
@@ -859,7 +835,7 @@ export function getDependencies(rootNodes: Set<DataGraphNode>, id: number) {
   const dependencies = new Set<DataGraphNode>()
   dataGrachTraverse([...rootNodes], (n, a) => {
     if (n.id === id) {
-      const deps = findDenpendenciesUntilIC(a.concat(n))
+      const deps = findReactiveDenpendencies(a.concat(n))
       deps?.forEach(dn => {
         dependencies.add(dn)
       })
@@ -868,92 +844,37 @@ export function getDependencies(rootNodes: Set<DataGraphNode>, id: number) {
   return dependencies
 }
 
-export function getExecutionResultFlow(
-  rootNodes: Set<DataGraphNode>,
-  id: number
-) {
-  const executionFlow = new Set<DataGraphNode>()
-  const allTargets = new Set<DataGraphNode>()
-
-  dataGrachTraverse([...rootNodes], (n, a) => {
-    if (n.id === id) {
-      if (n.targets.size) {
-        n.targets.forEach(tn => {
-          allTargets.add(tn)
-        })
-      } else {
-        n.watchers.forEach(tn => {
-          // the watcher shouldn't be "ic"
-          if (tn.targets.size === 0 && tn.type === 'h') {
-            allTargets.add(tn)
-          }
-        })
-      }
-    }
-  })
-
-  allTargets.forEach(tn => {
-    tn.getAllWatchers().forEach(cn => {
-      if (cn.targets.size === 0 && cn.type === 'h') {
-        executionFlow.add(cn)
-      }
-    })
-  })
-
-  return new Set([...allTargets, ...executionFlow])
-}
-
-export function getExecutionFlow(rootNodes: Set<DataGraphNode>, id: number) {
-  const dependencies = getDependencies(rootNodes, id)
-  const executionFlow = new Set<DataGraphNode>()
-  const allTargets = new Set<DataGraphNode>()
-
-  /**
-   * demonstrate: ic depends other ic
-   * */
-  dependencies.forEach(n => {
-    if (n.targets.size > 0) {
-      n.targets.forEach(tn => {
-        allTargets.add(tn)
-      })
-    }
-  })
-
-  /**
-   * what different with "getExecutionResultFlow" ?
-   * dependencies will influence allTargets
-   */
-  dataGrachTraverse([...rootNodes], (n, a) => {
-    if (n.id === id) {
-      if (n.targets.size) {
-        n.targets.forEach(tn => {
-          allTargets.add(tn)
-        })
-      } else {
-        n.watchers.forEach(tn => {
-          // the watcher shouldn't be "ic"
-          if (tn.targets.size === 0 && tn.type === 'h') {
-            allTargets.add(tn)
-          }
-        })
-      }
-    }
-  })
-
-  allTargets.forEach(tn => {
-    tn.getAllWatchers().forEach(cn => {
-      if (cn.targets.size === 0 && cn.type === 'h') {
-        executionFlow.add(cn)
-      }
-    })
-  })
-
-  return new Set([...dependencies, ...allTargets, ...executionFlow])
-}
-
 function getTypeFromContextDeps(contextDeps: THookDeps, index: number) {
   const r = contextDeps.find(v => v[1] === index)
   return r?.[0] || 'h'
+}
+
+export function mapGraph (s: Set<DataGraphNode>) {
+  const m = new Map<number, DataGraphNode>()
+  s.forEach(n => {
+    m.set(n.id, n)
+  })
+  return m
+}
+
+export function mapGraphSetToIds (s: Set<DataGraphNode>) {
+  return new Set([...s].map(n => n.id))
+}
+
+export function getNextNodes (current: DataGraphNode) {
+  return current.getAllChildren()
+}
+
+export function getPrevNodes (rootNodes: Set<DataGraphNode>, current: { id: number }) {
+  const prevNodes = new Set<DataGraphNode>()
+  dataGrachTraverse([...rootNodes], (n, ancestor) => {
+    if (n.id === current.id) {
+      ancestor.forEach(an => {
+        prevNodes.add(an)
+      })
+    }
+  })
+  return prevNodes
 }
 
 export function constructDataGraph(contextDeps: THookDeps) {
@@ -981,7 +902,7 @@ export function constructDataGraph(contextDeps: THookDeps) {
           nodesMap.set(idOrArr, parent)
         }
         hasParentIds.add(current.id)
-        parent.addWatcher(current)
+        parent.addToGet(current)
       }
     })
     set?.forEach(idOrArr => {
@@ -999,7 +920,11 @@ export function constructDataGraph(contextDeps: THookDeps) {
           nodesMap.set(idOrArr, child)
         }
         hasParentIds.add(child.id)
-        current.addTarget(child)
+        if (child.type === 'ic') {
+          current.addToCall(child)
+        } else {
+          current.addToSet(child)
+        }
       }
     })
   })
@@ -1022,14 +947,15 @@ export function getRelatedIndexes(
 
   const rootNodes = constructDataGraph(contextDeps)
 
-  indexArr.forEach(index => {
-    getExecutionFlow(rootNodes, index).forEach(n => {
-      deps.add(n.id)
-    })
-  })
+  // indexArr.forEach(index => {
+  //   getExecutionFlow(rootNodes, index).forEach(n => {
+  //     deps.add(n.id)
+  //   })
+  // })
 
   return deps
 }
+
 export function getTailRelatedIndexes(
   index: number[] | number,
   contextDeps: THookDeps
@@ -1039,28 +965,6 @@ export function getTailRelatedIndexes(
   const deps = new Set<number>(indexArr)
 
   const rootNodes = constructDataGraph(contextDeps)
-
-  // add direct dependencies
-  contextDeps.forEach(([_, i, get, set]) => {
-    if (i === index) {
-      get?.forEach(n => {
-        if (typeof n === 'number') {
-          deps.add(n)
-        }
-      })
-      set?.forEach(n => {
-        if (typeof n === 'number') {
-          deps.add(n)
-        }
-      })
-    }
-  })
-
-  indexArr.forEach(index => {
-    getExecutionResultFlow(rootNodes, index).forEach(n => {
-      deps.add(n.id)
-    })
-  })
 
   return deps
 }

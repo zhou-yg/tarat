@@ -32,7 +32,7 @@ describe('client model', () => {
         return prisma[e].findMany(w as any)
       },
       async create (from: string, e: 'item', d: Omit<IModelData, 'where'>) {
-        return prisma[e].create(d)
+        return prisma[e].create(d as any)
       },
       async executeDiff (from: string, entity: 'item', diff: IDiff) {
         await Promise.all(diff.create.map(async (obj) => {
