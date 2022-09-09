@@ -868,7 +868,10 @@ export function getDependencies(rootNodes: Set<DataGraphNode>, id: number) {
   return dependencies
 }
 
-export function getExecutionResultFlow(rootNodes: Set<DataGraphNode>, id: number) {
+export function getExecutionResultFlow(
+  rootNodes: Set<DataGraphNode>,
+  id: number
+) {
   const executionFlow = new Set<DataGraphNode>()
   const allTargets = new Set<DataGraphNode>()
 

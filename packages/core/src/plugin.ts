@@ -15,6 +15,7 @@ export interface IModelData {
           create?: IModelData
         }
   }
+  include?: Record<string, boolean>
 }
 
 interface IQuerySelect {

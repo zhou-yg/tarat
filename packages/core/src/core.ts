@@ -256,12 +256,12 @@ type TGetterData<T> = () => PartialGetter<T>
 
 interface AsyncHook<T> {
   init: boolean
-  getterPromise: Promise<T> | null  
-  startAsyncGetter: () => { end: () => void, valid: () => boolean }
+  getterPromise: Promise<T> | null
+  startAsyncGetter: () => { end: () => void; valid: () => boolean }
   pending: boolean
 }
 
-class AsyncState<T> extends State<T> implements AsyncHook<T>{
+class AsyncState<T> extends State<T> implements AsyncHook<T> {
   init = true
   getterPromise: Promise<T> | null = null
   asyncCount = 0
@@ -282,7 +282,7 @@ class AsyncState<T> extends State<T> implements AsyncHook<T>{
       }
     }
   }
-  get pending () {
+  get pending() {
     return !!this.getterPromise
   }
 }
@@ -439,7 +439,7 @@ export abstract class WriteModel<T extends Object> extends AsyncState<
     if (exist) {
       this.inputComputePatchesMap.delete(ic)
       const patches = exist[1].filter(isModelPatch) as IModelPatch[]
-      const {end, valid} = this.startAsyncGetter()
+      const { end, valid } = this.startAsyncGetter()
 
       await this.executeModelPath(patches)
       if (!valid()) {
@@ -490,7 +490,7 @@ export const writePrismaInitialSymbol = Symbol.for('@@writePrismaInitial')
 export class Prisma<T extends any[]> extends Model<T> {
   identifier = 'prisma'
   async executeQuery(reactiveChain?: ReactiveChain) {
-    const {end, valid} = this.startAsyncGetter()
+    const { end, valid } = this.startAsyncGetter()
     try {
       // @TODO：要确保时序，得阻止旧的query数据更新
       const q = await this.getQueryWhere(reactiveChain)
@@ -522,7 +522,7 @@ export class Prisma<T extends any[]> extends Model<T> {
       console.error(e)
     } finally {
       log(`[${this.name || ''} Model.executeQuery] end`)
-      if(valid()) {
+      if (valid()) {
         end()
       }
     }
@@ -550,7 +550,7 @@ export class Prisma<T extends any[]> extends Model<T> {
       this.update(v, patches, silent, reactiveChain)
     }
 
-    const {end} = this.startAsyncGetter()
+    const { end } = this.startAsyncGetter()
 
     const { entity } = this
     try {
@@ -601,7 +601,7 @@ export class WritePrisma<T> extends WriteModel<T> {
     })
     await Promise.all(arr)
   }
-  async createRow(obj?: Partial<T>) {
+  async createRow(obj?: Partial<T>, include?: { [k in keyof T]: boolean }) {
     log('[WritePrisma.createRow]')
     const defaults = this.getData()
 
@@ -611,7 +611,8 @@ export class WritePrisma<T> extends WriteModel<T> {
         {
           op: 'create',
           value: {
-            data: d
+            data: d,
+            include
           }
         }
       ])
@@ -657,7 +658,7 @@ export class WritePrisma<T> extends WriteModel<T> {
 
 export class ClientPrisma<T extends any[]> extends Prisma<T> {
   override async executeQuery() {
-    const {end} = this.startAsyncGetter()
+    const { end } = this.startAsyncGetter()
 
     const valid = await this.enableQuery()
 
@@ -783,11 +784,10 @@ export class Cache<T> extends AsyncState<T | Symbol> {
     return v === CacheInitialSymbol ? undefined : v
   }
   async executeQuery(reactiveChain?: ReactiveChain) {
-
     const { from } = this.options
     const { source } = this
 
-    const {end, valid} = this.startAsyncGetter()
+    const { end, valid } = this.startAsyncGetter()
 
     try {
       const valueInCache = await getPlugin('Cache').getValue<T>(
@@ -817,9 +817,7 @@ export class Cache<T> extends AsyncState<T | Symbol> {
       log(`[Cache.executeQuery] error`)
       console.error(e)
     } finally {
-      log(
-        `[${this.name || ''} Cache.executeQuery]`
-      )
+      log(`[${this.name || ''} Cache.executeQuery]`)
       if (valid()) {
         end()
       }
@@ -864,7 +862,7 @@ let currentComputedStack: Computed<any>[] = []
 /**
  * check if running inside a computed
  */
-function underComputed () {
+function underComputed() {
   return currentComputedStack.length > 0
 }
 
@@ -916,7 +914,7 @@ export class Computed<T> extends AsyncState<T | Symbol> {
 
     popComputed()
     if (isPromise(r)) {
-      const {end, valid} = this.startAsyncGetter()
+      const { end, valid } = this.startAsyncGetter()
       ;(r as Promise<T>).then((asyncResult: T) => {
         if (valid()) {
           this.update(asyncResult, [], false, innerReactiveChain)
@@ -924,7 +922,7 @@ export class Computed<T> extends AsyncState<T | Symbol> {
         }
       })
     } else if (isGenerator(r)) {
-      const {end, valid} = this.startAsyncGetter()
+      const { end, valid } = this.startAsyncGetter()
       ;(
         runGenerator(
           r as Generator,
@@ -956,7 +954,7 @@ export class Computed<T> extends AsyncState<T | Symbol> {
 
 export class ClientComputed<T> extends Computed<T> {
   override run() {
-    const {end, valid} = this.startAsyncGetter()
+    const { end, valid } = this.startAsyncGetter()
     const context = this.scope.createActionContext(this)
     log('[ComputedInServer.run] before post')
     getPlugin('Context')
@@ -1093,7 +1091,10 @@ export class InputCompute<P extends any[] = any> extends Hook {
   }
 }
 
-class AsyncInputCompute<T extends any[]> extends InputCompute<T> implements AsyncHook<T> {
+class AsyncInputCompute<T extends any[]>
+  extends InputCompute<T>
+  implements AsyncHook<T>
+{
   init = true
   getterPromise: Promise<T> | null = null
   asyncCount: number = 0
@@ -1121,11 +1122,10 @@ class AsyncInputCompute<T extends any[]> extends InputCompute<T> implements Asyn
 
 class InputComputeInServer<P extends any[]> extends AsyncInputCompute<P> {
   async run(...args: any[]) {
-    const {end, valid} = this.startAsyncGetter()
+    const { end, valid } = this.startAsyncGetter()
 
     this.emit(EHookEvents.beforeCalling, this)
     if (!checkFreeze({ _hook: this })) {
-
       /**
        * only icInServer need confirm all related dependencies ready
        * because IC just be manual (by User or System)
@@ -1868,7 +1868,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
   }
 
   // transform compose deps to number index that will be convinient for next steps
-  hookNumberIndexDeps () {
+  hookNumberIndexDeps() {
     const hookIndexDeps: THookDeps = this.intialContextDeps.map(
       ([name, hi, getD, setD]) => {
         const [newGetD, newSetD] = [getD, setD].map(dependencies => {
@@ -1905,7 +1905,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
 
     const hookIndexDeps = this.hookNumberIndexDeps()
     /**
-     * for the special performance case: 
+     * for the special performance case:
      * query on any async and client state eg: Client Model, ClientCache, ComputedInServer
      *  that will batch notify all watchers of it and
      *  doing these all operations in single request
@@ -1937,7 +1937,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
     const { hooks } = this
     return this.runnerContext.serializeBase(hooks)
   }
-  getRelatedIndexesByHook (h: Hook, excludeSelf?: boolean) {
+  getRelatedIndexesByHook(h: Hook, excludeSelf?: boolean) {
     const { hooks } = this
     const hookIndex = h ? hooks.indexOf(h) : -1
 
@@ -2036,12 +2036,10 @@ export class CurrentRunnerScope<T extends Driver = any> {
   ready(specifies?: Set<number>): Promise<void> {
     const asyncHooks = this.hooks.filter(
       (h, i) =>
-        (specifies ? specifies.has(i) : true) && 
-        (
-          (h && Reflect.has(h, 'getterPromise')) ||
+        (specifies ? specifies.has(i) : true) &&
+        ((h && Reflect.has(h, 'getterPromise')) ||
           h instanceof AsyncInputCompute ||
-          h instanceof AsyncState
-        )
+          h instanceof AsyncState)
     ) as unknown as (AsyncInputCompute<any> | AsyncState<any>)[]
 
     let readyResolve: () => void
@@ -2279,7 +2277,12 @@ export const hookFactoryFeatures = {
   /**
    * manual calling by User or System
    */
-  initiativeCompute: ['inputCompute', 'inputComputeInServer', 'writePrisma', 'writeModel'],  
+  initiativeCompute: [
+    'inputCompute',
+    'inputComputeInServer',
+    'writePrisma',
+    'writeModel'
+  ],
   /**
    * only compatibility with server
    */
@@ -2288,8 +2291,8 @@ export const hookFactoryFeatures = {
 /** @TODO need refact code to auto export these hooks */
 export const hookFactoryNames = hookFactoryFeatures.all
 export const hasSourceHookFactoryNames = hookFactoryFeatures.withSource
-export const initiativeComputeHookFactoryNames = hookFactoryFeatures.initiativeCompute
-
+export const initiativeComputeHookFactoryNames =
+  hookFactoryFeatures.initiativeCompute
 
 export let currentHookFactory: {
   state: typeof mountState
@@ -2356,8 +2359,8 @@ function createModelSetterGetterFunc<T extends any[]>(
         m.addComputePatches(result, patches)
       } else {
         const reactiveChain: ReactiveChain<T> | undefined =
-          currentReactiveChain?.addUpdate(m);
-        
+          currentReactiveChain?.addUpdate(m)
+
         const isUnderComputed = underComputed()
         m.updateWithPatches(result, patches, isUnderComputed, reactiveChain)
       }
@@ -2859,7 +2862,7 @@ type InputComputeFn<T extends any[]> = (...arg: T) => void
 type AsyncInputComputeFn<T extends any[]> = (...arg: T) => Promise<void>
 type GeneratorInputComputeFn<T extends any[]> = (
   ...arg: T
-) => Generator<unknown, void>
+) => Generator<T, void>
 
 function updateInputCompute(func: any) {
   const { hooks, initialHooksSet } = currentRunnerScope!
