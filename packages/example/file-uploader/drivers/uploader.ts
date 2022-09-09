@@ -4,6 +4,7 @@ import {
   computedInServer,
   prisma,
   writePrisma,
+  inputComputeInServer,
 } from 'tarat-core'
 import axios from 'axios'
 import * as fs from 'fs'
@@ -39,16 +40,30 @@ export default function uploader<T> () {
     }
   })
 
-  const fileStorage = prisma<{ name: string; link: string }[]>(indexes.StorageItem)
-  const writeFileStroage = writePrisma(fileStorage, () => ({
-    ...(OSSLink() || {}),
-  }))
+  const fileStorage = prisma<{ name: string; link: string }[]>(indexes.StorageItem, () => undefined, {
+    immediate: false
+  })
+  const writeFileStroage = writePrisma(fileStorage, () => {
+    if (OSSLink()) {
+      return OSSLink()
+    }
+  })
 
-  const createStorage = computedInServer(function * () {
+  const createStorage = inputComputeInServer(function * () {
     yield writeFileStroage.create()
+  })
+  const updateStorage = inputComputeInServer(function * (targetId: number) {
+    const d = OSSLink()
+    if (d) {
+      yield writeFileStroage.update(targetId, {
+        ...d
+      })
+    }
   })
   
   return {
+    writeFileStroage,
+    updateStorage,
     createStorage,
     inputFile,
     OSSLink

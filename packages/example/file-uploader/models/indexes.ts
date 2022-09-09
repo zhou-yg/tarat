@@ -1,1 +1,1 @@
-export const StorageItem = "StorageItem";
+export const StorageItem = "storageItem";
