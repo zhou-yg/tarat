@@ -11,7 +11,7 @@ import type {
   VariableDeclarator
 } from 'estree'
 
-import type { THookDeps } from 'tarat-core'
+import { hookFactoryFeatures, THookDeps } from 'tarat-core'
 import {
   hasSourceHookFactoryNames,
   hookFactoryNames,
@@ -224,7 +224,7 @@ type TOriginDepsMap = Map<number, {
 }>
 function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
   const depsMap: TOriginDepsMap = new Map
-
+  
   walk.ancestor(BMNode as any, {
     CallExpression (n, s, ancestor) {
       const { callee } = (n as any as CallExpression)
@@ -258,6 +258,7 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
         const parentCallerHook = findParentCallerHook(ancestor)
 
         if (parentCallerHook) {
+
           const v1 = findInScopeMap(scope, existSourceInScope)
           const parentCaller = findInScopeMap(scope, parentCallerHook)
 
@@ -278,7 +279,7 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
                  * @TODO
                  * consider a case that calling writePrisma.remove() hasnt arguments but should set in "set"
                  */
-                if (hasArguments) {
+                if (hasArguments || isWritor(v1.sourceHook)) {
                   deps.set.add(v1.hookIndex)
                 } else {
                   deps.get.add(v1.hookIndex)
@@ -305,10 +306,16 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
         const hook =  get(scope, name)
         if (hook && hook.type === 'hook') {
           const parentCallerHook = findParentCallerHook(ancestor)
+
+          const fromValidParentCallExpression =
+            ancestor[ancestor.length - 2]?.type === 'CallExpression' &&
+            hookFactoryFeatures.withSource.includes((ancestor[ancestor.length - 2] as any).callee.name)
+
           if (
             parentCallerHook &&
             parentCallerHook.callee.type === 'Identifier' &&
-            hasSourceHookFactoryNames.includes(parentCallerHook.callee.name)
+            hookFactoryFeatures.withSource.includes(parentCallerHook.callee.name) &&
+            fromValidParentCallExpression
           ) {
             const parentCaller = findInScopeMap(scope, parentCallerHook)
             

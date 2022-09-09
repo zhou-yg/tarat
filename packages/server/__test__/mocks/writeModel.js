@@ -14,7 +14,8 @@ export default function writeModelDriver () {
   }))
 
   const writeItems = writePrisma(items, () => ({
-    b: 2
+    b: 2,
+    c: s1()
   }))
   // 3
   const ic = inputComputeInServer(() => {

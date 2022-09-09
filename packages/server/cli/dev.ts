@@ -124,8 +124,6 @@ async function startCompile (c: IConfig) {
         buildEverything(newConfig)
       })
     })
-  
-    const watchSchema = chokidar.watch([])
 
   
   exitHook(() => {

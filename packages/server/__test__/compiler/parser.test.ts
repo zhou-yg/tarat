@@ -41,6 +41,28 @@ describe('parser', () => {
       }
     })    
   })
+  it('parse with inputComputeNested', () => {
+    const BM = 'inputComputeNested.js'
+    const code = mockUtil.readMock(BM)
+
+    const deps = parse(code)
+
+    expect(deps).toEqual({
+      singleBM: {
+        names: [
+          [0, 's1'],
+          [1, 'c1'],
+          [2, 'ic2'],
+          [3, 'ic']
+        ],
+        deps: [
+          ['h', 1, [0]],
+          ['ic', 2, [], [0]],
+          ['ic', 3, [1, 0], [0, 2]]
+        ]
+      }
+    })    
+  })
   it ('parse model.query', () => {
     const BM = 'model.js'
     const code = mockUtil.readMock(BM)
@@ -103,8 +125,28 @@ describe('parser', () => {
         ],
         deps: [
           ['h', 1, [0]],
-          ['ic', 2, [], [1]],
-          ['ic', 3, [2]],
+          ['ic', 2, [0], [1]],
+          ['ic', 3, [], [2]],
+        ]
+      }
+    })
+  })
+  it('inputCompute called by computed', () => {
+    const BM = 'ICIncomputed.js'
+    const code = mockUtil.readMock(BM)
+
+    const deps = parse(code)
+
+    expect(deps).toEqual({
+      ICIncomputed: {
+        names: [
+          [0, 's1'],
+          [1, 'c1'],
+          [2, 'ic'],
+        ],
+        deps: [
+          ['h', 1, [0], [2]],
+          ['ic', 2, [0]],
         ]
       }
     })
