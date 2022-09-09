@@ -120,7 +120,7 @@ async function generateNewSchema (c: IConfig, schemaContentArr: string[], enhanc
 
             const type = getSourceReferrenceType(source, 'id')
             target.fieldLines.push(`${lowerFirst(source.name)} ${source.name} @relation(fields: [${relation.to.field}], references:[id])`)
-            target.fieldLines.push(`${relation.to.field} ${type}`)
+            target.fieldLines.push(`${relation.to.field} ${type} @unique`)
           }
           break
         case '1:n':
@@ -286,6 +286,10 @@ export async function composeDriver(c: IConfig) {
   c.dependencyModules.forEach(moduleName => {
     const dir = path.join(c.cwd, 'node_modules', moduleName)
     const distDriversDir = path.join(dir, c.buildDirectory, c.driversDirectory)
+    if (!fs.existsSync(distDriversDir)) {
+      console.error(`[composeDriver] hasnt drivers in "${moduleName}/${c.buildDirectory}/${c.driversDirectory}"`)
+      return
+    }
 
     fs.readdirSync(distDriversDir)
       .filter(f => /\.js$/.test(f) && !/deps\.js$/.test(f))

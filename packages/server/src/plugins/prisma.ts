@@ -26,20 +26,40 @@ export async function setPrisma (config: IConfig)  {
     throw new Error('[setPrisma] error, prisma.PrismaClient not found please run prisma generate first')
   }
   const prisma = new client.PrismaClient()
-  prisma.$connect()
+  console.log('prisma.$connect: ', prisma.$connect);
+  const connectResult = prisma.$connect();
+  connectResult.then(() => {
+    console.log('connect success')
+  })
+  // connectResult.then(() => {
+  //   console.log('connect success')
+  //   const r = prisma.storageItem.create({
+  //     "data": {
+  //       "name": "kkk",
+  //       "link": "/注册界面.png",
+  //       "user": {
+  //         "connect": {
+  //           "id": "cl77pu30l0024fbuvcot5gu5e"
+  //         }
+  //       }
+  //     }
+  //   })
+  // }).catch(e => {
+  //   console.log('e: ', e);
+  // })
 
   loadPlugin('Model', {
     async find(from: string, e, w) {
-      return prisma[e].findMany(w)
+      return prisma[e].findMany(w).then(r => r)
     },
     async update(from: string, e, w) {
-      return prisma[e].update(w)
+      return prisma[e].update(w).then(r => r)
     },
     async remove(from: string, e, d) {
-      return prisma[e].delete(d)
+      return prisma[e].delete(d).then(r => r)
     },
     async create(from: string, e, q) {
-      return prisma[e].create(q)
+      return prisma[e].create(q).then(r => r)
     },
     // should check relation here
     async executeDiff(from: string, e, d) {

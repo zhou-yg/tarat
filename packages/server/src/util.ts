@@ -17,6 +17,10 @@ export function emptyDirectory (dir: string) {
   fs.mkdirSync(dir)
 }
 
+export function lowerFirst (s: string) {
+  return s[0].toLowerCase() + s.substring(1)
+}
+
 export function tryMkdir(dir: string) {
   !fs.existsSync(dir) && fs.mkdirSync(dir)
 }

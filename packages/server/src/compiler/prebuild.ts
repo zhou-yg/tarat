@@ -20,7 +20,7 @@ import autoExternal from 'rollup-plugin-auto-external';
 import replace from '@rollup/plugin-replace';
 import rollupAlias from '@rollup/plugin-alias'
 import dts from "rollup-plugin-dts"
-import { emptyDirectory, loadJSON, logFrame, traverseDir } from "../util";
+import { emptyDirectory, loadJSON, logFrame, lowerFirst, traverseDir } from "../util";
 import chalk from "chalk";
 import { cp } from "shelljs";
 import { ArrowFunctionExpression, CallExpression, FunctionExpression, Identifier, ImportDeclaration, Program } from 'estree';
@@ -380,18 +380,21 @@ export function replaceImportDriverPath (
   format: esbuild.Format,
   env: 'client' | 'server',
 ) {
-  const reg = /from (?:'|")([\w\/-]+)(?:'|")/
-  const reg2 = /require\((?:'|")([\w\/-]+)(?:'|")/
+  const reg = /from (?:'|")([\w\/-]*)(?:'|")/g
+  const reg2 = /require\((?:'|")([\w\/-]*)(?:'|")/g
 
   const code = fs.readFileSync(sourceFile).toString()
   const r = code.match(reg)
   const r2 = code.match(reg2)
-  const importModule = r?.[1] || r2?.[1]
-  if (importModule && /\/drivers\/[\w-]+$/.test(importModule)) {
-    const importModuleWithFormat = importModule.replace(/\/(drivers)\/([\w-]+)$/, `/${env}/$1/${format}/$2`)
-    const newCode = code.replace(importModule, importModuleWithFormat)
-    fs.writeFileSync(sourceFile, newCode)
-  } 
+  const importModules = r || r2
+
+  if (
+    importModules && importModules.length > 0 &&
+    importModules.some(m => /\/drivers\/[\w-]+/.test(m))
+  ) {  
+    const c2 = code.replace(/\/(drivers)\/([\w-]+)/, `/${env}/$1/${format}/$2`)
+    fs.writeFileSync(sourceFile, c2)
+  }
 }
 
 /**
@@ -655,15 +658,19 @@ export async function buildModelIndexes(c: IConfig) {
     const schemaFile = path.join(c.cwd, c.modelsDirectory, c.targetSchemaPrisma)
     const schemaIndexesFile = path.join(c.cwd, c.modelsDirectory, c.schemaIndexes + (c.ts ? '.ts' : '.js'))
     if (fs.existsSync(schemaFile)) {
-      const model = await prismaInternals.getDMMF({
-        datamodel: fs.readFileSync(schemaFile).toString()
-      })
-      const models = model.datamodel.models
-      const indexesStr = models.map(m => {
-        return `export const ${m.name} = "${m.name}"`
-      }).join('\n')
-
-      fs.writeFileSync(schemaIndexesFile, prettier.format(indexesStr))
+      try {
+        const model = await prismaInternals.getDMMF({
+          datamodel: fs.readFileSync(schemaFile).toString()
+        })
+        const models = model.datamodel.models
+        const indexesStr = models.map(m => {
+          return `export const ${m.name} = "${lowerFirst(m.name)}"`
+        }).join('\n')
+  
+        fs.writeFileSync(schemaIndexesFile, prettier.format(indexesStr))
+      } catch (e) {
+        console.error('[buildModelIndexes] building indexes')
+      }
     }
   }
 }
