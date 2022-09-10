@@ -5,6 +5,7 @@ import {
   dataGrachTraverse,
   DataGraphNode,
   get,
+  getDependentPrevNodes,
   getPrevNodes,
   mapGraph,
   mapGraphSetToIds,
@@ -538,6 +539,30 @@ describe('util', () => {
 
       const n3 = rootMaps.get(3).getAllChildren()
       expect(mapGraphSetToIds(n3)).toEqual(new Set([2, 5, 7]))
+    })
+    it('dependent chain', () => {
+      const deps:THookDeps = [
+        ['h', 0, [1]],
+        ['h', 2, [0]],
+        ['ic', 3, [4,5], [0, 6]]
+      ]
+      const rootNodes = constructDataGraph(deps)
+      const rootMaps = mapGraph(rootNodes)
+      
+      const n0 = getDependentPrevNodes(rootNodes, { id: 0 })
+      expect(mapGraphSetToIds(n0)).toEqual(new Set([1]))
+    })
+    it('dependent chain: h call ic', () => {
+      const deps:THookDeps = [
+        ['ic', 0, [1], [2]],
+        ['h', 3, [4], [0]],
+        ['h', 5, [3]]
+      ]
+      const rootNodes = constructDataGraph(deps)
+      const rootMaps = mapGraph(rootNodes)
+      
+      const n0 = getDependentPrevNodes(rootNodes, { id: 0 })
+      expect(mapGraphSetToIds(n0)).toEqual(new Set([1]))
     })
   })
 

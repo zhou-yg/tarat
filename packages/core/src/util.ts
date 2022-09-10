@@ -877,6 +877,35 @@ export function getPrevNodes (rootNodes: Set<DataGraphNode>, current: { id: numb
   return prevNodes
 }
 
+function sliceGetChain (arr: DataGraphNode[]) {
+  const len = arr.length
+  let i = len - 1
+  while (i >= 0) {
+    const last = arr[i]
+    const penultimate = arr[i - 1]
+    if (!penultimate || !penultimate.toGet.has(last)) {
+      break
+    }
+    i--
+  }
+  return arr.slice(i)
+}
+
+export function getDependentPrevNodes (rootNodes: Set<DataGraphNode>, current: { id: number }) {
+  const prevNodes = new Set<DataGraphNode>()
+  dataGrachTraverse([...rootNodes], (n, ancestor) => {
+    if (n.id === current.id) {
+      const onlyGetChain = sliceGetChain(ancestor.concat(n))
+      onlyGetChain.forEach(gn => {
+        if (gn.id !== current.id) {
+          prevNodes.add(gn)
+        }
+      })
+    }
+  })
+  return prevNodes
+}
+
 export function constructDataGraph(contextDeps: THookDeps) {
   const nodesMap = new Map<number, DataGraphNode>()
   const hasParentIds = new Set<number>()
@@ -947,11 +976,9 @@ export function getRelatedIndexes(
 
   const rootNodes = constructDataGraph(contextDeps)
 
-  // indexArr.forEach(index => {
-  //   getExecutionFlow(rootNodes, index).forEach(n => {
-  //     deps.add(n.id)
-  //   })
-  // })
+  indexArr.forEach(index => {
+    
+  })
 
   return deps
 }
