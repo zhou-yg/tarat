@@ -806,13 +806,17 @@ export function dataGrachTraverse(
       }
       const r = task(v1, ancestors.concat(current))
       if (r === false) {
-        break
+        return false
       }
     }
   }
-  ;[].concat(source).forEach(s => {
-    task(s)
-  })
+
+  for (const s of [].concat(source)) {    
+    const r = task(s)
+    if (r === false) {
+      break
+    }
+  }
 }
 
 function findReactiveDenpendencies(ancestors: DataGraphNode[]) {
@@ -865,7 +869,9 @@ export function getNextNodes (current: DataGraphNode) {
   return current.getAllChildren()
 }
 
-export function getPrevNodes (rootNodes: Set<DataGraphNode>, current: { id: number }) {
+export function getPrevNodes (
+  rootNodes: Set<DataGraphNode>, current: { id: number },
+) {
   const prevNodes = new Set<DataGraphNode>()
   dataGrachTraverse([...rootNodes], (n, ancestor) => {
     if (n.id === current.id) {
@@ -891,11 +897,14 @@ function sliceGetChain (arr: DataGraphNode[]) {
   return arr.slice(i)
 }
 
-export function getDependentPrevNodes (rootNodes: Set<DataGraphNode>, current: { id: number }) {
+function getDependentPrevNodesWith (
+  rootNodes: Set<DataGraphNode>, current: { id: number },
+  filter: (ancestors: DataGraphNode[]) => DataGraphNode[]
+) {
   const prevNodes = new Set<DataGraphNode>()
   dataGrachTraverse([...rootNodes], (n, ancestor) => {
     if (n.id === current.id) {
-      const onlyGetChain = sliceGetChain(ancestor.concat(n))
+      const onlyGetChain = filter(ancestor.concat(n))
       onlyGetChain.forEach(gn => {
         if (gn.id !== current.id) {
           prevNodes.add(gn)
@@ -904,6 +913,37 @@ export function getDependentPrevNodes (rootNodes: Set<DataGraphNode>, current: {
     }
   })
   return prevNodes
+}
+export function getDependentPrevNodes(rootNodes: Set<DataGraphNode>, current: { id: number }) {
+  return getDependentPrevNodesWith(rootNodes, current, sliceGetChain)
+}
+export function getDependentPrevNodesWithBlock (
+  rootNodes: Set<DataGraphNode>, current: { id: number },
+  blocks = new Set<DataGraphNode>()
+) {
+  return getDependentPrevNodesWith(rootNodes, current, arr => (
+    arr.some(v => blocks.has(v)) ? [] : arr
+  ))
+}
+
+export function getInfluencedNextNodes (rootNodes: Set<DataGraphNode>, current: { id: number }) {
+  const nextNodes = new Set<DataGraphNode>()
+
+  dataGrachTraverse([...rootNodes], (n, ancestor) => {
+    if (n.id === current.id) {
+      const allChildren = n.getAllChildren()
+      allChildren.forEach(cn => {
+        nextNodes.add(cn)
+        const currentDependentNodes = getDependentPrevNodesWithBlock(rootNodes, cn, new Set([n]))
+        currentDependentNodes.forEach(ccn => {
+          nextNodes.add(ccn)
+        })
+      })
+      return false
+    }
+  })
+
+  return nextNodes
 }
 
 export function constructDataGraph(contextDeps: THookDeps) {

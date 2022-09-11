@@ -6,6 +6,7 @@ import {
   DataGraphNode,
   get,
   getDependentPrevNodes,
+  getInfluencedNextNodes,
   getPrevNodes,
   mapGraph,
   mapGraphSetToIds,
@@ -563,6 +564,32 @@ describe('util', () => {
       
       const n0 = getDependentPrevNodes(rootNodes, { id: 0 })
       expect(mapGraphSetToIds(n0)).toEqual(new Set([1]))
+    })
+
+    it('influence chain 1', () => {
+      const deps: THookDeps = [
+        ['h', 1, [0, 5], [2]],
+        ['ic', 2, [3], [4]],
+        ['h', 6, [1]],
+        ['h', 3, [7]]
+      ]      
+      const rootNodes = constructDataGraph(deps)
+      const rootMaps = mapGraph(rootNodes)
+      
+      const n1 = getInfluencedNextNodes(rootNodes, { id: 1 })
+      expect(mapGraphSetToIds(n1)).toEqual(new Set([2, 3, 4, 7, 6]))
+    })
+    it('influence chain 2', () => {
+      const deps: THookDeps = [
+        ['h', 1, [0, 5], [2]],
+        ['ic', 2, [3], [4]],
+        ['h', 3, [7]]
+      ]      
+      const rootNodes = constructDataGraph(deps)
+      const rootMaps = mapGraph(rootNodes)
+      
+      const n1 = getInfluencedNextNodes(rootNodes, { id: 1 })
+      expect(mapGraphSetToIds(n1)).toEqual(new Set([2, 3, 4, 7]))
     })
   })
 
