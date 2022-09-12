@@ -1,4 +1,4 @@
-import { Runner, IHookContext } from '../../src/index'
+import { Runner, IHookContext, before } from '../../src/index'
 
 import * as mockBM from '../mockBM'
 
@@ -136,5 +136,39 @@ describe('initContext', () => {
       expect(r.s1()).toEqual({ num: newVal })
       expect(r.c1()).toEqual(newVal * 2)
     })
+  })
+
+  describe('context serialization to server', () => {
+    beforeAll(() => {
+      process.env.TARGET = 'client'
+    })
+    afterAll(() => {
+      process.env.TARGET = ''
+    })
+    it('simple', () => {
+      const clientRunner = new Runner(mockBM.changeOver3ChainDriver)
+      const scope = clientRunner.prepareScope()
+      const result = clientRunner.executeDriver(scope)
+      
+      const context = scope.createShallowActionContext(scope.hooks[11]);
+
+      [11, 1, 2,
+        9,
+        6, 7, 8, 10].forEach(i => {
+          expect(`[${i}] ${context.data[i][0]}`).not.toEqual(`[${i}] unserialized`)
+        })
+    })
+    // it.only('simple', () => {
+    //   const clientRunner = new Runner(mockBM.changeOver3ChainDriver)
+    //   const scope = clientRunner.prepareScope()
+    //   const result = clientRunner.executeDriver(scope)
+      
+    //   const context = scope.createShallowActionContext(scope.hooks[11]);
+    //   [11, 1, 2,
+    //     9, 3, 4, 5,
+    //     6, 7, 8, 10].forEach(i => {
+    //       expect(context.data[i]).not.toEqual('unserialized')
+    //     })
+    // })
   })
 })

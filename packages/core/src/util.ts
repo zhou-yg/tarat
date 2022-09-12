@@ -927,11 +927,14 @@ export function getShallowDependentPrevNodes (
   rootNodes: Set<DataGraphNode>, current: { id: number },
 ) {
   return getPrevNodesWithFilter(rootNodes, current, arr => (
-    [arr[arr.length - 2]]
+    arr.length >= 2 ? [arr[arr.length - 2]] : []
   ))
 }
 
-export function getInfluencedNextNodes (rootNodes: Set<DataGraphNode>, current: { id: number }) {
+function getInfluencedNextNodesWithDependence (
+  rootNodes: Set<DataGraphNode>, current: { id: number },
+  getDependent: (current: { id: number }, source: DataGraphNode) => Set<DataGraphNode>
+) {
   const nextNodes = new Set<DataGraphNode>()
 
   dataGrachTraverse([...rootNodes], (n, ancestor) => {
@@ -939,7 +942,7 @@ export function getInfluencedNextNodes (rootNodes: Set<DataGraphNode>, current: 
       const allChildren = n.getAllChildren()
       allChildren.forEach(cn => {
         nextNodes.add(cn)
-        const currentDependentNodes = getDependentPrevNodesWithBlock(rootNodes, cn, new Set([n]))
+        const currentDependentNodes = getDependent(cn, n)
         currentDependentNodes.forEach(ccn => {
           nextNodes.add(ccn)
         })
@@ -950,6 +953,23 @@ export function getInfluencedNextNodes (rootNodes: Set<DataGraphNode>, current: 
 
   return nextNodes
 }
+
+export function getInfluencedNextNodes(
+  rootNodes: Set<DataGraphNode>, current: { id: number },
+) {
+  return getInfluencedNextNodesWithDependence(rootNodes, current, (current, trigger) => {
+    return getDependentPrevNodesWithBlock(rootNodes, current, new Set([trigger]))
+  })
+}
+
+export function getShallowInfluencedNextNodes(
+  rootNodes: Set<DataGraphNode>, current: { id: number },
+) {
+  return getInfluencedNextNodesWithDependence(rootNodes, current, (current, trigger) => {
+    return getShallowDependentPrevNodes(rootNodes, current)
+  })
+}
+
 
 export function constructDataGraph(contextDeps: THookDeps) {
   const nodesMap = new Map<number, DataGraphNode>()
@@ -1045,7 +1065,7 @@ export function getShallowRelatedIndexes(
   const rootNodes = constructDataGraph(contextDeps)
 
   indexArr.forEach(index => {
-    const nodes1 = getInfluencedNextNodes(rootNodes, { id: index })
+    const nodes1 = getShallowInfluencedNextNodes(rootNodes, { id: index })
     const nodes2 = getShallowDependentPrevNodes(rootNodes, { id: index });
     [nodes1, nodes2].forEach(s => {
       s.forEach(n => {

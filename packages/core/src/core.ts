@@ -34,7 +34,9 @@ import {
   isModelPatch,
   shortValue,
   getRelatedIndexes,
-  getShallowRelatedIndexes
+  getShallowRelatedIndexes,
+  getShallowDependentPrevNodes,
+  constructDataGraph
 } from './util'
 import EventEmitter from 'eventemitter3'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
@@ -1927,10 +1929,44 @@ export class CurrentRunnerScope<T extends Driver = any> {
       return new Set()
     }
     const hookIndexDeps = this.hookNumberIndexDeps()
-
     const tailIndexes = getShallowRelatedIndexes(hookIndex, hookIndexDeps)
-
     return tailIndexes
+  }
+  getDependenceByModel (indexes: Set<number>) {
+    const result = new Set<number>()
+
+    const hookIndexDeps = this.hookNumberIndexDeps()
+    const rootNodes = constructDataGraph(hookIndexDeps)
+
+    const task = (currentIndexes: Set<number>) => {
+      if(currentIndexes.size <= 0) {
+        return
+      }
+
+      const modelIndexes = new Set<number>()
+      currentIndexes.forEach(i => {
+        if (this.hooks[i] instanceof Model) {
+          modelIndexes.add(i)
+        }
+      })
+      if (modelIndexes.size > 0) {
+        const nextModelIndexes = new Set<number>()
+        modelIndexes.forEach(i => {
+          getShallowDependentPrevNodes(rootNodes, { id: i }).forEach(n => {
+            const r = result.has(n.id)
+            result.add(n.id)
+            if (this.hooks[n.id] instanceof Model && !r) {
+              nextModelIndexes.add(n.id)
+            }
+          })
+        })
+        task(nextModelIndexes)
+      }
+    }
+    
+    task(indexes)
+
+    return result
   }
 
   createBaseContext() {
@@ -1984,6 +2020,13 @@ export class CurrentRunnerScope<T extends Driver = any> {
     let deps = new Set<number>()
     if (h) {
       deps = this.getShallowRelatedHookIndexes(hookIndex)
+      /** model must need it's shallow dependent */
+      if (deps.size > 0) {
+        const modelDeps = this.getDependenceByModel(deps)
+        modelDeps.forEach(v => {
+          deps.add(v)
+        })
+      }
     }
 
     return this.runnerContext.serializeAction(
