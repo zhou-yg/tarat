@@ -1932,14 +1932,14 @@ export class CurrentRunnerScope<T extends Driver = any> {
     const tailIndexes = getShallowRelatedIndexes(hookIndex, hookIndexDeps)
     return tailIndexes
   }
-  getDependenceByModel (indexes: Set<number>) {
+  getDependenceByModel(indexes: Set<number>) {
     const result = new Set<number>()
 
     const hookIndexDeps = this.hookNumberIndexDeps()
     const rootNodes = constructDataGraph(hookIndexDeps)
 
     const task = (currentIndexes: Set<number>) => {
-      if(currentIndexes.size <= 0) {
+      if (currentIndexes.size <= 0) {
         return
       }
 
@@ -1963,7 +1963,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
         task(nextModelIndexes)
       }
     }
-    
+
     task(indexes)
 
     return result

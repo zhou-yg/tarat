@@ -362,12 +362,10 @@ export function changeOver3ChainDriver() {
   const m5 = prisma('item')
   const m6 = prisma('item')
 
-  const c1 = computed(() => {
-  })
+  const c1 = computed(() => {})
   const s4 = state(3)
 
-  const ic1 = inputComputeInServer((v: number) => {
-  })
+  const ic1 = inputComputeInServer((v: number) => {})
 
   return {
     ic1
@@ -386,7 +384,7 @@ Object.assign(changeOver3ChainDriver, {
     [8, 'm6'],
     [9, 'c1'],
     [10, 's4'],
-    [11, 'ic1'],
+    [11, 'ic1']
   ],
   __deps__: [
     ['h', 11, [6, 9], [1, 2]],
@@ -394,8 +392,8 @@ Object.assign(changeOver3ChainDriver, {
     ['h', 3, [5]],
     ['h', 6, [7, 8]],
     ['h', 8, [7]],
-    ['h', 7, [10]],
-  ],
+    ['h', 7, [10]]
+  ]
 })
 
 export function changeStateInputComputeServer2() {

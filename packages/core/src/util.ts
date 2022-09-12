@@ -811,7 +811,7 @@ export function dataGrachTraverse(
     }
   }
 
-  for (const s of [].concat(source)) {    
+  for (const s of [].concat(source)) {
     const r = task(s)
     if (r === false) {
       break
@@ -853,7 +853,7 @@ function getTypeFromContextDeps(contextDeps: THookDeps, index: number) {
   return r?.[0] || 'h'
 }
 
-export function mapGraph (s: Set<DataGraphNode>) {
+export function mapGraph(s: Set<DataGraphNode>) {
   const m = new Map<number, DataGraphNode>()
   s.forEach(n => {
     m.set(n.id, n)
@@ -861,16 +861,17 @@ export function mapGraph (s: Set<DataGraphNode>) {
   return m
 }
 
-export function mapGraphSetToIds (s: Set<DataGraphNode>) {
+export function mapGraphSetToIds(s: Set<DataGraphNode>) {
   return new Set([...s].map(n => n.id))
 }
 
-export function getNextNodes (current: DataGraphNode) {
+export function getNextNodes(current: DataGraphNode) {
   return current.getAllChildren()
 }
 
-export function getPrevNodes (
-  rootNodes: Set<DataGraphNode>, current: { id: number },
+export function getPrevNodes(
+  rootNodes: Set<DataGraphNode>,
+  current: { id: number }
 ) {
   const prevNodes = new Set<DataGraphNode>()
   dataGrachTraverse([...rootNodes], (n, ancestor) => {
@@ -883,8 +884,9 @@ export function getPrevNodes (
   return prevNodes
 }
 
-function getPrevNodesWithFilter (
-  rootNodes: Set<DataGraphNode>, current: { id: number },
+function getPrevNodesWithFilter(
+  rootNodes: Set<DataGraphNode>,
+  current: { id: number },
   filter: (ancestors: DataGraphNode[]) => DataGraphNode[]
 ) {
   const prevNodes = new Set<DataGraphNode>()
@@ -900,8 +902,11 @@ function getPrevNodesWithFilter (
   })
   return prevNodes
 }
-export function getDependentPrevNodes(rootNodes: Set<DataGraphNode>, current: { id: number }) {
-  return getPrevNodesWithFilter(rootNodes, current, (arr) => {
+export function getDependentPrevNodes(
+  rootNodes: Set<DataGraphNode>,
+  current: { id: number }
+) {
+  return getPrevNodesWithFilter(rootNodes, current, arr => {
     const len = arr.length
     let i = len - 1
     while (i >= 0) {
@@ -912,28 +917,34 @@ export function getDependentPrevNodes(rootNodes: Set<DataGraphNode>, current: { 
       }
       i--
     }
-    return arr.slice(i)    
+    return arr.slice(i)
   })
 }
-export function getDependentPrevNodesWithBlock (
-  rootNodes: Set<DataGraphNode>, current: { id: number },
+export function getDependentPrevNodesWithBlock(
+  rootNodes: Set<DataGraphNode>,
+  current: { id: number },
   blocks = new Set<DataGraphNode>()
 ) {
-  return getPrevNodesWithFilter(rootNodes, current, arr => (
+  return getPrevNodesWithFilter(rootNodes, current, arr =>
     arr.some(v => blocks.has(v)) ? [] : arr
-  ))
+  )
 }
-export function getShallowDependentPrevNodes (
-  rootNodes: Set<DataGraphNode>, current: { id: number },
+export function getShallowDependentPrevNodes(
+  rootNodes: Set<DataGraphNode>,
+  current: { id: number }
 ) {
-  return getPrevNodesWithFilter(rootNodes, current, arr => (
+  return getPrevNodesWithFilter(rootNodes, current, arr =>
     arr.length >= 2 ? [arr[arr.length - 2]] : []
-  ))
+  )
 }
 
-function getInfluencedNextNodesWithDependence (
-  rootNodes: Set<DataGraphNode>, current: { id: number },
-  getDependent: (current: { id: number }, source: DataGraphNode) => Set<DataGraphNode>
+function getInfluencedNextNodesWithDependence(
+  rootNodes: Set<DataGraphNode>,
+  current: { id: number },
+  getDependent: (
+    current: { id: number },
+    source: DataGraphNode
+  ) => Set<DataGraphNode>
 ) {
   const nextNodes = new Set<DataGraphNode>()
 
@@ -955,21 +966,34 @@ function getInfluencedNextNodesWithDependence (
 }
 
 export function getInfluencedNextNodes(
-  rootNodes: Set<DataGraphNode>, current: { id: number },
+  rootNodes: Set<DataGraphNode>,
+  current: { id: number }
 ) {
-  return getInfluencedNextNodesWithDependence(rootNodes, current, (current, trigger) => {
-    return getDependentPrevNodesWithBlock(rootNodes, current, new Set([trigger]))
-  })
+  return getInfluencedNextNodesWithDependence(
+    rootNodes,
+    current,
+    (current, trigger) => {
+      return getDependentPrevNodesWithBlock(
+        rootNodes,
+        current,
+        new Set([trigger])
+      )
+    }
+  )
 }
 
 export function getShallowInfluencedNextNodes(
-  rootNodes: Set<DataGraphNode>, current: { id: number },
+  rootNodes: Set<DataGraphNode>,
+  current: { id: number }
 ) {
-  return getInfluencedNextNodesWithDependence(rootNodes, current, (current, trigger) => {
-    return getShallowDependentPrevNodes(rootNodes, current)
-  })
+  return getInfluencedNextNodesWithDependence(
+    rootNodes,
+    current,
+    (current, trigger) => {
+      return getShallowDependentPrevNodes(rootNodes, current)
+    }
+  )
 }
-
 
 export function constructDataGraph(contextDeps: THookDeps) {
   const nodesMap = new Map<number, DataGraphNode>()
@@ -1043,8 +1067,8 @@ export function getRelatedIndexes(
 
   indexArr.forEach(index => {
     const nodes1 = getInfluencedNextNodes(rootNodes, { id: index })
-    const nodes2 = getDependentPrevNodes(rootNodes, { id: index });
-    [nodes1, nodes2].forEach(s => {
+    const nodes2 = getDependentPrevNodes(rootNodes, { id: index })
+    ;[nodes1, nodes2].forEach(s => {
       s.forEach(n => {
         deps.add(n.id)
       })
@@ -1066,8 +1090,8 @@ export function getShallowRelatedIndexes(
 
   indexArr.forEach(index => {
     const nodes1 = getShallowInfluencedNextNodes(rootNodes, { id: index })
-    const nodes2 = getShallowDependentPrevNodes(rootNodes, { id: index });
-    [nodes1, nodes2].forEach(s => {
+    const nodes2 = getShallowDependentPrevNodes(rootNodes, { id: index })
+    ;[nodes1, nodes2].forEach(s => {
       s.forEach(n => {
         deps.add(n.id)
       })
