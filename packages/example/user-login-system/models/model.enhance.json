@@ -1,0 +1,15 @@
+{
+  "extraRelation": [
+    {
+      "from": {
+        "model": "User",
+        "field": "avatar2"
+      },
+      "type": "1:1",
+      "to": {
+        "model": "StorageItem",
+        "field": "userId"
+      }
+    }
+  ]
+}

@@ -7,8 +7,11 @@ import {
   inputCompute,
   inputComputeInServer,
   writePrisma,
+  compose,
 } from "tarat-core";
 import { nanoid } from "nanoid";
+import uploaderDriver from './compose/uploader'
+import * as indexes from '@/models/indexes'
 
 export const DEFAULT_AVATAR = "/default-user-icon.jpeg";
 
@@ -26,14 +29,7 @@ export default function login() {
 
   const signAndAutoLogin = state(true);
 
-  const userDataByInput = model("user", (prev) => {}, {
-    immediate: false,
-  });
-  const writeUserData = writePrisma(userDataByInput, () => ({
-    name: inputName(),
-    password: inputPassword(),
-    avatar: inputAvatar(),
-  }));
+  const uploader = compose(uploaderDriver)
 
   const cookieId = cache("userDataKey", { from: "cookie" }); // just run in server because by it depends 'cookie'
 
@@ -54,17 +50,25 @@ export default function login() {
   );
   const writeSessionStore = writePrisma(sessionStore);
 
-  const userDataByCookie = model("user", (prev) => {
+  const userDataByCookie = model(indexes.User, (prev) => {
     const ss = sessionStore();
-    console.log("[userDataByCookie] ss: ", ss);
     if (ss && ss.length > 0) {
       return {
         where: {
           id: ss[0].userId,
         },
+        include: {
+          avatar2: true
+        }
       };
     }
   });
+  const writeUserData = writePrisma(userDataByCookie, () => ({
+    name: inputName(),
+    password: inputPassword(),
+    avatar: inputAvatar(),
+  }));
+
   const userData = computed(() => {
     const u1 = userDataByCookie();
     if (u1?.length > 0) {
@@ -113,7 +117,7 @@ export default function login() {
   const sign = inputComputeInServer(function* () {
     const inputNameVal = inputName();
     const inputPasswordVal = inputPassword();
-    const r = yield userDataByInput.exist({
+    const r = yield userDataByCookie.exist({
       name: inputNameVal,
       password: inputPasswordVal,
     });
@@ -132,7 +136,7 @@ export default function login() {
   const login = inputComputeInServer(function* () {
     const inputNameVal = inputName();
     const inputPasswordVal = inputPassword();
-    const existUser = yield userDataByInput.exist({
+    const existUser = yield userDataByCookie.exist({
       name: inputNameVal,
       password: inputPasswordVal,
     }); // query DB
@@ -181,18 +185,45 @@ export default function login() {
   });
 
   const updateInfo = inputComputeInServer(function* () {
-    // name(() => inputName());
-    // password(() => inputPassword());
-    // avatar(() => inputAvatar());
-    yield writeUserData.update(userData().id, {
-      name: inputName(),
-      password: inputPassword(),
-      avatar: inputAvatar(),
-    });
-    closeEdit();
+    const ud = userData()
+    if (ud) {
+      const oss = uploader.OSSLink()
+      if (ud.avatar2) {
+        yield uploader.updateStorage(ud.avatar2.id)      
+      } else if (oss) {
+        yield uploader.writeFileStroage.create({
+          ...oss,
+          user: {
+            connect: {
+              id: ud.id
+            }
+          }
+        }, {
+          user: true
+        })
+      }
+
+      yield writeUserData.update(ud.id, {
+        name: inputName(),
+        password: inputPassword(),
+        avatar: inputAvatar(),
+      });
+      closeEdit();
+    }
   });
 
+  // const imgForDisplay = computed(function * () {
+  //   const file = uploader.inputFile()
+  //   if (file) {
+  //     return URL.createObjectURL(file)
+  //   }
+  // })
+
   return {
+    /** compose */
+    inputFile: uploader.inputFile,
+    /** inside */
+    // imgForDisplay,
     alreadyLogin,
     enableEdit,
     openEdit,

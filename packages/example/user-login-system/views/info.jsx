@@ -15,8 +15,13 @@ const UserInfo = (props, ref) => {
   const alreadyLogin = loginHook.alreadyLogin()
 
   const userData = loginHook.userData()
+  console.log('userData: ', userData);
 
   const edit = loginHook.enableEdit()
+
+  const ff = loginHook.inputFile()
+
+  const display = ff ? URL.createObjectURL(ff) : null
 
   return (
     <div className={`${s.login} shadow rounded relative`}>
@@ -34,13 +39,16 @@ const UserInfo = (props, ref) => {
       {alreadyLogin ? (
         <div className="flex items-center flex-col">
           <div className="w-20 h-20 rounded-full">
-            <img className="w-full h-full" src={userData.avatar || DEFAULT_AVATAR} />
+            <img className="w-full h-full" src={
+              display || userData.avatar2?.link || DEFAULT_AVATAR
+            } />
           </div>
           {edit ? (
             <div className="mt-2 text-lg" >
               <input
-                onChange={e => loginHook.inputAvatar(() => e.target.value)}
-                value={loginHook.inputAvatar()} className="border-x border-y px-2 py-1" />
+                type="file"
+                onChange={e => loginHook.inputFile(() => e.target.files[0])}
+                className="border-x border-y px-2 py-1" />
             </div>
           ) : ''}
           <div className="mt-2 text-lg" >
