@@ -8,6 +8,7 @@ import {
   getDependentPrevNodes,
   getInfluencedNextNodes,
   getPrevNodes,
+  getRelatedIndexes,
   mapGraph,
   mapGraphSetToIds,
   set,
@@ -594,6 +595,32 @@ describe('util', () => {
   })
 
   describe('getRelatedIndexes', () => {
+    it('simple', () => {
+      const deps: THookDeps = [
+        ['h', 1, [0, 5], [2]],
+        ['ic', 2, [3], [4]],
+        ['h', 3, [7]]
+      ]      
+      const rootNodes = constructDataGraph(deps)
+      const rootMaps = mapGraph(rootNodes)
+      
+      const r1 = getRelatedIndexes(1, deps)
+  
+      expect(r1).toEqual(new Set([1, 0, 5, 2,3,4,7]))
+    })
+    it('ic call ic and h', () => {
+      const deps: THookDeps = [
+        ['h', 1, [0, 5], [2]],
+        ['ic', 2, [3], [4]],
+        ['h', 6, [1, 8]],
+        ['h', 3, [7]]
+      ]      
+      const rootNodes = constructDataGraph(deps)
+      const rootMaps = mapGraph(rootNodes)
+      
+      const n1 = getRelatedIndexes(1, deps)
+      expect((n1)).toEqual(new Set([1, 0, 5, 2,3,4,7, 6, 8]))
+    })
   })
 
   describe('getShallowRelatedIndexes', () => {

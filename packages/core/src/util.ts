@@ -897,7 +897,7 @@ function sliceGetChain (arr: DataGraphNode[]) {
   return arr.slice(i)
 }
 
-function getDependentPrevNodesWith (
+function getPrevNodesWithFilter (
   rootNodes: Set<DataGraphNode>, current: { id: number },
   filter: (ancestors: DataGraphNode[]) => DataGraphNode[]
 ) {
@@ -915,13 +915,13 @@ function getDependentPrevNodesWith (
   return prevNodes
 }
 export function getDependentPrevNodes(rootNodes: Set<DataGraphNode>, current: { id: number }) {
-  return getDependentPrevNodesWith(rootNodes, current, sliceGetChain)
+  return getPrevNodesWithFilter(rootNodes, current, sliceGetChain)
 }
 export function getDependentPrevNodesWithBlock (
   rootNodes: Set<DataGraphNode>, current: { id: number },
   blocks = new Set<DataGraphNode>()
 ) {
-  return getDependentPrevNodesWith(rootNodes, current, arr => (
+  return getPrevNodesWithFilter(rootNodes, current, arr => (
     arr.some(v => blocks.has(v)) ? [] : arr
   ))
 }
@@ -1017,7 +1017,13 @@ export function getRelatedIndexes(
   const rootNodes = constructDataGraph(contextDeps)
 
   indexArr.forEach(index => {
-    
+    const nodes1 = getInfluencedNextNodes(rootNodes, { id: index })
+    const nodes2 = getDependentPrevNodes(rootNodes, { id: index });
+    [nodes1, nodes2].forEach(s => {
+      s.forEach(n => {
+        deps.add(n.id)
+      })
+    })
   })
 
   return deps
