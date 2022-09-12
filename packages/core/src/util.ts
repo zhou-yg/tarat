@@ -883,20 +883,6 @@ export function getPrevNodes (
   return prevNodes
 }
 
-function sliceGetChain (arr: DataGraphNode[]) {
-  const len = arr.length
-  let i = len - 1
-  while (i >= 0) {
-    const last = arr[i]
-    const penultimate = arr[i - 1]
-    if (!penultimate || !penultimate.toGet.has(last)) {
-      break
-    }
-    i--
-  }
-  return arr.slice(i)
-}
-
 function getPrevNodesWithFilter (
   rootNodes: Set<DataGraphNode>, current: { id: number },
   filter: (ancestors: DataGraphNode[]) => DataGraphNode[]
@@ -915,7 +901,19 @@ function getPrevNodesWithFilter (
   return prevNodes
 }
 export function getDependentPrevNodes(rootNodes: Set<DataGraphNode>, current: { id: number }) {
-  return getPrevNodesWithFilter(rootNodes, current, sliceGetChain)
+  return getPrevNodesWithFilter(rootNodes, current, (arr) => {
+    const len = arr.length
+    let i = len - 1
+    while (i >= 0) {
+      const last = arr[i]
+      const penultimate = arr[i - 1]
+      if (!penultimate || !penultimate.toGet.has(last)) {
+        break
+      }
+      i--
+    }
+    return arr.slice(i)    
+  })
 }
 export function getDependentPrevNodesWithBlock (
   rootNodes: Set<DataGraphNode>, current: { id: number },
@@ -923,6 +921,13 @@ export function getDependentPrevNodesWithBlock (
 ) {
   return getPrevNodesWithFilter(rootNodes, current, arr => (
     arr.some(v => blocks.has(v)) ? [] : arr
+  ))
+}
+export function getShallowDependentPrevNodes (
+  rootNodes: Set<DataGraphNode>, current: { id: number },
+) {
+  return getPrevNodesWithFilter(rootNodes, current, arr => (
+    [arr[arr.length - 2]]
   ))
 }
 
@@ -1029,7 +1034,7 @@ export function getRelatedIndexes(
   return deps
 }
 
-export function getTailRelatedIndexes(
+export function getShallowRelatedIndexes(
   index: number[] | number,
   contextDeps: THookDeps
 ) {
@@ -1038,6 +1043,16 @@ export function getTailRelatedIndexes(
   const deps = new Set<number>(indexArr)
 
   const rootNodes = constructDataGraph(contextDeps)
+
+  indexArr.forEach(index => {
+    const nodes1 = getInfluencedNextNodes(rootNodes, { id: index })
+    const nodes2 = getShallowDependentPrevNodes(rootNodes, { id: index });
+    [nodes1, nodes2].forEach(s => {
+      s.forEach(n => {
+        deps.add(n.id)
+      })
+    })
+  })
 
   return deps
 }

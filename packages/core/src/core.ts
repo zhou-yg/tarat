@@ -34,7 +34,7 @@ import {
   isModelPatch,
   shortValue,
   getRelatedIndexes,
-  getTailRelatedIndexes
+  getShallowRelatedIndexes
 } from './util'
 import EventEmitter from 'eventemitter3'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
@@ -1928,7 +1928,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
     }
     const hookIndexDeps = this.hookNumberIndexDeps()
 
-    const tailIndexes = getTailRelatedIndexes(hookIndex, hookIndexDeps)
+    const tailIndexes = getShallowRelatedIndexes(hookIndex, hookIndexDeps)
 
     return tailIndexes
   }
