@@ -18,7 +18,7 @@ const driverWeakMap = new Map<Driver, ArgResultMap>()
 
 typeof window !== 'undefined' && (window.driverWeakMap = driverWeakMap)
 
-const scopeSymbol = Symbol.for('@taratScope')
+const scopeSymbol = Symbol.for('@taratReactScope')
 
 export interface IProgress {
   state: EScopeState
