@@ -906,8 +906,9 @@ export class Computed<T> extends AsyncState<T | Symbol> {
   run(innerReactiveChain?: ReactiveChain) {
     pushComputed(this)
 
+    type ComputedReturnType = T | Symbol
     // making sure the hook called by computed can register thier chain
-    const r: T | Promise<T> | Generator<unknown, T> = ReactiveChain.withChain(
+    const r: ComputedReturnType | Promise<ComputedReturnType> | Generator<unknown, ComputedReturnType> = ReactiveChain.withChain(
       innerReactiveChain,
       () => {
         return this.getter(this._internalValue)
@@ -917,7 +918,7 @@ export class Computed<T> extends AsyncState<T | Symbol> {
     popComputed()
     if (isPromise(r)) {
       const { end, valid } = this.startAsyncGetter()
-      ;(r as Promise<T>).then((asyncResult: T) => {
+      ;(r as unknown as Promise<ComputedReturnType>).then((asyncResult: ComputedReturnType) => {
         if (valid()) {
           this.update(asyncResult, [], false, innerReactiveChain)
           end()
@@ -930,15 +931,15 @@ export class Computed<T> extends AsyncState<T | Symbol> {
           r as Generator,
           () => pushComputed(this),
           () => popComputed()
-        ) as Promise<T>
-      ).then((asyncResult: T) => {
+        ) as unknown as Promise<ComputedReturnType>
+      ).then((asyncResult: ComputedReturnType) => {
         if (valid()) {
           this.update(asyncResult, [], false, innerReactiveChain)
           end()
         }
       })
     } else {
-      this.update(r as T, [], false, innerReactiveChain)
+      this.update(r as unknown as ComputedReturnType, [], false, innerReactiveChain)
       /** @TODO this code need consider again.maybe need re-design */
       this.init = false
     }
@@ -2861,13 +2862,11 @@ export function cache<T>(key: string, options: ICacheOptions<T>) {
   return currentHookFactory.cache<T>(key, options)
 }
 
-type FComputedFuncAsync<T, S = T extends Symbol ? undefined : T> = (
-  prev?: T
-) => Promise<S>
-type FComputedFunc<T, S = T extends Symbol ? undefined : T> = (prev?: T) => S
-type FComputedFuncGenerator<T, S = T extends Symbol ? undefined : T> = (
-  prev?: T
-) => Generator<unknown, S>
+type FComputedFuncGenerator<T> = (prev?: T) => Generator<any, T, unknown>
+type FComputedFuncAsync<T> = (prev?: T) => T
+type FComputedFunc<T> = (prev?: T) => T
+
+// type PickGeneratorReturnType<T> = T extends 
 
 export function computed<T>(
   fn: FComputedFuncGenerator<T>
@@ -2905,7 +2904,7 @@ type InputComputeFn<T extends any[]> = (...arg: T) => void
 type AsyncInputComputeFn<T extends any[]> = (...arg: T) => Promise<void>
 type GeneratorInputComputeFn<T extends any[]> = (
   ...arg: T
-) => Generator<T, void>
+) => Generator<unknown, void, T>
 
 function updateInputCompute(func: any) {
   const { hooks, initialHooksSet } = currentRunnerScope!

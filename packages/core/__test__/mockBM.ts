@@ -659,10 +659,12 @@ export function asyncComputed2(v1: number, v2: number) {
   })
   return { s, c }
 }
+
+type AnyYieldType = string | number
 export function generatorComputed(v1: number, v2: number) {
   const s = state(v1)
   const c = computed(function* () {
-    yield new Promise(resolve => setTimeout(resolve, 1))
+    yield new Promise<AnyYieldType>(resolve => setTimeout(resolve, 1))
     return s() + v2
   })
   return { s, c }
