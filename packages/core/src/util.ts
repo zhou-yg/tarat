@@ -318,19 +318,23 @@ export interface IDataPatch {
   value?: any
 }
 // for model
+export type IModelPatchCreate = {
+  op: 'create'
+  value: IModelCreateData
+}
+export type IModelPatchUpdate = {
+  op: 'update'
+  value: IModelData
+}
+export type IModelPatchRemove = {
+  op: 'remove'
+  value: Omit<IModelData, 'data'>
+}
+
 export type IModelPatch =
-  | {
-      op: 'create'
-      value: IModelCreateData
-    }
-  | {
-      op: 'update'
-      value: IModelData
-    }
-  | {
-      op: 'remove'
-      value: Omit<IModelData, 'data'>
-    }
+  | IModelPatchCreate
+  | IModelPatchUpdate
+  | IModelPatchRemove
 
 export interface IStackUnit {
   value: {

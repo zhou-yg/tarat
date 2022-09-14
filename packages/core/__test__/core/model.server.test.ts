@@ -306,7 +306,7 @@ describe('model', () => {
   })
 
   describe('dependent models', () => {
-    it.only('apply compute patches sequence', async () => {
+    it('apply compute patches sequence', async () => {
       const runner = new Runner(mockBM.multiPatchesInputCompute)
       const result = runner.init()
       

@@ -36,7 +36,10 @@ import {
   getRelatedIndexes,
   getShallowRelatedIndexes,
   getShallowDependentPrevNodes,
-  constructDataGraph
+  constructDataGraph,
+  IModelPatchCreate,
+  IModelPatchUpdate,
+  IModelPatchRemove
 } from './util'
 import EventEmitter from 'eventemitter3'
 import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
@@ -578,30 +581,33 @@ export class Prisma<T extends any[]> extends Model<T> {
 export class WritePrisma<T> extends WriteModel<T> {
   identifier = 'prisma'
   async executeModelPath(ps: IModelPatch[]) {
-    const arr = ps.map(p => {
+    const { applyComputeParalle } = this.scope
+
+    const opMap: Record<
+      IModelPatch['op'],
+      (p: IModelPatch) => Promise<void | number[]>
+    > = {
+      create: (p: IModelPatchCreate) =>
+        getPlugin('Model').create(this.identifier, this.entity, p.value),
+      update: (p: IModelPatchUpdate) =>
+        getPlugin('Model').update(this.identifier, this.entity, p.value),
+      remove: (p: IModelPatchRemove) =>
+        getPlugin('Model').remove(this.identifier, this.entity, p.value)
+    }
+
+    let promiseArr: Promise<any>[] = []
+    for (const p of ps) {
       currentReactiveChain?.addCall(this, p.op)
-      switch (p.op) {
-        case 'create':
-          return getPlugin('Model').create(
-            this.identifier,
-            this.entity,
-            p.value
-          )
-        case 'update':
-          return getPlugin('Model').update(
-            this.identifier,
-            this.entity,
-            p.value
-          )
-        case 'remove':
-          return getPlugin('Model').remove(
-            this.identifier,
-            this.entity,
-            p.value
-          )
+      const r = opMap[p.op](p)
+      if (applyComputeParalle) {
+        promiseArr.push(r)
+      } else {
+        await r
       }
-    })
-    await Promise.all(arr)
+    }
+    if (promiseArr.length > 0) {
+      await Promise.all(promiseArr)
+    }
   }
   async createRow(obj?: Partial<T>, include?: { [k in keyof T]: boolean }) {
     log('[WritePrisma.createRow]')
@@ -908,7 +914,10 @@ export class Computed<T> extends AsyncState<T | Symbol> {
 
     type ComputedReturnType = T | Symbol
     // making sure the hook called by computed can register thier chain
-    const r: ComputedReturnType | Promise<ComputedReturnType> | Generator<unknown, ComputedReturnType> = ReactiveChain.withChain(
+    const r:
+      | ComputedReturnType
+      | Promise<ComputedReturnType>
+      | Generator<unknown, ComputedReturnType> = ReactiveChain.withChain(
       innerReactiveChain,
       () => {
         return this.getter(this._internalValue)
@@ -918,12 +927,14 @@ export class Computed<T> extends AsyncState<T | Symbol> {
     popComputed()
     if (isPromise(r)) {
       const { end, valid } = this.startAsyncGetter()
-      ;(r as unknown as Promise<ComputedReturnType>).then((asyncResult: ComputedReturnType) => {
-        if (valid()) {
-          this.update(asyncResult, [], false, innerReactiveChain)
-          end()
+      ;(r as unknown as Promise<ComputedReturnType>).then(
+        (asyncResult: ComputedReturnType) => {
+          if (valid()) {
+            this.update(asyncResult, [], false, innerReactiveChain)
+            end()
+          }
         }
-      })
+      )
     } else if (isGenerator(r)) {
       const { end, valid } = this.startAsyncGetter()
       ;(
@@ -939,7 +950,12 @@ export class Computed<T> extends AsyncState<T | Symbol> {
         }
       })
     } else {
-      this.update(r as unknown as ComputedReturnType, [], false, innerReactiveChain)
+      this.update(
+        r as unknown as ComputedReturnType,
+        [],
+        false,
+        innerReactiveChain
+      )
       /** @TODO this code need consider again.maybe need re-design */
       this.init = false
     }
@@ -1006,13 +1022,18 @@ export class InputCompute<P extends any[] = any> extends Hook {
   inputFuncStart() {}
   commitComputePatches(
     reactiveChain?: ReactiveChain
-  ): (void | Promise<void>)[] {
+  ): (void | Promise<void>)[] | undefined {
     return this.scope.applyAllComputePatches(this, reactiveChain)
   }
-  inputFuncEnd(reactiveChain?: ReactiveChain) {
-    this.commitComputePatches(reactiveChain)
+  inputFuncEnd(reactiveChain?: ReactiveChain): Promise<void> {
+    const r = this.commitComputePatches(reactiveChain)
     unFreeze({ _hook: this })
     this.emit(EHookEvents.afterCalling, this)
+
+    if (r?.some(p => isPromise(p))) {
+      return Promise.all(r).then(r => {})
+    }
+    return Promise.resolve()
   }
 
   async run(...args: any): Promise<void> {
@@ -1124,7 +1145,7 @@ class AsyncInputCompute<T extends any[]>
 }
 
 class InputComputeInServer<P extends any[]> extends AsyncInputCompute<P> {
-  async run(...args: any[]) {
+  async run(...args: any[]): Promise<void> {
     const { end, valid } = this.startAsyncGetter()
 
     this.emit(EHookEvents.beforeCalling, this)
@@ -1143,8 +1164,9 @@ class InputComputeInServer<P extends any[]> extends AsyncInputCompute<P> {
       }
     }
     if (valid()) {
-      this.inputFuncEnd()
+      const r = this.inputFuncEnd()
       end()
+      return r
     }
   }
 }
@@ -1854,20 +1876,31 @@ export class CurrentRunnerScope<T extends Driver = any> {
     currentInputCompute: InputCompute,
     reactiveChain?: ReactiveChain
   ): (void | Promise<void>)[] | undefined {
-    const hookModified = this.hooks.filter(h => {
+    const { applyComputeParalle, hooks } = this
+    const hookModified = hooks.filter(h => {
       if (h && (h as State).inputComputePatchesMap) {
         return (h as State).inputComputePatchesMap.get(currentInputCompute)
       }
     })
 
     if (hookModified.length) {
+      let prevPromise: Promise<void> | null = null
+
       return hookModified.map(h => {
         /** @TODO here appending new chain maybe in method of their self  */
         const newChildChain = reactiveChain?.addUpdate(h as State)
-        return (h as State).applyComputePatches(
-          currentInputCompute,
-          newChildChain
-        )
+        if (h instanceof Model || h instanceof WriteModel) {
+          const r = h.applyComputePatches(currentInputCompute, newChildChain)
+          if (applyComputeParalle) {
+            prevPromise = prevPromise ? prevPromise.then(() => r) : r
+          }
+          return r
+        } else {
+          return (h as State).applyComputePatches(
+            currentInputCompute,
+            newChildChain
+          )
+        }
       })
     }
   }
@@ -2871,7 +2904,7 @@ type FComputedFuncGenerator<T> = (prev?: T) => Generator<any, T, unknown>
 type FComputedFuncAsync<T> = (prev?: T) => T
 type FComputedFunc<T> = (prev?: T) => T
 
-// type PickGeneratorReturnType<T> = T extends 
+// type PickGeneratorReturnType<T> = T extends
 
 export function computed<T>(
   fn: FComputedFuncGenerator<T>

@@ -507,19 +507,19 @@ export function changeStateGeneratorInputCompute(
     changeS1
   }
 }
-export function multiPatchesInputCompute () {
+export function multiPatchesInputCompute() {
   const s1 = state(0)
-  const item = prisma<{ id?:number, name: string }[]>('item')
+  const item = prisma<{ id?: number; name: string }[]>('item')
   const writeItem = writePrisma(item)
 
-  const ic = inputCompute(function * () {
+  const ic = inputCompute(function* () {
     yield new Promise<void>(resolve => {
       s1(v => v + 1)
       resolve()
     })
 
-    yield writeItem.create({ name: String(s1()) })
-    
+    yield writeItem.create({ id: 3, name: String(s1()) })
+
     yield writeItem.update(item()[0].id, { name: 'updated' })
   })
 
@@ -527,7 +527,7 @@ export function multiPatchesInputCompute () {
     ic,
     item,
     writeItem,
-    s1,
+    s1
   }
 }
 
