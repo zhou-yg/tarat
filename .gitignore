@@ -120,6 +120,10 @@ dist/
 .taratBuild
 
 packages/example/*/models/customPrismaClient/
+packages/example/*/public/*
 packages/core/__test__/database/autoPrisma
 
 packages/example/file-uploader/public
+
+libquery_engine-darwin.dylib.node
+

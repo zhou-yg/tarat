@@ -8,7 +8,8 @@ export default function User () {
   const loginHook = useTarat(login)
   const progress = useProgress(loginHook)  
   const notLogin = progress.state === 'idle' && !loginHook.alreadyLogin()
-  console.log('notLogin: ', progress.state, loginHook.alreadyLogin(), '=>', notLogin);
+  console.log('progress:', progress.state);
+  console.log('login:', loginHook.alreadyLogin(), notLogin);
   
   return (
     <div className="bg-slate-100 h-screen flex justify-center" >

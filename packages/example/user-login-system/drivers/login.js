@@ -22,7 +22,6 @@ export default function login() {
 
   const enableEdit = state(false);
 
-  const inputAvatar = state();
   const inputName = state();
   const inputPassword = state();
   const repeatPassword = state();
@@ -66,7 +65,6 @@ export default function login() {
   const writeUserData = writePrisma(userDataByCookie, () => ({
     name: inputName(),
     password: inputPassword(),
-    avatar: inputAvatar(),
   }));
 
   const userData = computed(() => {
@@ -93,7 +91,7 @@ export default function login() {
    * common:
    * 1.http error
    */
-  const errorTip1 = computed(async () => {
+  const errorTip1 = computed(() => {
     const inputNameVal = inputName();
     const inputPasswordVal = inputPassword();
     const repeatPasswordVal = repeatPassword();
@@ -172,13 +170,11 @@ export default function login() {
 
   const openEdit = inputCompute(() => {
     const ud = userData();
-    inputAvatar(() => ud.avatar);
     inputName(() => ud.name);
     inputPassword(() => ud.password);
     enableEdit(() => true);
   });
   const closeEdit = inputCompute(() => {
-    inputAvatar(() => "");
     inputName(() => "");
     inputPassword(() => "");
     enableEdit(() => false);
@@ -196,8 +192,8 @@ export default function login() {
           user: {
             connect: {
               id: ud.id
-            }
-          }
+            },
+          },
         }, {
           user: true
         })
@@ -206,7 +202,6 @@ export default function login() {
       yield writeUserData.update(ud.id, {
         name: inputName(),
         password: inputPassword(),
-        avatar: inputAvatar(),
       });
       closeEdit();
     }
@@ -231,7 +226,6 @@ export default function login() {
     name,
     password,
     avatar,
-    inputAvatar,
     inputName,
     inputPassword,
     repeatPassword,

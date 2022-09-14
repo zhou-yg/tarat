@@ -23,7 +23,6 @@ model User {
 
   name     String       @unique
   password String
-  avatar   String?
   avatar2  StorageItem?
 }
 

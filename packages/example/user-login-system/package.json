@@ -21,8 +21,9 @@
   },
   "dependencies": {
     "@ant-design/icons": "^4.7.0",
+    "@prisma/client": "4.x.x",
     "classnames": "^2.3.1",
-    "file-uploader": "workspace:0.0.1",
+    "file-uploader": "workspace:*",
     "lodash": "^4.17.21",
     "nanoid": "3.x.x"
   },

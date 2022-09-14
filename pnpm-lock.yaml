@@ -344,7 +344,7 @@ importers:
       '@ant-design/icons': ^4.7.0
       '@babel/core': ^7.18.6
       '@babel/preset-react': ^7.18.6
-      '@prisma/client': ^3.14.0
+      '@prisma/client': 4.x.x
       '@types/lodash': ^4.14.182
       '@types/react-dom': ^18.0.5
       classnames: ^2.3.1
@@ -364,7 +364,7 @@ importers:
       vite: ^2.9.9
     dependencies:
       '@ant-design/icons': 4.7.0_biqbaboplfbrettd7655fr4n2y
-      '@prisma/client': 3.15.1_prisma@3.15.1
+      '@prisma/client': 4.2.1
       classnames: 2.3.1
       file-uploader: link:../file-uploader
       lodash: 4.17.21
@@ -1768,6 +1768,19 @@ packages:
     dependencies:
       '@prisma/engines-version': 3.15.1-1.461d6a05159055555eb7dfb337c9fb271cbd4d7e
       prisma: 3.15.1
+
+  /@prisma/client/4.2.1:
+    resolution: {integrity: sha512-PZBkY60+k5oix+e6IUfl3ub8TbRLNsPLdfWrdy2eh80WcHTaT+/UfvXf/B7gXedH7FRtbPFHZXk1hZenJiJZFQ==}
+    engines: {node: '>=14.17'}
+    requiresBuild: true
+    peerDependencies:
+      prisma: '*'
+    peerDependenciesMeta:
+      prisma:
+        optional: true
+    dependencies:
+      '@prisma/engines-version': 4.2.0-33.2920a97877e12e055c1333079b8d19cee7f33826
+    dev: false
 
   /@prisma/client/4.2.1_prisma@4.2.1:
     resolution: {integrity: sha512-PZBkY60+k5oix+e6IUfl3ub8TbRLNsPLdfWrdy2eh80WcHTaT+/UfvXf/B7gXedH7FRtbPFHZXk1hZenJiJZFQ==}
