@@ -154,7 +154,4 @@ describe('inputCompute', () => {
     
     expect(onRunnerUpdate).toHaveBeenCalledTimes(2)
   })
-  it('apply compute sequence', () => {
-    
-  })
 })

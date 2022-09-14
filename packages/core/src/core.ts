@@ -1605,9 +1605,12 @@ export class CurrentRunnerScope<T extends Driver = any> {
 
   reactiveChainStack: ReactiveChain[] = []
 
-  // indicate can beleive the model data in context
+  /**
+   * receive by runner options
+   */
   beleiveContext = false
   updateCallbackSync = false
+  applyComputeParalle = false
 
   effectFuncArr: Function[] = []
   disposeFuncArr: Function[] = []
@@ -1647,8 +1650,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
   }
 
   setOptions(op: Partial<IRunnerOptions>) {
-    this.beleiveContext = op.beleiveContext
-    this.updateCallbackSync = op.updateCallbackSync
+    Object.assign(this, op)
   }
 
   effect(f: Function) {
@@ -2128,6 +2130,7 @@ export interface IRunnerOptions {
   // scope
   beleiveContext: boolean
   updateCallbackSync?: boolean
+  applyComputeParalle?: boolean
   //
   runnerContext?: Symbol
 }
@@ -2136,7 +2139,8 @@ export class Runner<T extends Driver> {
   scope: CurrentRunnerScope<T>
   options: IRunnerOptions = {
     beleiveContext: false,
-    updateCallbackSync: false
+    updateCallbackSync: false,
+    applyComputeParalle: false
   }
   constructor(public driver: T, options?: IRunnerOptions) {
     Object.assign(this.options, options)
@@ -2164,7 +2168,8 @@ export class Runner<T extends Driver> {
     )
     scope.setOptions({
       updateCallbackSync: this.options.updateCallbackSync,
-      beleiveContext: this.options.beleiveContext
+      beleiveContext: this.options.beleiveContext,
+      applyComputeParalle: this.options.applyComputeParalle
     })
 
     return scope

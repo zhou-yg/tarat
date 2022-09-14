@@ -304,4 +304,26 @@ describe('model', () => {
       ])
     })
   })
+
+  describe('dependent models', () => {
+    it.only('apply compute patches sequence', async () => {
+      const runner = new Runner(mockBM.multiPatchesInputCompute)
+      const result = runner.init()
+      
+      await runner.scope.ready()
+
+      expect(result.item()).toEqual([
+        { id: 1, name: 'a' },
+        { id: 2, name: 'b' },
+      ])
+
+      await result.ic()
+  
+      expect(result.item()).toEqual([
+        { id: 1, name: 'updated' },
+        { id: 2, name: 'b' },
+        { id: 3, name: '1'}
+      ])
+    })  
+  })
 })

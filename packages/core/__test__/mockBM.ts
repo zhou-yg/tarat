@@ -1,3 +1,4 @@
+import { stat, write } from 'fs'
 import {
   state,
   model,
@@ -504,6 +505,29 @@ export function changeStateGeneratorInputCompute(
   return {
     ...ps,
     changeS1
+  }
+}
+export function multiPatchesInputCompute () {
+  const s1 = state(0)
+  const item = prisma<{ id?:number, name: string }[]>('item')
+  const writeItem = writePrisma(item)
+
+  const ic = inputCompute(function * () {
+    yield new Promise<void>(resolve => {
+      s1(v => v + 1)
+      resolve()
+    })
+
+    yield writeItem.create({ name: String(s1()) })
+    
+    yield writeItem.update(item()[0].id, { name: 'updated' })
+  })
+
+  return {
+    ic,
+    item,
+    writeItem,
+    s1,
   }
 }
 
