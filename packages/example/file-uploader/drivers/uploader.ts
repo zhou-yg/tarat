@@ -54,7 +54,7 @@ export default function uploader<T> () {
   })
   const updateStorage = inputComputeInServer(function * (targetId: number) {
     const d = OSSLink()
-    if (d) {
+    if (d) {  
       yield writeFileStroage.update(targetId, {
         ...d
       })

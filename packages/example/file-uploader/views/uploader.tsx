@@ -20,7 +20,6 @@ const Uploader = () => {
       <br/ >
       <input type="file" defaultValue="" onChange={e => {
         const f = e.target.files[0]
-        console.log('f: ', f);
         uploader.inputFile(() => f)
       }} />
     </div>

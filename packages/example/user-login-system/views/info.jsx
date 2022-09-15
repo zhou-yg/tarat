@@ -44,26 +44,26 @@ const UserInfo = (props, ref) => {
             } />
           </div>
           {edit ? (
-            <div className="mt-2 text-lg" >
+            <div className="mt-2 text-lg w-full" >
               <input
                 type="file"
                 onChange={e => loginHook.inputFile(() => e.target.files[0])}
-                className="border-x border-y px-2 py-1" />
+                className="border-x w-full border-y px-2 py-1" />
             </div>
           ) : ''}
-          <div className="mt-2 text-lg" >
+          <div className="mt-2 text-lg w-full text-center" >
             {edit
               ? (<input
                   onChange={e => loginHook.inputName(() => e.target.value)}
-                  value={loginHook.inputName()} className="border-x border-y px-2 py-1" />)
+                  value={loginHook.inputName()} className="w-full border-x border-y px-2 py-1" />)
               : userData.name
             }
           </div>
-          <div className="mt-1 text-sm text-slate-300" >
+          <div className="w-full mt-1 text-sm text-slate-300 text-center" >
             {edit
               ? (<input
                   onChange={e => loginHook.inputPassword(() => e.target.value)}
-                  value={loginHook.inputPassword()} className="text-lg border-x border-y px-2 py-1" />)
+                  value={loginHook.inputPassword()} className="w-full text-lg border-x border-y px-2 py-1" />)
               : userData.password
             }
           </div>
