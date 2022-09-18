@@ -16,7 +16,7 @@ export default [
     ],
     input: 'src/index.ts',
     output: {
-      file: 'dist/index.server.js',
+      file: 'dist/core.js',
       name: 'taratCore',
       format: 'umd'
     },
@@ -33,14 +33,15 @@ export default [
     ],
     input: 'src/index.ts',
     output: {
-      file: 'dist/index.client.js',
+      file: 'dist/core.client.js',
       format: 'esm'
     }
   },
   {
     input: "src/index.ts",
     output: [
-      { file: "dist/index.d.ts", format: "es" }
+      { file: "dist/core.client.d.ts", format: "es" },
+      { file: "dist/core.d.ts", format: "es" },
     ],
     plugins: [
       dts(),

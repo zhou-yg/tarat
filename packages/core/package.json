@@ -2,9 +2,8 @@
   "name": "tarat-core",
   "version": "0.0.9",
   "description": "useHook serverless framework",
-  "main": "./dist/index.server.js",
-  "module": "./dist/index.server.mjs",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/core.js",
+  "types": "./dist/core.d.ts",
   "scripts": {
     "watch-unit": "jest --watch -- __test__/core/context.test.ts",
     "wu": "sh scripts/dev-unit.sh",
