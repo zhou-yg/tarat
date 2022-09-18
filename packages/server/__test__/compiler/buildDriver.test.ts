@@ -6,7 +6,7 @@ import {
 
 import { readFileSync, unlinkSync, writeFileSync } from 'fs'
 import { driverFilesMap } from '../mockUtil'
-import { hookFactoryFeatures } from 'tarat-core'
+import { hookFactoryFeatures } from 'tarat/core'
 
 describe('esbuild driver result', () => {
 
@@ -138,7 +138,7 @@ import {
   state,
   computedInServer,
   prisma,
-} from 'tarat-core'
+} from 'tarat/core'
 import axios from 'axios'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -179,7 +179,7 @@ import {
   state,
   computedInServer,
   prisma,
-} from 'tarat-core'
+} from 'tarat/core'
 import axios from 'axios'
 import * as fs from 'fs'
 import * as path from 'path'

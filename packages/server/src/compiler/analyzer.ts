@@ -11,12 +11,12 @@ import type {
   VariableDeclarator
 } from 'estree'
 
-import { hookFactoryFeatures, THookDeps } from 'tarat-core'
+import { hookFactoryFeatures, THookDeps } from 'tarat/core'
 import {
   hasSourceHookFactoryNames,
   hookFactoryNames,
   initiativeComputeHookFactoryNames
-} from 'tarat-core'
+} from 'tarat/core'
 
 const composeName = 'compose'
 

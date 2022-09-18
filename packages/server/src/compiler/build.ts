@@ -19,7 +19,7 @@ export async function buildClientRoutes (c: IConfig) {
     mode: 'build',
     target: 'browser',
     alias: {
-      'tarat-core': 'tarat-core/dist/index.client.js',
+      'tarat/core': 'tarat/core/dist/index.client.js',
     },
     runtime: 'client'
   }, c)
@@ -39,8 +39,8 @@ export async function buildClientRoutes (c: IConfig) {
       //   dll: [
       //     'react',
       //     'react-dom',
-      //     'tarat-core',
-      //     'tarat-connect'
+      //     'tarat/core',
+      //     'tarat/connect'
       //   ]
       // }
     }
@@ -90,7 +90,7 @@ export async function buildViews (c: IConfig) {
               mode: 'build',
               target: 'unit',
               alias: {
-                'tarat-core': 'tarat-core/dist/index.client.js',
+                'tarat/core': 'tarat/core/dist/index.client.js',
               }
             }, c),
             external: externalDrivers  // use other external parameter types will conflict with auto-external plugins

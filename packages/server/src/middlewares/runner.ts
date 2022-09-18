@@ -1,8 +1,8 @@
 import {
   IHookContext, Runner, getPlugin, IDiff, debuggerLog, startdReactiveChain,
   stopReactiveChain
-} from 'tarat-core'
-import { parseWithUndef, stringifyWithUndef } from 'tarat-connect'
+} from 'tarat/core'
+import { parseWithUndef, stringifyWithUndef } from 'tarat/connect'
 import { join } from 'path'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'

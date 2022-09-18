@@ -1,4 +1,4 @@
-import { getPlugin, IRunningContext, loadPlugin } from 'tarat-core'
+import { getPlugin, IRunningContext, loadPlugin } from 'tarat/core'
 
 export function setCookies () {
 

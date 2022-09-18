@@ -87,13 +87,9 @@ export async function createDevServer (c: IConfig) {
       extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx', '.json'],
       alias: [
         {
-          find: 'tarat-core',
-          replacement: 'tarat-core/dist/index.client.js',
+          find: 'tarat/core',
+          replacement: 'tarat/core/dist/core.client.js',
         },
-        // {
-        //   find: /^\/drivers\/(\w+)\.\w+$/,
-        //   replacement: join(c.pointFiles.outputClientDir, c.driversDirectory, c.esmDirectory, '$1.js'),
-        // }
       ]
     }
   })

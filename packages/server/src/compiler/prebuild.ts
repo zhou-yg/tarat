@@ -1,6 +1,6 @@
 import * as prismaInternals from '@prisma/internals'
 import acorn, { parse as acornParse } from 'acorn'
-import { hookFactoryFeatures } from 'tarat-core'
+import { hookFactoryFeatures } from 'tarat/core'
 import * as walk from 'acorn-walk'
 import { IConfig, IViewConfig } from "../config";
 import * as fs from 'fs'

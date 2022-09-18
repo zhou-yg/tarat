@@ -21,8 +21,7 @@
     "build:examples": "node scripts/build-all-examples.mjs",
     "build": "rm -rf dist/ && node scripts/build.mjs",
     "build:dev": "rollup --config rollup.config.mjs",
-    "build:watch": "npm run build && rollup --config rollup.config.mjs --watch",
-    "release": "npm run build && bump --commit \"release: tarat-core v%s\" --push && npm publish --access public"
+    "build:watch": "npm run build && rollup --config rollup.config.mjs --watch"
   },
   "license": "ISC",
   "repository": {
@@ -100,8 +99,7 @@
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-pluginutils": "^2.8.2",
     "shelljs": "^0.8.5",
-    "tarat-connect": "workspace:*",
-    "tarat-core": "workspace:*",
+    "tarat": "workspace:*",
     "vite": "^2.9.12",
     "vite-tsconfig-paths": "^3.5.0"
   }

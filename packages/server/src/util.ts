@@ -3,7 +3,7 @@ import * as path from 'path'
 import rimraf from 'rimraf'
 import { IViewConfig } from './config'
 import os from "os";
-import { isEqual } from "tarat-core";
+import { isEqual } from "tarat/core";
 
 export function loadJSON (f: string) {
   return JSON.parse(fs.readFileSync(f).toString())

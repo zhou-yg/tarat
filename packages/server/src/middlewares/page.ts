@@ -5,10 +5,10 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { ViteDevServer } from "vite";
 import { fileURLToPath } from 'url'
-import { CurrentRunnerScope, debuggerLog, getPlugin, IHookContext, Runner, startdReactiveChain, stopReactiveChain } from "tarat-core";
+import { CurrentRunnerScope, debuggerLog, getPlugin, IHookContext, Runner, startdReactiveChain, stopReactiveChain } from "tarat/core";
 import { wrapCtx } from "./runner";
 import { renderToString } from 'react-dom/server'
-import { RenderDriver, renderWithDriverContext, DriverContext } from 'tarat-connect'
+import { RenderDriver, renderWithDriverContext, DriverContext } from 'tarat/connect'
 import React, { createElement } from "react";
 import { matchRoute } from "../config/routes";
 import chalk from 'chalk'
