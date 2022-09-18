@@ -11,7 +11,6 @@ const packagesPath = join(__dirname, '../packages/')
 
 
 const taratModule = join(packagesPath, 'tarat')
-const taratPkg = require(join(taratModule, 'package.json'))
 
 const coreModule = join(packagesPath, 'core')
 const connectModule = join(packagesPath, 'connect')
@@ -54,17 +53,21 @@ function build(cwd) {
   })
 }
 
-// moveDist()
-build(coreModule)
-  .then(() => {
-    return build(connectModule)
-  }).then(() => {
-    return build(serverModule)
-  }).then(() => {
-    return versionBump({
-      cwd: taratModule,
-      commit: 'release: tarat v%s'
-    })
-  }).then(r => {
-    console.log('end: ', r);
-  })
+function commit () {
+  const taratPkg = require(join(taratModule, 'package.json'))
+  exec(`git commit -a -m "release: v${taratPkg.version} "`)
+}
+commit()
+// build(coreModule)
+//   .then(() => {
+//     return build(connectModule)
+//   }).then(() => {
+//     return build(serverModule)
+//   }).then(() => {
+//     return versionBump({
+//       cwd: taratModule,
+//       commit: 'release: tarat v%s'
+//     })
+//   }).then(() => {
+//     return commit()
+//   })
