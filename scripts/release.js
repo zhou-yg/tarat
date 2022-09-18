@@ -8,10 +8,7 @@ const inquirer = require('inquirer')
 const { versionBump } = require('@jsdevtools/version-bump-prompt/lib/version-bump')
 
 const packagesPath = join(__dirname, '../packages/')
-
-
 const taratModule = join(packagesPath, 'tarat')
-
 const coreModule = join(packagesPath, 'core')
 const connectModule = join(packagesPath, 'connect')
 const serverModule = join(packagesPath, 'server')

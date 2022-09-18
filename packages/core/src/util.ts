@@ -1104,3 +1104,5 @@ export function getShallowRelatedIndexes(
 
   return deps
 }
+
+export const tttcorevv = 5

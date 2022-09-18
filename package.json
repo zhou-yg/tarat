@@ -8,7 +8,8 @@
   },
   "scripts": {
     "build:doc": "node scripts/build-doc.mjs",
-    "release": "node scripts/release.js"
+    "release": "node scripts/release.js",
+    "dev": "node scripts/build-watch-package.js"
   },
   "repository": {
     "type": "git",
@@ -32,6 +33,7 @@
   "dependencies": {
     "@jsdevtools/version-bump-prompt": "6.1.0",
     "chalk": "3.x.x",
+    "chokidar": "^3.5.3",
     "inquirer": "8.x.x",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.5"

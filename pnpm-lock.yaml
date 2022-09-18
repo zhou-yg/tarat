@@ -8,6 +8,7 @@ importers:
       '@types/jest': ^27.5.1
       '@types/node': ^18.6.2
       chalk: 3.x.x
+      chokidar: ^3.5.3
       eslint: ^8.16.0
       inquirer: 8.x.x
       jest: ^28.1.0
@@ -19,6 +20,7 @@ importers:
     dependencies:
       '@jsdevtools/version-bump-prompt': 6.1.0
       chalk: 3.0.0
+      chokidar: 3.5.3
       inquirer: 8.2.4
       rimraf: 3.0.2
       shelljs: 0.8.5
