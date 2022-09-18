@@ -53,10 +53,38 @@ function build(cwd) {
   })
 }
 
-function commit () {
-  const taratPkg = JSON.parse(readFileSync(join(taratModule, 'package.json')).toString())
-  exec(`git commit -a -m "release: tarat v${taratPkg.version} "`)
+function publish () {
+  return new Promise(resolve => {
+    console.log('npm pulibsh');
+    exec(`npm pulibsh`, { cwd: taratModule }, (err, stdout) => {
+      if (err) {
+        throw err
+      }
+      if (stdout) {
+        console.log(stdout);
+      }
+      resolve()
+    })
+  })
 }
+
+function commit () {
+  return new Promise(resolve => {
+    console.log('git commit');
+    const taratPkg = JSON.parse(readFileSync(join(taratModule, 'package.json')).toString())
+    exec(`git commit -a -m "release: tarat v${taratPkg.version} "`, (err, stdout) => {
+      if (err) {
+        throw err
+      }
+      if (stdout) {
+        console.log(stdout);
+      }
+      resolve()
+    })
+  })
+}
+
+
 build(coreModule)
   .then(() => {
     return build(connectModule)
@@ -68,4 +96,6 @@ build(coreModule)
     })
   }).then(() => {
     return commit()
+  }).then(() => {
+    return publish()
   })
