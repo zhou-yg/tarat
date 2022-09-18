@@ -1,13 +1,14 @@
 {
-  "name": "tarat",
-  "version": "0.0.0",
+  "name": "tarat-project",
+  "version": "0.0.1",
   "description": "maybe a useless simple busness description DSL for frontend and serverless",
   "main": "index.js",
   "directories": {
     "doc": "doc"
   },
   "scripts": {
-    "build:doc": "node scripts/build-doc.mjs"
+    "build:doc": "node scripts/build-doc.mjs",
+    "release": "node scripts/release.js"
   },
   "repository": {
     "type": "git",
@@ -21,16 +22,18 @@
   "homepage": "https://github.com/zhou-yg/tarat#readme",
   "devDependencies": {
     "@types/jest": "^27.5.1",
+    "@types/node": "^18.6.2",
+    "eslint": "^8.16.0",
     "jest": "^28.1.0",
     "prettier": "^2.6.2",
     "ts-jest": "^28.0.2",
     "typescript": "^4.6.4"
   },
   "dependencies": {
-    "@types/node": "^18.6.2",
-    "@typescript-eslint/parser": "^5.25.0",
-    "babel": "^6.23.0",
-    "eslint": "^8.16.0",
-    "koa": "^2.13.4"
+    "@jsdevtools/version-bump-prompt": "6.1.0",
+    "chalk": "3.x.x",
+    "inquirer": "8.x.x",
+    "rimraf": "^3.0.2",
+    "shelljs": "^0.8.5"
   }
 }
