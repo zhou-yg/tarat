@@ -4,7 +4,7 @@ import {
   IHookContext,
   ReactiveChain,
   Runner
-} from 'tarat-core'
+} from 'tarat/core'
 import React, { createElement, createContext } from 'react'
 
 import { setHookAdaptor } from './adaptor'

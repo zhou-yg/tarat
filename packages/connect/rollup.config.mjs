@@ -13,28 +13,15 @@ export default [
     ],
     input: 'src/index.ts',
     output: {
-      file: 'dist/index.js',
+      file: 'dist/connect.js',
       name: 'taratConnect',
       format: 'umd'
     },
   },
   {
-    plugins: [
-      tsPlugin({
-        clean: true,
-        tsconfig: './tsconfig.json',
-      }),
-    ],
-    input: 'src/index.ts',
-    output: {
-      file: 'dist/index.esm.js',
-      format: 'esm'
-    },
-  },
-  {
     input: "src/index.ts",
     output: [
-      { file: "dist/index.d.ts", format: "es" }
+      { file: "dist/connect.d.ts", format: "es" }
     ],
     plugins: [
       dts(),

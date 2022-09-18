@@ -1,5 +1,6 @@
-import { Runner, Driver, EScopeState, CurrentRunnerScope } from 'tarat-core'
-import type { IHookContext } from 'tarat-core'
+import { Runner, Driver, EScopeState, CurrentRunnerScope } from 'tarat/core'
+import { useRef, useEffect, useState, useContext } from 'react'
+import type { IHookContext } from 'tarat/core'
 import { DriverContext, RenderDriver } from '../driver'
 import { unstable_serialize } from 'swr'
 
@@ -39,8 +40,8 @@ interface ICacheDriver<T extends Driver> {
 }
 
 export function useReactHook<T extends Driver>(react: any, hook: T, args: Parameters<T>) {
-  const init = react.useRef(null) as { current: ICacheDriver<T> | null }
-  const driver: RenderDriver = react.useContext(DriverContext)
+  const init = useRef(null) as { current: ICacheDriver<T> | null }
+  const driver: RenderDriver = useContext(DriverContext)
 
   if (!init.current) {
 
@@ -101,7 +102,7 @@ export function useReactHook<T extends Driver>(react: any, hook: T, args: Parame
     }
   }
   // release event
-  react.useEffect(() => {
+  useEffect(() => {
     function fn() {
       setHookResult({ ...init.current.result })
     }
@@ -111,6 +112,6 @@ export function useReactHook<T extends Driver>(react: any, hook: T, args: Parame
     }
   }, [])
 
-  const [hookResult, setHookResult] = react.useState(init.current.result)
+  const [hookResult, setHookResult] = useState(init.current.result)
   return hookResult as ReturnType<T>
 }

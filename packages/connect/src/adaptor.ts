@@ -1,5 +1,5 @@
-import { Driver } from 'tarat-core'
-export { Driver } from 'tarat-core'
+import { Driver } from 'tarat/core'
+export { Driver } from 'tarat/core'
 import { useAxiiHook } from './adaptors/axii'
 import { useReactHook, useReactProgress } from './adaptors/react'
 

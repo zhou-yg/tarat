@@ -1,4 +1,4 @@
-import { set } from 'tarat-core'
+import { set } from 'tarat/core'
 
 export function traverse(
   target: Record<string, any>,

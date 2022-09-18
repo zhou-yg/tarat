@@ -1,4 +1,4 @@
-import { loadPlugin, ModelEvent, setGlobalModelEvent } from 'tarat-core'
+import { loadPlugin, ModelEvent, setGlobalModelEvent } from 'tarat/core'
 import { setHookAdaptor } from './adaptor'
 import { serializeJSON, parseWithUndef, stringifyWithUndef } from './utils'
 

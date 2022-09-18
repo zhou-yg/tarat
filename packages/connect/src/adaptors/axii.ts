@@ -12,7 +12,7 @@ import {
   isFunc,
   isPrimtive,
   set
-} from 'tarat-core'
+} from 'tarat/core'
 
 class AxiiData {
   watcher: Watcher<Hook> = new Watcher(this)
