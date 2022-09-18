@@ -127,3 +127,5 @@ packages/example/file-uploader/public
 
 libquery_engine-darwin.dylib.node
 
+packages/tarat/*
+!packages/tarat/package.json

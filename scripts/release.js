@@ -2,7 +2,7 @@ const { cp } = require('shelljs')
 const { join, resolve, parse } = require('path')
 const { spawn, exec } = require('child_process')
 const chalk = require('chalk')
-const { existsSync, mkdirSync } = require('fs')
+const { existsSync, mkdirSync, readFileSync } = require('fs')
 const rimraf = require('rimraf')
 const inquirer = require('inquirer')
 const { versionBump } = require('@jsdevtools/version-bump-prompt/lib/version-bump')
@@ -54,20 +54,18 @@ function build(cwd) {
 }
 
 function commit () {
-  const taratPkg = require(join(taratModule, 'package.json'))
-  exec(`git commit -a -m "release: v${taratPkg.version} "`)
+  const taratPkg = JSON.parse(readFileSync(join(taratModule, 'package.json')).toString())
+  exec(`git commit -a -m "release: tarat v${taratPkg.version} "`)
 }
-commit()
-// build(coreModule)
-//   .then(() => {
-//     return build(connectModule)
-//   }).then(() => {
-//     return build(serverModule)
-//   }).then(() => {
-//     return versionBump({
-//       cwd: taratModule,
-//       commit: 'release: tarat v%s'
-//     })
-//   }).then(() => {
-//     return commit()
-//   })
+build(coreModule)
+  .then(() => {
+    return build(connectModule)
+  }).then(() => {
+    return build(serverModule)
+  }).then(() => {
+    return versionBump({
+      cwd: taratModule
+    })
+  }).then(() => {
+    return commit()
+  })
