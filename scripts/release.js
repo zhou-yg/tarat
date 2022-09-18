@@ -56,7 +56,7 @@ function build(cwd) {
 function publish () {
   return new Promise(resolve => {
     console.log('npm pulibsh');
-    exec(`npm pulibsh`, { cwd: taratModule }, (err, stdout) => {
+    exec(`npm publish`, { cwd: taratModule }, (err, stdout) => {
       if (err) {
         throw err
       }
