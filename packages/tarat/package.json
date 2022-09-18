@@ -1,9 +1,11 @@
 {
   "name": "tarat",
-  "version": "0.0.9",
+  "version": "0.0.13",
   "description": "a super fast application framework",
-  "scripts": {
+  "bin": {
+    "tarat": "./cli/index.js"
   },
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zhou-yg/tarat.git"
@@ -13,10 +15,7 @@
     "url": "https://github.com/zhou-yg/tarat/issues"
   },
   "homepage": "https://github.com/zhou-yg/tarat#readme",
-  "dependencies": {
-  },
-  "devDependencies": {
-  },
-  "peerDependencies": {
-  }
+  "dependencies": {},
+  "devDependencies": {},
+  "peerDependencies": {}
 }
