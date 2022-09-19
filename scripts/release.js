@@ -1,5 +1,5 @@
 const { cp } = require('shelljs')
-const { join, resolve, parse } = require('path')
+const { join, resolve, parse, relative } = require('path')
 const { spawn, exec } = require('child_process')
 const chalk = require('chalk')
 const { existsSync, mkdirSync, readFileSync, fstat, readdirSync, writeFileSync } = require('fs')
@@ -16,29 +16,55 @@ const serverModule = join(packagesPath, 'server')
 
 const distDir = 'dist'
 
+const PKG = 'package.json'
+
 const modules = [
   coreModule,
   connectModule,
   serverModule,
 ]
 
+function mergeDeps (sourceDir) {
+  const target = join(taratModule, PKG)
+  const targetPkg = loadJSON(target)
+
+  const subModulePkgFile = join(sourceDir, PKG)
+  const subPkg = loadJSON(subModulePkgFile)
+
+  if (subPkg.dependencies) {
+    if (!targetPkg.dependencies) {
+      targetPkg.dependencies = {}
+    }
+    const deps = Object.assign(targetPkg.dependencies, subPkg.dependencies)
+
+    targetPkg.dependencies = {}
+    Object.entries(deps).forEach(([k, v]) => {
+      if (!/^workspace/.test(v)) {
+        targetPkg.dependencies[k] = v
+      }
+    })
+    writeFileSync(target, JSON.stringify(targetPkg, null, 2))
+  }
+}
+
 function replaceTaratModuleImport (sourceDir) {
   const sourceDist = join(sourceDir, distDir)
   traverseDir(sourceDist, ({ isDir, dir, file, path }) => {
-    if (!isDir) {
+    if (!isDir && /\.js$/.test(file)) {
+      const relativeToOutputRoot = relative(path, sourceDist).replace(/^\.\./, '.')
       const destFile = path.replace(sourceDist, taratModule)
       const code = readFileSync(destFile).toString()
 
       let needWrite = false
 
       const newCode = code.replace(/tarat\/(\w+)/g, (moduleWithSub, sub) => {
-        console.log('moduleWithSub, sub: ', moduleWithSub, sub);
-        const subModulePkgFile = join(packagesPath, sub, 'package.json')
+        const subModulePkgFile = join(packagesPath, sub, PKG)
         if (existsSync(subModulePkgFile)) {
           const subPkg = loadJSON(subModulePkgFile)
           if (subPkg.main) {
             needWrite = needWrite || true
-            return subPkg.main.replace(`/${distDir}`, '')
+            const p = join(relativeToOutputRoot, subPkg.main.replace(`/${distDir}`, ''))
+            return /^\./.test(p) ? p : `./${p}`
           }
         }
         return moduleWithSub
@@ -73,6 +99,8 @@ function build(cwd) {
 
         // 替换文件内模块
         replaceTaratModuleImport(cwd, distDir)
+        // 合并依赖
+        mergeDeps(cwd)
 
         resolve()
       }
@@ -98,7 +126,7 @@ function publish () {
 function commit () {
   return new Promise(resolve => {
     console.log('git commit');
-    const taratPkg = JSON.parse(readFileSync(join(taratModule, 'package.json')).toString())
+    const taratPkg = JSON.parse(readFileSync(join(taratModule, PKG)).toString())
     exec(`git commit -a -m "release: tarat v${taratPkg.version} "`, (err, stdout) => {
       if (err) {
         throw err

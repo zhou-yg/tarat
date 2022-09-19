@@ -17,7 +17,7 @@ export default [
     input: 'cli/index.ts',
     output: {
       file: 'dist/cli/index.js',
-      format: 'umd',
+      format: 'commonjs',
       sourcemap: true,
     },
   },
