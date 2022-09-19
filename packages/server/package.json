@@ -80,6 +80,7 @@
     "exit-hook": "2.x.x",
     "express-to-koa": "^2.0.0",
     "get-port": "5.1.1",
+    "immer": "^9.0.14",
     "jsx-transform": "^2.4.1",
     "koa": "^2.13.4",
     "koa-body": "^5.0.0",
@@ -99,7 +100,7 @@
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-pluginutils": "^2.8.2",
     "shelljs": "^0.8.5",
-    "tarat": "workspace:*",
+    "tarat": "workspace:0.0.19",
     "vite": "^2.9.12",
     "vite-tsconfig-paths": "^3.5.0"
   }
