@@ -2,7 +2,7 @@ const { cp } = require('shelljs')
 const { join, resolve, parse } = require('path')
 const { spawn, exec } = require('child_process')
 const chalk = require('chalk')
-const { existsSync, mkdirSync, readFileSync, fstat, readdirSync } = require('fs')
+const { existsSync, mkdirSync, readFileSync, fstat, readdirSync, writeFileSync } = require('fs')
 const rimraf = require('rimraf')
 const inquirer = require('inquirer')
 const { versionBump } = require('@jsdevtools/version-bump-prompt/lib/version-bump')
@@ -28,17 +28,22 @@ function replaceTaratModuleImport (sourceDir) {
     if (!isDir) {
       const destFile = path.replace(sourceDist, taratModule)
       const code = readFileSync(destFile).toString()
-      code.replace(/tarat\/(\w+)/g, (moduleWithSub, sub) => {
+
+      let needWrite = false
+
+      const newCode = code.replace(/tarat\/(\w+)/g, (moduleWithSub, sub) => {
         console.log('moduleWithSub, sub: ', moduleWithSub, sub);
         const subModulePkgFile = join(packagesPath, sub, 'package.json')
         if (existsSync(subModulePkgFile)) {
           const subPkg = loadJSON(subModulePkgFile)
           if (subPkg.main) {
+            needWrite = needWrite || true
             return subPkg.main.replace(`/${distDir}`, '')
           }
         }
         return moduleWithSub
       })
+      needWrite && writeFileSync(destFile, newCode)
     }
   })
 }
