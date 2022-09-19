@@ -8,7 +8,7 @@ import {
   inputComputeInServer,
   writePrisma,
   compose,
-} from "tarat-core";
+} from "tarat/core";
 import { nanoid } from "nanoid";
 import uploaderDriver from './compose/uploader'
 import * as indexes from '@/models/indexes'

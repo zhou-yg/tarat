@@ -25,7 +25,8 @@
     "classnames": "^2.3.1",
     "file-uploader": "workspace:*",
     "lodash": "^4.17.21",
-    "nanoid": "3.x.x"
+    "nanoid": "3.x.x",
+    "tarat": "workspace:^0.0.22"
   },
   "devDependencies": {
     "@babel/core": "^7.18.6",
@@ -36,7 +37,6 @@
     "less": "^4.1.2",
     "react-router-dom": "^6.3.0",
     "tailwindcss": "^3.1.8",
-    "tarat-server": "workspace:*",
     "vite": "^2.9.9"
   },
   "peerDependencies": {
@@ -47,7 +47,6 @@
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-router-dom": "^6.3.0",
-    "tarat-connect": "workspace:*",
-    "tarat-core": "workspace:*"
+    "tarat": "workspace:*"
   }
 }

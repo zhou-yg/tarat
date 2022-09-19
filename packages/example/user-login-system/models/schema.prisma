@@ -15,7 +15,7 @@ generator client {
   previewFeatures = ["fullTextSearch", "fullTextIndex"]
 }
 
-// auto composing schema
+// auto composing schema 
 model User {
   id         String   @id @default(cuid())
   createdAt  DateTime @default(now())
