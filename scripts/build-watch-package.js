@@ -3,14 +3,10 @@ const { join, resolve, parse } = require('path')
 const { spawn, exec } = require('child_process')
 const inquirer = require('inquirer')
 const chokidar = require('chokidar')
-
+const { mergeDeps, replaceTaratModuleImport } = require('./utils')
 
 const packagesPath = join(__dirname, '../packages/')
 const taratModule = join(packagesPath, 'tarat')
-
-const coreModule = join(packagesPath, 'core')
-const connectModule = join(packagesPath, 'connect')
-const serverModule = join(packagesPath, 'server')
 
 const names = ['core', 'connect', 'server']
 
@@ -59,5 +55,8 @@ function buildAndWatch (name) {
       '-r',
       join(targetPath, 'dist/*'),
       join(taratModule));
+    
+    replaceTaratModuleImport(targetPath)
+    mergeDeps(targetPath)
   })
 }

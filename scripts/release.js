@@ -6,15 +6,13 @@ const { existsSync, mkdirSync, readFileSync, fstat, readdirSync, writeFileSync }
 const rimraf = require('rimraf')
 const inquirer = require('inquirer')
 const { versionBump } = require('@jsdevtools/version-bump-prompt/lib/version-bump')
-const { traverseDir, loadJSON } = require('./utils')
+const { replaceTaratModuleImport, mergeDeps, distDir } = require('./utils')
 
 const packagesPath = join(__dirname, '../packages/')
 const taratModule = join(packagesPath, 'tarat')
 const coreModule = join(packagesPath, 'core')
 const connectModule = join(packagesPath, 'connect')
 const serverModule = join(packagesPath, 'server')
-
-const distDir = 'dist'
 
 const PKG = 'package.json'
 
@@ -24,55 +22,6 @@ const modules = [
   serverModule,
 ]
 
-function mergeDeps (sourceDir) {
-  const target = join(taratModule, PKG)
-  const targetPkg = loadJSON(target)
-
-  const subModulePkgFile = join(sourceDir, PKG)
-  const subPkg = loadJSON(subModulePkgFile)
-
-  if (subPkg.dependencies) {
-    if (!targetPkg.dependencies) {
-      targetPkg.dependencies = {}
-    }
-    const deps = Object.assign(targetPkg.dependencies, subPkg.dependencies)
-
-    targetPkg.dependencies = {}
-    Object.entries(deps).forEach(([k, v]) => {
-      if (!/^workspace/.test(v)) {
-        targetPkg.dependencies[k] = v
-      }
-    })
-    writeFileSync(target, JSON.stringify(targetPkg, null, 2))
-  }
-}
-
-function replaceTaratModuleImport (sourceDir) {
-  const sourceDist = join(sourceDir, distDir)
-  traverseDir(sourceDist, ({ isDir, dir, file, path }) => {
-    if (!isDir && /\.js$/.test(file)) {
-      const relativeToOutputRoot = relative(path, sourceDist).replace(/^\.\./, '.')
-      const destFile = path.replace(sourceDist, taratModule)
-      const code = readFileSync(destFile).toString()
-
-      let needWrite = false
-
-      const newCode = code.replace(/tarat\/(\w+)/g, (moduleWithSub, sub) => {
-        const subModulePkgFile = join(packagesPath, sub, PKG)
-        if (existsSync(subModulePkgFile)) {
-          const subPkg = loadJSON(subModulePkgFile)
-          if (subPkg.main) {
-            needWrite = needWrite || true
-            const p = join(relativeToOutputRoot, subPkg.main.replace(`/${distDir}`, ''))
-            return /^\./.test(p) ? p : `./${p}`
-          }
-        }
-        return moduleWithSub
-      })
-      needWrite && writeFileSync(destFile, newCode)
-    }
-  })
-}
 
 function build(cwd) {
 
