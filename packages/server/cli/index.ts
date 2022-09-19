@@ -35,7 +35,7 @@ cac
   .action(() => {
 
     inquirer
-      .prompot([
+      .prompt([
         {
           name: 'language',
           message: 'Which language you prefer?',
