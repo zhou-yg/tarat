@@ -100,8 +100,10 @@ importers:
   packages/create:
     specifiers:
       inquirer: 8.x.x
+      node-stream-zip: ^1.15.0
     dependencies:
       inquirer: 8.2.4
+      node-stream-zip: 1.15.0
 
   packages/example/cascading-list:
     specifiers:
@@ -539,12 +541,14 @@ importers:
       '@types/node': ^18.6.2
       acorn: ^8.7.1
       acorn-walk: ^8.2.0
+      create-tarat: workspace:^0.0.1
       immer: ^9.0.14
       rollup: ^2.74.1
       rollup-plugin-dts: ^4.2.2
       rollup-plugin-typescript2: ^0.31.2
       tslib: ^2.4.0
     dependencies:
+      create-tarat: link:../create
       immer: 9.0.15
       rollup-plugin-dts: 4.2.2_ihkqvyh37tzxtjmovjyy2yrv7m
       tslib: 2.4.0
@@ -5980,6 +5984,11 @@ packages:
 
   /node-releases/2.0.6:
     resolution: {integrity: sha512-PiVXnNuFm5+iYkLBNeq5211hvO38y63T0i2KKh2KnUs3RpzJ+JtODFjkD8yjLwnDkTYF1eKXheUwdssR+NRZdg==}
+
+  /node-stream-zip/1.15.0:
+    resolution: {integrity: sha512-LN4fydt9TqhZhThkZIVQnF9cwjU3qmUH9h78Mx/K7d3VvfRqqwthLwJEUOEL0QPZ0XQmNN7be5Ggit5+4dq3Bw==}
+    engines: {node: '>=0.12.0'}
+    dev: false
 
   /normalize-package-data/2.5.0:
     resolution: {integrity: sha512-/5CMN3T0R4XTj4DcGaexo+roZSdSFW/0AOOTROrjxzCG1wrWXEsGbRKevjlIL+ZDE4sZlJr5ED4YW0yqmkK+eA==}

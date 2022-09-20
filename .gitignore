@@ -129,3 +129,5 @@ libquery_engine-darwin.dylib.node
 
 packages/tarat/*
 !packages/tarat/package.json
+
+.DS_Store
