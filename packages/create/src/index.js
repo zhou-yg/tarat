@@ -49,7 +49,8 @@ async function downloadZip () {
 
 async function create(options) {
   const projectDir = join(cwd, options.name)
-  
+  const nodeModulesDir = join(projectDir, 'node_modules')
+
   await downloadZip()
 
   const zip = new StreamZip.async({ file: cacheZip })
@@ -66,15 +67,23 @@ async function create(options) {
     .prompt([
       {
         name: 'installer',
-        message: 'Do you want me to run `install`',
+        message: 'Do you want me to run `install` ?',
         type: 'list',
         choices: ['dont do this', ...regularManagers]
       },
     ])
   if (regularManagers.includes(installer)) {
-    spawn(`${installer}`, ['install'], {
+    const instance = spawn(`${installer}`, ['install'], {
       stdio: ['pipe', process.stdout, process.stderr],
       cwd: projectDir
+    })
+    instance.on('close', () => {
+      if (existsSync(nodeModulesDir)) {
+        spawn('npm', ['run', 'p:dev'], {
+          stdio: ['pipe', process.stdout, process.stderr],
+          cwd: projectDir
+        })  
+      }
     })
   }
 }
