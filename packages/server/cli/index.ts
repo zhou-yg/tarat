@@ -4,8 +4,6 @@ import dev from "./dev";
 import build from './build'
 import start from './start'
 import any from "./any";
-import create from "./create";
-import inquirer from 'inquirer'
 const cac = cacFactory('tarat-server')
 
 const cwd = process.cwd()
@@ -29,23 +27,6 @@ cac
   .command('start', 'starting project as service')
   .action(async () => {
     start(cwd)
-  })
-cac
-  .command('create', 'create tarat project')
-  .action(() => {
-
-    inquirer
-      .prompt([
-        {
-          name: 'language',
-          message: 'Which language you prefer?',
-          type: 'list',
-          choices: ['typescript', 'javascript']
-        },
-      ])
-      .then(({ language }) => {
-        create(cwd, { useTs: language === 'typescript' })
-      })
   })
 
 cac
