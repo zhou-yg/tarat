@@ -364,21 +364,18 @@ importers:
       react-dom: ^18.1.0
       react-router-dom: ^6.3.0
       tailwindcss: ^3.1.8
-      tarat-connect: workspace:*
-      tarat-core: workspace:*
-      tarat-server: workspace:*
+      tarat: workspace:^0.0.22
       vite: ^2.9.9
     dependencies:
       '@ant-design/icons': 4.7.0_biqbaboplfbrettd7655fr4n2y
-      '@prisma/client': 4.3.1_prisma@3.15.2
+      '@prisma/client': 4.3.1
       classnames: 2.3.2
       file-uploader: link:../file-uploader
       lodash: 4.17.21
       nanoid: 3.3.4
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
-      tarat-connect: link:../../connect
-      tarat-core: link:../../core
+      tarat: link:../../tarat
     devDependencies:
       '@babel/core': 7.19.1
       '@babel/preset-react': 7.18.6_@babel+core@7.19.1
@@ -389,7 +386,6 @@ importers:
       prisma: 3.15.2
       react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
       tailwindcss: 3.1.8
-      tarat-server: link:../../server
       vite: 2.9.15_less@4.1.3
 
   packages/server:
@@ -1716,7 +1712,7 @@ packages:
       '@prisma/engines-version': 3.15.1-1.461d6a05159055555eb7dfb337c9fb271cbd4d7e
       prisma: 3.15.2
 
-  /@prisma/client/4.3.1_prisma@3.15.2:
+  /@prisma/client/4.3.1:
     resolution: {integrity: sha512-FA0/d1VMJNWqzU7WVWTNWJ+lGOLR9JUBnF73GdIPAEVo/6dWk4gHx0EmgeU+SMv4MZoxgOeTBJF2azhg7x0hMw==}
     engines: {node: '>=14.17'}
     requiresBuild: true
@@ -1727,7 +1723,6 @@ packages:
         optional: true
     dependencies:
       '@prisma/engines-version': 4.3.0-32.c875e43600dfe042452e0b868f7a48b817b9640b
-      prisma: 3.15.2
     dev: false
 
   /@prisma/client/4.3.1_prisma@4.3.1:

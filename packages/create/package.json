@@ -1,6 +1,6 @@
 {
   "name": "create-tarat",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "useHook serverless framework",
   "main": "index.js",
   "bin": {
@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/zhou-yg/tarat#readme",
   "dependencies": {
-    "inquirer": "8.x.x"
+    "inquirer": "8.x.x",
+    "node-stream-zip": "^1.15.0"
   }
 }
