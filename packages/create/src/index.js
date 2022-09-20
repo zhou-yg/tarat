@@ -9,7 +9,12 @@ const { spawn } = require('node:child_process');
 
 const taratTemplatesZipURL = 'https://codeload.github.com/zhou-yg/tarat-templates/zip/refs/heads/master'
 
-const cacheZip = join(__dirname, './tarat-templates.zip')
+const cwd = process.cwd()
+
+console.log(`cli command in:`, __dirname)
+console.log('run in cwd:', cwd);
+
+const cacheZip = join(cwd, './tarat-templates.zip')
 
 const regularManagers = ['pnpm', 'yarn', 'npm']
 
@@ -42,10 +47,10 @@ async function downloadZip () {
   })
 }
 
-async function create(cwd, options) {
+async function create(options) {
+  const projectDir = join(cwd, options.name)
+  
   await downloadZip()
-
-  const projectDir = join(__dirname, options.name)
 
   const zip = new StreamZip.async({ file: cacheZip })
   if (!existsSync(projectDir)) {
@@ -90,7 +95,7 @@ inquirer
       choices: ['typescript', 'javascript']
     },
   ]).then(({ lang, name }) => {
-    create(process.cwd(), { useTs: lang === 'typescript', name })
+    create({ useTs: lang === 'typescript', name })
       .finally(() => {
         rm(cacheZip, (err) => {
           if (err) console.error(err)

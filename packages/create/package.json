@@ -1,6 +1,6 @@
 {
   "name": "create-tarat",
-  "version": "0.0.3",
+  "version": "0.0.8",
   "description": "useHook serverless framework",
   "main": "index.js",
   "bin": {
