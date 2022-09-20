@@ -1,6 +1,6 @@
 {
   "name": "tarat",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "description": "a super fast application framework",
   "bin": {
     "tarat": "./cli/index.js"
@@ -72,6 +72,8 @@
     "tslib": "^2.4.0",
     "vite": "^2.9.12",
     "vite-tsconfig-paths": "^3.5.0",
-    "@rollup/plugin-replace": "^4.0.0"
+    "@rollup/plugin-replace": "^4.0.0",
+    "rollup": "^2.74.1",
+    "rollup-plugin-typescript2": "^0.31.2"
   }
 }
