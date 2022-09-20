@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const inquirer = require('inquirer')
 const { writeFile, existsSync, mkdir, mkdirSync, rm } = require('node:fs')
 const https = require('node:https')
