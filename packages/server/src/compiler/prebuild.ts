@@ -53,6 +53,7 @@ export interface IBuildOption {
 export function getTSConfigPath (c: IConfig) {
   const tsconfigFile = path.join(c.cwd, 'tsconfig.json')
   if (fs.existsSync(tsconfigFile)) {
+    console.log(`[getTSConfigPath] using tsconfig setting in project: ${tsconfigFile}`)
     return tsconfigFile
   }
   console.log(`[getTSConfigPath] using default tsconfig setting: ${defaultTsconfigJSON}`)
@@ -327,7 +328,8 @@ export async function buildServerRoutes(c: IConfig) {
     input: {
       cache: false,
       input: autoGenerateServerRoutes,
-      plugins: myPlugins
+      plugins: myPlugins,
+      external: ['tarat/core', 'tarat/connect']
     },
     output: {
       file: distServerRoutes,

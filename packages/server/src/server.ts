@@ -88,7 +88,11 @@ export async function createDevServer (c: IConfig) {
       alias: [
         {
           find: 'tarat/core',
-          replacement: 'tarat/core/dist/core.client.js',
+          replacement: 'tarat/core.client.js',
+        },
+        {
+          find: 'tarat/connect',
+          replacement: 'tarat/connect.esm.js',
         },
       ]
     }

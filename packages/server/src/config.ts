@@ -215,8 +215,8 @@ function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) 
     outputAppClientDir,
     // router
     autoGenerateClientRoutes: path.join(outputAppClientDir, `${config.routes}${config.ts ? '.tsx' : '.jsx'}`),
-    clientRoutes: path.join(outputAppClientDir, 'index.js'),
-    clientRoutesCSS: path.join(outputAppClientDir, 'index.css'),
+    clientRoutes: path.join(outputAppClientDir, 'routes.js'),
+    clientRoutesCSS: path.join(outputAppClientDir, 'routes.css'),
     // drivers
     outputClientDriversDir: path.join(outputClientDir, config.driversDirectory),
   }

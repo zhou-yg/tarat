@@ -19,7 +19,6 @@ export async function buildClientRoutes (c: IConfig) {
     mode: 'build',
     target: 'browser',
     alias: {
-      'tarat/core': 'tarat/core/dist/index.client.js',
     },
     runtime: 'client'
   }, c)
@@ -33,16 +32,7 @@ export async function buildClientRoutes (c: IConfig) {
     },
     output: {
       file: clientRoutes,
-      name: `${pkg.name}TaratApp`,
-      format: 'umd',
-      // manualChunks: {
-      //   dll: [
-      //     'react',
-      //     'react-dom',
-      //     'tarat/core',
-      //     'tarat/connect'
-      //   ]
-      // }
+      format: 'commonjs',
     }
   }
   
@@ -89,11 +79,8 @@ export async function buildViews (c: IConfig) {
               css: outputCSS,
               mode: 'build',
               target: 'unit',
-              alias: {
-                'tarat/core': 'tarat/core/dist/index.client.js',
-              }
             }, c),
-            external: externalDrivers  // use other external parameter types will conflict with auto-external plugins
+            external: [...externalDrivers, 'tarat/core', 'tarat/connect']  // use other external parameter types will conflict with auto-external plugins
           },
           output: {
             file: outputJS,
