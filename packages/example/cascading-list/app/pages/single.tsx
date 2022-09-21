@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import * as immer from 'immer'
 import singleDriver from '@/drivers/single'
-import { DriverContext, useTarat } from 'tarat-connect'
+import { DriverContext, useTarat } from 'tarat/connect'
 
 let myName = 'my'
 

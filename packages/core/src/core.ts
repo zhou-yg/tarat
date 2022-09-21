@@ -42,7 +42,8 @@ import {
   IModelPatchRemove
 } from './util'
 import EventEmitter from 'eventemitter3'
-import { produceWithPatches, Draft, enablePatches, applyPatches } from 'immer'
+import * as Immer from 'immer'
+import type { Draft } from 'immer'
 import {
   getPlugin,
   IModelCreateData,
@@ -50,6 +51,8 @@ import {
   IModelQuery,
   TCacheFrom
 } from './plugin'
+
+const { produceWithPatches, enablePatches, applyPatches } = Immer
 
 enablePatches()
 

@@ -1,4 +1,4 @@
-import { useTarat } from 'tarat-connect'
+import { useTarat } from 'tarat/connect'
 import React, { useEffect, useState } from 'react'
 import PlusSquareOutlined from '@ant-design/icons/PlusSquareOutlined'
 import FolderOutlined from '@ant-design/icons/FolderOutlined'

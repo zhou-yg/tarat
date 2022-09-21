@@ -123,8 +123,6 @@ export function getPlugins (input: {
   runtime?: 'server' | 'client'
 }, c: IConfig) {
   const { runtime, alias, css, mode, target = 'node' } = input
-
-  console.log('runtime: ', runtime);
   const plugins = [
     runtime ? aliasDriverRollupPlugin(c, runtime) : undefined,
     replace({
