@@ -17,8 +17,7 @@ export default [
     input: 'src/index.ts',
     output: {
       file: 'dist/core.js',
-      name: 'taratCore',
-      format: 'umd'
+      format: 'commonjs'
     },
   },
   {

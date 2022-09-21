@@ -7,7 +7,7 @@
   "scripts": {
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
     "format:commit": "npm run format && git commit -a -m 'feat(core): lint'",
-    "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs",
+    "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs && node after-build.js",
     "build:watch": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs --watch"
   },
   "files": [
@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@jsdevtools/version-bump-prompt": "6.1.0",
+    "@rollup/plugin-alias": "^3.1.9",
     "@rollup/plugin-node-resolve": "^13.3.0",
     "@rollup/plugin-replace": "^4.0.0",
     "@rollup/plugin-typescript": "^6.1.0",

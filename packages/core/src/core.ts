@@ -42,7 +42,7 @@ import {
   IModelPatchRemove
 } from './util'
 import EventEmitter from 'eventemitter3'
-import * as Immer from 'immer'
+import * as immer from 'immer'
 import type { Draft } from 'immer'
 import {
   getPlugin,
@@ -52,7 +52,7 @@ import {
   TCacheFrom
 } from './plugin'
 
-const { produceWithPatches, enablePatches, applyPatches } = Immer
+const { produceWithPatches, enablePatches, applyPatches } = immer
 
 enablePatches()
 
@@ -2883,7 +2883,7 @@ export function prisma<T extends any[]>(
   op?: IModelOption
 ) {
   if (!currentRunnerScope) {
-    throw new Error('[model] must under a tarat runner')
+    throw new Error('[prisma] must under a tarat runner')
   }
   return currentHookFactory.prisma<T>(e, q, op)
 }
