@@ -92,7 +92,7 @@ export async function createDevServer (c: IConfig) {
         },
         {
           find: 'tarat/connect',
-          replacement: 'tarat/connect.esm.js',
+          replacement: 'tarat/connect.client.js',
         },
       ]
     }

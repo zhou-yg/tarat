@@ -59,6 +59,22 @@ const PKG = 'package.json'
 const distDir = 'dist'
 exports.distDir = distDir
 
+function checkRequireOrImport (code, moduleWord, index) {
+
+  const len = moduleWord.length
+
+  const left = `${code[index - 2]}${code[index - 1]}`
+  const right = `${code[index + len]}${code[index + len + 1]}`
+  const isRequire = (left === `('` || left === '("') && (right === `')` || right === '")')
+
+  const left2 = code.substring(index - 6, index - 2)
+  const isFrom = left2 === 'from'
+
+  console.log('moduleWord: ', moduleWord, isRequire, isFrom);
+
+  return isRequire || isFrom
+}
+
 function replaceTaratModuleImport (sourceDir) {
   const sourceDist = join(sourceDir, distDir)
   traverseDir(sourceDist, ({ isDir, dir, file, path }) => {
@@ -69,14 +85,21 @@ function replaceTaratModuleImport (sourceDir) {
 
       let needWrite = false
 
-      const newCode = code.replace(/tarat\/(\w+)/g, (moduleWithSub, sub) => {
-        const subModulePkgFile = join(packagesPath, sub, PKG)
+      const newCode = code.replace(/tarat\/([\w\.]+)/g, (moduleWithSub, sub, i) => {
+        let subPkg = sub
+        if (/\./.test(sub)) {
+          subPkg = sub.split('.')[0]
+        }
+
+        const subModulePkgFile = join(packagesPath, subPkg, PKG)
         if (existsSync(subModulePkgFile)) {
-          const subPkg = loadJSON(subModulePkgFile)
-          if (subPkg.main) {
-            needWrite = needWrite || true
-            const p = join(relativeToOutputRoot, subPkg.main.replace(`/${distDir}`, ''))
-            return /^\./.test(p) ? p : `./${p}`
+          if (checkRequireOrImport(code, `tarat/${sub}`, i)) {
+            const subPkgJSON = loadJSON(subModulePkgFile)
+            if (subPkgJSON.main) {
+              needWrite = needWrite || true
+              const p = join(relativeToOutputRoot, `${sub}.js`)
+              return /^\./.test(p) ? p : `./${p}`
+            }
           }
         }
         return moduleWithSub
