@@ -1,44 +1,34 @@
 import tsPlugin from 'rollup-plugin-typescript2'
 import dts from "rollup-plugin-dts"
-import rollupAlias from '@rollup/plugin-alias'
-import replace from '@rollup/plugin-replace';
-// import { nodeResolve } from '@rollup/plugin-node-resolve';
+
+const base = {
+  plugins: [
+    tsPlugin({
+      clean: true,
+      tsconfig: './tsconfig.json',
+    }),
+  ],
+  input: 'src/index.ts',
+  external: ['react', 'tarat/core', 'swr'],
+}
 
 export default [
   {
-    plugins: [
-      tsPlugin({
-        clean: true,
-        tsconfig: './tsconfig.json',
-      }),
-    ],
-    input: 'src/index.ts',
+    ...base,
     output: {
       file: 'dist/connect.js',
       format: 'commonjs'
     },
   },
   {
-    plugins: [
-      tsPlugin({
-        clean: true,
-        tsconfig: './tsconfig.json',
-      }),
-    ],
-    input: 'src/index.ts',
+    ...base,
     output: {
       file: 'dist/connect.esm.js',
       format: 'esm'
     },
   },
   {
-    plugins: [
-      tsPlugin({
-        clean: true,
-        tsconfig: './tsconfig.json',
-      }),
-    ],
-    input: 'src/index.ts',
+    ...base,
     output: {
       file: 'dist/connect.client.esm.js',
       format: 'esm'

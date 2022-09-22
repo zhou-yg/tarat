@@ -2370,8 +2370,10 @@ export const hookFactoryFeatures = {
   ],
   /**
    * only compatibility with server
+   * "model" & "prisma" maybe still run in client because of their query compute
    */
-  serverOnly: ['inputComputeInServer', 'computedInServer', 'model', 'prisma']
+  // serverOnly: ['inputComputeInServer', 'computedInServer', 'model', 'prisma']
+  serverOnly: ['inputComputeInServer', 'computedInServer']
 }
 /** @TODO need refact code to auto export these hooks */
 export const hookFactoryNames = hookFactoryFeatures.all

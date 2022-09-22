@@ -465,7 +465,6 @@ function clearFunctionBodyEsbuildPlugin (dir: string, names: string[]): esbuild.
     setup(build) {
       /** @TODO should match more explicit */
       build.onResolve({ filter: /drivers\// }, args => {
-        console.log('args: ', args);
         const { base } = path.parse(args.path)
         
         const code = fs.readFileSync(args.path).toString()
@@ -474,7 +473,6 @@ function clearFunctionBodyEsbuildPlugin (dir: string, names: string[]): esbuild.
         const destFile = path.join(dir, base)
 
         fs.writeFileSync(destFile, newCode2)
-        console.log('destFile: ', destFile);
 
         return {
           path: destFile,

@@ -3,66 +3,69 @@ import dts from "rollup-plugin-dts"
 import replace from '@rollup/plugin-replace';
 // import { nodeResolve } from '@rollup/plugin-node-resolve';
 
+const base = {
+  plugins: [
+    tsPlugin({
+      clean: true,
+      tsconfig: './tsconfig.json',
+    }),
+  ],
+  input: 'src/index.ts',
+  external: ['eventemitter3', 'immer'],
+}
+
 export default [
   {
+    ...base,
     plugins: [
-      tsPlugin({
-        clean: true,
-        tsconfig: './tsconfig.json',
-      }),
+      ...base.plugins,
       replace({
-        'process.env.TARGET': '"server"'
+        'process.env.TARGET': '"server"',
+        preventAssignment: true
       }),
     ],
-    input: 'src/index.ts',
     output: {
       file: 'dist/core.js',
       format: 'commonjs'
     },
   },
   {
+    ...base,
     plugins: [
-      tsPlugin({
-        clean: true,
-        tsconfig: './tsconfig.json',
-      }),
+      ...base.plugins,
       replace({
-        'process.env.TARGET': '"server"'
+        'process.env.TARGET': '"server"',
+        preventAssignment: true
       }),
     ],
-    input: 'src/index.ts',
     output: {
       file: 'dist/core.esm.js',
       format: 'esm'
     },
   },
   {
+    ...base,
     plugins: [
-      tsPlugin({
-        clean: true,
-        tsconfig: './tsconfig.json',
-      }),
+      ...base.plugins,
       replace({
-        'process.env.TARGET': '"client"'
+        'process.env.TARGET': '"client"',
+        preventAssignment: true
       }),
     ],
-    input: 'src/index.ts',
     output: {
       file: 'dist/core.client.esm.js',
       format: 'esm'
     }
   },
   {
+    ...base,
     plugins: [
-      tsPlugin({
-        clean: true,
-        tsconfig: './tsconfig.json',
-      }),
+      ...base.plugins,
       replace({
-        'process.env.TARGET': '"client"'
+        'process.env.TARGET': '"client"',
+        preventAssignment: true
       }),
     ],
-    input: 'src/index.ts',
     output: {
       file: 'dist/core.client.js',
       format: 'cjs'

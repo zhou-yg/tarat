@@ -1,15 +1,14 @@
-import * as child_process from 'child_process'
+import { spawn } from 'child_process'
 import shelljs from 'shelljs'
-
-import { execa } from 'execa'
 
 const { cp } = shelljs;
 
-(async () =>{
+const instance = spawn('rollup', ['--config', 'rollup.config.mjs'], {
+  cwd: process.cwd(),
+  stdio: ['pipe', process.stdout, process.stderr]
+})
 
-  await execa('rollup', ['--config', 'rollup.config.mjs'], {
-    cwd: process.cwd()
-  })
+instance.on('close', () => {
   
   cp('src/middlewares/pageTemplate.ejs', 'dist/cli/')
   cp('src/middlewares/pageTemplate.ejs', 'dist/')
@@ -24,15 +23,4 @@ const { cp } = shelljs;
   cp('src/compiler/defaultTsconfig.json', 'dist/')
 
   console.log('build end')
-
-})()
-// const instance = child_process.spawn('npm', ['run', 'build'], {
-//   cwd: process.cwd()
-// })
-
-// instance.stdout.on('data', (data) => {
-//   console.log(`instance: ${data}`);
-// })
-// instance.stderr.on('data', (data) => {
-//   console.log(`instance-error: ${data}`);
-// })
+})

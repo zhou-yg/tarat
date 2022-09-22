@@ -21,19 +21,6 @@ export default [
       sourcemap: true,
     },
   },
-  // {
-  //   plugins: [
-  //     tsPlugin({
-  //       clean: true,
-  //       tsconfig: './tsconfig.json',
-  //     }),
-  //     commonjs(),
-  //   ],
-  //   input: "src/index.ts",
-  //   output: [
-  //     { file: "dist/index.js", format: "es" }
-  //   ],
-  // },
   {
     plugins: [
       dts()
