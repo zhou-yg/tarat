@@ -159,9 +159,7 @@ importers:
       react-dom: ^18.1.0
       react-router-dom: ^6.3.0
       tailwindcss: ^3.1.8
-      tarat-connect: workspace:*
-      tarat-core: workspace:*
-      tarat-server: workspace:*
+      tarat: workspace:^0.0.25
       tslib: ^2.4.0
     dependencies:
       '@prisma/client': 4.3.1_prisma@4.3.1
@@ -169,9 +167,7 @@ importers:
       prisma: 4.3.1
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
-      tarat-connect: link:../../connect
-      tarat-core: link:../../core
-      tarat-server: link:../../server
+      tarat: link:../../tarat
     devDependencies:
       '@babel/preset-react': 7.18.6_@babel+core@7.19.1
       '@types/lodash': 4.14.185
@@ -364,7 +360,7 @@ importers:
       react-dom: ^18.1.0
       react-router-dom: ^6.3.0
       tailwindcss: ^3.1.8
-      tarat: workspace:^0.0.22
+      tarat: workspace:^0.0.25
       vite: ^2.9.9
     dependencies:
       '@ant-design/icons': 4.7.0_biqbaboplfbrettd7655fr4n2y

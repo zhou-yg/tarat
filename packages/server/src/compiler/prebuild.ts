@@ -414,7 +414,7 @@ export function removeUnusedImports(sourceFile: string) {
   try {
     ast = acornParse(code, { sourceType: 'module', ecmaVersion: 'latest' });
   } catch (e) {
-    console.error(`[removeUnusedImports] acorn parse error`, e)
+    console.error(`[removeUnusedImports] acorn parse error in ${sourceFile}:`, e)
     return
   }
   const removeImportRange: [number, number][] = []
@@ -654,9 +654,9 @@ export async function buildDrivers (c: IConfig) {
   // build compose first
   const configWithComposeOnly: IConfig = { ...c, drivers: c.drivers.filter(p => /compose\//.test(p.filePath))}
   await Promise.all([
-    // cjs
-    esbuildDrivers(configWithComposeOnly, path.join(outputClientDriversDir, composeDriversDirectory), 'cjs', 'client'),
-    esbuildDrivers(configWithComposeOnly, path.join(outputServerDriversDir, composeDriversDirectory), 'cjs', 'server'),
+    // cjs: no cjs because of these compose driver prepared for drivers TIP
+    // esbuildDrivers(configWithComposeOnly, path.join(outputClientDriversDir, composeDriversDirectory), 'cjs', 'client'),
+    // esbuildDrivers(configWithComposeOnly, path.join(outputServerDriversDir, composeDriversDirectory), 'cjs', 'server'),
     // esm
     esbuildDrivers(configWithComposeOnly, path.join(outputClientDriversDir, composeDriversDirectory), 'esm', 'client'),
     esbuildDrivers(configWithComposeOnly, path.join(outputServerDriversDir, composeDriversDirectory), 'esm', 'server'),
