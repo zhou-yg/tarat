@@ -19,6 +19,8 @@ export async function buildClientRoutes (c: IConfig) {
     mode: 'build',
     target: 'browser',
     alias: {
+      'tarat/core': 'tarat/core.client.esm',
+      'tarat/connect': 'tarat/connect.client.esm'
     },
     runtime: 'client'
   }, c)
