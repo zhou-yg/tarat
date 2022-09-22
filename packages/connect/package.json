@@ -3,6 +3,7 @@
   "version": "0.0.9",
   "description": "useHook serverless framework",
   "main": "./dist/connect.js",
+  "module": "./dist/connect.esm.js",
   "types": "./dist/connect.d.ts",
   "scripts": {
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",

@@ -8,7 +8,8 @@
   },
   "scripts": {
     "build:doc": "node scripts/build-doc.mjs",
-    "release": "node scripts/release.js",
+    "build:all": "node scripts/release.js",
+    "release": "RELEASE=1 node scripts/release.js",
     "dev": "node scripts/build-watch-package.js"
   },
   "repository": {

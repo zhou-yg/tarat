@@ -5,6 +5,27 @@
   "bin": {
     "tarat": "./cli/index.js"
   },
+  "exports": {
+    "./core": {
+      "import": "./core.esm.js",
+      "require": "./core.js"
+    },
+    "./core.client.*": {
+      "import": "./core.client.esm.js",
+      "require": "./core.client.js"
+    },
+    "./core.client": {
+      "import": "./core.client.esm.js",
+      "require": "./core.client.js"
+    },
+    "./connect": {
+      "import": "./connect.esm.js",
+      "require": "./connect.js"
+    },
+    "./connect.client.esm.*": {
+      "import": "./connect.client.esm.js"
+    }
+  },
   "scripts": {},
   "repository": {
     "type": "git",

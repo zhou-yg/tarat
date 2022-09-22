@@ -27,13 +27,45 @@ export default [
         tsconfig: './tsconfig.json',
       }),
       replace({
+        'process.env.TARGET': '"server"'
+      }),
+    ],
+    input: 'src/index.ts',
+    output: {
+      file: 'dist/core.esm.js',
+      format: 'esm'
+    },
+  },
+  {
+    plugins: [
+      tsPlugin({
+        clean: true,
+        tsconfig: './tsconfig.json',
+      }),
+      replace({
+        'process.env.TARGET': '"client"'
+      }),
+    ],
+    input: 'src/index.ts',
+    output: {
+      file: 'dist/core.client.esm.js',
+      format: 'esm'
+    }
+  },
+  {
+    plugins: [
+      tsPlugin({
+        clean: true,
+        tsconfig: './tsconfig.json',
+      }),
+      replace({
         'process.env.TARGET': '"client"'
       }),
     ],
     input: 'src/index.ts',
     output: {
       file: 'dist/core.client.js',
-      format: 'esm'
+      format: 'cjs'
     }
   },
   {

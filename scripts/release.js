@@ -8,6 +8,9 @@ const inquirer = require('inquirer')
 const { versionBump } = require('@jsdevtools/version-bump-prompt/lib/version-bump')
 const { replaceTaratModuleImport, mergeDeps, distDir } = require('./utils')
 
+const SHOULD_RELEASE = !!process.env.RELEASE
+console.log('SHOULD_RELEASE: ', SHOULD_RELEASE);
+
 const packagesPath = join(__dirname, '../packages/')
 const taratModule = join(packagesPath, 'tarat')
 const coreModule = join(packagesPath, 'core')
@@ -95,11 +98,13 @@ build(coreModule)
   }).then(() => {
     return build(serverModule)
   }).then(() => {
-    return versionBump({
-      cwd: taratModule
-    })
-  }).then(() => {
-    return commit()
-  }).then(() => {
-    return publish()
+    if (SHOULD_RELEASE) {
+      return versionBump({
+        cwd: taratModule
+      }).then(() => {
+        return commit()
+      }).then(() => {
+        return publish()
+      })
+    }
   })
