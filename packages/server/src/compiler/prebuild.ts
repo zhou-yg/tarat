@@ -50,8 +50,8 @@ export interface IBuildOption {
  * searches for tsconfig.json file starting in the current directory, if not found
  * use the default tsconfig.json provide by tarat
  */
-export function getTSConfigPath (c: IConfig) {
-  const tsconfigFile = path.join(c.cwd, 'tsconfig.json')
+export function getTSConfigPath (cwd: string) {
+  const tsconfigFile = path.join(cwd, 'tsconfig.json')
   if (fs.existsSync(tsconfigFile)) {
     return tsconfigFile
   }
@@ -158,7 +158,7 @@ export function getPlugins (input: {
     }),
     c.ts ? tsPlugin({
       clean: true,
-      tsconfig: getTSConfigPath(c)
+      tsconfig: getTSConfigPath(c.cwd)
     }) : undefined,
   ].filter(Boolean)
 
@@ -465,6 +465,10 @@ function clearFunctionBodyEsbuildPlugin (dir: string, names: string[]): esbuild.
     setup(build) {
       /** @TODO should match more explicit */
       build.onResolve({ filter: /drivers\// }, args => {
+        if (!fs.existsSync(args.path)) {
+          return null
+        }
+
         const { base } = path.parse(args.path)
         
         const code = fs.readFileSync(args.path).toString()
@@ -496,13 +500,13 @@ function clearFunctionBodyEsbuildPlugin (dir: string, names: string[]): esbuild.
   }
 }
 
-function aliasAtCodeToCwd (c: IConfig): esbuild.Plugin {
+function aliasAtCodeToCwd (cwd: string): esbuild.Plugin {
   return {
     name: 'aliasAtCodeToCwd',
     setup(build) {
       build.onLoad({ filter: /drivers\// }, args => {
         const code = fs.readFileSync(args.path).toString()
-        const newCode2 = code.replace(/@\//, c.cwd + '/')
+        const newCode2 = code.replace(/@\//, cwd + '/')
         return {
           contents: newCode2,
           loader: /\.ts$/.test(args.path) ? 'ts' : 'js'
@@ -513,58 +517,59 @@ function aliasAtCodeToCwd (c: IConfig): esbuild.Plugin {
 };
 
 async function esbuildDrivers (
-  c: IConfig,
+  config: IConfig,
   outputDir: string, 
   format: esbuild.Format,
   env?: 'client' | 'server',
 ) {
-  const { drivers } = c
+  const { drivers, ts, pacakgeJSON, cwd, pointFiles } = config
   let includingTs = false
   const points: string[] = []
   drivers.map(h => {
     const { filePath, name } = h
     if (/\.(m)?(j|t)s$/.test(filePath)) {
+
       points.push(filePath)
 
       includingTs = /\.ts(x)?$/.test(filePath) || includingTs
     }
   })
 
-  if (includingTs && !c.ts) {
+  if (includingTs && !ts) {
     throw new Error('[tarat] you are using ts file. please specific ts:true in tarat.config.js')
   }
-
 
   const buildOptions: esbuild.BuildOptions = {
     entryPoints: points,
     /**
      * because of removing unused module in the intact file and three-shaking
      */
-    bundle: false,
-    // bundle: true,
-    // external: [
-    //   ...Object.keys(c.pacakgeJSON.dependencies || {}),
-    //   ...Object.keys(c.pacakgeJSON.devDependencies || {}),
-    //   ...Object.keys(c.pacakgeJSON.peerDependencies || {})
-    // ],
+    // bundle: false,
+    bundle: true,
+    external: [
+      ...Object.keys(pacakgeJSON.dependencies || {}),
+      ...Object.keys(pacakgeJSON.devDependencies || {}),
+      ...Object.keys(pacakgeJSON.peerDependencies || {}),
+      'drivers/*',
+    ],
 
     outdir: outputDir,
     platform: 'node',
     format,
     treeShaking: true,
     plugins: [
-      aliasAtCodeToCwd(c)
+      aliasAtCodeToCwd(cwd)
     ],
   }
   if (env === 'client') {
     buildOptions.plugins.push(
-      clearFunctionBodyEsbuildPlugin(c.pointFiles.outputClientDriversDir, hookFactoryFeatures.serverOnly)
+      clearFunctionBodyEsbuildPlugin(pointFiles.outputClientDriversDir, hookFactoryFeatures.serverOnly)
     )
   }
 
   // check tsconfig
   if (includingTs) {
-    buildOptions.tsconfig = getTSConfigPath(c)
+    buildOptions.tsconfig = getTSConfigPath(cwd)
   }
 
   await esbuild.build(buildOptions)
@@ -582,7 +587,7 @@ async function esbuildDrivers (
 }
 
 function buildDTS (c: IConfig, filePath: string, outputFile: string) {
-  const tsconfigPath = getTSConfigPath(c)
+  const tsconfigPath = getTSConfigPath(c.cwd)
   const json = loadJSON(tsconfigPath)
 
   const options: IBuildOption = {
@@ -639,19 +644,33 @@ export async function buildDrivers (c: IConfig) {
   } = c.pointFiles
   const {
     esmDirectory,
-    cjsDirectory
+    cjsDirectory,
+    composeDriversDirectory
   } = c
 
   // 1.must build source dir first prevent to traverse below children dir 
   await esbuildDrivers(c, outputDriversDir, 'esm')
-  // 2.run after source building
+
+  // build compose first
+  const configWithComposeOnly: IConfig = { ...c, drivers: c.drivers.filter(p => /compose\//.test(p.filePath))}
   await Promise.all([
     // cjs
-    esbuildDrivers(c, path.join(outputClientDriversDir, cjsDirectory), 'cjs', 'client'),
-    esbuildDrivers(c, path.join(outputServerDriversDir, cjsDirectory), 'cjs', 'server'),
+    esbuildDrivers(configWithComposeOnly, path.join(outputClientDriversDir, composeDriversDirectory), 'cjs', 'client'),
+    esbuildDrivers(configWithComposeOnly, path.join(outputServerDriversDir, composeDriversDirectory), 'cjs', 'server'),
     // esm
-    esbuildDrivers(c, path.join(outputClientDriversDir, esmDirectory), 'esm', 'client'),
-    esbuildDrivers(c, path.join(outputServerDriversDir, esmDirectory), 'esm', 'server'),
+    esbuildDrivers(configWithComposeOnly, path.join(outputClientDriversDir, composeDriversDirectory), 'esm', 'client'),
+    esbuildDrivers(configWithComposeOnly, path.join(outputServerDriversDir, composeDriversDirectory), 'esm', 'server'),
+  ])
+
+  // 2.run after source building
+  const configWithoutCompose: IConfig = { ...c, drivers: c.drivers.filter(p => !/compose\//.test(p.filePath))}
+  await Promise.all([
+    // cjs
+    esbuildDrivers(configWithoutCompose, path.join(outputClientDriversDir, cjsDirectory), 'cjs', 'client'),
+    esbuildDrivers(configWithoutCompose, path.join(outputServerDriversDir, cjsDirectory), 'cjs', 'server'),
+    // esm
+    esbuildDrivers(configWithoutCompose, path.join(outputClientDriversDir, esmDirectory), 'esm', 'client'),
+    esbuildDrivers(configWithoutCompose, path.join(outputServerDriversDir, esmDirectory), 'esm', 'server'),
   ])
 
   if (c.ts) {

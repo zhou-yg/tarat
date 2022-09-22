@@ -22,6 +22,9 @@
       "import": "./connect.esm.js",
       "require": "./connect.js"
     },
+    "./connect.client.esm": {
+      "import": "./connect.client.esm.js"
+    },
     "./connect.client.esm.*": {
       "import": "./connect.client.esm.js"
     }
