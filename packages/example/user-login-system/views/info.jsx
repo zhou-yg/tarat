@@ -1,5 +1,5 @@
 import React, { useState, forwardRef, useImperativeHandle } from 'react'
-import { useTarat } from 'tarat-connect'
+import { useTarat } from 'tarat/connect'
 import login, { DEFAULT_AVATAR } from '../drivers/login'
 import s from './login.module.less'
 import EditOutlined from '@ant-design/icons/EditOutlined'

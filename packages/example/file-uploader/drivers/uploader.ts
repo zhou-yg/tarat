@@ -5,7 +5,7 @@ import {
   prisma,
   writePrisma,
   inputComputeInServer,
-} from 'tarat-core'
+} from 'tarat/core'
 import axios from 'axios'
 import * as fs from 'fs'
 import * as path from 'path'

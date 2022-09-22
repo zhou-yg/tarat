@@ -1,5 +1,5 @@
 import React, { useState, forwardRef, useImperativeHandle } from 'react'
-import { useTarat } from 'tarat-connect'
+import { useTarat } from 'tarat/connect'
 import login from '../drivers/login'
 import s from './login.module.less'
 import classnames from 'classnames'
