@@ -8,7 +8,7 @@ import 'react-markdown-editor-lite/lib/index.css';
 
 import mdEditor from '../drivers/mdEditor'
 
-import { useProgress, useTarat } from 'tarat-connect'
+import { useProgress, useTarat } from 'tarat/connect'
 
 // Initialize a markdown parser
 const mdParser = new MarkdownIt(/* Markdown-it options */);

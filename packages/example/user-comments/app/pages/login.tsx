@@ -4,7 +4,7 @@ import { useLocation, Navigate, Link } from 'react-router-dom'
 import LoginFrame from 'user-login-system/dist/views/login'
 import 'user-login-system/dist/views/login.css'
 
-import { after } from 'tarat-core'
+import { after } from 'tarat/core'
 
 export default function Login () {
   console.log('--- user-comments Login ---')

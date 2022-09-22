@@ -24,8 +24,6 @@
     "@types/react": "^18.0.15",
     "date-fns": "^2.28.0",
     "tailwindcss": "^3.1.8",
-    "tarat-connect": "workspace:*",
-    "tarat-core": "workspace:*",
     "typescript": "^4.6.4"
   },
   "devDependencies": {
@@ -33,8 +31,7 @@
     "@types/lodash": "^4.14.182",
     "@types/react-dom": "^18.0.5",
     "immer": "^9.0.14",
-    "less": "^4.1.2",
-    "tarat-server": "workspace:*"
+    "less": "^4.1.2"
   },
   "peerDependencies": {
     "@mui/material": "^5.10.0",
@@ -45,7 +42,6 @@
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-router-dom": "^6.3.0",
-    "tarat-connect": "workspace:*",
-    "tarat-core": "workspace:*"
+    "tarat": "workspace:*"
   }
 }

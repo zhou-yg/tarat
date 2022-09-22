@@ -1,4 +1,4 @@
-import { useTarat } from 'tarat-connect'
+import { useTarat } from 'tarat/connect'
 import React, { useState } from 'react'
 import todoHook from '../drivers/todo.js'
 import '../styles/todos.less'

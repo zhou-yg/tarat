@@ -1,6 +1,6 @@
 import mainHook from '../drivers/main'
 import topicDriver from '../drivers/topic'
-import { useTarat, useProgress, useDriver } from 'tarat-connect'
+import { useTarat, useProgress, useDriver } from 'tarat/connect'
 import React, { useState } from 'react'
 import s from './comments.module.less'
 import { Link } from 'react-router-dom'

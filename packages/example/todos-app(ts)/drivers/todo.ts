@@ -4,7 +4,7 @@ import {
   model,
   inputComputeInServer,
   computed
-} from 'tarat-core'
+} from 'tarat/core'
 
 function newTodoItem(description: string): { status: 'done' | 'undone', description: string } {
   return {

@@ -1,7 +1,7 @@
 import React, { ReactElement, useState } from 'react'
 
 import s from './topicList.module.less'
-import { useTarat } from 'tarat-connect'
+import { useTarat } from 'tarat/connect'
 import topicHook, { ITopic } from '../drivers/topic'
 import { Button, Input, List, ListItem, ListItemButton } from '@mui/material'
 

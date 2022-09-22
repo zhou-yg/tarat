@@ -5,7 +5,7 @@ import {
   inputComputeInServer,
   progress,
   state,
-} from "tarat-core";
+} from "tarat/core";
 import login from "./compose/login";
 import topic from "./compose/topic";
 

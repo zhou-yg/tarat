@@ -1,4 +1,4 @@
-import { computed, inputComputeInServer, model, state } from "tarat-core";
+import { computed, inputComputeInServer, model, state } from "tarat/core";
 import { ITopic } from "./topic";
 
 export interface ITopicProps {

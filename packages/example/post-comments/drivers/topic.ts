@@ -6,7 +6,7 @@ import {
   state,
   writeModel,
   writePrisma,
-} from "tarat-core";
+} from "tarat/core";
 
 export interface ITopic {
   id?: number;

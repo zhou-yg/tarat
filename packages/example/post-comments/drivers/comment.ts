@@ -5,7 +5,7 @@ import {
   model,
   inputComputeInServer,
   computed,
-} from "tarat-core";
+} from "tarat/core";
 import { ITopic } from "./topic";
 
 interface IComment {

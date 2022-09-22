@@ -1,7 +1,7 @@
 import React, { ReactElement, useEffect, useState } from 'react'
 
 import s from './commentList.module.less'
-import { useTarat } from 'tarat-connect'
+import { useTarat } from 'tarat/connect'
 
 import { Button, Input, List, ListItem } from '@mui/material'
 

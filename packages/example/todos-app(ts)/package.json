@@ -24,10 +24,7 @@
     "prisma": "^3.15.1",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
-    "react-router-dom": "^6.3.0",
-    "tarat-connect": "workspace:*",
-    "tarat-core": "workspace:*",
-    "tarat-server": "workspace:*"
+    "react-router-dom": "^6.3.0"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.182",
@@ -36,6 +33,7 @@
     "tslib": "^2.4.0"
   },
   "peerDependencies": {
-    "immer": "^9.0.14"
+    "immer": "^9.0.14",
+    "tarat": "workspace:*"
   }
 }
