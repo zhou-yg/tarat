@@ -70,8 +70,6 @@ function checkRequireOrImport (code, moduleWord, index) {
   const left2 = code.substring(index - 6, index - 2)
   const isFrom = left2 === 'from'
 
-  console.log('moduleWord: ', moduleWord, isRequire, isFrom);
-
   return isRequire || isFrom
 }
 

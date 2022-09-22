@@ -108,7 +108,7 @@ export function generateHookDeps (c: IConfig) {
       }
 
       // json in tarat: generate deps.json
-      fs.writeFileSync(path.join(c.pointFiles.outputDriversDir, `${name}.deps.json`), (JSON.stringify(deps)))
+      fs.writeFileSync(path.join(c.pointFiles.outputDriversDir, `${name}.deps.json`), JSON.stringify(deps, null, 2))
     
       // modify original hook file
       injectDeps(c, compiledFile);

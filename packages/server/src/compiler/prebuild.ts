@@ -372,7 +372,7 @@ export async function buildEntryServer (c: IConfig) {
 }
 
 /**
- * make sure hook will import the same module type
+ * make sure hook will import the same module type and same envirnment (eg. client or server)
  */
 export function replaceImportDriverPath (
   sourceFile: string,
@@ -458,22 +458,42 @@ export function removeUnusedImports(sourceFile: string) {
   fs.writeFileSync(sourceFile, newCode)
 }
 
-function clearFunctionBodyEsbuildPlugin (names: string[]): esbuild.Plugin {
+function clearFunctionBodyEsbuildPlugin (dir: string, names: string[]): esbuild.Plugin {
 
   return {
     name: 'clear tarat runtime function body',
     setup(build) {
       /** @TODO should match more explicit */
-      build.onLoad({ filter: /drivers\// }, args => {
+      build.onResolve({ filter: /drivers\// }, args => {
+        console.log('args: ', args);
+        const { base } = path.parse(args.path)
+        
         const code = fs.readFileSync(args.path).toString()
-
         const newCode2 = removeFunctionBody(code, names)
 
+        const destFile = path.join(dir, base)
+
+        fs.writeFileSync(destFile, newCode2)
+        console.log('destFile: ', destFile);
+
         return {
-          contents: newCode2,
-          loader: /\.ts$/.test(args.path) ? 'ts' : 'js'
+          path: destFile,
+          sideEffects: false
         }
       })
+
+      // build.onLoad({ filter: /drivers\// }, args => {
+      //   console.log('args: ', args);
+      //   const code = fs.readFileSync(args.path).toString()
+
+      //   const newCode2 = removeFunctionBody(code, names)
+      //   console.log('newCode2: ', newCode2);
+
+      //   return {
+      //     contents: newCode2,
+      //     loader: /\.ts$/.test(args.path) ? 'ts' : 'js'
+      //   }
+      // })
     },
   }
 }
@@ -519,23 +539,28 @@ async function esbuildDrivers (
 
   const buildOptions: esbuild.BuildOptions = {
     entryPoints: points,
-    bundle: true,
+    /**
+     * because of removing unused module in the intact file and three-shaking
+     */
+    bundle: false,
+    // bundle: true,
+    // external: [
+    //   ...Object.keys(c.pacakgeJSON.dependencies || {}),
+    //   ...Object.keys(c.pacakgeJSON.devDependencies || {}),
+    //   ...Object.keys(c.pacakgeJSON.peerDependencies || {})
+    // ],
+
     outdir: outputDir,
     platform: 'node',
     format,
     treeShaking: true,
-    external: [
-      ...Object.keys(c.pacakgeJSON.dependencies || {}),
-      ...Object.keys(c.pacakgeJSON.devDependencies || {}),
-      ...Object.keys(c.pacakgeJSON.peerDependencies || {})
-    ],
     plugins: [
       aliasAtCodeToCwd(c)
     ],
   }
   if (env === 'client') {
     buildOptions.plugins.push(
-      clearFunctionBodyEsbuildPlugin(hookFactoryFeatures.serverOnly)
+      clearFunctionBodyEsbuildPlugin(c.pointFiles.outputClientDriversDir, hookFactoryFeatures.serverOnly)
     )
   }
 
