@@ -334,7 +334,6 @@ importers:
       '@types/lodash': ^4.14.182
       '@types/react-dom': ^18.0.5
       classnames: ^2.3.1
-      file-uploader: workspace:*
       immer: ^9.0.14
       less: ^4.1.2
       lodash: ^4.17.21
@@ -344,18 +343,19 @@ importers:
       react-dom: ^18.1.0
       react-router-dom: ^6.3.0
       tailwindcss: ^3.1.8
-      tarat: workspace:^0.0.25
+      tarat: workspace:*
+      tarat-file-uploader: workspace:^0.0.2
       vite: ^2.9.9
     dependencies:
       '@ant-design/icons': 4.7.0_biqbaboplfbrettd7655fr4n2y
       '@prisma/client': 4.3.1
       classnames: 2.3.2
-      file-uploader: link:../file-uploader
       lodash: 4.17.21
       nanoid: 3.3.4
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
       tarat: link:../../tarat
+      tarat-file-uploader: link:../file-uploader
     devDependencies:
       '@babel/core': 7.19.1
       '@babel/preset-react': 7.18.6_@babel+core@7.19.1
