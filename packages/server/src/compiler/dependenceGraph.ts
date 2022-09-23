@@ -38,6 +38,8 @@ function cleanOriginalCodeTag (code: string) {
   return code
 }
 
+let i = 0;
+
 export function injectDeps (c: IConfig, targetFile: string) {
   const code = fs.readFileSync(targetFile).toString()
   const parsed = path.parse(targetFile)
@@ -47,7 +49,7 @@ export function injectDeps (c: IConfig, targetFile: string) {
   if (fs.existsSync(depsJSONPath)) {
     const depsJSON = loadJSON(depsJSONPath)
 
-    const AUTO_PARSER = 'autoParser'
+    const AUTO_PARSER = 'autoParser' + Date.now() + `_${i++}` 
 
     const arr = Object.keys(depsJSON).map(funcName => {
       return `Object.assign(${funcName}, {
