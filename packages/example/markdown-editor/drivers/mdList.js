@@ -8,9 +8,10 @@ import {
   state,
   writePrisma,
 } from "tarat/core";
+import { Markdown } from '@/models/indexes'
 
 export default function mdList(q = {}) {
-  const list = model("markdown", () => ({}));
+  const list = model(Markdown, () => ({}));
 
   const title = state("");
 

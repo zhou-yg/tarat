@@ -18,11 +18,3 @@ model Markdown {
   title String?
   content String? // equal sqlite.TEXT 
 }
-
-model MarkdownX {
-  id         Int @id @default(autoincrement())
-  createdAt  DateTime @default(now())
-  modifiedAt DateTime @default(now())
-
-  content String // equal sqlite.TEXT 
-}
