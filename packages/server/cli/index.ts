@@ -4,6 +4,7 @@ import dev from "./dev";
 import build from './build'
 import start from './start'
 import any from "./any";
+import bootstrap from "./bootstrap";
 const cac = cacFactory('tarat-server')
 
 const cwd = process.cwd()
@@ -27,6 +28,11 @@ cac
   .command('start', 'starting project as service')
   .action(async () => {
     start(cwd)
+  })
+cac
+  .command('boostrap', 'initialize the project')
+  .action(() => {
+    bootstrap(cwd)
   })
 
 cac

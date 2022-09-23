@@ -19,14 +19,13 @@ const serverModule = join(packagesPath, 'server')
 
 const PKG = 'package.json'
 
-const modules = [
-  coreModule,
-  connectModule,
-  serverModule,
-]
-
+const [specificModule] = process.argv.slice(2)
 
 function build(cwd) {
+  if (specificModule && !(new RegExp(`${specificModule}$`).test(cwd))) {
+    console.log(`skip building ${cwd}`)
+    return Promise.resolve()
+  }
 
   console.log(`start building ${chalk.green(cwd)} \n`)
 

@@ -5,7 +5,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "init": "pnpm i && npm run p:dev",
     "dev": "tarat dev",
     "build": "tarat build",
     "start": "tarat start",
