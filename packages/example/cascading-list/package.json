@@ -1,5 +1,5 @@
 {
-  "name": "cascading-list",
+  "name": "tarat-cascading-list",
   "version": "0.0.1",
   "tarat": {},
   "description": "a tarat unit",
@@ -13,6 +13,12 @@
     "p:deploy": "prisma migrate deploy",
     "p:studio": "prisma studio"
   },
+  "files": [
+    "dist",
+    "pacakge.json",
+    "types",
+    "README.md"
+  ],
   "prisma": {
     "schema": "./models/schema.prisma"
   },

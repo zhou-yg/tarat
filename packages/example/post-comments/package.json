@@ -1,5 +1,5 @@
 {
-  "name": "post-comments",
+  "name": "tarat-post-comments",
   "version": "0.0.1",
   "description": "a tarat unit",
   "tarat": {},
@@ -19,6 +19,12 @@
   "prisma": {
     "schema": "./models/schema.prisma"
   },
+  "files": [
+    "dist",
+    "pacakge.json",
+    "types",
+    "README.md"
+  ],
   "dependencies": {
     "@types/node": "^18.6.2",
     "@types/react": "^18.0.15",

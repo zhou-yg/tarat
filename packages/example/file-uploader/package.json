@@ -1,5 +1,5 @@
 {
-  "name": "file-uploader",
+  "name": "tarat-file-uploader",
   "version": "0.0.1",
   "tarat": {},
   "description": "a tarat unit",
@@ -16,6 +16,12 @@
   "prisma": {
     "schema": "./models/schema.prisma"
   },
+  "files": [
+    "dist",
+    "pacakge.json",
+    "types",
+    "README.md"
+  ],
   "devDependencies": {
     "@babel/preset-react": "^7.18.6",
     "@types/lodash": "^4.14.182",
