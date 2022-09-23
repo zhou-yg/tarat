@@ -5,11 +5,11 @@
   "description": "tarat service application for todos example",
   "main": "index.js",
   "scripts": {
-    "init": "pnpm i && npm run p:dev",
+    "bootstrap": "tarat bootstrap",
     "dev": "tarat dev",
     "build": "tarat build",
     "start": "tarat start",
-    "p:dev": "prisma migrate dev && prisma generate",
+    "p:dev": "prisma migrate dev",
     "p:gen": "prisma generate",
     "p:deploy": "prisma migrate deploy",
     "p:studio": "prisma studio"
@@ -27,10 +27,11 @@
   ],
   "dependencies": {
     "@ant-design/icons": "^4.7.0",
-    "@prisma/client": "4.x.x",
+    "@prisma/client": "4.3.1",
     "classnames": "^2.3.1",
     "lodash": "^4.17.21",
     "nanoid": "3.x.x",
+    "prisma": "4.x.x",
     "tarat": "workspace:*",
     "tarat-file-uploader": "workspace:*"
   },

@@ -7,7 +7,7 @@
       },
       "type": "1:1",
       "to": {
-        "model": "StorageItem",
+        "model": "UploaderItem",
         "field": "userId"
       }
     }
