@@ -30,7 +30,7 @@ cac
     start(cwd)
   })
 cac
-  .command('boostrap', 'initialize the project')
+  .command('bootstrap', 'initialize the project')
   .action(() => {
     bootstrap(cwd)
   })

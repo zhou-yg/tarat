@@ -47,7 +47,7 @@ importers:
       rollup-plugin-dts: ^4.2.2
       rollup-plugin-typescript2: ^0.31.2
       swr: ^1.3.0
-      tarat: workspace:0.0.24
+      tarat: workspace:*
       tslib: ^2.4.0
     dependencies:
       '@types/node': 18.7.18
@@ -123,10 +123,11 @@ importers:
       react-dom: ^18.1.0
       react-router-dom: ^6.3.0
       tailwindcss: ^3.1.8
-      tarat: workspace:^0.0.23
+      tarat: workspace:*
     dependencies:
       '@ant-design/icons': 4.7.0_biqbaboplfbrettd7655fr4n2y
       '@prisma/client': 4.3.1_prisma@4.3.1
+      immer: 9.0.15
       lodash: 4.17.21
       prisma: 4.3.1
       react: 18.2.0
@@ -137,7 +138,6 @@ importers:
       '@types/node': 18.7.18
       '@types/react': 18.0.20
       '@types/react-dom': 18.0.6
-      immer: 9.0.15
       less: 4.1.3
       react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
       tailwindcss: 3.1.8
@@ -159,10 +159,11 @@ importers:
       react-dom: ^18.1.0
       react-router-dom: ^6.3.0
       tailwindcss: ^3.1.8
-      tarat: workspace:^0.0.25
+      tarat: workspace:*
       tslib: ^2.4.0
     dependencies:
       '@prisma/client': 4.3.1_prisma@4.3.1
+      immer: 9.0.15
       lodash: 4.17.21
       prisma: 4.3.1
       react: 18.2.0
@@ -175,7 +176,6 @@ importers:
       '@types/react': 18.0.20
       '@types/react-dom': 18.0.6
       axios: 0.27.2
-      immer: 9.0.15
       less: 4.1.3
       react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
       tailwindcss: 3.1.8
@@ -193,13 +193,13 @@ importers:
       react-markdown-editor-lite: ^1.3.2
       react-router-dom: ^6.3.0
       tailwindcss: ^3.1.8
-      tarat: workspace:^0.0.25
+      tarat: workspace:*
       vite: ^3.0.7
     dependencies:
       markdown-it: 13.0.1
-      react: 17.0.2
+      react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
-      react-markdown-editor-lite: 1.3.3_react@17.0.2
+      react-markdown-editor-lite: 1.3.3_react@18.2.0
       tarat: link:../../tarat
     devDependencies:
       '@babel/preset-react': 7.18.6_@babel+core@7.19.1
@@ -229,15 +229,17 @@ importers:
       react-dom: ^18.1.0
       react-router-dom: ^6.3.0
       tailwindcss: ^3.1.8
-      tarat: workspace:^0.0.25
+      tarat: workspace:*
       typescript: ^4.6.4
     dependencies:
       '@ant-design/icons': 4.7.0_biqbaboplfbrettd7655fr4n2y
       '@mui/material': 5.10.5_7ey2zzynotv32rpkwno45fsx4e
+      '@prisma/client': 3.15.2_prisma@3.15.2
       '@types/node': 18.7.18
       '@types/react': 18.0.20
       date-fns: 2.29.3
       lodash: 4.17.21
+      prisma: 3.15.2
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
       tailwindcss: 3.1.8
@@ -245,12 +247,10 @@ importers:
       typescript: 4.8.3
     devDependencies:
       '@babel/core': 7.19.1
-      '@prisma/client': 3.15.2_prisma@3.15.2
       '@types/lodash': 4.14.185
       '@types/react-dom': 18.0.6
       immer: 9.0.15
       less: 4.1.3
-      prisma: 3.15.2
       react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
 
   packages/example/todos-app(ts):
@@ -265,7 +265,7 @@ importers:
       react: ^18.1.0
       react-dom: ^18.1.0
       react-router-dom: ^6.3.0
-      tarat: workspace:^0.0.25
+      tarat: workspace:*
       tslib: ^2.4.0
     dependencies:
       '@prisma/client': 3.15.2_prisma@3.15.2
@@ -295,14 +295,14 @@ importers:
       less: ^4.1.2
       lodash: ^4.17.21
       nanoid: 2.1.11
-      post-comments: workspace:*
       prisma: ^3.15.1
       react: ^18.2.0
       react-dom: ^18.2.0
       react-router-dom: ^6.3.0
-      tarat: workspace:^0.0.25
+      tarat: workspace:*
+      tarat-post-comments: workspace:*
+      tarat-user-login-system: workspace:*
       tslib: ^2.4.0
-      user-login-system: workspace:*
     dependencies:
       '@babel/preset-react': 7.18.6_@babel+core@7.19.1
       '@prisma/client': 3.15.2_prisma@3.15.2
@@ -312,14 +312,14 @@ importers:
       immer: 9.0.15
       lodash: 4.17.21
       nanoid: 2.1.11
-      post-comments: link:../post-comments
       prisma: 3.15.2
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
       react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
       tarat: link:../../tarat
+      tarat-post-comments: link:../post-comments
+      tarat-user-login-system: link:../user-login-system
       tslib: 2.4.0
-      user-login-system: link:../user-login-system
     devDependencies:
       '@types/lodash': 4.14.185
       '@types/react-dom': 18.0.6
@@ -330,7 +330,7 @@ importers:
       '@ant-design/icons': ^4.7.0
       '@babel/core': ^7.18.6
       '@babel/preset-react': ^7.18.6
-      '@prisma/client': 4.x.x
+      '@prisma/client': 4.3.1
       '@types/lodash': ^4.14.182
       '@types/react-dom': ^18.0.5
       classnames: ^2.3.1
@@ -338,20 +338,21 @@ importers:
       less: ^4.1.2
       lodash: ^4.17.21
       nanoid: 3.x.x
-      prisma: ^3.14.0
+      prisma: 4.x.x
       react: ^18.1.0
       react-dom: ^18.1.0
       react-router-dom: ^6.3.0
       tailwindcss: ^3.1.8
       tarat: workspace:*
-      tarat-file-uploader: workspace:^0.0.2
+      tarat-file-uploader: workspace:*
       vite: ^2.9.9
     dependencies:
       '@ant-design/icons': 4.7.0_biqbaboplfbrettd7655fr4n2y
-      '@prisma/client': 4.3.1
+      '@prisma/client': 4.3.1_prisma@4.3.1
       classnames: 2.3.2
       lodash: 4.17.21
       nanoid: 3.3.4
+      prisma: 4.3.1
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
       tarat: link:../../tarat
@@ -363,7 +364,6 @@ importers:
       '@types/react-dom': 18.0.6
       immer: 9.0.15
       less: 4.1.3
-      prisma: 3.15.2
       react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
       tailwindcss: 3.1.8
       vite: 2.9.15_less@4.1.3
@@ -372,7 +372,6 @@ importers:
     specifiers:
       '@babel/parser': ^7.18.8
       '@babel/preset-react': ^7.18.6
-      '@jsdevtools/version-bump-prompt': 6.1.0
       '@koa/cors': ^3.3.0
       '@prisma/internals': ^4.0.0
       '@prisma/sdk': ^4.0.0
@@ -409,7 +408,6 @@ importers:
       execa: 6.x.x
       exit-hook: 2.x.x
       express-to-koa: ^2.0.0
-      figures: 3.x.x
       get-port: 5.1.1
       immer: ^9.0.14
       inquirer: 8.2.4
@@ -418,7 +416,6 @@ importers:
       koa-body: ^5.0.0
       koa-static: ^5.0.0
       lodash: ^4.17.21
-      lodash-es: ^4.17.21
       magic-string: ^0.26.2
       postcss: ^8.4.14
       prettier: ^2.6.2
@@ -450,6 +447,7 @@ importers:
       '@rollup/plugin-commonjs': 22.0.2_rollup@2.79.0
       '@rollup/plugin-json': 4.1.0_rollup@2.79.0
       '@rollup/plugin-node-resolve': 13.3.0_rollup@2.79.0
+      '@rollup/plugin-replace': 4.0.0_rollup@2.79.0
       '@types/estree': 0.0.52
       '@types/koa': 2.13.5
       '@types/node': 18.7.18
@@ -466,7 +464,6 @@ importers:
       execa: 6.1.0
       exit-hook: 2.2.1
       express-to-koa: 2.0.0
-      figures: 3.2.0
       get-port: 5.1.1
       immer: 9.0.15
       inquirer: 8.2.4
@@ -475,26 +472,26 @@ importers:
       koa-body: 5.0.0
       koa-static: 5.0.0
       lodash: 4.17.21
-      lodash-es: 4.17.21
       magic-string: 0.26.3
       postcss: 8.4.16
       prettier: 2.7.1
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
       rimraf: 3.0.2
+      rollup: 2.79.0
       rollup-plugin-analyzer: 4.0.0
       rollup-plugin-auto-external: 2.0.0_rollup@2.79.0
+      rollup-plugin-dts: 4.2.2_ihkqvyh37tzxtjmovjyy2yrv7m
       rollup-plugin-jsx: 1.0.3
       rollup-plugin-less: 1.1.3
       rollup-plugin-postcss: 4.0.2_postcss@8.4.16
+      rollup-plugin-typescript2: 0.31.2_ihkqvyh37tzxtjmovjyy2yrv7m
       rollup-pluginutils: 2.8.2
       shelljs: 0.8.5
       tarat: link:../tarat
       vite: 2.9.15
       vite-tsconfig-paths: 3.5.0_vite@2.9.15
     devDependencies:
-      '@jsdevtools/version-bump-prompt': 6.1.0
-      '@rollup/plugin-replace': 4.0.0_rollup@2.79.0
       '@types/ejs': 3.1.1
       '@types/express-to-koa': 1.0.0
       '@types/koa__cors': 3.3.0
@@ -506,39 +503,7 @@ importers:
       '@types/rimraf': 3.0.2
       '@types/rollup-plugin-auto-external': 2.0.2
       '@types/shelljs': 0.8.11
-      rollup: 2.79.0
-      rollup-plugin-dts: 4.2.2_ihkqvyh37tzxtjmovjyy2yrv7m
-      rollup-plugin-typescript2: 0.31.2_ihkqvyh37tzxtjmovjyy2yrv7m
       tslib: 2.4.0
-
-  packages/signal:
-    specifiers:
-      '@jsdevtools/version-bump-prompt': 6.1.0
-      '@rollup/plugin-replace': ^4.0.0
-      '@rollup/plugin-typescript': ^6.1.0
-      '@types/node': ^18.6.2
-      acorn: ^8.7.1
-      acorn-walk: ^8.2.0
-      create-tarat: workspace:^0.0.1
-      immer: ^9.0.14
-      rollup: ^2.74.1
-      rollup-plugin-dts: ^4.2.2
-      rollup-plugin-typescript2: ^0.31.2
-      tslib: ^2.4.0
-    dependencies:
-      create-tarat: link:../create
-      immer: 9.0.15
-      rollup-plugin-dts: 4.2.2_ihkqvyh37tzxtjmovjyy2yrv7m
-      tslib: 2.4.0
-    devDependencies:
-      '@jsdevtools/version-bump-prompt': 6.1.0
-      '@rollup/plugin-replace': 4.0.0_rollup@2.79.0
-      '@rollup/plugin-typescript': 6.1.0_tznp6w7csbjledp5nresoxoky4
-      '@types/node': 18.7.18
-      acorn: 8.8.0
-      acorn-walk: 8.2.0
-      rollup: 2.79.0
-      rollup-plugin-typescript2: 0.31.2_ihkqvyh37tzxtjmovjyy2yrv7m
 
   packages/tarat:
     specifiers:
@@ -553,6 +518,7 @@ importers:
       '@rollup/plugin-commonjs': ^22.0.1
       '@rollup/plugin-json': ^4.1.0
       '@rollup/plugin-node-resolve': ^13.3.0
+      '@rollup/plugin-replace': ^4.0.0
       '@types/estree': ^0.0.52
       '@types/koa': ^2.13.5
       '@types/node': ^18.6.2
@@ -573,7 +539,7 @@ importers:
       express-to-koa: ^2.0.0
       get-port: 5.1.1
       immer: ^9.0.14
-      inquirer: 8.x.x
+      inquirer: 8.2.4
       jsx-transform: ^2.4.1
       koa: ^2.13.4
       koa-body: ^5.0.0
@@ -586,12 +552,14 @@ importers:
       react: ^18.2.0
       react-dom: ^18.2.0
       rimraf: ^3.0.2
+      rollup: ^2.74.1
       rollup-plugin-analyzer: ^4.0.0
       rollup-plugin-auto-external: ^2.0.0
       rollup-plugin-dts: ^4.2.2
       rollup-plugin-jsx: ^1.0.3
       rollup-plugin-less: ^1.1.3
       rollup-plugin-postcss: ^4.0.2
+      rollup-plugin-typescript2: ^0.31.2
       rollup-pluginutils: ^2.8.2
       shelljs: ^0.8.5
       swr: ^1.3.0
@@ -610,6 +578,7 @@ importers:
       '@rollup/plugin-commonjs': 22.0.2_rollup@2.79.0
       '@rollup/plugin-json': 4.1.0_rollup@2.79.0
       '@rollup/plugin-node-resolve': 13.3.0_rollup@2.79.0
+      '@rollup/plugin-replace': 4.0.0_rollup@2.79.0
       '@types/estree': 0.0.52
       '@types/koa': 2.13.5
       '@types/node': 18.7.18
@@ -643,12 +612,14 @@ importers:
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
       rimraf: 3.0.2
+      rollup: 2.79.0
       rollup-plugin-analyzer: 4.0.0
       rollup-plugin-auto-external: 2.0.0_rollup@2.79.0
       rollup-plugin-dts: 4.2.2_ihkqvyh37tzxtjmovjyy2yrv7m
       rollup-plugin-jsx: 1.0.3
       rollup-plugin-less: 1.1.3
       rollup-plugin-postcss: 4.0.2_postcss@8.4.16
+      rollup-plugin-typescript2: 0.31.2_ihkqvyh37tzxtjmovjyy2yrv7m
       rollup-pluginutils: 2.8.2
       shelljs: 0.8.5
       swr: 1.3.0_react@18.2.0
@@ -1694,19 +1665,6 @@ packages:
       '@prisma/engines-version': 3.15.1-1.461d6a05159055555eb7dfb337c9fb271cbd4d7e
       prisma: 3.15.2
 
-  /@prisma/client/4.3.1:
-    resolution: {integrity: sha512-FA0/d1VMJNWqzU7WVWTNWJ+lGOLR9JUBnF73GdIPAEVo/6dWk4gHx0EmgeU+SMv4MZoxgOeTBJF2azhg7x0hMw==}
-    engines: {node: '>=14.17'}
-    requiresBuild: true
-    peerDependencies:
-      prisma: '*'
-    peerDependenciesMeta:
-      prisma:
-        optional: true
-    dependencies:
-      '@prisma/engines-version': 4.3.0-32.c875e43600dfe042452e0b868f7a48b817b9640b
-    dev: false
-
   /@prisma/client/4.3.1_prisma@4.3.1:
     resolution: {integrity: sha512-FA0/d1VMJNWqzU7WVWTNWJ+lGOLR9JUBnF73GdIPAEVo/6dWk4gHx0EmgeU+SMv4MZoxgOeTBJF2azhg7x0hMw==}
     engines: {node: '>=14.17'}
@@ -2092,7 +2050,6 @@ packages:
       '@rollup/pluginutils': 3.1.0_rollup@2.79.0
       magic-string: 0.25.9
       rollup: 2.79.0
-    dev: true
 
   /@rollup/plugin-typescript/6.1.0_tznp6w7csbjledp5nresoxoky4:
     resolution: {integrity: sha512-hJxaiE6WyNOsK+fZpbFh9CUijZYqPQuAOWO5khaGTUkM8DYNNyA2TDlgamecE+qLOG1G1+CwbWMAx3rbqpp6xQ==}
@@ -2126,7 +2083,6 @@ packages:
     dependencies:
       estree-walker: 2.0.2
       picomatch: 2.3.1
-    dev: true
 
   /@sinclair/typebox/0.24.42:
     resolution: {integrity: sha512-d+2AtrHGyWek2u2ITF0lHRIv6Tt7X0dEHW+0rP+5aDCEjC3fiN2RBjrLD0yU0at52BcZbRGxLbAtXiR0hFCjYw==}
@@ -2482,7 +2438,6 @@ packages:
       pkg-dir: 5.0.0
       tslib: 2.4.0
       upath2: 3.1.15
-    dev: true
 
   /accepts/1.3.8:
     resolution: {integrity: sha512-PYAthTa2m2VKxuvSD3DPC/Gy+U+sOA1LAuT8mkmRuvw+NACSaeXEQ+NHcVF7rONl6qcaxV3Uuemwawk+7+SJLw==}
@@ -2514,6 +2469,7 @@ packages:
   /acorn-walk/8.2.0:
     resolution: {integrity: sha512-k+iyHEuPgSw6SbuDpGQM+06HQUa04DZ3o+F6CSzXMvvI5KMvnaEqXe+YVe555R9nn6GPt404fos4wcgpw12SDA==}
     engines: {node: '>=0.4.0'}
+    dev: false
 
   /acorn/5.7.4:
     resolution: {integrity: sha512-1D++VG7BhrtvQpNbBzovKNc1FLGGEE/oGe7b9xJm/RFHMBeUaUGpluV9RLjZa47YFdPcDAenEYuq9pQPcMdLJg==}
@@ -6218,7 +6174,6 @@ packages:
     resolution: {integrity: sha512-nnU+ssj5jUxQ5lTxNXHkPJeQ2ZVpsoGLEyM+eSCe9Q7v2NhiJhxlCECuUvhICOIgJd3OVFTWlrmCoAE64X6qsQ==}
     dependencies:
       tslib: 2.4.0
-    dev: true
 
   /path-key/3.1.1:
     resolution: {integrity: sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q==}
@@ -6236,7 +6191,6 @@ packages:
     resolution: {integrity: sha512-lxc+Mv83LrhLolN1E7lhIb2XLT3epL6QT/rrLySo6MEK08E5dTKxGFGSiqr71H9W9xe7uOgzlpN8hFqpavF0Gg==}
     dependencies:
       tslib: 2.4.0
-    dev: true
 
   /path-type/3.0.0:
     resolution: {integrity: sha512-T2ZUsdZFHgA3u4e5PfPbjd7HDDpxPnQb5jN0SrDsjNSuVXHJqtwTnWqG0B1jZrgmJ/7lj1EmVIByWt1gxGkWvg==}
@@ -6291,7 +6245,6 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       find-up: 5.0.0
-    dev: true
 
   /postcss-calc/8.2.4_postcss@8.4.16:
     resolution: {integrity: sha512-SmWMSJmB8MRnnULldx0lQIyhSNvuDl9HfrZkaqqE/WHAhToYsAvDq+yAsA/kIyINDszOp3Rh0GFoNuH5Ypsm3Q==}
@@ -6854,7 +6807,7 @@ packages:
   /react-is/18.2.0:
     resolution: {integrity: sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==}
 
-  /react-markdown-editor-lite/1.3.3_react@17.0.2:
+  /react-markdown-editor-lite/1.3.3_react@18.2.0:
     resolution: {integrity: sha512-n4IIiicC0c4BqjxPoZ5+tnK9JokjwRNJFo1m22MnDzdA+p5irCvUM1Ms8TNc7kn07nrETrxKP6TuD2jP12cSoA==}
     peerDependencies:
       react: ^16.9.0 || ^17.0.0
@@ -6862,7 +6815,7 @@ packages:
       '@babel/runtime': 7.19.0
       classnames: 2.3.2
       eventemitter3: 4.0.7
-      react: 17.0.2
+      react: 18.2.0
       uuid: 8.3.2
     dev: false
 
@@ -6898,14 +6851,6 @@ packages:
       prop-types: 15.8.1
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
-    dev: false
-
-  /react/17.0.2:
-    resolution: {integrity: sha512-gnhPt75i/dq/z3/6q/0asP78D0u592D5L1pd7M8P+dck6Fu/jJeL6iVVK23fptSUZj8Vjf++7wXA8UNclGQcbA==}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      loose-envify: 1.4.0
-      object-assign: 4.1.1
     dev: false
 
   /react/18.2.0:
@@ -7184,7 +7129,6 @@ packages:
       rollup: 2.79.0
       tslib: 2.4.0
       typescript: 4.8.3
-    dev: true
 
   /rollup-pluginutils/1.5.2:
     resolution: {integrity: sha512-SjdWWWO/CUoMpDy8RUbZ/pSpG68YHmhk5ROKNIoi2En9bJ8bTt3IhYi254RWiTclQmL7Awmrq+rZFOhZkJAHmQ==}
@@ -7886,7 +7830,6 @@ packages:
       path-is-network-drive: 1.0.16
       path-strip-sep: 1.0.13
       tslib: 2.4.0
-    dev: true
 
   /update-browserslist-db/1.0.9_browserslist@4.21.4:
     resolution: {integrity: sha512-/xsqn21EGVdXI3EXSum1Yckj3ZVZugqyOZQ/CxYPBD/R+ko9NSUScf8tFF4dOKY+2pvSSJA/S+5B8s4Zr4kyvg==}
