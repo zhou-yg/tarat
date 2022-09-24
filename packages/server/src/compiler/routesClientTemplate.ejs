@@ -29,15 +29,15 @@ function _TaratRootApplication({
   driver.switchToClientConsumeMode();
   
   return (
-    <%- rootStart %>
     <DriverContext.Provider value={driver}>
+      <%- rootStart %>
       <BrowserRouter>
         <Routes>
           <%- routes %>
         </Routes>  
       </BrowserRouter>
+      <%- rootEnd %>
     </DriverContext.Provider>
-    <%- rootEnd %>
   );
 }
 
