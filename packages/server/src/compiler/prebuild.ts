@@ -210,7 +210,7 @@ function getAppRootFile (c: IConfig) {
   }
 }
 
-function upperFirst (s: string) {
+function upperFirst (s: string = '') {
   s = s.replace(/\:|-/g, '_').replace(/^_/, '')
   return s ? (s[0].toUpperCase() + s.substring(1)) : ''
 }

@@ -10,6 +10,7 @@
     "build:doc": "node scripts/build-doc.mjs",
     "build:all": "node scripts/release.js",
     "release": "RELEASE=1 node scripts/release.js",
+    "build:eg": "node scripts/build-examples.js",
     "dev": "node scripts/build-watch-package.js"
   },
   "repository": {
