@@ -148,6 +148,30 @@ Model x Model时，静态它们之间的表还是只是简单的线性增加，�
 ]
 ```
 
+### Model冲突
+
+在静态合并的过程中，可能会涉及如下结构：
+- App
+  - module-A
+  - module-B
+    - 依赖：module-A
+
+App直接的module-A可能是用来存储自己业务场景的数据，跟moduel-B是不同的
+
+这意味着每个被引入的module，存在一个父级维度的namespace，
+
+App如果要访问module-B下的module-A的数据就必须带上module-B的namespace
+
+不同的module之间可能存在同名的model，所以module自身也是天然namespace隔离
+
+这里需要2个层次的namespace：
+- module自身
+- 父级
+
+namespace的规则应该是框架支持的，对于开发者来说，所有对model的引用应该均来自于module每步暴露的索引
+
+避免手写直接的model名称
+
 ### 动态模式
 
 应用于基于现有系统的再拓展，旧系统仍在工作，它的数据仍有价值，动态合并可以让新系统拉取旧系统的数据
