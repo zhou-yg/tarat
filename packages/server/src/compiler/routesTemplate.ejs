@@ -12,16 +12,22 @@ import {
 
 <%- entryCSSPath %>
 
+<% if (rootPath) { %>
+  import <%= rootName %> from '<%- rootPath %>'
+<% } %>  
+
 <%- imports %>
 
-export default function App({
+export default function _TaratRootApplication({
   location
 }) {
   return (
+    <%- rootStart %>
     <StaticRouter location={location}>
       <Routes>
         <%- routes %>
       </Routes>  
     </StaticRouter>
+    <%- rootEnd %>
   );
 }

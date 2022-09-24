@@ -20,6 +20,8 @@ export const defaultConfig = () => ({
 
   entry: 'entry', // jsx|tsx|css|less|json
 
+  appRoot: '_app', // the app root that is extesntion in jsx|tsx
+
   entryServer: 'entry.server', // .(j|t)sx in app
   routesServer: 'routes.server', // serve for tarat self
   routes: 'routes', // serve for tarat self

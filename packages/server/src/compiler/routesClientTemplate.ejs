@@ -10,6 +10,10 @@ import {
 } from "react-router-dom"
 import { clientRuntime, RenderDriver, DriverContext } from 'tarat/connect'
 
+<% if (rootPath) { %>
+import <%= rootName %> from '<%= rootPath %>'
+<% } %>
+
 <%- imports %>
 
 clientRuntime({
@@ -17,7 +21,7 @@ clientRuntime({
   name: 'react'
 })
 
-function App({
+function _TaratRootApplication({
   location
 }) {
   const driver = new RenderDriver();
@@ -25,6 +29,7 @@ function App({
   driver.switchToClientConsumeMode();
   
   return (
+    <%- rootStart %>
     <DriverContext.Provider value={driver}>
       <BrowserRouter>
         <Routes>
@@ -32,10 +37,11 @@ function App({
         </Routes>  
       </BrowserRouter>
     </DriverContext.Provider>
+    <%- rootEnd %>
   );
 }
 
-render(App)
+render(_TaratRootApplication)
 
 function render (f) {
   const ele = React.createElement(f)

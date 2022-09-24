@@ -185,8 +185,33 @@ function getEntryFile (c: IConfig) {
     }
   }
 }
+
+function getAppRootFile (c: IConfig) {
+  let f = path.join(c.cwd, c.appDirectory, c.appRoot)
+
+  const tsx = '.tsx'
+  const jsx = '.jsx'
+
+  if (c.ts && fs.existsSync(`${f}${tsx}`)) {
+    return {
+      file: `${f}${tsx}`,
+      path: f,
+      name: c.appRoot,
+      ext: tsx
+    }
+  }
+  if (!c.ts && fs.existsSync(`${f}${jsx}`)) {
+    return {
+      file: `${f}${jsx}`,
+      path: f,
+      name: c.appRoot,
+      ext: jsx
+    }
+  }
+}
+
 function upperFirst (s: string) {
-  s = s.replace(/\:|-/g, '_')
+  s = s.replace(/\:|-/g, '_').replace(/^_/, '')
   return s ? (s[0].toUpperCase() + s.substring(1)) : ''
 }
 
@@ -277,6 +302,8 @@ export async function buildServerRoutes(c: IConfig) {
     distServerRoutesCSS
   } = c.pointFiles
 
+  const appRootFile = getAppRootFile(c)
+
   const routesTreeArr = defineRoutesTree(c.pages)
 
   const imports = generateRoutesImports(routesTreeArr)
@@ -300,7 +327,17 @@ export async function buildServerRoutes(c: IConfig) {
     entryCSSPath = `import "${c.entryCSS}"`
   }
 
+  const rootName = upperFirst(appRootFile?.name)
+
+  const rootAppInfo = {
+    rootPath: appRootFile?.path,
+    rootName,
+    rootStart: appRootFile?.name ? `<${rootName}>` : '',
+    rootEnd: appRootFile?.name ? `</${rootName}>` : ''
+  }
+
   const routesStr = routesTemplate({
+    ...rootAppInfo,
     imports: importsWithAbsolutePathServer,
     entryCSSPath,
     routes: r
@@ -308,10 +345,11 @@ export async function buildServerRoutes(c: IConfig) {
   fs.writeFileSync(autoGenerateServerRoutes, prettier.format(routesStr))
 
   const routesStr2 = routesClientTemplate({
+    ...rootAppInfo,
     imports: importsWithAbsolutePathClient,
     routes: r
   })
-  // generate for vite.js
+  // generate for vite.js so that this file doesn't need to be compiled to js
   fs.writeFileSync(autoGenerateClientRoutes, prettier.format(routesStr2))
 
   const myPlugins = getPlugins({
