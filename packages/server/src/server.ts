@@ -79,6 +79,9 @@ export async function createDevServer (c: IConfig) {
   const vite = await createViteServer({
     root: c.cwd,
     server:{ middlewareMode: 'ssr' },
+    optimizeDeps: {
+      force: true
+    },
     plugins: [
       tsconfigPaths(),
       { ...aliasDriverRollupPlugin(c, 'client'), enforce: 'pre' },
