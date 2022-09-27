@@ -1,6 +1,6 @@
 import * as prismaInternals from '@prisma/internals'
 import acorn, { parse as acornParse } from 'acorn'
-import { hookFactoryFeatures } from 'tarat/core'
+import { hookFactoryFeatures, set } from 'tarat/core'
 import * as walk from 'acorn-walk'
 import { IConfig, IViewConfig } from "../config";
 import * as fs from 'fs'
@@ -28,6 +28,7 @@ import { traverse, last } from '../util';
 import aliasDriverRollupPlugin from './plugins/rollup-plugin-alias-driver';
 import { removeFunctionBody } from './ast';
 import esbuildAliasPlugin from 'esbuild-plugin-alias';
+import { findDependentPrisma, readCurrentPrisma, readExsitPrismaPart, transformModelName } from './compose';
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -210,7 +211,7 @@ function getAppRootFile (c: IConfig) {
   }
 }
 
-function upperFirst (s: string = '') {
+function upperFirstVariable (s: string = '') {
   s = s.replace(/\:|-/g, '_').replace(/^_/, '')
   return s ? (s[0].toUpperCase() + s.substring(1)) : ''
 }
@@ -245,10 +246,10 @@ function generateRoutesContent (routes: IRouteChild[], depth = 0, parentNmae = '
     if (r.dir) {
     } else {
       if (r.file) {
-        Cpt = `${upperFirst(parentNmae)}${upperFirst(r.name)}`
+        Cpt = `${upperFirstVariable(parentNmae)}${upperFirstVariable(r.name)}`
       } else {
         const childIndex = r.children.find(c => c.index)
-        Cpt = childIndex ? `${upperFirst(parentNmae)}${upperFirst(r.name) || '/'}${upperFirst(childIndex.name)}` : ''
+        Cpt = childIndex ? `${upperFirstVariable(parentNmae)}${upperFirstVariable(r.name) || '/'}${upperFirstVariable(childIndex.name)}` : ''
       }
       if (Cpt) {
         element = `element={<${Cpt} />}`
@@ -270,7 +271,7 @@ function generateRoutesImports (routes: IRouteChild[], parentNmae = '') {
   routes.forEach(r => {
     if (!r.dir && r.file) {
       importsArr.push([
-        `${upperFirst(parentNmae)}${upperFirst(r.name)}`,
+        `${upperFirstVariable(parentNmae)}${upperFirstVariable(r.name)}`,
         r.file,
       ])
     }
@@ -327,7 +328,7 @@ export async function buildServerRoutes(c: IConfig) {
     entryCSSPath = `import "${c.entryCSS}"`
   }
 
-  const rootName = upperFirst(appRootFile?.name)
+  const rootName = upperFirstVariable(appRootFile?.name)
 
   const rootAppInfo = {
     rootPath: appRootFile?.path,
@@ -732,24 +733,77 @@ export async function buildDrivers (c: IConfig) {
   }
 }
 
+interface IModelIndexesBase {
+  [k: string]: string | IModelIndexesBase
+}
+
+
+function findDependentIndexes (c: IConfig) {
+  const schemaFiles: Array<{
+    moduleName: string
+    indexes: IModelIndexesBase
+  }> = []
+
+  c.dependencyModules.forEach(moduleName => {
+    const dir = path.join(c.cwd, 'node_modules', moduleName)
+
+    const depSchemaPath = path.join(dir, c.buildDirectory, c.modelsDirectory, c.schemaIndexes)
+    const r2 = fs.existsSync(depSchemaPath)
+
+    if (r2) {
+      schemaFiles.push({
+        moduleName,
+        indexes: JSON.parse(fs.readFileSync(depSchemaPath).toString())
+      })
+    }
+  })
+
+  return schemaFiles
+}
+
 export async function buildModelIndexes(c: IConfig) {
   if (c.model.engine === 'prisma') {
-    const schemaFile = path.join(c.cwd, c.modelsDirectory, c.targetSchemaPrisma)
-    const schemaIndexesFile = path.join(c.cwd, c.modelsDirectory, c.schemaIndexes + (c.ts ? '.ts' : '.js'))
-    if (fs.existsSync(schemaFile)) {
-      try {
-        const model = await prismaInternals.getDMMF({
-          datamodel: fs.readFileSync(schemaFile).toString()
-        })
-        const models = model.datamodel.models
-        const indexesStr = models.map(m => {
-          return `export const ${m.name} = "${lowerFirst(m.name)}"`
-        }).join('\n')
-  
-        fs.writeFileSync(schemaIndexesFile, prettier.format(indexesStr))
-      } catch (e) {
-        console.error('[buildModelIndexes] building indexes')
-      }
+
+    const dependentIndexes = findDependentIndexes(c)
+
+    let existPrismaPart = readExsitPrismaPart(c)
+    if (existPrismaPart.length <= 0) {
+      existPrismaPart = [].concat(readCurrentPrisma(c))
     }
+
+    const schemaIndexesFile = path.join(c.cwd, c.modelsDirectory, c.schemaIndexes)
+
+    const objArr = await Promise.all(existPrismaPart.map(async ({ content }) => {
+      const model = await prismaInternals.getDMMF({
+        datamodel: content
+      })
+      const models = model.datamodel.models
+      const r: Record<string, string | Record<string, string>> = {}
+      models.forEach(m => {
+        r[m.name] = lowerFirst(m.name)
+      })
+      return r
+    }))
+    const mergedObj: IModelIndexesBase = objArr.reduce((p, n) => Object.assign(p, n), {})
+
+    dependentIndexes.forEach(obj => {
+      const dependentIndexesWithNamespace: IModelIndexesBase = {}
+      traverse(obj.indexes, (keys, val: string) => {
+        set(dependentIndexesWithNamespace, keys, transformModelName(`${obj.moduleName}_${val}`))
+      })
+
+      mergedObj[obj.moduleName] = dependentIndexesWithNamespace
+    })
+
+    /**
+     * eg
+     * mergedObj = {
+     *   modelA: string
+     *   anyModule: {
+     *     modelA: `anyModule`_modelA
+     *   }
+     * }
+     */
+    fs.writeFileSync(schemaIndexesFile, JSON.stringify(mergedObj, null, 2))
   }
 }

@@ -5,6 +5,7 @@ import { readViews } from './config/routes'
 import { isFileEmpty, loadJSON, logFrame } from './util'
 import chalk from 'chalk'
 import { findDependencies } from './config/deps'
+import type { JSONSchemaForNPMPackageJsonFiles } from '@schemastore/package'
 const { merge } = l
 
 export const defaultConfig = () => ({
@@ -42,7 +43,7 @@ export const defaultConfig = () => ({
   modelEnhance: 'model.enhance.json',
   prismaModelPart: 'part.prisma', // postfix
   targetSchemaPrisma: 'schema.prisma',
-  schemaIndexes: 'indexes',
+  schemaIndexes: 'indexes.json',
 
   // server side
   apiPre: '_hook',
@@ -240,6 +241,10 @@ function readEntryCSS (pre: string, ) {
   return r
 }
 
+export interface IPackageJSON {
+  name: string
+}
+
 export async function readConfig (arg: {
   cwd: string,
   isProd?: boolean
@@ -253,7 +258,7 @@ export async function readConfig (arg: {
     merge(config, configInFile)
   }
 
-  const pacakgeJSON = loadJSON(path.join(cwd, 'package.json'))
+  const pacakgeJSON: JSONSchemaForNPMPackageJsonFiles = loadJSON(path.join(cwd, 'package.json'))
 
   const viewsDirectory = path.join(cwd, config.viewsDirectory)
   const driversDirectory = path.join(cwd, config.driversDirectory)

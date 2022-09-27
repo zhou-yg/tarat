@@ -28,21 +28,23 @@ export default async (cwd: string) => {
 
   prepareDir(config)
 
-  composeSchema(config)
+  await composeSchema(config)
   composeDriver(config)
-
-  if (fs.existsSync(path.join(cwd, config.modelsDirectory, config.targetSchemaPrisma))) {
-    cp(
-      path.join(cwd, config.modelsDirectory, config.targetSchemaPrisma),
-      path.join(config.pointFiles.outputModelsDir, config.targetSchemaPrisma)
-    )
-  }
 
   logFrame(('build routes/entryServer/drivers'))
 
   const cost = time()
 
   await buildEverything(config)
+
+  const modelSchema = path.join(cwd, config.modelsDirectory, config.targetSchemaPrisma)
+  const modelIndexes = path.join(cwd, config.modelsDirectory, config.schemaIndexes)
+  if (fs.existsSync(modelSchema)) {
+    cp(modelSchema, path.join(config.pointFiles.outputModelsDir, config.targetSchemaPrisma))
+  }
+  if (fs.existsSync(modelIndexes)) {
+    cp(modelIndexes, path.join(config.pointFiles.outputModelsDir, config.schemaIndexes))
+  }
   
   logFrame((`build routes/entryServer/drivers end. cost ${chalk.green(cost())} seconds`))
 

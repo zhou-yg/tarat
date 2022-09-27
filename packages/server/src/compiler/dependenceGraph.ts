@@ -44,6 +44,8 @@ export function injectDeps (c: IConfig, targetFile: string) {
   const code = fs.readFileSync(targetFile).toString()
   const parsed = path.parse(targetFile)
 
+  const moduleName = c.pacakgeJSON.name
+
   const depsJSONPath = path.join(c.pointFiles.outputDriversDir, `${parsed.name}.deps.json`)
 
   if (fs.existsSync(depsJSONPath)) {
@@ -55,7 +57,8 @@ export function injectDeps (c: IConfig, targetFile: string) {
       return `Object.assign(${funcName}, {
   __deps__: ${AUTO_PARSER}.${funcName}.deps,
   __names__: ${AUTO_PARSER}.${funcName}.names,
-  __name__: "${funcName}" })`
+  __name__: "${funcName}",
+  __namespace__: "${moduleName}" })`
     })
 
     const codeIncludingDeps = template(
