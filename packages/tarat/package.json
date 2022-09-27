@@ -98,6 +98,7 @@
     "vite-tsconfig-paths": "^3.5.0",
     "@rollup/plugin-replace": "^4.0.0",
     "rollup": "^2.74.1",
-    "rollup-plugin-typescript2": "^0.31.2"
+    "rollup-plugin-typescript2": "^0.31.2",
+    "@schemastore/package": "^0.0.6"
   }
 }

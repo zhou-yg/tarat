@@ -21,9 +21,9 @@ model User {
   createdAt  DateTime @default(now())
   modifiedAt DateTime @default(now())
 
-  name     String        @unique
+  name     String                            @unique
   password String
-  avatar2  UploaderItem?
+  avatar2  Tarat_file_uploader_UploaderItem?
 }
 
 model SessionStore {
@@ -35,7 +35,7 @@ model SessionStore {
   userId    String
 }
 
-model UploaderItem {
+model Tarat_file_uploader_UploaderItem {
   id         Int      @id @default(autoincrement())
   createdAt  DateTime @default(now())
   modifiedAt DateTime @default(now())
