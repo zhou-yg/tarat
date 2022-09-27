@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useLocation, Navigate, Link } from 'react-router-dom'
 
-import LoginFrame from 'user-login-system/dist/views/login'
-import 'user-login-system/dist/views/login.css'
+import LoginFrame from 'tarat-user-login-system/dist/views/login'
+import 'tarat-user-login-system/dist/views/login.css'
 
 import { after } from 'tarat/core'
 

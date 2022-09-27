@@ -1,0 +1,13 @@
+{
+  "tarat-post-comments": {
+    "Topic": "Tarat_post_comments_topic",
+    "Comment": "Tarat_post_comments_comment"
+  },
+  "tarat-user-login-system": {
+    "User": "Tarat_user_login_system_user",
+    "SessionStore": "Tarat_user_login_system_sessionStore",
+    "tarat-file-uploader": {
+      "UploaderItem": "Tarat_user_login_system_Tarat_file_uploader_uploaderItem"
+    }
+  }
+}

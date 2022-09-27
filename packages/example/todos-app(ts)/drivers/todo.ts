@@ -5,6 +5,7 @@ import {
   inputComputeInServer,
   computed
 } from 'tarat/core'
+import indexes from '@/models/indexes.json'
 
 function newTodoItem(description: string): { status: 'done' | 'undone', description: string } {
   return {
@@ -15,7 +16,7 @@ function newTodoItem(description: string): { status: 'done' | 'undone', descript
 
 export default function todo () {
 
-  const items = model<{ id?: number, status: 'done' | 'undone', description: string }[]>('todoItem', () => ({
+  const items = model<{ id?: number, status: 'done' | 'undone', description: string }[]>(indexes.TodoItem, () => ({
     where: {
       status: 'undone'
     }

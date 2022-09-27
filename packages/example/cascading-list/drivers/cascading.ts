@@ -7,8 +7,8 @@ import {
   state,
   writePrisma,
 } from "tarat/core";
-
 import rename from "./rename";
+import indexes from '@/models/indexes.json'
 
 export interface Folder {
   id?: number;
@@ -32,7 +32,7 @@ export enum ETypes {
 }
 
 function cascading() {
-  const folders = prisma<Folder[]>("folder", () => ({}));
+  const folders = prisma<Folder[]>(indexes.Folder, () => ({}));
 
   const renameFolderCompose = compose(rename);
 
@@ -70,7 +70,7 @@ function cascading() {
     }
   });
 
-  const items = prisma<FolderItem[]>("item", () => {
+  const items = prisma<FolderItem[]>(indexes.Item, () => {
     const fid = renameFolderCompose.currentId();
     if (fid) {
       return {

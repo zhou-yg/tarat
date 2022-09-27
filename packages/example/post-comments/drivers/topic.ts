@@ -7,6 +7,7 @@ import {
   writeModel,
   writePrisma,
 } from "tarat/core";
+import indexes from '@/models/indexes.json'
 
 export interface ITopic {
   id?: number;
@@ -18,7 +19,7 @@ export interface ITopicProps {
 }
 
 export default function topic() {
-  const topics = model<ITopic[]>("topic", () => ({
+  const topics = model<ITopic[]>(indexes.Topic, () => ({
     orderBy: {
       createdAt: "desc",
     },

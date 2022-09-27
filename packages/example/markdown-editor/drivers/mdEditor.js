@@ -9,7 +9,7 @@ import {
   state,
   writeModel,
 } from "tarat/core";
-import { Markdown } from '@/models/indexes'
+import { Markdown } from '@/models/indexes.json'
 
 export default function mdEditor(q = {}) {
   const currentId = state(q.id);

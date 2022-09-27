@@ -1,4 +1,3 @@
-import { orderBy } from "lodash";
 import {
   inputCompute,
   state,
@@ -6,7 +5,7 @@ import {
   inputComputeInServer,
   computed,
 } from "tarat/core";
-import { ITopic } from "./topic";
+import indexes from '@/models/indexes.json'
 
 interface IComment {
   id?: number;
@@ -42,7 +41,7 @@ export default function comment(props: ICommentProps) {
 
   const commentReqTiming = state(Date.now());
 
-  const comments = model<IComment[]>("comment", () => {
+  const comments = model<IComment[]>(indexes.Comment, () => {
     // commentReqTiming()
     const tid = topicId();
     if (tid) {

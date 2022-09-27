@@ -1,5 +1,6 @@
 import { computed, inputComputeInServer, model, state } from "tarat/core";
 import { ITopic } from "./topic";
+import indexes from '@/models/indexes.json'
 
 export interface ITopicProps {
   id?: number;
@@ -8,7 +9,7 @@ export interface ITopicProps {
 function topicOne(props: ITopicProps) {
   const topicId = state(props.id);
 
-  const topicsById = model<ITopic[]>("topic", () => {
+  const topicsById = model<ITopic[]>(indexes.Topic, () => {
     const tid = topicId();
     if (tid) {
       return {
