@@ -1,6 +1,5 @@
 import { Driver } from 'tarat/core'
 export { Driver } from 'tarat/core'
-import { useAxiiHook } from './adaptors/axii'
 import { useReactHook, useReactProgress } from './adaptors/react'
 
 let hookAdaptorRuntime: any = null
@@ -27,7 +26,7 @@ export function useTarat<T extends HasParamFunc, U extends Parameters<T>>(
 export function useTarat(driver: Driver, ...args: any[]): any {
   switch (hookAdaptorType) {
     case 'react':
-      return useReactHook(hookAdaptorRuntime, driver, args)
+      return useReactHook(hookAdaptorRuntime, driver, args, currentModelIndexes)
     // case 'axii':
     //   return useAxiiHook(hookAdaptorRuntime, driver, args)
     default:
@@ -44,3 +43,9 @@ export function useProgress(driverResult: any) {
 
 // aliass
 export const useDriver = useTarat
+
+let currentModelIndexes: IModelIndexesBase | null = null
+
+export function registerModelIndexes (indexes: IModelIndexesBase | null) {
+  currentModelIndexes = indexes
+}

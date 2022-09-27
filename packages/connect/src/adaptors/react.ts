@@ -39,7 +39,7 @@ interface ICacheDriver<T extends Driver> {
   result: ReturnType<T>
 }
 
-export function useReactHook<T extends Driver>(react: any, hook: T, args: Parameters<T>) {
+export function useReactHook<T extends Driver>(react: any, hook: T, args: Parameters<T>, currentModelIndexes: IModelIndexesBase) {
   const init = useRef(null) as { current: ICacheDriver<T> | null }
   const driver: RenderDriver = useContext(DriverContext)
 
@@ -73,6 +73,7 @@ export function useReactHook<T extends Driver>(react: any, hook: T, args: Parame
         {
           beleiveContext: driver.beleiveContext,
           updateCallbackSync: driver.updateCallbackSync,
+          modelIndexes: currentModelIndexes
         }
       )
 
