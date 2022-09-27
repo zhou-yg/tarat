@@ -46,6 +46,6 @@ export const useDriver = useTarat
 
 let currentModelIndexes: IModelIndexesBase | null = null
 
-export function registerModelIndexes (indexes: IModelIndexesBase | null) {
+export function registerModelIndexes(indexes: IModelIndexesBase | null) {
   currentModelIndexes = indexes
 }

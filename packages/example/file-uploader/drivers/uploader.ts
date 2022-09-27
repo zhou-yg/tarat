@@ -6,10 +6,9 @@ import {
   writePrisma,
   inputComputeInServer,
 } from 'tarat/core'
-import axios from 'axios'
 import * as fs from 'fs'
 import * as path from 'path'
-import * as indexes from '@/models/indexes'
+import indexes from '@/models/indexes.json'
 
 export default function uploader<T> () {
   // only in browser

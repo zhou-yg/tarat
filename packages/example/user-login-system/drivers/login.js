@@ -11,7 +11,7 @@ import {
 } from "tarat/core";
 import { nanoid } from "nanoid";
 import uploaderDriver from './compose/uploader'
-import * as indexes from '@/models/indexes'
+import indexes from '@/models/indexes.json'
 
 export const DEFAULT_AVATAR = "/default-user-icon.jpeg";
 
