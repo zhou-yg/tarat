@@ -717,6 +717,9 @@ export function getDeps(f: Driver) {
 export function getName(f: Driver) {
   return f.__name__ || f.name
 }
+export function getNamespace(f: Driver) {
+  return f.__namespace__
+}
 export function getNames(f: Driver) {
   return f.__names__
 }
@@ -728,6 +731,7 @@ export interface Driver extends Function {
   __deps__?: THookDeps
   __names__?: THookNames // hook name by index
   __name__?: string
+  __namespace__?: string
 }
 export type BM = Driver
 

@@ -39,7 +39,9 @@ import {
   constructDataGraph,
   IModelPatchCreate,
   IModelPatchUpdate,
-  IModelPatchRemove
+  IModelPatchRemove,
+  get,
+  getNamespace
 } from './util'
 import EventEmitter from 'eventemitter3'
 import * as immer from 'immer'
@@ -300,13 +302,16 @@ export const writeInitialSymbol = Symbol.for('@@writePrismaInitial')
 export abstract class Model<T extends any[]> extends AsyncState<T[]> {
   queryWhereComputed: Computed<IModelQuery['query'] | void> | null = null
   watcher: Watcher = new Watcher(this)
+  entity: string
   constructor(
-    public entity: string,
+    entity: string,
     getter: (() => IModelQuery['query'] | undefined) | undefined = undefined,
     public options: IModelOption = {},
     public scope: CurrentRunnerScope
   ) {
     super([], scope)
+
+    this.entity = scope.getRealEntityName(entity)
 
     if (!getter) {
       getter = () => ({})
@@ -1636,6 +1641,8 @@ export class CurrentRunnerScope<T extends Driver = any> {
   beleiveContext = false
   updateCallbackSync = false
   applyComputeParalle = false
+  modelIndexes: IModelIndexesBase | undefined = undefined
+  modelIndexesPath: string[] = []
 
   effectFuncArr: Function[] = []
   disposeFuncArr: Function[] = []
@@ -1672,6 +1679,24 @@ export class CurrentRunnerScope<T extends Driver = any> {
       })
       this.initialHooksSet = s
     }
+  }
+
+  enterComposeDriver (driverNamespace: string) {
+    if (!driverNamespace) {
+      throw new Error('[CurrentRunnerScope.enterComposeDriver] sub composed driver doesnt have name')
+    }
+    this.modelIndexesPath.push(driverNamespace)
+    return () => {
+      this.modelIndexesPath.pop()
+    }
+  }
+
+  getRealEntityName (entityKey: string) {
+    if (this.modelIndexes) {
+      const subIndexes = get(this.modelIndexes, this.modelIndexesPath)
+      return subIndexes[entityKey] || entityKey
+    }
+    return entityKey
   }
 
   setOptions(op: Partial<IRunnerOptions>) {
@@ -1982,15 +2007,15 @@ export class CurrentRunnerScope<T extends Driver = any> {
         return
       }
 
-      const modelIndexes = new Set<number>()
+      const modelHookIndexes = new Set<number>()
       currentIndexes.forEach(i => {
         if (this.hooks[i] instanceof Model) {
-          modelIndexes.add(i)
+          modelHookIndexes.add(i)
         }
       })
-      if (modelIndexes.size > 0) {
+      if (modelHookIndexes.size > 0) {
         const nextModelIndexes = new Set<number>()
-        modelIndexes.forEach(i => {
+        modelHookIndexes.forEach(i => {
           getShallowDependentPrevNodes(rootNodes, { id: i }).forEach(n => {
             const r = result.has(n.id)
             result.add(n.id)
@@ -2162,11 +2187,16 @@ export function setGlobalModelEvent(me: ModelEvent | null) {
   GlobalModelEvent = me
 }
 
+export interface IModelIndexesBase {
+  [k: string]: string | IModelIndexesBase
+}
+
 export interface IRunnerOptions {
   // scope
   beleiveContext: boolean
   updateCallbackSync?: boolean
   applyComputeParalle?: boolean
+  modelIndexes?: IModelIndexesBase
   //
   runnerContext?: Symbol
 }
@@ -2176,7 +2206,8 @@ export class Runner<T extends Driver> {
   options: IRunnerOptions = {
     beleiveContext: false,
     updateCallbackSync: false,
-    applyComputeParalle: false
+    applyComputeParalle: false,
+    modelIndexes: undefined
   }
   constructor(public driver: T, options?: IRunnerOptions) {
     Object.assign(this.options, options)
@@ -2202,11 +2233,7 @@ export class Runner<T extends Driver> {
       names,
       modelPatchEvents
     )
-    scope.setOptions({
-      updateCallbackSync: this.options.updateCallbackSync,
-      beleiveContext: this.options.beleiveContext,
-      applyComputeParalle: this.options.applyComputeParalle
-    })
+    scope.setOptions(this.options)
 
     return scope
   }
@@ -3123,8 +3150,12 @@ export function compose<T extends Driver>(f: T, args?: any[]) {
   const deps = getDeps(f)
   currentRunnerScope.appendComposeDeps(startIndex, endIndex, deps)
 
+  const driverNamespace = getNamespace(f)
+  const leaveCompose = currentRunnerScope.enterComposeDriver(driverNamespace)
+
   const insideResult: ReturnType<T> = executeDriver(f, args)
 
+  leaveCompose()
   currentRunnerScope.composes.push(insideResult)
 
   return insideResult

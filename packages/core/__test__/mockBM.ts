@@ -951,7 +951,8 @@ Object.assign(simpleSS, {
   __names__: [
     [0, 's1'],
     [1, 's2']
-  ]
+  ],
+  __namespace__: 'jest/test'
 })
 
 export function composeWithSS() {
@@ -970,7 +971,7 @@ Object.assign(composeWithSS, {
   __names__: [
     [0, 's1'],
     [1, 's2']
-  ]
+  ],
 })
 
 export function composeWithSS2() {
@@ -1017,3 +1018,28 @@ injectExternalDescription(simpleComputedInServer, [
   [0, 's1', 1, 'c'],
   [['h', 1, [0]]]
 ])
+
+
+export function subPackageDriver () {
+  const m1 = prisma('item')
+
+  return {
+    m1
+  }
+}
+
+Object.assign(subPackageDriver, {
+  __names__: [[0, 'm1']],
+  __namespace__: 'sub/pacakge'
+})
+
+export function composeDriverWithNamespace () {
+  const m1 = prisma('item')
+
+  const composeResult = compose(subPackageDriver)
+
+  return {
+    m1,
+    cm1: composeResult.m1,
+  }
+}

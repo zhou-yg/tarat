@@ -14,9 +14,13 @@ describe('model', () => {
   })
   beforeEach(async () => {
     await prisma.item.deleteMany({})
+    await prisma.sub_package_Item.deleteMany({})
+    // check delete result
     const r = await prisma.item.findMany({})
     if (r.length > 0) {
       await prisma.item.deleteMany({})
+      await prisma.sub_package_Item.deleteMany({})
+
       const r2 = await prisma.item.findMany({})
       if (r2.length > 0) {
         throw new Error('prisma.item.deleteMany fail')
@@ -30,6 +34,9 @@ describe('model', () => {
     for (const data of mockUsersData) {
       await prisma.item.create({
         data
+      })  
+      await prisma.sub_package_Item.create({
+        data: { ...data, name: `sub-${data.name}` }
       })  
     }
     mockBM.initModelConfig({
@@ -98,7 +105,6 @@ describe('model', () => {
       await runner.ready()
   
       const r2 = await result.items()
-      
   
       expect(r2).toEqual([
         { id: 1, name: 'a' },
@@ -325,5 +331,31 @@ describe('model', () => {
         { id: 3, name: '1'}
       ])
     })  
+  })
+
+  describe('dynmaic model indexes', () => {
+    it ('compose sub package driver', async () => {
+      const runner = new Runner(mockBM.composeDriverWithNamespace, {
+        beleiveContext: true,
+        modelIndexes: {
+          item: 'item',
+          'sub/pacakge': {
+            item: 'sub_package_Item'
+          }
+        }
+      })
+      const result = runner.init()
+      
+      await runner.scope.ready()    
+
+      expect(result.m1()).toEqual([
+        { id: 1, name: 'a' },
+        { id: 2, name: 'b' },
+      ])
+      expect(result.cm1()).toEqual([
+        { id: 1, name: 'sub-a' },
+        { id: 2, name: 'sub-b' },
+      ])
+    })
   })
 })
