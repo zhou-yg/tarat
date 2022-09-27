@@ -109,14 +109,33 @@ async function generateNewSchema (c: IConfig, schemaContentArr: IPrismaFile[], e
       const { name } = n
       const r = schemaContent.match(new RegExp(`model ${name} {[\\w\\W\\n]*?}`, 'g'))
       const nameWithModulePrefix = moduleName ? transformModelName(`${moduleName}_${name}`) : name
+      const fieldLines = r?.[0]?.split('\n').slice(1, -1) || []
+
+      const newFieldLines = fieldLines.map(line => {
+        const [columnName, columnType, ...rest] = line.trim().split(/\s+/)
+        if (columnType) {
+          // get the highest match rate
+          const [selfCustomModel] = models.filter(m => new RegExp(`^${m.name}`).test(columnType)).sort((p, n) => p.name.length - n.name.length)
+          if (selfCustomModel) {
+            const columnTypePostfix = columnType.replace(new RegExp(`^${selfCustomModel.name}`), '')
+            return [
+              columnName,
+              transformModelName(`${moduleName}_${selfCustomModel.name}`) + columnTypePostfix,
+              ...rest
+            ].join(' ')
+          }
+        }
+        return line
+      })
+
       return {
         name: nameWithModulePrefix,
         originalName: name,
-        fieldLines: r?.[0]?.split('\n').slice(1, -1) || []
+        fieldLines: newFieldLines,
       }
     })
     
-
+    console.log('modelsStruct: ', modelsStruct);
     return modelsStruct
   }))
   const schemaStructArrFlat:IParsedSchemaStruct[] = schemaStructArr.flat()

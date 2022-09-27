@@ -761,6 +761,18 @@ function findDependentIndexes (c: IConfig) {
   return schemaFiles
 }
 
+function deepInsertName (moduleName: string, indexes: IModelIndexesBase) {
+  const dependentIndexesWithNamespace: IModelIndexesBase = {}
+  traverse(indexes, (keys, val: string | IModelIndexesBase) => {
+    if (typeof val === 'string') {
+      set(dependentIndexesWithNamespace, keys, transformModelName(`${moduleName}_${val}`))
+    } else {
+      set(dependentIndexesWithNamespace, keys, deepInsertName(moduleName, val))
+    }
+  })
+  return dependentIndexesWithNamespace
+}
+
 export async function buildModelIndexes(c: IConfig) {
   if (c.model.engine === 'prisma') {
 
@@ -787,10 +799,7 @@ export async function buildModelIndexes(c: IConfig) {
     const mergedObj: IModelIndexesBase = objArr.reduce((p, n) => Object.assign(p, n), {})
 
     dependentIndexes.forEach(obj => {
-      const dependentIndexesWithNamespace: IModelIndexesBase = {}
-      traverse(obj.indexes, (keys, val: string) => {
-        set(dependentIndexesWithNamespace, keys, transformModelName(`${obj.moduleName}_${val}`))
-      })
+      const dependentIndexesWithNamespace = deepInsertName(obj.moduleName, obj.indexes)
 
       mergedObj[obj.moduleName] = dependentIndexesWithNamespace
     })
