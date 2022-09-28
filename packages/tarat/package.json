@@ -1,6 +1,6 @@
 {
   "name": "tarat",
-  "version": "0.0.36",
+  "version": "0.0.37",
   "description": "a super fast application framework",
   "bin": {
     "tarat": "./cli/index.js"
@@ -38,7 +38,7 @@
   "bugs": {
     "url": "https://github.com/zhou-yg/tarat/issues"
   },
-  "homepage": "https://github.com/zhou-yg/tarat#readme",
+  "homepage": "https://tarat.run/",
   "dependencies": {
     "@babel/parser": "^7.18.8",
     "@babel/preset-react": "^7.18.6",
