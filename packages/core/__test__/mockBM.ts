@@ -971,7 +971,7 @@ Object.assign(composeWithSS, {
   __names__: [
     [0, 's1'],
     [1, 's2']
-  ],
+  ]
 })
 
 export function composeWithSS2() {
@@ -1019,8 +1019,7 @@ injectExternalDescription(simpleComputedInServer, [
   [['h', 1, [0]]]
 ])
 
-
-export function subPackageDriver () {
+export function subPackageDriver() {
   const m1 = prisma('item')
 
   return {
@@ -1033,13 +1032,13 @@ Object.assign(subPackageDriver, {
   __namespace__: 'sub/pacakge'
 })
 
-export function composeDriverWithNamespace () {
+export function composeDriverWithNamespace() {
   const m1 = prisma('item')
 
   const composeResult = compose(subPackageDriver)
 
   return {
     m1,
-    cm1: composeResult.m1,
+    cm1: composeResult.m1
   }
 }

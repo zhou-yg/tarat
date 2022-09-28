@@ -436,6 +436,7 @@ export abstract class WriteModel<T extends Object> extends AsyncState<
     } else {
       this.entity = sourceModelGetter
     }
+    this.entity = scope.getRealEntityName(this.entity)
   }
   setGetter(fn: () => T) {
     this.getData = fn
@@ -1681,9 +1682,11 @@ export class CurrentRunnerScope<T extends Driver = any> {
     }
   }
 
-  enterComposeDriver (driverNamespace: string) {
+  enterComposeDriver(driverNamespace: string) {
     if (!driverNamespace) {
-      throw new Error('[CurrentRunnerScope.enterComposeDriver] sub composed driver doesnt have name')
+      throw new Error(
+        '[CurrentRunnerScope.enterComposeDriver] sub composed driver doesnt have name'
+      )
     }
     this.modelIndexesPath.push(driverNamespace)
     return () => {
@@ -1691,7 +1694,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
     }
   }
 
-  getRealEntityName (entityKey: string) {
+  getRealEntityName(entityKey: string) {
     if (this.modelIndexes) {
       const subIndexes = get(this.modelIndexes, this.modelIndexesPath)
       return subIndexes[entityKey] || entityKey
