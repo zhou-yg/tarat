@@ -1,7 +1,7 @@
 {
-  "User": "user",
-  "SessionStore": "sessionStore",
+  "user": "user",
+  "sessionStore": "sessionStore",
   "tarat-file-uploader": {
-    "UploaderItem": "Tarat_file_uploader_uploaderItem"
+    "uploaderItem": "tarat_file_uploader_UploaderItem"
   }
 }

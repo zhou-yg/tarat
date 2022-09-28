@@ -49,7 +49,7 @@ export default function login() {
   );
   const writeSessionStore = writePrisma(sessionStore);
 
-  const userDataByCookie = model(indexes.User, (prev) => {
+  const userDataByCookie = model(indexes.user, (prev) => {
     const ss = sessionStore();
     if (ss && ss.length > 0) {
       return {

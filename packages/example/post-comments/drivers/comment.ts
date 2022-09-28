@@ -41,7 +41,7 @@ export default function comment(props: ICommentProps) {
 
   const commentReqTiming = state(Date.now());
 
-  const comments = model<IComment[]>(indexes.Comment, () => {
+  const comments = model<IComment[]>(indexes.comment, () => {
     // commentReqTiming()
     const tid = topicId();
     if (tid) {

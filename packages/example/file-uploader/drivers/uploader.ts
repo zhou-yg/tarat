@@ -39,7 +39,7 @@ export default function uploader<T> () {
     }
   })
 
-  const fileStorage = prisma<{ name: string; link: string }[]>(indexes.UploaderItem, () => undefined, {
+  const fileStorage = prisma<{ name: string; link: string }[]>(indexes.uploaderItem, () => undefined, {
     immediate: false
   })
   const writeFileStroage = writePrisma(fileStorage, () => {

@@ -19,7 +19,7 @@ export interface ITopicProps {
 }
 
 export default function topic() {
-  const topics = model<ITopic[]>(indexes.Topic, () => ({
+  const topics = model<ITopic[]>(indexes.topic, () => ({
     orderBy: {
       createdAt: "desc",
     },

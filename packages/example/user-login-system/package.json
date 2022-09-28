@@ -1,6 +1,6 @@
 {
   "name": "tarat-user-login-system",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "tarat": {},
   "description": "tarat service application for todos example",
   "main": "index.js",
@@ -28,6 +28,7 @@
   "dependencies": {
     "@ant-design/icons": "^4.7.0",
     "@prisma/client": "4.3.1",
+    "@remix-run/router": "^1.0.1",
     "classnames": "^2.3.1",
     "lodash": "^4.17.21",
     "nanoid": "3.x.x",

@@ -1,13 +1,13 @@
 {
   "tarat-post-comments": {
-    "Topic": "Tarat_post_comments_topic",
-    "Comment": "Tarat_post_comments_comment"
+    "topic": "tarat_post_comments_Topic",
+    "comment": "tarat_post_comments_Comment"
   },
   "tarat-user-login-system": {
-    "User": "Tarat_user_login_system_user",
-    "SessionStore": "Tarat_user_login_system_sessionStore",
+    "user": "tarat_user_login_system_User",
+    "sessionStore": "tarat_user_login_system_SessionStore",
     "tarat-file-uploader": {
-      "UploaderItem": "Tarat_user_login_system_Tarat_file_uploader_uploaderItem"
+      "uploaderItem": "tarat_user_login_system_Tarat_file_uploader_UploaderItem"
     }
   }
 }

@@ -9,7 +9,7 @@ export interface ITopicProps {
 function topicOne(props: ITopicProps) {
   const topicId = state(props.id);
 
-  const topicsById = model<ITopic[]>(indexes.Topic, () => {
+  const topicsById = model<ITopic[]>(indexes.topic, () => {
     const tid = topicId();
     if (tid) {
       return {

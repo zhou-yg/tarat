@@ -32,7 +32,7 @@ export enum ETypes {
 }
 
 function cascading() {
-  const folders = prisma<Folder[]>(indexes.Folder, () => ({}));
+  const folders = prisma<Folder[]>(indexes.folder, () => ({}));
 
   const renameFolderCompose = compose(rename);
 
@@ -70,7 +70,7 @@ function cascading() {
     }
   });
 
-  const items = prisma<FolderItem[]>(indexes.Item, () => {
+  const items = prisma<FolderItem[]>(indexes.item, () => {
     const fid = renameFolderCompose.currentId();
     if (fid) {
       return {
