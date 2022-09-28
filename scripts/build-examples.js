@@ -5,16 +5,20 @@ const { loadJSON } = require("./utils")
 
 const exampleDir = join(__dirname, '../packages/example/')
 
+const shouldPublish = process.env.PUBLISH !== 'false'
+console.log('shouldPublish: ', shouldPublish);
+
 const pack1 = [
   'cascading-list',
   'file-uploader',
   'markdown-editor',
-  'user-login-system'
+  'post-comments',
+  'user-login-system',
+  'user-comments',
 ]
 
-const map = {
-  p1: pack1
-}
+const pack2 = [
+]
 
 const [packType] = process.argv.slice(2)
 
@@ -31,20 +35,23 @@ async function buildAndPublish (dir) {
     instance.on('error', reject)
   })
 
-  const pkgJSONPath = join(dirPath, 'package.json')
-  const pkgJSON = loadJSON(pkgJSONPath)
-  pkgJSON.version = pkgJSON.version.replace(/\d+$/, (w) => parseInt(w) + 1)
-  writeFileSync(pkgJSONPath, JSON.stringify(pkgJSON, null, 2))
 
-  const instance2 = spawn('pnpm', ['publish', '--no-git-checks'], {
-    cwd: dirPath,
-    stdio: [process.stdin, process.stdout, process.stderr]
-  })
+  if (shouldPublish) {
+    const pkgJSONPath = join(dirPath, 'package.json')
+    const pkgJSON = loadJSON(pkgJSONPath)
+    pkgJSON.version = pkgJSON.version.replace(/\d+$/, (w) => parseInt(w) + 1)
+    writeFileSync(pkgJSONPath, JSON.stringify(pkgJSON, null, 2))
 
-  await new Promise((resolve, reject) => {
-    instance2.on('close', resolve)
-    instance2.on('error', reject)
-  })
+    const instance2 = spawn('pnpm', ['publish', '--no-git-checks'], {
+      cwd: dirPath,
+      stdio: [process.stdin, process.stdout, process.stderr]
+    })
+  
+    await new Promise((resolve, reject) => {
+      instance2.on('close', resolve)
+      instance2.on('error', reject)
+    })
+  }
 }
 
 async function doTask () {
@@ -53,6 +60,7 @@ async function doTask () {
       for (const m of pack1) {
         await buildAndPublish(m)
       }
+      await Promise.all(pack2.map(m => buildAndPublish(m)))
     }
   }
 }
