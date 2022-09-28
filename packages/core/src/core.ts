@@ -1018,6 +1018,7 @@ function popInputComputeStack() {
 }
 
 export class InputCompute<P extends any[] = any> extends Hook {
+  commitPromise: Promise<void> | null = null
   constructor(
     public getter:
       | InputComputeFn<P>
@@ -1032,7 +1033,20 @@ export class InputCompute<P extends any[] = any> extends Hook {
   commitComputePatches(
     reactiveChain?: ReactiveChain
   ): (void | Promise<void>)[] | undefined {
-    return this.scope.applyAllComputePatches(this, reactiveChain)
+    if (this.commitPromise) {
+      this.commitPromise = this.commitPromise.then(() => {
+        const r = this.scope.applyAllComputePatches(this, reactiveChain)
+        if (r?.some(p => isPromise(p))) {
+          return Promise.all(r).then()
+        }
+      })
+      return [this.commitPromise]
+    }
+    const r = this.scope.applyAllComputePatches(this, reactiveChain)
+    if (r?.some(p => isPromise(p))) {
+      this.commitPromise = Promise.all(r).then()
+    }
+    return r
   }
   inputFuncEnd(reactiveChain?: ReactiveChain): Promise<void> {
     const r = this.commitComputePatches(reactiveChain)
@@ -1040,7 +1054,9 @@ export class InputCompute<P extends any[] = any> extends Hook {
     this.emit(EHookEvents.afterCalling, this)
 
     if (r?.some(p => isPromise(p))) {
-      return Promise.all(r).then(r => {})
+      return Promise.all(r).then(r => {
+        this.commitPromise = null
+      })
     }
     return Promise.resolve()
   }
@@ -1921,11 +1937,19 @@ export class CurrentRunnerScope<T extends Driver = any> {
         /** @TODO here appending new chain maybe in method of their self  */
         const newChildChain = reactiveChain?.addUpdate(h as State)
         if (h instanceof Model || h instanceof WriteModel) {
-          const r = h.applyComputePatches(currentInputCompute, newChildChain)
           if (applyComputeParalle) {
-            prevPromise = prevPromise ? prevPromise.then(() => r) : r
+            return h.applyComputePatches(currentInputCompute, newChildChain)
+          } else {
+            prevPromise = prevPromise
+              ? prevPromise.then(() => {
+                  return h.applyComputePatches(
+                    currentInputCompute,
+                    newChildChain
+                  )
+                })
+              : h.applyComputePatches(currentInputCompute, newChildChain)
           }
-          return r
+          return prevPromise
         } else {
           return (h as State).applyComputePatches(
             currentInputCompute,
