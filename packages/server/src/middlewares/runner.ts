@@ -77,7 +77,7 @@ export default function taratMiddleware (args: {
         let scope = runner.prepareScope(c.initialArgList, c)
         getPlugin('GlobalRunning').setCurrent(scope, wrapCtx(ctx))
 
-        console.log('==== before exeexecuteDriver ===============')
+        console.log('==== before executeDriver ===============')
 
         const chain1 = startdReactiveChain(`${driverName}(init)`)
 

@@ -29,6 +29,7 @@ import aliasDriverRollupPlugin from './plugins/rollup-plugin-alias-driver';
 import { removeFunctionBody } from './ast';
 import esbuildAliasPlugin from 'esbuild-plugin-alias';
 import { findDependentPrisma, readCurrentPrisma, readExsitPrismaPart, transformModelName } from './compose';
+import { upperFirst } from 'lodash';
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -768,7 +769,7 @@ function deepInsertName (moduleName: string, indexes: IModelIndexesBase) {
   const dependentIndexesWithNamespace: IModelIndexesBase = {}
   traverse(indexes, (keys, val: string | IModelIndexesBase) => {
     if (typeof val === 'string') {
-      set(dependentIndexesWithNamespace, keys, transformModelName(`${moduleName}_${val}`))
+      set(dependentIndexesWithNamespace, keys, transformModelName(`${moduleName}_${upperFirst(val)}`))
     } else {
       set(dependentIndexesWithNamespace, keys, deepInsertName(moduleName, val))
     }
@@ -795,7 +796,7 @@ export async function buildModelIndexes(c: IConfig) {
       const models = model.datamodel.models
       const r: Record<string, string | Record<string, string>> = {}
       models.forEach(m => {
-        r[m.name] = lowerFirst(m.name)
+        r[lowerFirst(m.name)] = lowerFirst(m.name)
       })
       return r
     }))

@@ -29,7 +29,7 @@ export async function setPrisma (config: IConfig)  {
   console.log('prisma.$connect: ', prisma.$connect);
   const connectResult = prisma.$connect();
   connectResult.then(() => {
-    console.log('connect success')
+    console.log('connect success', Object.keys(prisma))
   })
   // connectResult.then(() => {
   //   console.log('connect success')
@@ -50,16 +50,27 @@ export async function setPrisma (config: IConfig)  {
 
   loadPlugin('Model', {
     async find(from: string, e, w) {
+      console.log('find e: ', e);
       return prisma[e].findMany(w).then(r => r)
     },
     async update(from: string, e, w) {
-      return prisma[e].update(w).then(r => r)
+      console.log('update e: ', e, w, 'start');
+      const r = prisma[e].update(w).then(r => r)
+      r.then(() => {
+        console.log('update e: ', e, 'end');
+      })
+      return r
     },
     async remove(from: string, e, d) {
       return prisma[e].delete(d).then(r => r)
     },
     async create(from: string, e, q) {
-      return prisma[e].create(q).then(r => r)
+      console.log('createe: ', e, q, 'start');
+      const r = prisma[e].create(q).then(r => r)
+      r.then(() => {
+        console.log(`create ${e} end`)
+      })
+      return r
     },
     // should check relation here
     async executeDiff(from: string, e, d) {

@@ -108,19 +108,19 @@ async function generateNewSchema (c: IConfig, schemaContentArr: IPrismaFile[], e
     const modelsStruct = models.map((n: any) => {
       const { name } = n
       const r = schemaContent.match(new RegExp(`model ${name} {[\\w\\W\\n]*?}`, 'g'))
-      const nameWithModulePrefix = moduleName ? transformModelName(`${moduleName}_${name}`) : name
+      const nameWithModulePrefix = moduleName ? upperFirst(transformModelName(`${moduleName}_${name}`)) : name
       const fieldLines = r?.[0]?.split('\n').slice(1, -1) || []
 
       const newFieldLines = fieldLines.map(line => {
         const [columnName, columnType, ...rest] = line.trim().split(/\s+/)
         if (columnType) {
-          // get the highest match rate
+          // pick model type that having the highest match rate
           const [selfCustomModel] = models.filter(m => new RegExp(`^${m.name}`).test(columnType)).sort((p, n) => p.name.length - n.name.length)
           if (selfCustomModel) {
             const columnTypePostfix = columnType.replace(new RegExp(`^${selfCustomModel.name}`), '')
             return [
               columnName,
-              transformModelName(`${moduleName}_${selfCustomModel.name}`) + columnTypePostfix,
+              upperFirst(transformModelName(`${moduleName}_${selfCustomModel.name}`)) + columnTypePostfix,
               ...rest
             ].join(' ')
           }
@@ -138,6 +138,7 @@ async function generateNewSchema (c: IConfig, schemaContentArr: IPrismaFile[], e
     return modelsStruct
   }))
   const schemaStructArrFlat:IParsedSchemaStruct[] = schemaStructArr.flat()
+
   const manyToManyCenteralModels: IParsedSchemaStruct[] = []
 
   if (enhanceJSON) {
@@ -149,7 +150,7 @@ async function generateNewSchema (c: IConfig, schemaContentArr: IPrismaFile[], e
       const target = schemaStructArrFlat.find(t => t.name === toModel)
 
       if (!source || !target) {
-        throw new Error(`[generateNewSchema] cannot found the source (name=${fromModel}) or target (name=${toModel})`)
+        throw new Error(`[generateNewSchema] ${!!source} ${!!target} cannot found the source (name=${fromModel}) or target (name=${toModel}) `)
       }
 
       // prisma doc:https://www.prisma.io/docs/concepts/components/prisma-schema/relations/one-to-one-relations
