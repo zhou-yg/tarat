@@ -337,11 +337,14 @@ export async function buildServerRoutes(c: IConfig) {
     rootEnd: appRootFile?.name ? `</${rootName}>` : ''
   }
 
+  const moldeIndexesJSON = path.join(c.cwd, c.modelsDirectory, c.schemaIndexes)
+
   const routesStr = routesTemplate({
     ...rootAppInfo,
     imports: importsWithAbsolutePathServer,
     entryCSSPath,
-    routes: r
+    routes: r,
+    modelIndexes: fs.readFileSync(moldeIndexesJSON).toString()
   })
   fs.writeFileSync(autoGenerateServerRoutes, prettier.format(routesStr))
 

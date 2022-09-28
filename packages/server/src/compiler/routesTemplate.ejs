@@ -10,6 +10,8 @@ import {
   StaticRouter,
 } from "react-router-dom/server"
 
+import { registerModelIndexes } from 'tarat/connect'
+
 <%- entryCSSPath %>
 
 <% if (rootPath) { %>
@@ -17,6 +19,8 @@ import {
 <% } %>  
 
 <%- imports %>
+
+registerModelIndexes(<%- modelIndexes %>)
 
 export default function _TaratRootApplication({
   location

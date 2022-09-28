@@ -93,7 +93,7 @@ function getSourceReferrenceType (source: IParsedSchemaStruct, targetProp: strin
 }
 
 export function transformModelName(str: string) {
-  return upperFirst(str.replace(/\/|@|-/g, '_'))
+  return str.replace(/\/|@|-/g, '_')
 }
 
 async function generateNewSchema (c: IConfig, schemaContentArr: IPrismaFile[], enhanceJSON?: IEnhancement) {
@@ -135,7 +135,6 @@ async function generateNewSchema (c: IConfig, schemaContentArr: IPrismaFile[], e
       }
     })
     
-    console.log('modelsStruct: ', modelsStruct);
     return modelsStruct
   }))
   const schemaStructArrFlat:IParsedSchemaStruct[] = schemaStructArr.flat()

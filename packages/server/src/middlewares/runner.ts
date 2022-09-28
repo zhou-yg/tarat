@@ -65,9 +65,14 @@ export default function taratMiddleware (args: {
         const BMPath = join(pointFiles.outputServerDriversDir, config.cjsDirectory, driver.relativeDir, `${driverName}.js`)
         const BM = require(BMPath)
 
+        const modelIndexesPath = join(config.cwd, config.modelsDirectory, config.schemaIndexes)
+
         const c: IHookContext = typeof body === 'string' ? parseWithUndef(body) : body;
 
-        let runner = new Runner(BM.default)
+        let runner = new Runner(BM.default, {
+          beleiveContext: true,
+          modelIndexes: require(modelIndexesPath)
+        })
         
         let scope = runner.prepareScope(c.initialArgList, c)
         getPlugin('GlobalRunning').setCurrent(scope, wrapCtx(ctx))
