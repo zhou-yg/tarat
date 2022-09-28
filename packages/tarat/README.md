@@ -1,4 +1,4 @@
-# Welcome to Remix!
+# Welcome to Tarat!
 
 We are happy you're here!
 
