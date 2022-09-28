@@ -38,7 +38,7 @@
   "bugs": {
     "url": "https://github.com/zhou-yg/tarat/issues"
   },
-  "homepage": "https://tarat.run/",
+  "homepage": "https://tarat.run",
   "dependencies": {
     "@babel/parser": "^7.18.8",
     "@babel/preset-react": "^7.18.6",

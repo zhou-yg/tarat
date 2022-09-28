@@ -8,5 +8,5 @@ To get started, open a new shell and run:
 
 Then follow the prompts you see in your terminal.
 
-For more information about Tarat, visit tarat.run!
+For more information about Tarat, visit [tarat.run](https://tarat.run)
 
