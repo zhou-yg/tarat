@@ -40,20 +40,17 @@ export async function buildEverything (c: IConfig) {
 export function prepareDir (c: IConfig) {
   emptyDirectory(c.pointFiles.outputDir)
 
+  // append
+  tryMkdir(path.join(c.pointFiles.outputClientDir))
+  tryMkdir(path.join(c.pointFiles.outputServerDir))
+  tryMkdir(path.join(c.pointFiles.outputClientDir, c.driversDirectory))
+  tryMkdir(path.join(c.pointFiles.outputServerDir, c.driversDirectory))
+  
   Object.entries(c.pointFiles).forEach(([name, path]) => {
     if (/Dir$/.test(name)) {
       tryMkdir(path)
     }
   })
-  // append
-  tryMkdir(path.join(c.pointFiles.outputDriversDir, c.esmDirectory))
-  tryMkdir(path.join(c.pointFiles.outputDriversDir, c.cjsDirectory))
-
-  tryMkdir(path.join(c.pointFiles.outputClientDriversDir, c.esmDirectory))
-  tryMkdir(path.join(c.pointFiles.outputClientDriversDir, c.cjsDirectory))
-
-  tryMkdir(path.join(c.pointFiles.outputServerDriversDir, c.esmDirectory))
-  tryMkdir(path.join(c.pointFiles.outputServerDriversDir, c.cjsDirectory))
 }
 
 

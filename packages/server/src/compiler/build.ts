@@ -26,8 +26,6 @@ export async function buildClientRoutes (c: IConfig) {
     runtime: 'client'
   }, c)
 
-  const pkg = loadJSON(path.join(c.cwd, 'package.json'))
-
   const op: IBuildOption = {
     input: {
       input: autoGenerateClientRoutes,

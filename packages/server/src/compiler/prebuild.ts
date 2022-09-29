@@ -22,7 +22,7 @@ import rollupAlias from '@rollup/plugin-alias'
 import dts from "rollup-plugin-dts"
 import { emptyDirectory, loadJSON, logFrame, lowerFirst, traverseDir } from "../util";
 import chalk from "chalk";
-import { cp } from "shelljs";
+import { cp, mkdir, rm } from "shelljs";
 import { ArrowFunctionExpression, CallExpression, FunctionExpression, Identifier, ImportDeclaration, Program } from 'estree';
 import { traverse, last } from '../util';
 import aliasDriverRollupPlugin from './plugins/rollup-plugin-alias-driver';
@@ -432,7 +432,8 @@ export function replaceImportDriverPath (
 
   if (
     importModules && importModules.length > 0 &&
-    importModules.some(m => /\/drivers\/[\w-]+/.test(m))
+    importModules.some(m => /\/drivers\/[\w-]+/.test(m)) &&
+    !importModules.some(m => /(client|server)\/drivers\//.test(m))
   ) {  
     const c2 = code.replace(/\/(drivers)\/([\w-]+)/, `/${env}/$1/${format}/$2`)
     fs.writeFileSync(sourceFile, c2)
@@ -502,6 +503,7 @@ export function removeUnusedImports(sourceFile: string) {
 }
 
 function clearFunctionBodyEsbuildPlugin (dir: string, names: string[]): esbuild.Plugin {
+  !fs.existsSync(dir) && mkdir(dir)
 
   return {
     name: 'clear tarat runtime function body',
@@ -595,7 +597,7 @@ async function esbuildDrivers (
       ...Object.keys(pacakgeJSON.peerDependencies || {}),
       'drivers/*',
     ],
-
+    allowOverwrite: true,
     outdir: outputDir,
     platform: 'node',
     format,
@@ -606,7 +608,7 @@ async function esbuildDrivers (
   }
   if (env === 'client') {
     buildOptions.plugins.push(
-      clearFunctionBodyEsbuildPlugin(pointFiles.outputClientDriversDir, hookFactoryFeatures.serverOnly)
+      clearFunctionBodyEsbuildPlugin(outputDir, hookFactoryFeatures.serverOnly)
     )
   }
 
@@ -619,10 +621,15 @@ async function esbuildDrivers (
 
   if (fs.existsSync(outputDir)) {
     traverseDir(outputDir, (obj) => {
+      // not ts file
       if (!obj.isDir) {
-        removeUnusedImports(obj.path)
-        if (env) {
-          replaceImportDriverPath(obj.path, format, env)
+        if (/\.ts$/.test(obj.path)) {
+          fs.rmSync(obj.path)
+        } else {
+          removeUnusedImports(obj.path)
+          if (env) {
+            replaceImportDriverPath(obj.path, format, env)
+          }  
         }
       }
     })
@@ -694,40 +701,34 @@ export async function buildDrivers (c: IConfig) {
   // 1.must build source dir first prevent to traverse below children dir 
   await esbuildDrivers(c, outputDriversDir, 'esm')
 
-  // build compose first
+  // // build compose first
   const configWithComposeOnly: IConfig = { ...c, drivers: c.drivers.filter(p => /compose\//.test(p.filePath))}
   await Promise.all([
-    // cjs: no cjs because of these compose driver prepared for drivers TIP
-    // esbuildDrivers(configWithComposeOnly, path.join(outputClientDriversDir, composeDriversDirectory), 'cjs', 'client'),
-    // esbuildDrivers(configWithComposeOnly, path.join(outputServerDriversDir, composeDriversDirectory), 'cjs', 'server'),
-    // esm
+    // cjs for server
+    esbuildDrivers(configWithComposeOnly, path.join(outputServerDriversDir, composeDriversDirectory), 'cjs', 'server'),
+    // esm for client
     esbuildDrivers(configWithComposeOnly, path.join(outputClientDriversDir, composeDriversDirectory), 'esm', 'client'),
-    esbuildDrivers(configWithComposeOnly, path.join(outputServerDriversDir, composeDriversDirectory), 'esm', 'server'),
   ])
 
   // 2.run after source building
   const configWithoutCompose: IConfig = { ...c, drivers: c.drivers.filter(p => !/compose\//.test(p.filePath))}
   await Promise.all([
     // cjs
-    esbuildDrivers(configWithoutCompose, path.join(outputClientDriversDir, cjsDirectory), 'cjs', 'client'),
-    esbuildDrivers(configWithoutCompose, path.join(outputServerDriversDir, cjsDirectory), 'cjs', 'server'),
-    // esm
-    esbuildDrivers(configWithoutCompose, path.join(outputClientDriversDir, esmDirectory), 'esm', 'client'),
-    esbuildDrivers(configWithoutCompose, path.join(outputServerDriversDir, esmDirectory), 'esm', 'server'),
+    esbuildDrivers(configWithoutCompose, path.join(outputServerDriversDir), 'cjs', 'server'),
+    // // esm
+    esbuildDrivers(configWithoutCompose, path.join(outputClientDriversDir), 'esm', 'client'),
   ])
 
   if (c.ts) {
     try {
       const files = await driversType(c, outputDriversDir)
       files.forEach(({ name, destFile, relativePath }) => {
-        [cjsDirectory, esmDirectory].forEach(formatDir => {
-          [outputClientDriversDir, outputServerDriversDir].forEach(envDir => {
-            const dir = path.join(envDir, formatDir, relativePath)
-            if (!fs.existsSync(dir)) {
-              fs.mkdirSync(dir)
-            }
-            cp(destFile, dir)
-          })
+        [outputClientDriversDir, outputServerDriversDir].forEach(outputEnvDir => {
+          const dir = path.join(outputEnvDir, relativePath)
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir)
+          }
+          cp(destFile, dir)
         })
       })
     } catch (e) {

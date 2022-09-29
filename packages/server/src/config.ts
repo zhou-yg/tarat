@@ -178,6 +178,8 @@ export interface IConfig extends IReadConfigResult{
 }
 
 function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) {
+  const { esmDirectory, cjsDirectory } = config
+
   const outputClientDir = path.join(outputDir, config.clientDir)
   const outputServerDir = path.join(outputDir, config.serverDir)
 
@@ -210,7 +212,7 @@ function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) 
     distEntryJS: path.join(outputAppServerDir, `${config.entryServer}.js`),
     distEntryCSS: path.join(outputAppServerDir, `${config.entryServer}.css`),
     // drivers
-    outputServerDriversDir: path.join(outputServerDir, config.driversDirectory),
+    outputServerDriversDir: path.join(outputServerDir, config.driversDirectory, cjsDirectory),
 
     /** client */
 
@@ -221,7 +223,7 @@ function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) 
     clientRoutes: path.join(outputAppClientDir, 'routes.js'),
     clientRoutesCSS: path.join(outputAppClientDir, 'routes.css'),
     // drivers
-    outputClientDriversDir: path.join(outputClientDir, config.driversDirectory),
+    outputClientDriversDir: path.join(outputClientDir, config.driversDirectory, esmDirectory),
   }
 }
 

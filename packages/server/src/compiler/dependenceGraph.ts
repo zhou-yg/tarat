@@ -119,11 +119,8 @@ export function generateHookDeps (c: IConfig) {
       injectDeps(c, compiledFile);
 
       [outputClientDriversDir, outputServerDriversDir].forEach(envDir => {
-        [esmDirectory, cjsDirectory].forEach(formatDir => {
-
-          const cjsOutputFile = path.join(envDir, formatDir, `${name}.js`)
-          injectDeps(c, cjsOutputFile)
-        })
+        const cjsOutputFile = path.join(envDir, `${name}.js`)
+        injectDeps(c, cjsOutputFile)
       })
     }
   })
