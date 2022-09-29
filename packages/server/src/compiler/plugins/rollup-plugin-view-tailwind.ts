@@ -1,9 +1,13 @@
-import { readFileSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { Plugin } from 'vite'
 import { IConfig } from '../../config'
 
 function pickTailwindFromEntry (c: IConfig) {
+  if (!c.entryCSS || !existsSync(c.entryCSS)) {
+    return ''
+  }
+
   const entryCSSContent = readFileSync(c.entryCSS).toString()
   const presetDirectives = entryCSSContent.match(/(@tailwind\s+?.+;?)/g)
 

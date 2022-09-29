@@ -79,7 +79,6 @@ export async function buildViews (c: IConfig) {
           input: {
             input,
             plugins: [
-              viewTailwind(c),
               ...getPlugins({
                 css: outputCSS,
                 mode: 'build',
