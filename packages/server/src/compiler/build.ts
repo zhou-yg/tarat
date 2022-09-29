@@ -2,6 +2,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { IConfig } from "../config";
 import { loadJSON, traverseDir } from '../util';
+import viewTailwind from './plugins/rollup-plugin-view-tailwind';
 import { build, IBuildOption, getPlugins } from "./prebuild";
 
 
@@ -77,11 +78,14 @@ export async function buildViews (c: IConfig) {
         const op: IBuildOption = {
           input: {
             input,
-            plugins: getPlugins({
-              css: outputCSS,
-              mode: 'build',
-              target: 'unit',
-            }, c),
+            plugins: [
+              viewTailwind(c),
+              ...getPlugins({
+                css: outputCSS,
+                mode: 'build',
+                target: 'unit',
+              }, c),
+            ],
             external: [...externalDrivers, 'tarat/core', 'tarat/connect']  // use other external parameter types will conflict with auto-external plugins
           },
           output: {

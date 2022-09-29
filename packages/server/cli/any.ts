@@ -3,6 +3,7 @@ import {
   driversType,
   composeSchema,
   buildModelIndexes,
+  buildViews,
 } from "../src/"
 
 export default async (cwd: string) => {
@@ -12,7 +13,5 @@ export default async (cwd: string) => {
   })
 
 
-  await composeSchema(config)
-  
-  await buildModelIndexes(config)
+  await buildViews(config)  
 }

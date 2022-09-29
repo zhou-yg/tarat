@@ -9,7 +9,10 @@ function isDriver (path: string, tag: string) {
   
   return pathArr.includes(tag)
 }
-
+/**
+ * redirect drivers imports to already compiled drivers in client runtime
+ * eg: from 'drivers/login.js' -> from './tarat/client/drivers/login.js'
+ */
 export default function aliasDriverRollupPlugin (c: IConfig, env: 'server' | 'client'): Plugin {
   const {
     cwd,
