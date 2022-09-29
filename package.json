@@ -12,7 +12,8 @@
     "release": "RELEASE=1 node scripts/release.js",
     "build:eg": "PUBLISH=false node scripts/build-examples.js",
     "release:eg": "node scripts/build-examples.js",
-    "dev": "node scripts/build-watch-package.js"
+    "dev": "node scripts/build-watch-package.js",
+    "release:all": "npm run release && npm run release:eg"
   },
   "repository": {
     "type": "git",
