@@ -62,7 +62,7 @@ export default function taratMiddleware (args: {
         const driver = config.drivers.find(d => d.name === driverName)
 
         // driver has double nested output structure
-        const BMPath = join(pointFiles.outputServerDriversDir, config.cjsDirectory, driver.relativeDir, `${driverName}.js`)
+        const BMPath = join(pointFiles.outputServerDriversDir, driver.relativeDir, `${driverName}.js`)
         const BM = require(BMPath)
 
         const modelIndexesPath = join(config.cwd, config.modelsDirectory, config.schemaIndexes)
