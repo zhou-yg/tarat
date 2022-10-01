@@ -1,6 +1,6 @@
 {
   "name": "tarat-user-comments",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "a tarat unit",
   "scripts": {
     "init": "pnpm i && npm run p:dev",
