@@ -26,12 +26,12 @@ export default function _TaratRootApplication({
   location
 }) {
   return (
-    <%- rootStart %>
     <StaticRouter location={location}>
+      <%- rootStart %>
       <Routes>
         <%- routes %>
       </Routes>  
+      <%- rootEnd %>
     </StaticRouter>
-    <%- rootEnd %>
   );
 }

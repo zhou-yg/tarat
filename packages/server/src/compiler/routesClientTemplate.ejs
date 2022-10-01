@@ -30,13 +30,13 @@ function _TaratRootApplication({
   
   return (
     <DriverContext.Provider value={driver}>
-      <%- rootStart %>
       <BrowserRouter>
+        <%- rootStart %>
         <Routes>
           <%- routes %>
         </Routes>  
+        <%- rootEnd %>
       </BrowserRouter>
-      <%- rootEnd %>
     </DriverContext.Provider>
   );
 }

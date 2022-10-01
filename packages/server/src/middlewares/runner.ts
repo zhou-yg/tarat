@@ -1,6 +1,7 @@
 import {
   IHookContext, Runner, getPlugin, IDiff, debuggerLog, startdReactiveChain,
-  stopReactiveChain
+  stopReactiveChain,
+  getNamespace
 } from 'tarat/core'
 import { parseWithUndef, stringifyWithUndef } from 'tarat/connect'
 import { join } from 'path'
@@ -65,13 +66,18 @@ export default function taratMiddleware (args: {
         const BMPath = join(pointFiles.outputServerDriversDir, driver.relativeDir, `${driverName}.js`)
         const BM = require(BMPath)
 
+        const driverNamespace = getNamespace(BM)
+
         const modelIndexesPath = join(config.cwd, config.modelsDirectory, config.schemaIndexes)
+        const wholeModelIndexes = require(modelIndexesPath)
+
+        const modelIndexes = driverNamespace ? wholeModelIndexes[driverNamespace] : wholeModelIndexes
 
         const c: IHookContext = typeof body === 'string' ? parseWithUndef(body) : body;
 
         let runner = new Runner(BM.default, {
           beleiveContext: true,
-          modelIndexes: require(modelIndexesPath)
+          modelIndexes,
         })
         
         let scope = runner.prepareScope(c.initialArgList, c)
