@@ -66,7 +66,7 @@ export default function taratMiddleware (args: {
         const BMPath = join(pointFiles.outputServerDriversDir, driver.relativeDir, `${driverName}.js`)
         const BM = require(BMPath)
 
-        const driverNamespace = getNamespace(BM)
+        const driverNamespace = getNamespace(BM.default)
 
         const modelIndexesPath = join(config.cwd, config.modelsDirectory, config.schemaIndexes)
         const wholeModelIndexes = require(modelIndexesPath)
