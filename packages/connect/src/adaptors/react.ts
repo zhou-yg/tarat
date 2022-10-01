@@ -75,7 +75,7 @@ export function useReactHook<T extends Driver>(react: any, hook: T, args: Parame
         {
           beleiveContext: driver.beleiveContext,
           updateCallbackSync: driver.updateCallbackSync,
-          modelIndexes: namespace ? currentModelIndexes[namespace] as IModelIndexesBase : currentModelIndexes
+          modelIndexes: namespace && currentModelIndexes ? currentModelIndexes[namespace] as IModelIndexesBase : currentModelIndexes
         }
       )
 
