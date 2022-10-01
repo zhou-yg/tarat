@@ -523,6 +523,7 @@ importers:
       '@rollup/plugin-json': ^4.1.0
       '@rollup/plugin-node-resolve': ^13.3.0
       '@rollup/plugin-replace': ^4.0.0
+      '@schemastore/package': ^0.0.6
       '@types/estree': ^0.0.52
       '@types/koa': ^2.13.5
       '@types/node': ^18.6.2
@@ -568,7 +569,7 @@ importers:
       shelljs: ^0.8.5
       swr: ^1.3.0
       tslib: ^2.4.0
-      vite: ^2.9.12
+      vite: ~3.x.x
       vite-tsconfig-paths: ^3.5.0
     dependencies:
       '@babel/parser': 7.19.1
@@ -583,6 +584,7 @@ importers:
       '@rollup/plugin-json': 4.1.0_rollup@2.79.0
       '@rollup/plugin-node-resolve': 13.3.0_rollup@2.79.0
       '@rollup/plugin-replace': 4.0.0_rollup@2.79.0
+      '@schemastore/package': 0.0.6
       '@types/estree': 0.0.52
       '@types/koa': 2.13.5
       '@types/node': 18.7.18
@@ -628,8 +630,8 @@ importers:
       shelljs: 0.8.5
       swr: 1.3.0_react@18.2.0
       tslib: 2.4.0
-      vite: 2.9.15
-      vite-tsconfig-paths: 3.5.0_vite@2.9.15
+      vite: 3.1.3
+      vite-tsconfig-paths: 3.5.0_vite@3.1.3
 
 packages:
 
@@ -7406,6 +7408,7 @@ packages:
     hasBin: true
     optionalDependencies:
       fsevents: 2.3.2
+    dev: true
 
   /rollup/2.78.1:
     resolution: {integrity: sha512-VeeCgtGi4P+o9hIg+xz4qQpRl6R401LWEXBmxYKOV4zlF82lyhgh2hTZnheFUbANE8l2A41F458iwj2vEYaXJg==}
@@ -8124,20 +8127,6 @@ packages:
     engines: {node: '>= 0.8'}
     dev: false
 
-  /vite-tsconfig-paths/3.5.0_vite@2.9.15:
-    resolution: {integrity: sha512-NKIubr7gXgh/3uniQaOytSg+aKWPrjquP6anAy+zCWEn6h9fB8z2/qdlfQrTgZWaXJ2pHVlllrSdRZltHn9P4g==}
-    peerDependencies:
-      vite: '>2.0.0-0'
-    dependencies:
-      debug: 4.3.4
-      globrex: 0.1.2
-      recrawl-sync: 2.2.2
-      tsconfig-paths: 4.1.0
-      vite: 2.9.15
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-
   /vite-tsconfig-paths/3.5.0_vite@3.1.3:
     resolution: {integrity: sha512-NKIubr7gXgh/3uniQaOytSg+aKWPrjquP6anAy+zCWEn6h9fB8z2/qdlfQrTgZWaXJ2pHVlllrSdRZltHn9P4g==}
     peerDependencies:
@@ -8150,30 +8139,6 @@ packages:
       vite: 3.1.3
     transitivePeerDependencies:
       - supports-color
-    dev: false
-
-  /vite/2.9.15:
-    resolution: {integrity: sha512-fzMt2jK4vQ3yK56te3Kqpkaeq9DkcZfBbzHwYpobasvgYmP2SoAr6Aic05CsB4CzCZbsDv4sujX3pkEGhLabVQ==}
-    engines: {node: '>=12.2.0'}
-    hasBin: true
-    peerDependencies:
-      less: '*'
-      sass: '*'
-      stylus: '*'
-    peerDependenciesMeta:
-      less:
-        optional: true
-      sass:
-        optional: true
-      stylus:
-        optional: true
-    dependencies:
-      esbuild: 0.14.54
-      postcss: 8.4.16
-      resolve: 1.22.1
-      rollup: 2.77.3
-    optionalDependencies:
-      fsevents: 2.3.2
     dev: false
 
   /vite/2.9.15_less@4.1.3:

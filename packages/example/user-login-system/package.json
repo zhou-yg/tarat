@@ -1,6 +1,6 @@
 {
   "name": "tarat-user-login-system",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "tarat": {},
   "description": "tarat service application for todos example",
   "main": "index.js",
@@ -33,8 +33,8 @@
     "lodash": "^4.17.21",
     "nanoid": "3.x.x",
     "prisma": "4.x.x",
-    "tarat": "workspace:*",
-    "tarat-file-uploader": "workspace:*"
+    "tarat": "workspace:~*",
+    "tarat-file-uploader": "workspace:~*"
   },
   "devDependencies": {
     "@babel/core": "^7.18.6",

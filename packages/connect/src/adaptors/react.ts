@@ -1,4 +1,4 @@
-import { Runner, Driver, EScopeState, CurrentRunnerScope } from 'tarat/core'
+import { Runner, Driver, EScopeState, CurrentRunnerScope, getNamespace } from 'tarat/core'
 import { useRef, useEffect, useState, useContext } from 'react'
 import type { IHookContext } from 'tarat/core'
 import { DriverContext, RenderDriver } from '../driver'
@@ -68,12 +68,14 @@ export function useReactHook<T extends Driver>(react: any, hook: T, args: Parame
         throw new Error('[useTarat] must provide a DriverContext at Root ')
       }
   
+      const namespace = getNamespace(hook)
+
       const runner = new Runner(
         hook,
         {
           beleiveContext: driver.beleiveContext,
           updateCallbackSync: driver.updateCallbackSync,
-          modelIndexes: currentModelIndexes
+          modelIndexes: namespace ? currentModelIndexes[namespace] as IModelIndexesBase : currentModelIndexes
         }
       )
 

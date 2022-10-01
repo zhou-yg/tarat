@@ -1,6 +1,6 @@
 {
   "name": "tarat-post-comments",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "a tarat unit",
   "tarat": {},
   "scripts": {
@@ -48,6 +48,6 @@
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-router-dom": "^6.3.0",
-    "tarat": "workspace:*"
+    "tarat": "workspace:~*"
   }
 }
