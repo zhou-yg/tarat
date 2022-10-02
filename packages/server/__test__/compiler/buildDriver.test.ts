@@ -111,7 +111,7 @@ describe('esbuild driver result', () => {
         const m = prisma('xx',${removedFunctionBodyPlaceholder}, [])
       `
       const r0 = removeFunctionBody(code, hookFactoryFeatures.serverOnly)
-      expect(r0).toBe(r)
+      expect(r0).toBe(code)
     })
     it('generate with complex generics', () => {
       const code = `

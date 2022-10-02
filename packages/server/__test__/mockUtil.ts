@@ -7,7 +7,7 @@ import {
 
 export function readMock (n: string) {
 
-  return readFileSync(path.join(__dirname, './mocks', n)).toString()
+  return readFileSync(path.join(__dirname, './mocks/drivers', n)).toString()
 }
 
 export function writeDepsMock (n: string, deps: any) {
