@@ -2,15 +2,15 @@ import { loadJSON, logFrame } from "../util"
 import * as path from 'path'
 import { existsSync } from "fs"
 import chalk from 'chalk'
+import { JSONSchemaForNPMPackageJsonFiles } from "@schemastore/package"
 
 interface IPkg {
   dependencies: {
     [k: string]: string
   }
 }
-export function findDependencies (cwd: string) {
-  const pkgJSON: IPkg = loadJSON(path.join(cwd, 'package.json'))
-  const pkgModules = Object.keys(pkgJSON.dependencies || {})
+export function findDependencies (cwd: string, pkgJSON: null | JSONSchemaForNPMPackageJsonFiles) {
+  const pkgModules = Object.keys(pkgJSON?.dependencies || {})
 
   const modules: string[] = pkgModules.filter(moduleName => {
     const dir = path.join(cwd, 'node_modules', moduleName)

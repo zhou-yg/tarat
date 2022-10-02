@@ -545,7 +545,7 @@ function clearFunctionBodyEsbuildPlugin (dir: string, names: string[]): esbuild.
   }
 }
 
-function aliasAtCodeToCwd (cwd: string): esbuild.Plugin {
+export function aliasAtCodeToCwd (cwd: string): esbuild.Plugin {
   return {
     name: 'aliasAtCodeToCwd',
     setup(build) {

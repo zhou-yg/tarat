@@ -41,10 +41,15 @@ function cleanOriginalCodeTag (code: string) {
 let i = 0;
 
 export function injectDeps (c: IConfig, targetFile: string) {
+  // check file exist
+  if (!fs.existsSync(targetFile)) {
+    return
+  }
+
   const code = fs.readFileSync(targetFile).toString()
   const parsed = path.parse(targetFile)
 
-  const moduleName = c.pacakgeJSON.name
+  const moduleName = c.pacakgeJSON?.name
 
   const depsJSONPath = path.join(c.pointFiles.outputDriversDir, `${parsed.name}.deps.json`)
 
