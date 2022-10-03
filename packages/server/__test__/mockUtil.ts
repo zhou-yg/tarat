@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'fs'
 import * as path from 'path'
 import {
   readConfig,
@@ -16,8 +16,10 @@ export function writeDepsMock (n: string, deps: any) {
 }
 
 export function readMockProjectConfig (n: string) {
+  const cwd = path.join(__dirname, '../../server-mocks/', n)
+
   return readConfig({
-    cwd: path.join(__dirname, './mocks/projects', n),
+    cwd,
     isProd: true
   })
 }

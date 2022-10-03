@@ -8,9 +8,9 @@ import { readFileSync, unlinkSync, writeFileSync } from 'fs'
 import { driverFilesMap } from '../mockUtil'
 import { hookFactoryFeatures } from 'tarat/core'
 
-describe('esbuild driver result', () => {
+describe('compile driver result', () => {
 
-  describe('build driver result', () => {
+  describe('compile driver result', () => {
     beforeEach(() => {
       Object.entries(driverFilesMap).forEach(([name, content]) => {
         writeFileSync(`./${name}.js`, content)

@@ -142,3 +142,26 @@ export function traverse(
 export function last<T> (arr: T[]):T {
   return arr[arr.length - 1]
 }
+
+
+// read all files in directory
+export function readFiles (dir: string, ext: string = '') {
+  // check file
+  if (fs.lstatSync(dir).isFile()) {
+    return dir.endsWith(ext) ? [dir] : []
+  }
+
+  const files: string[] = []
+  traverseDir(dir, (file) => {
+    if (!file.isDir) {
+      if (ext) {
+        if (file.file.endsWith(ext)) {
+          files.push(file.path)
+        }
+      } else {
+        files.push(file.path)
+      }
+    }
+  })
+  return files
+}

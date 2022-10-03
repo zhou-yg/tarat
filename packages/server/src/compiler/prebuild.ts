@@ -20,7 +20,7 @@ import autoExternal from 'rollup-plugin-auto-external';
 import replace from '@rollup/plugin-replace';
 import rollupAlias from '@rollup/plugin-alias'
 import dts from "rollup-plugin-dts"
-import { emptyDirectory, loadJSON, logFrame, lowerFirst, traverseDir } from "../util";
+import { emptyDirectory, loadJSON, logFrame, lowerFirst, readFiles, traverseDir } from "../util";
 import chalk from "chalk";
 import { cp, mkdir, rm } from "shelljs";
 import { ArrowFunctionExpression, CallExpression, FunctionExpression, Identifier, ImportDeclaration, Program } from 'estree';
@@ -30,6 +30,7 @@ import { removeFunctionBody } from './ast';
 import esbuildAliasPlugin from 'esbuild-plugin-alias';
 import { findDependentPrisma, readCurrentPrisma, readExsitPrismaPart, transformModelName } from './compose';
 import { upperFirst } from 'lodash';
+import { generateHookDeps } from './dependenceGraph';
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -57,7 +58,6 @@ export function getTSConfigPath (cwd: string) {
   if (fs.existsSync(tsconfigFile)) {
     return tsconfigFile
   }
-  console.log(`[getTSConfigPath] using default tsconfig setting: ${defaultTsconfigJSON}`)
   return defaultTsconfigJSON
 }
 
@@ -502,7 +502,7 @@ export function removeUnusedImports(sourceFile: string) {
   fs.writeFileSync(sourceFile, newCode)
 }
 
-function clearFunctionBodyEsbuildPlugin (dir: string, names: string[]): esbuild.Plugin {
+export function clearFunctionBodyEsbuildPlugin (dir: string, names: string[]): esbuild.Plugin {
   !fs.existsSync(dir) && mkdir(dir)
 
   return {
@@ -563,40 +563,30 @@ export function aliasAtCodeToCwd (cwd: string): esbuild.Plugin {
 
 async function esbuildDrivers (
   config: IConfig,
-  outputDir: string, 
-  format: esbuild.Format,
-  env?: 'client' | 'server',
+  inputs: string[],
+  outputDir: string,
+  options: {
+    format: esbuild.Format,
+    env?: 'client' | 'server',
+    bundle?: boolean,
+  },
 ) {
   const { drivers, ts, pacakgeJSON, cwd, pointFiles } = config
-  let includingTs = false
-  const points: string[] = []
-  drivers.map(h => {
-    const { filePath, name } = h
-    if (/\.(m)?(j|t)s$/.test(filePath)) {
-
-      points.push(filePath)
-
-      includingTs = /\.ts(x)?$/.test(filePath) || includingTs
-    }
-  })
-
-  if (includingTs && !ts) {
-    throw new Error('[tarat] you are using ts file. please specific ts:true in tarat.config.js')
-  }
+  const { bundle, format, env } = options
 
   const buildOptions: esbuild.BuildOptions = {
-    entryPoints: points,
+    entryPoints: inputs,
     /**
      * because of removing unused module in the intact file and three-shaking
      */
-    // bundle: false,
-    bundle: true,
-    external: [
+    bundle,
+    external: bundle ? [
       ...Object.keys(pacakgeJSON.dependencies || {}),
       ...Object.keys(pacakgeJSON.devDependencies || {}),
       ...Object.keys(pacakgeJSON.peerDependencies || {}),
       'drivers/*',
-    ],
+      'tarat',
+    ] : undefined,
     allowOverwrite: true,
     outdir: outputDir,
     platform: 'node',
@@ -613,7 +603,7 @@ async function esbuildDrivers (
   }
 
   // check tsconfig
-  if (includingTs) {
+  if (ts) {
     buildOptions.tsconfig = getTSConfigPath(cwd)
   }
 
@@ -683,6 +673,25 @@ export async function driversType(c: IConfig, outputDir: string) {
   return generateFiles
 }
 
+export async function transformCommonDriver (c: IConfig) {
+  const {
+    outputClientDriversDir,
+    outputServerDriversDir,
+    outputDriversDir,
+  } = c.pointFiles
+  const {
+    esmDirectory,
+    cjsDirectory,
+    composeDriversDirectory
+  } = c
+
+  // 1.must build source dir first prevent to traverse below children dir 
+  const inputs = c.drivers.filter(({ filePath }) => /\.(ts|js|mjs)$/.test(filePath)).map(({ filePath }) => filePath)
+  await esbuildDrivers(c, inputs, outputDriversDir, { format: 'esm' })
+
+  generateHookDeps(c)
+}
+
 /**
  * for server side running
  */
@@ -698,25 +707,15 @@ export async function buildDrivers (c: IConfig) {
     composeDriversDirectory
   } = c
 
-  // 1.must build source dir first prevent to traverse below children dir 
-  await esbuildDrivers(c, outputDriversDir, 'esm')
+  await transformCommonDriver(c)
 
-  // // build compose first
-  const configWithComposeOnly: IConfig = { ...c, drivers: c.drivers.filter(p => /compose\//.test(p.filePath))}
-  await Promise.all([
-    // cjs for server
-    esbuildDrivers(configWithComposeOnly, path.join(outputServerDriversDir, composeDriversDirectory), 'cjs', 'server'),
-    // esm for client
-    esbuildDrivers(configWithComposeOnly, path.join(outputClientDriversDir, composeDriversDirectory), 'esm', 'client'),
-  ])
+  const compiledFiles = readFiles(outputDriversDir, '.js')
 
-  // 2.run after source building
-  const configWithoutCompose: IConfig = { ...c, drivers: c.drivers.filter(p => !/compose\//.test(p.filePath))}
   await Promise.all([
     // cjs
-    esbuildDrivers(configWithoutCompose, path.join(outputServerDriversDir), 'cjs', 'server'),
-    // // esm
-    esbuildDrivers(configWithoutCompose, path.join(outputClientDriversDir), 'esm', 'client'),
+    esbuildDrivers(c, compiledFiles, path.join(outputServerDriversDir), { format: 'cjs', env: 'server', bundle: true }),
+    // esm
+    esbuildDrivers(c, compiledFiles, path.join(outputClientDriversDir), { format: 'esm', env: 'client', bundle: true }),
   ])
 
   if (c.ts) {
