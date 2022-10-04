@@ -123,7 +123,7 @@ importers:
       react-dom: ^18.1.0
       react-router-dom: ^6.3.0
       tailwindcss: ^3.1.8
-      tarat: workspace:*
+      tarat: workspace:~*
     dependencies:
       '@ant-design/icons': 4.7.0_biqbaboplfbrettd7655fr4n2y
       '@prisma/client': 4.3.1_prisma@4.3.1
@@ -132,6 +132,7 @@ importers:
       prisma: 4.3.1
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
+      react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
       tarat: link:../../tarat
     devDependencies:
       '@types/lodash': 4.14.185
@@ -139,7 +140,6 @@ importers:
       '@types/react': 18.0.20
       '@types/react-dom': 18.0.6
       less: 4.1.3
-      react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
       tailwindcss: 3.1.8
 
   packages/example/file-uploader:
@@ -159,7 +159,7 @@ importers:
       react-dom: ^18.1.0
       react-router-dom: ^6.3.0
       tailwindcss: ^3.1.8
-      tarat: workspace:*
+      tarat: workspace:~*
       tslib: ^2.4.0
     dependencies:
       '@prisma/client': 4.3.1_prisma@4.3.1
@@ -168,6 +168,7 @@ importers:
       prisma: 4.3.1
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
+      react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
       tarat: link:../../tarat
     devDependencies:
       '@babel/preset-react': 7.18.6_@babel+core@7.19.1
@@ -177,7 +178,6 @@ importers:
       '@types/react-dom': 18.0.6
       axios: 0.27.2
       less: 4.1.3
-      react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
       tailwindcss: 3.1.8
       tslib: 2.4.0
 
@@ -193,20 +193,20 @@ importers:
       react-markdown-editor-lite: ^1.3.2
       react-router-dom: ^6.3.0
       tailwindcss: ^3.1.8
-      tarat: workspace:*
+      tarat: workspace:~*
       vite: ^3.0.7
     dependencies:
       markdown-it: 13.0.1
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
       react-markdown-editor-lite: 1.3.3_react@18.2.0
+      react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
       tarat: link:../../tarat
     devDependencies:
       '@babel/preset-react': 7.18.6_@babel+core@7.19.1
       '@prisma/client': 3.15.2_prisma@3.15.2
       less: 4.1.3
       prisma: 3.15.2
-      react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
       tailwindcss: 3.1.8
       vite: 3.1.3_less@4.1.3
 
@@ -229,7 +229,7 @@ importers:
       react-dom: ^18.1.0
       react-router-dom: ^6.3.0
       tailwindcss: ^3.1.8
-      tarat: workspace:*
+      tarat: workspace:~*
       typescript: ^4.6.4
     dependencies:
       '@ant-design/icons': 4.7.0_biqbaboplfbrettd7655fr4n2y
@@ -242,6 +242,7 @@ importers:
       prisma: 3.15.2
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
+      react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
       tailwindcss: 3.1.8
       tarat: link:../../tarat
       typescript: 4.8.3
@@ -251,36 +252,6 @@ importers:
       '@types/react-dom': 18.0.6
       immer: 9.0.15
       less: 4.1.3
-      react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
-
-  packages/example/todos-app(ts):
-    specifiers:
-      '@prisma/client': ^3.15.1
-      '@types/lodash': ^4.14.182
-      '@types/react-dom': ^18.0.5
-      immer: ^9.0.14
-      less: ^4.1.2
-      lodash: ^4.17.21
-      prisma: ^3.15.1
-      react: ^18.1.0
-      react-dom: ^18.1.0
-      react-router-dom: ^6.3.0
-      tarat: workspace:*
-      tslib: ^2.4.0
-    dependencies:
-      '@prisma/client': 3.15.2_prisma@3.15.2
-      '@types/react-dom': 18.0.6
-      lodash: 4.17.21
-      prisma: 3.15.2
-      react: 18.2.0
-      react-dom: 18.2.0_react@18.2.0
-      react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
-      tarat: link:../../tarat
-    devDependencies:
-      '@types/lodash': 4.14.185
-      immer: 9.0.15
-      less: 4.1.3
-      tslib: 2.4.0
 
   packages/example/user-comments:
     specifiers:
@@ -300,8 +271,8 @@ importers:
       react-dom: ^18.2.0
       react-router-dom: ^6.3.0
       tarat: workspace:*
-      tarat-post-comments: workspace:*
-      tarat-user-login-system: workspace:*
+      tarat-post-comments: workspace:~*
+      tarat-user-login-system: workspace:~*
       tslib: ^2.4.0
     dependencies:
       '@babel/preset-react': 7.18.6_@babel+core@7.19.1
@@ -344,8 +315,8 @@ importers:
       react-dom: ^18.1.0
       react-router-dom: ^6.3.0
       tailwindcss: ^3.1.8
-      tarat: workspace:*
-      tarat-file-uploader: workspace:*
+      tarat: workspace:~*
+      tarat-file-uploader: workspace:~*
       vite: ^2.9.9
     dependencies:
       '@ant-design/icons': 4.7.0_biqbaboplfbrettd7655fr4n2y
@@ -507,6 +478,48 @@ importers:
       '@types/rimraf': 3.0.2
       '@types/rollup-plugin-auto-external': 2.0.2
       '@types/shelljs': 0.8.11
+      tslib: 2.4.0
+
+  packages/server-mocks/releativeReferrenceDriver:
+    specifiers:
+      '@prisma/client': ^4.2.1
+      '@types/lodash': ^4.14.182
+      '@types/node': ^18.6.2
+      '@types/react': ^18.0.15
+      '@types/react-dom': ^18.0.5
+      immer: ^9.0.15
+      less: ^4.1.2
+      lodash: ^4.17.21
+      prisma: ^4.2.1
+      react: ^18.1.0
+      react-dom: ^18.1.0
+      react-router-dom: ^6.4.1
+      tailwindcss: ^3.1.8
+      tarat: '*'
+      tarat-cascading-list: '*'
+      tarat-file-uploader: '*'
+      tarat-markdown-editor: '*'
+      tarat-user-login-system: '*'
+      tslib: ^2.4.0
+    dependencies:
+      '@prisma/client': 4.3.1_prisma@4.3.1
+      '@types/lodash': 4.14.185
+      '@types/node': 18.7.18
+      '@types/react': 18.0.20
+      '@types/react-dom': 18.0.6
+      immer: 9.0.15
+      less: 4.1.3
+      lodash: 4.17.21
+      prisma: 4.3.1
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+      react-router-dom: 6.4.1_biqbaboplfbrettd7655fr4n2y
+      tailwindcss: 3.1.8
+      tarat: link:../../tarat
+      tarat-cascading-list: link:../../example/cascading-list
+      tarat-file-uploader: link:../../example/file-uploader
+      tarat-markdown-editor: link:../../example/markdown-editor
+      tarat-user-login-system: link:../../example/user-login-system
       tslib: 2.4.0
 
   packages/tarat:
@@ -2351,7 +2364,6 @@ packages:
 
   /@types/lodash/4.14.185:
     resolution: {integrity: sha512-evMDG1bC4rgQg4ku9tKpuMh5iBNEwNa3tf9zRHdP1qlv+1WUg44xat4IxCE14gIpZRGUUWAx2VhItCZc25NfMA==}
-    dev: true
 
   /@types/mime/3.0.1:
     resolution: {integrity: sha512-Y4XFY5VJAuw0FgAqPNd6NNoV44jbq9Bz2L7Rh/J6jLTiHBSBJa9fxqQIvkIld4GsoDOcCbvzOUAbLPsSKKg+uA==}
@@ -4853,7 +4865,6 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       safer-buffer: 2.1.2
-    dev: true
     optional: true
 
   /icss-replace-symbols/1.1.0:
@@ -5811,7 +5822,6 @@ packages:
       source-map: 0.6.1
     transitivePeerDependencies:
       - supports-color
-    dev: true
 
   /leven/3.1.0:
     resolution: {integrity: sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A==}
@@ -6124,7 +6134,6 @@ packages:
       sax: 1.2.4
     transitivePeerDependencies:
       - supports-color
-    dev: true
     optional: true
 
   /negotiator/0.6.3:
@@ -6392,7 +6401,6 @@ packages:
   /parse-node-version/1.0.1:
     resolution: {integrity: sha512-3YHlOa/JgH6Mnpr05jP9eDG254US9ek25LyIxZlDItp2iJtwyaXQb57lBYLdT3MowkUFYEV2XXNAYIPlESvJlA==}
     engines: {node: '>= 0.10'}
-    dev: true
 
   /parseurl/1.3.3:
     resolution: {integrity: sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==}
@@ -7074,6 +7082,19 @@ packages:
       react-dom: 18.2.0_react@18.2.0
       react-router: 6.4.0_react@18.2.0
 
+  /react-router-dom/6.4.1_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-MY7NJCrGNVJtGp8ODMOBHu20UaIkmwD2V3YsAOUQoCXFk7Ppdwf55RdcGyrSj+ycSL9Uiwrb3gTLYSnzcRoXww==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      react: '>=16.8'
+      react-dom: '>=16.8'
+    dependencies:
+      '@remix-run/router': 1.0.1
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+      react-router: 6.4.1_react@18.2.0
+    dev: false
+
   /react-router/6.4.0_react@18.2.0:
     resolution: {integrity: sha512-B+5bEXFlgR1XUdHYR6P94g299SjrfCBMmEDJNcFbpAyRH1j1748yt9NdDhW3++nw1lk3zQJ6aOO66zUx3KlTZg==}
     engines: {node: '>=14'}
@@ -7082,6 +7103,16 @@ packages:
     dependencies:
       '@remix-run/router': 1.0.0
       react: 18.2.0
+
+  /react-router/6.4.1_react@18.2.0:
+    resolution: {integrity: sha512-OJASKp5AykDWFewgWUim1vlLr7yfD4vO/h+bSgcP/ix8Md+LMHuAjovA74MQfsfhQJGGN1nHRhwS5qQQbbBt3A==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      react: '>=16.8'
+    dependencies:
+      '@remix-run/router': 1.0.1
+      react: 18.2.0
+    dev: false
 
   /react-transition-group/4.4.5_biqbaboplfbrettd7655fr4n2y:
     resolution: {integrity: sha512-pZcd1MCJoiKiBR2NRxeCRg13uCXbydPnmB4EOeRrY7480qNWO8IIgQG6zlDkm6uRMsURXPuKq0GWtiM59a5Q6g==}
@@ -7465,7 +7496,6 @@ packages:
 
   /sax/1.2.4:
     resolution: {integrity: sha512-NqVDv9TpANUjFm0N8uM5GxL36UgKi9/atZw+x7YFnQ8ckwFGKrl4xX4yWtrey3UJm5nP1kUbnYgLopqWNSRhWw==}
-    dev: true
     optional: true
 
   /scheduler/0.23.0:
