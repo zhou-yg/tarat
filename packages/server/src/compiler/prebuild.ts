@@ -418,6 +418,7 @@ export async function buildEntryServer (c: IConfig) {
  * make sure hook will import the same module type and same envirnment (eg. client or server)
  */
 export function replaceImportDriverPath (
+  config: IConfig,
   sourceFile: string,
   format: esbuild.Format,
   env: 'client' | 'server',
@@ -425,17 +426,23 @@ export function replaceImportDriverPath (
   const reg = /from (?:'|")([\w\/-]*)(?:'|")/g
   const reg2 = /require\((?:'|")([\w\/-]*)(?:'|")/g
 
+  const { dependencyModules, buildDirectory, driversDirectory } = config
+
   const code = fs.readFileSync(sourceFile).toString()
   const r = code.match(reg)
   const r2 = code.match(reg2)
   const importModules = r || r2
 
-  if (
+  const modulePathRegExp = new RegExp(`(${dependencyModules.join('|')})/(${buildDirectory})/(${driversDirectory})/([\\w-]+)`)
+
+  const condition = 
     importModules && importModules.length > 0 &&
-    importModules.some(m => /\/drivers\/[\w-]+/.test(m)) &&
-    !importModules.some(m => /(client|server)\/drivers\//.test(m))
-  ) {  
-    const c2 = code.replace(/\/(drivers)\/([\w-]+)/, `/${env}/$1/${format}/$2`)
+    importModules.some(m => modulePathRegExp.test(m))
+      
+  if (condition) {  
+    const c2 = code.replace(
+      modulePathRegExp,
+      `$1/$2/${env}/$3/${format}/$4`)
     fs.writeFileSync(sourceFile, c2)
   }
 }
@@ -513,13 +520,12 @@ export function clearFunctionBodyEsbuildPlugin (dir: string, names: string[]): e
         if (!fs.existsSync(args.path)) {
           return null
         }
-
-        const { base } = path.parse(args.path)
+        const { base, dir: fileDir } = path.parse(args.path)
         
         const code = fs.readFileSync(args.path).toString()
         const newCode2 = removeFunctionBody(code, names)
 
-        const destFile = path.join(dir, base)
+        const destFile = path.join(fileDir, base)
 
         fs.writeFileSync(destFile, newCode2)
 
@@ -618,7 +624,7 @@ async function esbuildDrivers (
         } else {
           removeUnusedImports(obj.path)
           if (env) {
-            replaceImportDriverPath(obj.path, format, env)
+            replaceImportDriverPath(config, obj.path, format, env)
           }  
         }
       }
