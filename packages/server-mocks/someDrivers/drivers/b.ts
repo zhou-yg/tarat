@@ -1,6 +1,7 @@
 import {
   compose,
-  computed
+  computed,
+  inputComputeInServer
 } from 'tarat/core'
 
 import a from './a'

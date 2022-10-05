@@ -509,7 +509,10 @@ export function removeUnusedImports(sourceFile: string) {
   fs.writeFileSync(sourceFile, newCode)
 }
 
-export function clearFunctionBodyEsbuildPlugin (dir: string, names: string[]): esbuild.Plugin {
+export function clearFunctionBodyEsbuildPlugin (
+  dir: string,
+  names: string[],cache: string[]
+): esbuild.Plugin {
   !fs.existsSync(dir) && mkdir(dir)
 
   return {
@@ -525,7 +528,8 @@ export function clearFunctionBodyEsbuildPlugin (dir: string, names: string[]): e
         const code = fs.readFileSync(args.path).toString()
         const newCode2 = removeFunctionBody(code, names)
 
-        const destFile = path.join(fileDir, base)
+        const destFile = path.join(fileDir, 'cache_' + base)
+        cache.push(destFile)
 
         fs.writeFileSync(destFile, newCode2)
 
@@ -602,9 +606,11 @@ async function esbuildDrivers (
       aliasAtCodeToCwd(cwd)
     ],
   }
+
+  let cacheFilesByPlugin: string[] = []
   if (env === 'client') {
     buildOptions.plugins.push(
-      clearFunctionBodyEsbuildPlugin(outputDir, hookFactoryFeatures.serverOnly)
+      clearFunctionBodyEsbuildPlugin(outputDir, hookFactoryFeatures.serverOnly, cacheFilesByPlugin)
     )
   }
 
@@ -614,6 +620,12 @@ async function esbuildDrivers (
   }
 
   await esbuild.build(buildOptions)
+
+  cacheFilesByPlugin.forEach(f => fs.unlink(f, e => {
+    if (e) {
+      throw e
+    }
+  }))
 
   if (fs.existsSync(outputDir)) {
     traverseDir(outputDir, (obj) => {

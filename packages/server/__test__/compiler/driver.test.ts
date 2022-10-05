@@ -1,7 +1,10 @@
 import { readdirSync, readFileSync } from "fs"
 import { join } from "path"
 import { prepareDir } from "../../cli/dev"
-import { buildDrivers, readConfig, readFiles, traverse, traverseDir,
+import {
+  removedFunctionBodyPlaceholder,
+  transformCommonDriver,
+  buildDrivers, readConfig, readFiles, traverse, traverseDir,
   composeDriver
 } from "../../src"
 import {
@@ -47,7 +50,7 @@ describe('driver compiler', () => {
     expect(files.length).toBeGreaterThan(0)
   })
 
-  it('generate dirver with compose', async () => {
+  it.only('generate dirver with compose', async () => {
     const config = await readMockProjectConfig('someDrivers')
     prepareDir(config)
 
@@ -76,4 +79,17 @@ describe('driver compiler', () => {
     })
 
   }, 9 * 1000)
+
+  it('generate common driver', async () => {
+    const config = await readMockProjectConfig('someDrivers')
+    prepareDir(config)
+
+    await transformCommonDriver(config)
+    const { outputDriversDir } = config.pointFiles
+    const files = readdirSync(outputDriversDir).filter(f => f.endsWith('.js'))
+    files.forEach((f) => {
+      const content = readFileSync(join(outputDriversDir, f)).toString()
+      expect(content).not.toContain(removedFunctionBodyPlaceholder)
+    })
+  })
 })
