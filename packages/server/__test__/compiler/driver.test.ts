@@ -50,7 +50,7 @@ describe('driver compiler', () => {
     expect(files.length).toBeGreaterThan(0)
   })
 
-  it.only('generate dirver with compose', async () => {
+  it('generate dirver with compose', async () => {
     const config = await readMockProjectConfig('someDrivers')
     prepareDir(config)
 
