@@ -607,6 +607,7 @@ async function esbuildDrivers (
       ...Object.keys(pacakgeJSON.peerDependencies || {}),
       'drivers/*',
       'tarat',
+      'node:*',
     ] : undefined,
     allowOverwrite: true,
     outdir: outputDir,
