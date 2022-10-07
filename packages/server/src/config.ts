@@ -213,6 +213,7 @@ function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) 
     distEntryCSS: path.join(outputAppServerDir, `${config.entryServer}.css`),
     // drivers
     outputServerDriversDir: path.join(outputServerDir, config.driversDirectory, cjsDirectory),
+    outputServerDriversESMDir: path.join(outputServerDir, config.driversDirectory, esmDirectory),
 
     /** client */
 

@@ -64,9 +64,9 @@ export default function taratMiddleware (args: {
 
         // driver has double nested output structure
         const BMPath = join(pointFiles.outputServerDriversDir, driver.relativeDir, `${driverName}.js`)
-        const BM = require(BMPath)
+        const BM = require(BMPath).default
 
-        const driverNamespace = getNamespace(BM.default)
+        const driverNamespace = getNamespace(BM)
 
         const modelIndexesPath = join(config.cwd, config.modelsDirectory, config.schemaIndexes)
         const wholeModelIndexes = require(modelIndexesPath)
@@ -75,7 +75,7 @@ export default function taratMiddleware (args: {
 
         const c: IHookContext = typeof body === 'string' ? parseWithUndef(body) : body;
 
-        let runner = new Runner(BM.default, {
+        let runner = new Runner(BM, {
           beleiveContext: true,
           modelIndexes,
         })

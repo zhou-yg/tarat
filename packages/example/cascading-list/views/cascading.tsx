@@ -7,8 +7,8 @@ import EditOutlined from '@ant-design/icons/EditOutlined'
 import DeleteOutlined from '@ant-design/icons/DeleteOutlined'
 import cascadingHook, { Folder } from '../drivers/cascading'
 
-const Files: React.FC<{}> = () => {
-  const cascading = useTarat(cascadingHook)
+const Files: React.FC<ReturnType<typeof cascadingHook>> = (props) => {
+  const cascading = props
 
   const hasItems = cascading.items().length > 0
 
@@ -143,12 +143,11 @@ const CascadingFolder: React.FC<{
   )
 })
 
-const Cascading: React.FC<{
-  title?: string
-}> = (props) => {
+const Cascading: React.FC<
+  ReturnType<typeof cascadingHook> & { title?: string }
+> = (props) => {
   const { title = '我的文件夹' } = props
-
-  const cascading = useTarat(cascadingHook)
+  const cascading = props
 
   const cfid = cascading.currentFolderId()
 
@@ -176,7 +175,7 @@ const Cascading: React.FC<{
         </button>
       </div>
       <div className="flex-1">
-        {cascading.currentFolderId() ? <Files /> : ''}
+        {cascading.currentFolderId() ? <Files {...cascading} /> : ''}
       </div>
     </div>
   )

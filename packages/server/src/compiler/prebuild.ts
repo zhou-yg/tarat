@@ -27,7 +27,7 @@ import { ArrowFunctionExpression, CallExpression, FunctionExpression, Identifier
 import { traverse, last } from '../util';
 import aliasDriverRollupPlugin from './plugins/rollup-plugin-alias-driver';
 import { removeFunctionBody } from './ast';
-import esbuildAliasPlugin from 'esbuild-plugin-alias';
+import esModuleInterop from 'rollup-plugin-es-module-interop'
 import { findDependentPrisma, readCurrentPrisma, readExsitPrismaPart, transformModelName } from './compose';
 import { upperFirst } from 'lodash';
 import { generateHookDeps } from './dependenceGraph';
@@ -91,7 +91,10 @@ export async function build (c: IConfig, op: IBuildOption) {
 }
 
 async function generateOutput(c: IConfig, bundle: RollupBuild, op: IBuildOption['output']) {
-  const { output } = await bundle.generate(op)
+  const { output } = await bundle.generate({
+    exports: 'named',
+    ...op,
+  })
   for (const chunkOrAsset of output) {
 
     if (chunkOrAsset.type === 'asset') {
@@ -138,12 +141,16 @@ export function getPlugins (input: {
       }
     }),
     json(),
-    commonjs(),
+    commonjs({
+      // extensions: ['.js', '.ts'],
+    }),
     resolve({
       browser: target === 'browser',
-      extensions: ['.jsx', '.tsx', '.js', '.cjs', '.mjs', '.ts', '.json']
+      extensions: ['.jsx', '.tsx', '.js', '.cjs', '.mjs', '.ts', '.json'],
+      
     }),
     babel({
+      babelHelpers: 'bundled',
       exclude: 'node_modules/**',
       presets: ['@babel/preset-react']
     }),
@@ -338,16 +345,20 @@ export async function buildServerRoutes(c: IConfig) {
     rootEnd: appRootFile?.name ? `</${rootName}>` : ''
   }
 
-  const moldeIndexesJSON = path.join(c.cwd, c.modelsDirectory, c.schemaIndexes)
-
+  const modelIndexesJSON = path.join(c.cwd, c.modelsDirectory, c.schemaIndexes)
+  let modelIndexes = '{}'
+  if (fs.existsSync(modelIndexesJSON)) {
+    modelIndexes = fs.readFileSync(modelIndexesJSON).toString()
+  }
+  
   const routesStr = routesTemplate({
     ...rootAppInfo,
     imports: importsWithAbsolutePathServer,
     entryCSSPath,
     routes: r,
-    modelIndexes: fs.readFileSync(moldeIndexesJSON).toString()
+    modelIndexes
   })
-  fs.writeFileSync(autoGenerateServerRoutes, prettier.format(routesStr))
+  fs.writeFileSync(autoGenerateServerRoutes, prettier.format(routesStr, { parser: 'babel' }))
 
   const routesStr2 = routesClientTemplate({
     ...rootAppInfo,
@@ -355,12 +366,12 @@ export async function buildServerRoutes(c: IConfig) {
     routes: r
   })
   // generate for vite.js so that this file doesn't need to be compiled to js
-  fs.writeFileSync(autoGenerateClientRoutes, prettier.format(routesStr2))
+  fs.writeFileSync(autoGenerateClientRoutes, prettier.format(routesStr2, { parser: 'babel' }))
 
   const myPlugins = getPlugins({
     css: distServerRoutesCSS,
     mode: 'dev',
-    runtime: 'server'
+    runtime: 'server',
   }, c)
   /**
    * compile routes.server to js
@@ -371,7 +382,7 @@ export async function buildServerRoutes(c: IConfig) {
       cache: false,
       input: autoGenerateServerRoutes,
       plugins: myPlugins,
-      external: ['tarat/core', 'tarat/connect']
+      external: ['tarat/core', 'tarat/connect'],
     },
     output: {
       file: distServerRoutes,
@@ -379,7 +390,7 @@ export async function buildServerRoutes(c: IConfig) {
     }
   }
 
-  await build(c, inputOptions)  
+  await build(c, inputOptions)
 }
 
 export async function buildEntryServer (c: IConfig) {
@@ -599,7 +610,7 @@ async function esbuildDrivers (
     ] : undefined,
     allowOverwrite: true,
     outdir: outputDir,
-    platform: 'node',
+    platform: env === 'client' ? 'browser' : 'node',
     format,
     treeShaking: true,
     plugins: [
@@ -717,6 +728,7 @@ export async function buildDrivers (c: IConfig) {
   const {
     outputClientDriversDir,
     outputServerDriversDir,
+    outputServerDriversESMDir,
     outputDriversDir,
   } = c.pointFiles
   const {
@@ -732,6 +744,7 @@ export async function buildDrivers (c: IConfig) {
   await Promise.all([
     // cjs
     esbuildDrivers(c, compiledFiles, path.join(outputServerDriversDir), { format: 'cjs', env: 'server', bundle: true }),
+    esbuildDrivers(c, compiledFiles, outputServerDriversESMDir, { format: 'esm', env: 'server', bundle: true }),
     // esm
     esbuildDrivers(c, compiledFiles, path.join(outputClientDriversDir), { format: 'esm', env: 'client', bundle: true }),
   ])

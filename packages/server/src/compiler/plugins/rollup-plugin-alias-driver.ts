@@ -16,6 +16,7 @@ function isDriver (path: string, tag: string) {
 export default function aliasDriverRollupPlugin (c: IConfig, env: 'server' | 'client'): Plugin {
   const {
     cwd,
+    cjsDirectory,
     esmDirectory,
     driversDirectory
   } = c
@@ -26,7 +27,7 @@ export default function aliasDriverRollupPlugin (c: IConfig, env: 'server' | 'cl
 
   const envDriverOutputDir = env === 'server' ? outputServerDir : outputClientDir
 
-  const defaultFormat = esmDirectory
+  const defaultFormat = esmDirectory // env === 'server' ? cjsDirectory : esmDirectory
 
   return {
     name: 'tarat-alias-driver',

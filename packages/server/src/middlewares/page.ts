@@ -31,9 +31,9 @@ async function renderPage (ctx: Application.ParameterizedContext, config: IConfi
 
   let entryFunctionModule = (doc: React.ReactElement) => doc
   if (fs.existsSync(distEntryJS)) {
-    entryFunctionModule = require(distEntryJS)
+    entryFunctionModule = require(distEntryJS).default
   }
-  const routesEntryModule = require(distServerRoutes)
+  const routesEntryModule = require(distServerRoutes).default
 
   const driver = new RenderDriver()
   driver.mode = 'collect'
