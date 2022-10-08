@@ -1724,19 +1724,25 @@ export class CurrentRunnerScope<T extends Driver = any> {
         '[CurrentRunnerScope.enterComposeDriver] sub composed driver doesnt have name'
       )
     }
+    log(`[enterComposeDriver] enter namespace => ${driverNamespace}`)
     this.modelIndexesPath.push(driverNamespace)
     return () => {
+      log(`[enterComposeDriver] leave namespace <- ${driverNamespace}`)
       this.modelIndexesPath.pop()
     }
   }
 
   getRealEntityName(entityKey: string) {
+    let result = entityKey
     if (this.modelIndexes) {
-      const subIndexes = get(this.modelIndexes, this.modelIndexesPath)
-      return subIndexes[entityKey] || entityKey
+        const subIndexes = get(this.modelIndexes, this.modelIndexesPath);
+        result = subIndexes[entityKey] || entityKey;
     }
-    return entityKey
-  }
+
+    log(`[getRealEntityName] entityKey=${entityKey} mi=${!!this.modelIndexes} result=${result}`);
+
+    return result;
+}
 
   setOptions(op: Partial<IRunnerOptions>) {
     Object.assign(this, op)
@@ -3198,6 +3204,7 @@ export function compose<T extends Driver>(f: T, args?: any[]) {
   currentRunnerScope.appendComposeDeps(startIndex, endIndex, deps)
 
   const driverNamespace = getNamespace(f)
+  log('[compose] current = ', currentRunnerScope.runnerContext.driverName, !!currentRunnerScope.modelIndexes)
   const leaveCompose = currentRunnerScope.enterComposeDriver(driverNamespace)
 
   const insideResult: ReturnType<T> = executeDriver(f, args)
