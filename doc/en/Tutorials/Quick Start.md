@@ -2,6 +2,6 @@
 order: 1
 ---
 
-# quick start
+# Quick Start
 
 follow steps to build your first applicaiton
