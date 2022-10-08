@@ -419,14 +419,16 @@ export abstract class WriteModel<T extends Object> extends AsyncState<
   entity: string = ''
   sourceModel?: Model<T[]>
 
+  extraGetters: Array<(() => T) | undefined> = []
+
   constructor(
     public sourceModelGetter: { _hook: Model<T[]> } | string,
-    public getData: (() => T) | undefined,
+    public basicGetData: (() => T) | undefined,
     scope: CurrentRunnerScope
   ) {
     super(writeInitialSymbol, scope)
 
-    if (!getData) {
+    if (!basicGetData) {
       this.setGetter(() => ({} as T))
     }
 
@@ -438,8 +440,26 @@ export abstract class WriteModel<T extends Object> extends AsyncState<
     }
     this.entity = scope.getRealEntityName(this.entity)
   }
+  refresh (): Promise<void> {
+    return this.sourceModel?.refresh()
+  }
+  injectGetter(fn: () => T) {
+    this.extraGetters.push(fn)
+  }
+  getData (): T {
+    const base = this.basicGetData()
+    // iterate array from tail to head
+    for (let i = this.extraGetters.length - 1; i >= 0; i--) {
+      const fn = this.extraGetters[i]
+      if (fn) {
+        const data = fn()
+        Object.assign(base, data)
+      }
+    }
+    return base
+  }
   setGetter(fn: () => T) {
-    this.getData = fn
+    this.basicGetData = fn
   }
   abstract createRow(obj?: Partial<T>): Promise<void>
   abstract updateRow(where: number, obj?: { [k: string]: any }): Promise<void>
@@ -465,7 +485,7 @@ export abstract class WriteModel<T extends Object> extends AsyncState<
 
       log('[WriteModel.applyComputePatches]', 'execute patches done')
 
-      await this.sourceModel?.refresh()
+      await this.refresh()
 
       log('[WriteModel.applyComputePatches]', 'sourceModel refresh done')
 
@@ -3197,6 +3217,13 @@ export function connectModel<T>(
   dataGetter: TGetterData<T>
 ) {
   modelGetter._hook.setGetter(dataGetter)
+}
+
+export function injectModel<T>(
+  modelGetter: ReturnType<typeof writePrisma>,
+  dataGetter: TGetterData<T>
+) {
+  modelGetter._hook.injectGetter(dataGetter)
 }
 
 export function progress<T = any>(getter: {

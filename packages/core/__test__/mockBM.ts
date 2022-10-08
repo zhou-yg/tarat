@@ -20,7 +20,8 @@ import {
   writeModel,
   prisma,
   writePrisma,
-  computedInServer
+  computedInServer,
+  injectModel
 } from '../src/'
 import { loadPlugin } from '../src/plugin'
 
@@ -1042,3 +1043,31 @@ export function composeDriverWithNamespace() {
     cm1: composeResult.m1
   }
 }
+
+export function writeWritePrisma() {
+  const id = state(10)
+  const name = state('aa')
+  const p1 = prisma('item', () => ({}))
+
+  const wp1 = writePrisma(p1, () => ({
+    id: id()
+  }))
+  injectModel(wp1, () => ({
+    name: name()
+  }))
+
+  const ic = inputCompute(function * () {
+    yield wp1.create()
+  })
+
+  const itemsLength = computed(() => {
+    return p1().length
+  })
+
+  return {
+    itemsLength,
+    p1,
+    ic
+  }
+}
+
