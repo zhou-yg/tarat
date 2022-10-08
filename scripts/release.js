@@ -90,6 +90,13 @@ function commit () {
   })
 }
 
+function upgradePatch(dirPath) {
+  const pkgJSONPath = join(dirPath, 'package.json')
+  const pkgJSON = loadJSON(pkgJSONPath)
+  pkgJSON.version = pkgJSON.version.replace(/\d+$/, (w) => parseInt(w) + 1)
+  writeFileSync(pkgJSONPath, JSON.stringify(pkgJSON, null, 2))
+}
+
 
 build(coreModule)
   .then(() => {
@@ -98,12 +105,16 @@ build(coreModule)
     return build(serverModule)
   }).then(() => {
     if (SHOULD_RELEASE) {
-      return versionBump({
-        cwd: taratModule
-      }).then(() => {
-        return commit()
-      }).then(() => {
-        return publish()
+      upgradePatch()
+      commit().then(() => {
+        publish()
       })
+      // return versionBump({
+      //   cwd: taratModule
+      // }).then(() => {
+      //   return commit()
+      // }).then(() => {
+      //   return publish()
+      // })
     }
   })
