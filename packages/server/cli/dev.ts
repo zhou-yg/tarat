@@ -133,11 +133,13 @@ export default async (cwd: string) => {
   const config = await readConfig({
     cwd,
   })
-    
-  await startCompile(config)
 
-  composeSchema(config)
-  composeDriver(config)
+  await Promise.all([
+    composeSchema(config),
+    composeDriver(config)  
+  ])
+  
+  await startCompile(config)
 
   await createDevServer(config)
 }

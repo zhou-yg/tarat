@@ -6,7 +6,7 @@ const { existsSync, mkdirSync, readFileSync, fstat, readdirSync, writeFileSync }
 const rimraf = require('rimraf')
 const inquirer = require('inquirer')
 const { versionBump } = require('@jsdevtools/version-bump-prompt/lib/version-bump')
-const { replaceTaratModuleImport, mergeDeps, distDir } = require('./utils')
+const { loadJSON, replaceTaratModuleImport, mergeDeps, distDir } = require('./utils')
 
 const SHOULD_RELEASE = !!process.env.RELEASE
 console.log('SHOULD_RELEASE: ', SHOULD_RELEASE);
@@ -105,7 +105,7 @@ build(coreModule)
     return build(serverModule)
   }).then(() => {
     if (SHOULD_RELEASE) {
-      upgradePatch()
+      upgradePatch(taratModule)
       commit().then(() => {
         publish()
       })

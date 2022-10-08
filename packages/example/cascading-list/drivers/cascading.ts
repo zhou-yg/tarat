@@ -10,6 +10,8 @@ import {
 import rename from "./rename";
 import indexes from '@/models/indexes.json'
 
+export type { RenameTarget } from './rename'
+
 export interface Folder {
   id?: number;
   name: string;
