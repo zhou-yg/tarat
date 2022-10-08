@@ -1,6 +1,10 @@
 import { Driver } from 'tarat/core'
 export { Driver } from 'tarat/core'
-import { useReactHook, useReactProgress } from './adaptors/react'
+import {
+  useReactHook,
+  useReactProgress,
+  IModelIndexesBase
+} from './adaptors/react'
 
 let hookAdaptorRuntime: any = null
 let hookAdaptorType: 'react' | 'axii' | null = null

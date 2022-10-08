@@ -1,6 +1,6 @@
 {
   "name": "tarat-post-comments",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "a tarat unit",
   "tarat": {},
   "scripts": {

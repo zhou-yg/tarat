@@ -4,6 +4,11 @@ import type { IHookContext } from 'tarat/core'
 import { DriverContext, RenderDriver } from '../driver'
 import { unstable_serialize } from 'swr'
 
+export interface IModelIndexesBase {
+  [k: string]: string | IModelIndexesBase
+}
+
+
 declare global {
   var hookContextMap: {
     [k: string]: IHookContext[]
@@ -69,13 +74,14 @@ export function useReactHook<T extends Driver>(react: any, hook: T, args: Parame
       }
   
       const namespace = getNamespace(hook)
+      const isComposedDriver  = !!(hook as any).__tarat_compose__
 
       const runner = new Runner(
         hook,
         {
           beleiveContext: driver.beleiveContext,
           updateCallbackSync: driver.updateCallbackSync,
-          modelIndexes: namespace && currentModelIndexes ? currentModelIndexes[namespace] as IModelIndexesBase : currentModelIndexes
+          modelIndexes: namespace && currentModelIndexes && isComposedDriver ? currentModelIndexes[namespace] as IModelIndexesBase : currentModelIndexes
         }
       )
 

@@ -21,6 +21,7 @@ const pack2 = [
 ]
 
 const [packType] = process.argv.slice(2)
+console.log('packType: ', packType);
 
 async function buildAndPublish (dir) {
   const dirPath = join(exampleDir, dir)
@@ -55,13 +56,15 @@ async function buildAndPublish (dir) {
 }
 
 async function doTask () {
-  switch (packType) {
-    default: {
-      for (const m of pack1) {
-        await buildAndPublish(m)
-      }
-      await Promise.all(pack2.map(m => buildAndPublish(m)))
+  for (const m of pack1) {
+    if (!packType || packType === m) {
+      await buildAndPublish(m)
     }
   }
+  await Promise.all(pack2.map(m => {
+    if (!packType || packType === m) {
+      buildAndPublish(m)
+    }
+  }))
 }
 doTask()
