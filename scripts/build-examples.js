@@ -56,6 +56,9 @@ async function buildAndPublish (dir) {
 }
 
 async function doTask () {
+
+  console.time('release examples')
+
   for (const m of pack1) {
     if (!packType || packType === m) {
       await buildAndPublish(m)
@@ -66,5 +69,7 @@ async function doTask () {
       buildAndPublish(m)
     }
   }))
+
+  console.timeEnd('release examples')
 }
 doTask()

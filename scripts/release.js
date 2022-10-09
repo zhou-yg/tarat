@@ -98,6 +98,8 @@ function upgradePatch(dirPath) {
 }
 
 
+console.time('release tarat')
+
 build(coreModule)
   .then(() => {
     return build(connectModule)
@@ -107,7 +109,9 @@ build(coreModule)
     if (SHOULD_RELEASE) {
       upgradePatch(taratModule)
       commit().then(() => {
-        publish()
+        return publish()
+      }).then(() => {
+        console.timeEnd('release tarat')
       })
       // return versionBump({
       //   cwd: taratModule
