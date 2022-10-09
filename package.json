@@ -13,7 +13,7 @@
     "release": "RELEASE=1 node scripts/release.js",
     "release:eg": "node scripts/build-examples.js",
     "dev": "node scripts/build-watch-package.js",
-    "release:all": "npm run release && npm run release:eg"
+    "release:all": "st=`date` && npm run release && npm run release:eg && echo $a && date"
   },
   "repository": {
     "type": "git",
