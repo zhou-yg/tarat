@@ -1901,7 +1901,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
    * add compose deps to current driver.
    * plus current hook dep index
    */
-  appendComposeDeps(si: number, ei: number, deps?: THookDeps) {
+  appendComposeDeps(si: number, ei: number, currentComposeLengh:number, deps?: THookDeps) {
     if (!deps) {
       return
     }
@@ -1931,12 +1931,12 @@ export class CurrentRunnerScope<T extends Driver = any> {
       arr[1] += si
       if (arr[2]) {
         arr[2] = arr[2].map(v =>
-          typeof v === 'number' ? v + si : [v[0], v[1] + si, v[2]]
+          typeof v === 'number' ? v + si : [v[0], v[1] + currentComposeLengh, v[2]]
         )
       }
       if (arr[3]) {
         arr[3] = arr[3].map(v =>
-          typeof v === 'number' ? v + si : [v[0], v[1] + si, v[2]]
+          typeof v === 'number' ? v + si : [v[0], v[1] + currentComposeLengh, v[2]]
         )
       }
       return arr
@@ -3190,8 +3190,8 @@ export function compose<T extends Driver>(f: T, args?: any[]) {
 
   let names = getNames(f)
   const driverName = getName(f)
+  const composeIndex = currentRunnerScope.composes.length
   if (driverName && names) {
-    const composeIndex = currentRunnerScope.composes.length
     names = names.map(arr => [
       arr[0],
       `compose.${composeIndex}.${driverName}.${arr[1]}`
@@ -3201,7 +3201,7 @@ export function compose<T extends Driver>(f: T, args?: any[]) {
 
   const endIndex = startIndex + names.length
   const deps = getDeps(f)
-  currentRunnerScope.appendComposeDeps(startIndex, endIndex, deps)
+  currentRunnerScope.appendComposeDeps(startIndex, endIndex, composeIndex, deps)
 
   const driverNamespace = getNamespace(f)
   log('[compose] current = ', currentRunnerScope.runnerContext.driverName, !!currentRunnerScope.modelIndexes)
