@@ -12,9 +12,9 @@ const pack1 = [
   'cascading-list',
   'file-uploader',
   'markdown-editor',
-  'post-comments',
+  // 'post-comments',
   'user-login-system',
-  'user-comments',
+  // 'user-comments',
 ]
 
 const pack2 = [
