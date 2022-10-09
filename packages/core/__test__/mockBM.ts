@@ -968,6 +968,7 @@ export function composeWithSS() {
   return { s1, s2, simpleSSResult }
 }
 Object.assign(composeWithSS, {
+  __namespace__: 'jest/test',
   __deps__: [['h', 1, [0]]],
   __names__: [
     [0, 's1'],
@@ -995,6 +996,7 @@ export function composeWithSS2() {
   return { s1, ic, s33, simpleSSResult }
 }
 Object.assign(composeWithSS2, {
+  __namespace__: 'jest/test',
   __deps__: [
     ['h', 2, [], [0]], // will -> 6
     ['h', 2, [0, ['c', 0, 's1'], ['c', 1, 's2']]] // will -> 6
@@ -1007,6 +1009,33 @@ Object.assign(composeWithSS2, {
     [2, 's33']
   ]
 })
+
+export function composeDeeplyThan2() {
+  const s1 = state(0)
+  /* insert [state, computed], 2 -> 1 */
+  const simpleSSResult = compose(composeWithSS2)
+
+  const icComposedState = inputCompute(() => {
+    simpleSSResult.s1(v => v + 1)
+    s1(v => v + simpleSSResult.s1())
+  })
+
+  return {
+    icComposedState,
+    s1,
+  }
+}
+Object.assign(composeDeeplyThan2, {
+  __namespace__: 'jest/test',
+  __deps__: [
+    ['h', 1, [['c', 0, 's1']], [0]],
+  ],
+  __names__: [
+    [0, 's1'],
+    [1, 'icComposedState'],
+  ]
+})
+
 
 export function simpleComputedInServer() {
   const s1 = state(0)

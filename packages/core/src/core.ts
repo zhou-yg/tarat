@@ -1897,6 +1897,33 @@ export class CurrentRunnerScope<T extends Driver = any> {
     this.intialContextNames = modifiedNames.concat(newOffsetNames)
   }
 
+  offsetComposeIndex (originalIndex: number, newLength: number) {
+    const offset = newLength - originalIndex
+    if (offset > 0) {
+      this.intialContextDeps = (this.intialContextDeps || []).map(a => {
+        const arr: THookDeps[0] = cloneDeep(a)
+        if (arr[2]) {
+          arr[2] = arr[2].map(b => {
+            if (Array.isArray(b)) {
+              if (b[0] === 'c' && b[1] === originalIndex) {
+                b[1] += offset
+              }
+            }
+            return b
+          }) 
+        }
+        if (arr[3]) {
+          arr[3] = arr[3].map(b => {
+            if (b[0] === 'c' && b[1] === originalIndex) {
+              b[1] += offset
+            }
+            return b
+          })
+        }
+        return arr
+      });
+    }
+  }
   /**
    * add compose deps to current driver.
    * plus current hook dep index
@@ -1914,14 +1941,20 @@ export class CurrentRunnerScope<T extends Driver = any> {
         arr[1] += hooksInComposeSize
       }
       if (arr[2]) {
-        arr[2] = arr[2].map(v =>
-          typeof v === 'number' && v >= si ? v + hooksInComposeSize : v
-        )
+        arr[2] = arr[2].map(v => {
+          if (v >= si) {
+            return typeof v === 'number' ? v + hooksInComposeSize : v
+          }
+          return v
+        })
       }
       if (arr[3]) {
-        arr[3] = arr[3].map(v =>
-          typeof v === 'number' && v >= si ? v + hooksInComposeSize : v
-        )
+        arr[3] = arr[3].map(v => {
+          if (v >= si) {
+            return typeof v === 'number' ? v + hooksInComposeSize : v
+          }
+          return v
+        })
       }
       return arr
     })
@@ -3206,8 +3239,13 @@ export function compose<T extends Driver>(f: T, args?: any[]) {
   const driverNamespace = getNamespace(f)
   log('[compose] current = ', currentRunnerScope.runnerContext.driverName, !!currentRunnerScope.modelIndexes)
   const leaveCompose = currentRunnerScope.enterComposeDriver(driverNamespace)
-
   const insideResult: ReturnType<T> = executeDriver(f, args)
+
+  const afterEnterComposedLength = currentRunnerScope.composes.length
+  if (afterEnterComposedLength > composeIndex) {
+    // tip: there exist deeply composing in child compose driver
+    currentRunnerScope.offsetComposeIndex(composeIndex, afterEnterComposedLength)
+  }
 
   leaveCompose()
   currentRunnerScope.composes.push(insideResult)

@@ -201,29 +201,29 @@ export function map(
   return Object.values(target).map(callback)
 }
 
-export function likeObject(target: any) {
+export function likeObject(target: any): target is Object {
   return target && typeof target === 'object'
 }
 
-export function isDef(v?: any) {
+export function isDef(v?: any): v is any {
   return typeof v !== 'undefined'
 }
-export function isUndef(v?: any) {
+export function isUndef(v?: any): v is undefined {
   return typeof v === 'undefined'
 }
 
-export function isFunc(f?: Function | any) {
+export function isFunc(f?: Function | any): f is Function {
   return typeof f === 'function'
 }
 
-export function isAsyncFunc(f?: any) {
+export function isAsyncFunc<T>(f?: any): f is () => Promise<T> {
   return f && f[Symbol.toStringTag] === 'AsyncFunction'
 }
-export function isPromise(p?: any) {
+export function isPromise<T>(p?: any): p is Promise<T> {
   return p && (p instanceof Promise || !!p.then)
 }
 
-export function isGenerator(g: any) {
+export function isGenerator(g: any): g is Generator {
   return g && 'function' == typeof g.next && 'function' == typeof g.throw
 }
 

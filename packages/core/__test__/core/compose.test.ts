@@ -46,6 +46,16 @@ describe('compose', () => {
       expect(hooks[arr[0]].name).toBe(arr[1])
     })
   })
+  it('compose deeply driver greater than 2', () => {
+    const runner = new Runner(mockBM.composeDeeplyThan2)
+    runner.init()
+
+    expect(runner.scope.composes.length).toBe(3)
+
+    expect(runner.scope.intialContextDeps[0][2][0][0]).toBe('c')
+    expect(runner.scope.intialContextDeps[0][2][0][1]).toBe(2)
+  })
+
 
   describe('update', () => {
     it('with nested compose deps', () => {
