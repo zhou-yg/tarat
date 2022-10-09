@@ -8,8 +8,7 @@ import { join } from 'path'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'
 import { setCookies, setPrisma, setRunning, setER  } from '../plugins'
-import { buildDrivers } from '../compiler/prebuild'
-import { loadJSON } from '../util'
+import { loadJSON, isComposedDriver } from '../util'
 import { filterFileType } from './unserialize'
 
 function matchHookName (p: string) {
@@ -67,16 +66,19 @@ export default function taratMiddleware (args: {
         const BM = require(BMPath).default
 
         const driverNamespace = getNamespace(BM)
+        const driverComposed = isComposedDriver(BM);
 
         const modelIndexesPath = join(config.cwd, config.modelsDirectory, config.schemaIndexes)
         const wholeModelIndexes = require(modelIndexesPath)
 
-        const modelIndexes = driverNamespace ? wholeModelIndexes[driverNamespace] : wholeModelIndexes
+        const modelIndexes = driverNamespace && driverComposed 
+          ? wholeModelIndexes[driverNamespace]
+          : wholeModelIndexes
 
         const c: IHookContext = typeof body === 'string' ? parseWithUndef(body) : body;
 
         let runner = new Runner(BM, {
-          beleiveContext: true,
+          beleiveContext: false,
           modelIndexes,
         })
         

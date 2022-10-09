@@ -3,7 +3,7 @@ import * as path from 'path'
 import rimraf from 'rimraf'
 import { IViewConfig } from './config'
 import os from "os";
-import { isEqual } from "tarat/core";
+import { BM, isEqual } from "tarat/core";
 
 export function loadJSON (f: string) {
   return JSON.parse(fs.readFileSync(f).toString())
@@ -19,6 +19,10 @@ export function emptyDirectory (dir: string) {
 
 export function lowerFirst (s: string) {
   return s[0].toLowerCase() + s.substring(1)
+}
+
+export function isComposedDriver (f: BM) {
+  return !!(f as any).__tarat_composed__
 }
 
 export function tryMkdir(dir: string) {

@@ -444,7 +444,7 @@ export function replaceImportDriverPath (
   const r2 = code.match(reg2)
   const importModules = r || r2
 
-  const modulePathRegExp = new RegExp(`(${dependencyModules.join('|')})/(${buildDirectory})/(${driversDirectory})/([\\w-]+)`)
+  const modulePathRegExp = new RegExp(`(${dependencyModules.join('|')})/(${buildDirectory})/(${driversDirectory})/([\\w-]+)`, 'g')
 
   const condition = 
     importModules && importModules.length > 0 &&
