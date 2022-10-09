@@ -21,7 +21,7 @@ export default () => {
     <div className="w-full h-screen bg-slate-100 flex justify-center">
       {alreadyLogin ? <Navigate to="/user/info" replace={true} /> : ''}
       <div className="mt-6">
-        <Login title={
+        <Login {...loginHook} title={
           <h2 className="text-xl">LOGIN EXAMPLE</h2>
         } type="login" />
       </div>

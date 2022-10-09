@@ -15,7 +15,7 @@ export default function User () {
     <div className="bg-slate-100 h-screen flex justify-center" >
       {notLogin ? <Navigate to="/login" replace={true} /> : ''}
       <div className="mt-6">
-        <UserInfo />
+        <UserInfo {...loginHook} />
       </div>
     </div>
   )

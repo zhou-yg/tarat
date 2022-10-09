@@ -1,12 +1,11 @@
 import React, { useState, forwardRef, useImperativeHandle } from 'react'
-import { useTarat } from 'tarat/connect'
-import login, { DEFAULT_AVATAR } from '../drivers/login'
+import { DEFAULT_AVATAR } from '../drivers/login'
 import s from './login.module.less'
 import EditOutlined from '@ant-design/icons/EditOutlined'
 import CloseOutlined from '@ant-design/icons/CloseOutlined'
 
 const UserInfo = (props, ref) => {
-  const loginHook = useTarat(login)
+  const loginHook = props; // useTarat(login)
   
   useImperativeHandle(ref, () => ({
     hook: loginHook

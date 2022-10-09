@@ -5,7 +5,7 @@ import s from './login.module.less'
 import classnames from 'classnames'
 
 const SignFrame = (props) => {
-  const loginHook = useTarat(login)
+  const loginHook = props; // useTarat(login)
 
   const errorContent = loginHook?.errorTip()
 
@@ -56,7 +56,7 @@ const SignFrame = (props) => {
 }
 
 const LoginFrame = (props) => {
-  const loginHook = useTarat(login)
+  const loginHook = props; // useTarat(login)
 
   return (
     <div>
@@ -101,7 +101,7 @@ const LoginTypes = {
 }
 
 const LoginBox = (props, ref) => {
-  const loginHook = useTarat(login)
+  const loginHook = props; // useTarat(login)
   
   useImperativeHandle(ref, () => ({
     hook: loginHook
@@ -119,8 +119,8 @@ const LoginBox = (props, ref) => {
         'already login'
       ) :  null}
 
-      {!alreadyLogin && loginType === LoginTypes.login ? <LoginFrame setLoginType={setLoginType} /> : '' }
-      {!alreadyLogin && loginType === LoginTypes.sign ? <SignFrame setLoginType={setLoginType} /> : '' }
+      {!alreadyLogin && loginType === LoginTypes.login ? <LoginFrame {...loginHook} setLoginType={setLoginType} /> : '' }
+      {!alreadyLogin && loginType === LoginTypes.sign ? <SignFrame {...loginHook} setLoginType={setLoginType} /> : '' }
 
       <hr className="m-2" />
 

@@ -2,9 +2,9 @@ import { useTarat } from 'tarat/connect'
 import React, { useState } from 'react'
 import uploaderHook from '@/drivers/uploader'
 
-const Uploader = () => {
+const Uploader = (props: ReturnType<typeof uploaderHook>) => {
 
-  const uploader = useTarat(uploaderHook)
+  const uploader = props; // useTarat(uploaderHook)
 
   const f = uploader.inputFile()
   const OSSLink = uploader.OSSLink()

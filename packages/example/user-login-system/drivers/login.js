@@ -28,7 +28,7 @@ export default function login() {
 
   const signAndAutoLogin = state(true);
 
-  const uploader = compose(uploaderDriver)
+  const uploaderCompose = compose(uploaderDriver)
 
   const cookieId = cache("userDataKey", { from: "cookie" }); // just run in server because by it depends 'cookie'
 
@@ -183,11 +183,11 @@ export default function login() {
   const updateInfo = inputComputeInServer(function* () {
     const ud = userData()
     if (ud) {
-      const oss = uploader.OSSLink()
+      const oss = uploaderCompose.OSSLink()
       if (ud.avatar2) {
-        yield uploader.updateStorage(ud.avatar2.id)      
+        yield uploaderCompose.updateStorage(ud.avatar2.id)      
       } else if (oss) {
-        yield uploader.writeFileStroage.create({
+        yield uploaderCompose.writeFileStroage.create({
           ...oss,
           user: {
             connect: {
@@ -207,16 +207,10 @@ export default function login() {
     }
   });
 
-  // const imgForDisplay = computed(function * () {
-  //   const file = uploader.inputFile()
-  //   if (file) {
-  //     return URL.createObjectURL(file)
-  //   }
-  // })
-
   return {
     /** compose */
-    inputFile: uploader.inputFile,
+    uploader: uploaderCompose,
+    inputFile: uploaderCompose.inputFile,
     /** inside */
     // imgForDisplay,
     alreadyLogin,
