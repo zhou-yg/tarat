@@ -6,21 +6,13 @@ import MarkdownIt from 'markdown-it';
 // import style manually
 import 'react-markdown-editor-lite/lib/index.css';
 
-import mdEditor from '../drivers/mdEditor'
-
-import { useProgress, useTarat } from 'tarat/connect'
-
 // Initialize a markdown parser
 const mdParser = new MarkdownIt(/* Markdown-it options */);
 
 export default function Editor (props) {
-  const { id, height = 800 } = props
-  console.log('[Editor] id: ', id);
+  const { height = 800, editorProgress, ...rest } = props
 
-  let query = { id }
-
-  const mdEditorHook = useTarat(mdEditor, query)
-  const editorProgress = useProgress(mdEditorHook)
+  const mdEditorHook =  rest; // useTarat(mdEditor, query)
 
   const defualtMD = mdEditorHook.displayMD()
 

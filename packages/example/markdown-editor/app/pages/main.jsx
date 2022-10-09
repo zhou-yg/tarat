@@ -1,18 +1,20 @@
 import React from 'react'
-import s from './main.module.less'
-import Editor from '../../views/editor'
+import Editor from '@/views/editor'
+import mdEditor from '@/drivers/mdEditor'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { useTarat, useProgress } from 'tarat/connect'
 
 export default function Main () {
-  const searchParams = useSearchParams()
-  const location = useLocation()
-  
+  const searchParams = useSearchParams()  
   const mdId = searchParams[0].get('id')
+  const mdHook = useTarat(mdEditor, { id: mdId ? parseInt(mdId) : mdId })
+  const editorProgress = useProgress(mdHook)
+  console.log('editorProgress: ', editorProgress);
 
   return (
     <div className="px-4">
       <Link className="underline" to="/list" >&lt; back</Link>
-      <Editor id={mdId ? parseInt(mdId) : mdId} />
+      <Editor {...mdHook} editorProgress={editorProgress} />
     </div>
   )
 }
