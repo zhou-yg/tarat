@@ -151,4 +151,13 @@ describe('parser', () => {
       }
     })
   })
+  it.only('call compose sub member', () => {
+    const BM = 'compose3.js'
+    const code = mockUtil.readMock(BM)
+
+    const deps = parse(code)
+    // console.log('deps: ', JSON.stringify(deps, null, 2));
+
+    // expect(deps)
+  })
 })

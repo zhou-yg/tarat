@@ -253,6 +253,7 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
       }
 
       /** find which hook use this */
+      console.log('existSourceInScope: ', lastCalleeName);
       if (existSourceInScope) {
         
         const parentCallerHook = findParentCallerHook(ancestor)
@@ -442,10 +443,8 @@ export function parseDeps (hookCode: string) {
   const BMFunctionNodes = matchBMFunction(ast)
 
   const allBMDeps = BMFunctionNodes.map((n, i) => {
-    if (i === 0) {
-    }
     const { nameMap, depsMap } = generateBMDepMaps((Array.isArray(n) ? n[0] : n) as any)
-    
+  
     const arr = convertDepsToJSON(depsMap)
     
     return  {
