@@ -440,13 +440,13 @@ export abstract class WriteModel<T extends Object> extends AsyncState<
     }
     this.entity = scope.getRealEntityName(this.entity)
   }
-  refresh (): Promise<void> {
+  refresh(): Promise<void> {
     return this.sourceModel?.refresh()
   }
   injectGetter(fn: () => T) {
     this.extraGetters.push(fn)
   }
-  getData (): T {
+  getData(): T {
     const base = this.basicGetData()
     // iterate array from tail to head
     for (let i = this.extraGetters.length - 1; i >= 0; i--) {
@@ -1735,14 +1735,17 @@ export class CurrentRunnerScope<T extends Driver = any> {
   getRealEntityName(entityKey: string) {
     let result = entityKey
     if (this.modelIndexes) {
-        const subIndexes = get(this.modelIndexes, this.modelIndexesPath);
-        result = subIndexes[entityKey] || entityKey;
+      const subIndexes = get(this.modelIndexes, this.modelIndexesPath)
+      result = subIndexes[entityKey] || entityKey
     }
 
-    log(`[getRealEntityName] entityKey=${entityKey} mi=${!!this.modelIndexes} result=${result}`);
+    log(
+      `[getRealEntityName] entityKey=${entityKey} mi=${!!this
+        .modelIndexes} result=${result}`
+    )
 
-    return result;
-}
+    return result
+  }
 
   setOptions(op: Partial<IRunnerOptions>) {
     Object.assign(this, op)
@@ -1897,14 +1900,23 @@ export class CurrentRunnerScope<T extends Driver = any> {
     this.intialContextNames = modifiedNames.concat(newOffsetNames)
   }
 
-  offsetComposeIndex (originalIndex: number, newLength: number, icrement: number) {
+  offsetComposeIndex(
+    originalIndex: number,
+    newLength: number,
+    icrement: number
+  ) {
     const offset = newLength - originalIndex
     const endIndex = (this.intialContextDeps || []).length - icrement
     if (offset > 0) {
-      const originalDepsBeforeCompose = (this.intialContextDeps || []).slice(0, endIndex)
-      const icrementDepsAfterCompose = (this.intialContextDeps || []).slice(endIndex)
+      const originalDepsBeforeCompose = (this.intialContextDeps || []).slice(
+        0,
+        endIndex
+      )
+      const icrementDepsAfterCompose = (this.intialContextDeps || []).slice(
+        endIndex
+      )
 
-      const modifiedOriginalDeps = originalDepsBeforeCompose.map((a) => {
+      const modifiedOriginalDeps = originalDepsBeforeCompose.map(a => {
         const arr: THookDeps[0] = cloneDeep(a)
         if (arr[2]) {
           arr[2] = arr[2].map(b => {
@@ -1914,7 +1926,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
               }
             }
             return b
-          }) 
+          })
         }
         if (arr[3]) {
           arr[3] = arr[3].map(b => {
@@ -1925,15 +1937,22 @@ export class CurrentRunnerScope<T extends Driver = any> {
           })
         }
         return arr
-      });
-      this.intialContextDeps = modifiedOriginalDeps.concat(icrementDepsAfterCompose)
+      })
+      this.intialContextDeps = modifiedOriginalDeps.concat(
+        icrementDepsAfterCompose
+      )
     }
   }
   /**
    * add compose deps to current driver.
    * plus current hook dep index
    */
-  appendComposeDeps(si: number, ei: number, currentComposeLengh:number, deps?: THookDeps) {
+  appendComposeDeps(
+    si: number,
+    ei: number,
+    currentComposeLengh: number,
+    deps?: THookDeps
+  ) {
     if (!deps) {
       return
     }
@@ -1969,12 +1988,16 @@ export class CurrentRunnerScope<T extends Driver = any> {
       arr[1] += si
       if (arr[2]) {
         arr[2] = arr[2].map(v =>
-          typeof v === 'number' ? v + si : [v[0], v[1] + currentComposeLengh, v[2]]
+          typeof v === 'number'
+            ? v + si
+            : [v[0], v[1] + currentComposeLengh, v[2]]
         )
       }
       if (arr[3]) {
         arr[3] = arr[3].map(v =>
-          typeof v === 'number' ? v + si : [v[0], v[1] + currentComposeLengh, v[2]]
+          typeof v === 'number'
+            ? v + si
+            : [v[0], v[1] + currentComposeLengh, v[2]]
         )
       }
       return arr
@@ -2448,12 +2471,12 @@ export const mountHookFactory = {
   model: mountPrisma,
   prisma: mountPrisma,
   writePrisma: mountWritePrisma,
-  writeModel: writeModel,  
+  writeModel: writeModel,
   // quick command
   createPrisma: mountCreatePrisma,
   updatePrisma: mountUpdatePrisma,
   removePrisma: mountRemovePrisma,
-  
+
   cache: mountCache,
   computed: mountComputed,
   computedInServer: mountComputedInServer,
@@ -2486,7 +2509,14 @@ export const hookFactoryFeatures = {
   /**
    * need other hook as data source
    */
-  withSource: ['cache', 'writeModel', 'writePrisma'],
+  withSource: [
+    'cache',
+    'writeModel',
+    'writePrisma',
+    'createPrisma',
+    'updatePrisma',
+    'removePrisma'
+  ],
   /**
    * manual calling by User or System
    */
@@ -2494,7 +2524,10 @@ export const hookFactoryFeatures = {
     'inputCompute',
     'inputComputeInServer',
     'writePrisma',
-    'writeModel'
+    'writeModel',
+    'createPrisma',
+    'updatePrisma',
+    'removePrisma'
   ],
   /**
    * only compatibility with server
@@ -2802,7 +2835,10 @@ function mountWritePrisma<T>(source: { _hook: Model<T[]> }, q: () => T) {
   return newGetter
 }
 
-function mountCreatePrisma<T>(source: { _hook: Model<T[]> }, q: () => Partial<T>) {
+function mountCreatePrisma<T>(
+  source: { _hook: Model<T[]> },
+  q: () => Partial<T>
+) {
   const hook =
     process.env.TARGET === 'server'
       ? new WritePrisma(source, q, currentRunnerScope)
@@ -2817,7 +2853,10 @@ function mountCreatePrisma<T>(source: { _hook: Model<T[]> }, q: () => Partial<T>
   return caller
 }
 
-function mountUpdatePrisma<T>(source: { _hook: Model<T[]> }, q: () => Partial<T>) {
+function mountUpdatePrisma<T>(
+  source: { _hook: Model<T[]> },
+  q: () => Partial<T>
+) {
   const hook =
     process.env.TARGET === 'server'
       ? new WritePrisma(source, q, currentRunnerScope)
@@ -2832,7 +2871,10 @@ function mountUpdatePrisma<T>(source: { _hook: Model<T[]> }, q: () => Partial<T>
   return caller
 }
 
-function mountRemovePrisma<T>(source: { _hook: Model<T[]> }, q: () => Partial<T>) {
+function mountRemovePrisma<T>(
+  source: { _hook: Model<T[]> },
+  q: () => Partial<T>
+) {
   const hook =
     process.env.TARGET === 'server'
       ? new WritePrisma(source, q, currentRunnerScope)
@@ -3076,21 +3118,30 @@ export function writePrisma<T>(source: { _hook: Model<T[]> }, q?: () => T) {
   return currentHookFactory.writePrisma<T>(source, q)
 }
 
-export function createPrisma<T>(source: { _hook: Model<T[]> }, q?: () => Partial<T>) {
+export function createPrisma<T>(
+  source: { _hook: Model<T[]> },
+  q?: () => Partial<T>
+) {
   if (!currentRunnerScope) {
     throw new Error('[createPrisma] must under a tarat runner')
   }
   return currentHookFactory.createPrisma<T>(source, q)
 }
 
-export function updatePrisma<T>(source: { _hook: Model<T[]> }, q?: () => Partial<T>) {
+export function updatePrisma<T>(
+  source: { _hook: Model<T[]> },
+  q?: () => Partial<T>
+) {
   if (!currentRunnerScope) {
     throw new Error('[updatePrisma] must under a tarat runner')
   }
   return currentHookFactory.updatePrisma<T>(source, q)
 }
 
-export function removePrisma<T>(source: { _hook: Model<T[]> }, q?: () => Partial<T>) {
+export function removePrisma<T>(
+  source: { _hook: Model<T[]> },
+  q?: () => Partial<T>
+) {
   if (!currentRunnerScope) {
     throw new Error('[removePrisma] must under a tarat runner')
   }
@@ -3325,7 +3376,11 @@ export function compose<T extends Driver>(f: T, args?: any[]) {
   currentRunnerScope.appendComposeDeps(startIndex, endIndex, composeIndex, deps)
 
   const driverNamespace = getNamespace(f)
-  log('[compose] current = ', currentRunnerScope.runnerContext.driverName, !!currentRunnerScope.modelIndexes)
+  log(
+    '[compose] current = ',
+    currentRunnerScope.runnerContext.driverName,
+    !!currentRunnerScope.modelIndexes
+  )
   const leaveCompose = currentRunnerScope.enterComposeDriver(driverNamespace)
   const insideResult: ReturnType<T> = executeDriver(f, args)
 
@@ -3334,7 +3389,11 @@ export function compose<T extends Driver>(f: T, args?: any[]) {
     const latestDepsSize = (currentRunnerScope.intialContextDeps || []).length
 
     // tip: there exist deeply composing in child compose driver
-    currentRunnerScope.offsetComposeIndex(composeIndex, afterEnterComposedLength, latestDepsSize - originalDepsSize)
+    currentRunnerScope.offsetComposeIndex(
+      composeIndex,
+      afterEnterComposedLength,
+      latestDepsSize - originalDepsSize
+    )
   }
 
   leaveCompose()

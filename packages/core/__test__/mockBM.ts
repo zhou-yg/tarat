@@ -580,15 +580,15 @@ export function writeModelByQuickCommand() {
   const ri = removePrisma(items)
 
   const createItem = inputComputeInServer(() => ci())
-  const updateItem = inputComputeInServer((id) => ui(id))
-  const removeItem = inputComputeInServer((id) => ri(id))
+  const updateItem = inputComputeInServer(id => ui(id))
+  const removeItem = inputComputeInServer(id => ri(id))
 
   return {
     items,
     name,
     createItem,
     updateItem,
-    removeItem,
+    removeItem
   }
 }
 
@@ -1053,20 +1053,17 @@ export function composeDeeplyThan2() {
   return {
     composeResult1,
     icComposedState,
-    s1,
+    s1
   }
 }
 Object.assign(composeDeeplyThan2, {
   __namespace__: 'jest/test',
-  __deps__: [
-    ['h', 1, [['c', 1, 's1']], [0]],
-  ],
+  __deps__: [['h', 1, [['c', 1, 's1']], [0]]],
   __names__: [
     [0, 's1'],
-    [1, 'icComposedState'],
+    [1, 'icComposedState']
   ]
 })
-
 
 export function simpleComputedInServer() {
   const s1 = state(0)
@@ -1116,7 +1113,7 @@ export function writeWritePrisma() {
     name: name()
   }))
 
-  const ic = inputCompute(function * () {
+  const ic = inputCompute(function* () {
     yield wp1.create()
   })
 
@@ -1130,4 +1127,3 @@ export function writeWritePrisma() {
     ic
   }
 }
-
