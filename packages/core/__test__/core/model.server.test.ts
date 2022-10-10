@@ -373,5 +373,27 @@ describe('model', () => {
 
       expect(result.items()[3].name).toEqual('ddd')
     })
+
+    it('write model by quick command',async () => {
+      const runner = new Runner(mockBM.writeModelByQuickCommand)
+      const result = runner.init()
+      
+      await runner.ready()
+  
+      result.name(() => 'c')
+      await result.createItem()
+
+      expect(result.items().length).toEqual(3)
+      expect(result.items()[2].name).toEqual('c')
+
+      const id = result.items()[2].id
+      result.name(() => 'ccc')
+      await result.updateItem(id)
+
+      expect(result.items()[2].name).toEqual('ccc')
+
+      await result.removeItem(id)
+      expect(result.items().length).toEqual(2)
+    })
   })
 })

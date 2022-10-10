@@ -21,7 +21,10 @@ import {
   prisma,
   writePrisma,
   computedInServer,
-  injectModel
+  injectModel,
+  createPrisma,
+  updatePrisma,
+  removePrisma
 } from '../src/'
 import { loadPlugin } from '../src/plugin'
 
@@ -562,6 +565,30 @@ export function writeModelWithSource() {
     items,
     name,
     createItem
+  }
+}
+
+export function writeModelByQuickCommand() {
+  const items = model<{ id?: number; name: string }[]>('item', () => ({}))
+  const name = state('')
+  const ci = createPrisma(items, () => ({
+    name: name()
+  }))
+  const ui = updatePrisma(items, () => ({
+    name: name()
+  }))
+  const ri = removePrisma(items)
+
+  const createItem = inputComputeInServer(() => ci())
+  const updateItem = inputComputeInServer((id) => ui(id))
+  const removeItem = inputComputeInServer((id) => ri(id))
+
+  return {
+    items,
+    name,
+    createItem,
+    updateItem,
+    removeItem,
   }
 }
 

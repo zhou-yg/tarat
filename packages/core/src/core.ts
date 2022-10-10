@@ -2448,7 +2448,12 @@ export const mountHookFactory = {
   model: mountPrisma,
   prisma: mountPrisma,
   writePrisma: mountWritePrisma,
-  writeModel: writeModel,
+  writeModel: writeModel,  
+  // quick command
+  createPrisma: mountCreatePrisma,
+  updatePrisma: mountUpdatePrisma,
+  removePrisma: mountRemovePrisma,
+  
   cache: mountCache,
   computed: mountComputed,
   computedInServer: mountComputedInServer,
@@ -2457,10 +2462,15 @@ export const mountHookFactory = {
 }
 export const updateHookFactory = {
   state: updateState,
-  model: updatePrisma,
-  writeModel: writeModel,
-  prisma: updatePrisma,
+  model: updateCyclePrisma,
+  prisma: updateCyclePrisma,
   writePrisma: mountWritePrisma,
+  writeModel: writeModel,
+
+  createPrisma: mountCreatePrisma,
+  updatePrisma: mountUpdatePrisma,
+  removePrisma: mountRemovePrisma,
+
   cache: updateCache,
   computed: updateComputed,
   computedInServer: updateComputedInServer,
@@ -2504,6 +2514,12 @@ export let currentHookFactory: {
   model: typeof mountPrisma
   prisma: typeof mountPrisma
   writePrisma: typeof mountWritePrisma
+  writeModel: typeof writeModel
+
+  createPrisma: typeof mountCreatePrisma
+  updatePrisma: typeof mountUpdatePrisma
+  removePrisma: typeof mountRemovePrisma
+
   cache: typeof mountCache
   computed: typeof mountComputed
   computedInServer: typeof mountComputedInServer
@@ -2690,7 +2706,7 @@ function mountState<T>(initialValue?: T) {
   return newSetterGetter
 }
 
-function updatePrisma<T extends any[]>(
+function updateCyclePrisma<T extends any[]>(
   e: string,
   q?: () => IModelQuery['query'] | undefined,
   op?: IModelOption
@@ -2784,6 +2800,51 @@ function mountWritePrisma<T>(source: { _hook: Model<T[]> }, q: () => T) {
   })
 
   return newGetter
+}
+
+function mountCreatePrisma<T>(source: { _hook: Model<T[]> }, q: () => Partial<T>) {
+  const hook =
+    process.env.TARGET === 'server'
+      ? new WritePrisma(source, q, currentRunnerScope)
+      : new ClientWritePrisma(source, q, currentRunnerScope)
+
+  currentRunnerScope!.addHook(hook)
+  currentReactiveChain?.add(hook)
+
+  const caller = (receivedData?: Partial<T>) => {
+    return hook.createRow(receivedData)
+  }
+  return caller
+}
+
+function mountUpdatePrisma<T>(source: { _hook: Model<T[]> }, q: () => Partial<T>) {
+  const hook =
+    process.env.TARGET === 'server'
+      ? new WritePrisma(source, q, currentRunnerScope)
+      : new ClientWritePrisma(source, q, currentRunnerScope)
+
+  currentRunnerScope!.addHook(hook)
+  currentReactiveChain?.add(hook)
+
+  const caller = (where: number, receivedData?: Partial<T>) => {
+    return hook.updateRow(where, receivedData)
+  }
+  return caller
+}
+
+function mountRemovePrisma<T>(source: { _hook: Model<T[]> }, q: () => Partial<T>) {
+  const hook =
+    process.env.TARGET === 'server'
+      ? new WritePrisma(source, q, currentRunnerScope)
+      : new ClientWritePrisma(source, q, currentRunnerScope)
+
+  currentRunnerScope!.addHook(hook)
+  currentReactiveChain?.add(hook)
+
+  const caller = (where?: number) => {
+    return hook.removeRow(where)
+  }
+  return caller
 }
 
 function updateCache<T>(key: string, options: ICacheOptions<T>) {
@@ -3013,6 +3074,27 @@ export function writePrisma<T>(source: { _hook: Model<T[]> }, q?: () => T) {
     throw new Error('[writePrisma] must under a tarat runner')
   }
   return currentHookFactory.writePrisma<T>(source, q)
+}
+
+export function createPrisma<T>(source: { _hook: Model<T[]> }, q?: () => Partial<T>) {
+  if (!currentRunnerScope) {
+    throw new Error('[createPrisma] must under a tarat runner')
+  }
+  return currentHookFactory.createPrisma<T>(source, q)
+}
+
+export function updatePrisma<T>(source: { _hook: Model<T[]> }, q?: () => Partial<T>) {
+  if (!currentRunnerScope) {
+    throw new Error('[updatePrisma] must under a tarat runner')
+  }
+  return currentHookFactory.updatePrisma<T>(source, q)
+}
+
+export function removePrisma<T>(source: { _hook: Model<T[]> }, q?: () => Partial<T>) {
+  if (!currentRunnerScope) {
+    throw new Error('[removePrisma] must under a tarat runner')
+  }
+  return currentHookFactory.removePrisma<T>(source, q)
 }
 
 export function cache<T>(key: string, options: ICacheOptions<T>) {
