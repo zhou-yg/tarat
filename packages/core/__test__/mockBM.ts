@@ -1012,6 +1012,9 @@ Object.assign(composeWithSS2, {
 
 export function composeDeeplyThan2() {
   const s1 = state(0)
+
+  const composeResult1 = compose(simpleSS)
+
   /* insert [state, computed], 2 -> 1 */
   const simpleSSResult = compose(composeWithSS2)
 
@@ -1021,6 +1024,7 @@ export function composeDeeplyThan2() {
   })
 
   return {
+    composeResult1,
     icComposedState,
     s1,
   }
@@ -1028,7 +1032,7 @@ export function composeDeeplyThan2() {
 Object.assign(composeDeeplyThan2, {
   __namespace__: 'jest/test',
   __deps__: [
-    ['h', 1, [['c', 0, 's1']], [0]],
+    ['h', 1, [['c', 1, 's1']], [0]],
   ],
   __names__: [
     [0, 's1'],

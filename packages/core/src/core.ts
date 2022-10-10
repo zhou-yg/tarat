@@ -1897,10 +1897,14 @@ export class CurrentRunnerScope<T extends Driver = any> {
     this.intialContextNames = modifiedNames.concat(newOffsetNames)
   }
 
-  offsetComposeIndex (originalIndex: number, newLength: number) {
+  offsetComposeIndex (originalIndex: number, newLength: number, icrement: number) {
     const offset = newLength - originalIndex
+    const endIndex = (this.intialContextDeps || []).length - icrement
     if (offset > 0) {
-      this.intialContextDeps = (this.intialContextDeps || []).map(a => {
+      const originalDepsBeforeCompose = (this.intialContextDeps || []).slice(0, endIndex)
+      const icrementDepsAfterCompose = (this.intialContextDeps || []).slice(endIndex)
+
+      const modifiedOriginalDeps = originalDepsBeforeCompose.map((a) => {
         const arr: THookDeps[0] = cloneDeep(a)
         if (arr[2]) {
           arr[2] = arr[2].map(b => {
@@ -1922,6 +1926,7 @@ export class CurrentRunnerScope<T extends Driver = any> {
         }
         return arr
       });
+      this.intialContextDeps = modifiedOriginalDeps.concat(icrementDepsAfterCompose)
     }
   }
   /**
@@ -3234,6 +3239,7 @@ export function compose<T extends Driver>(f: T, args?: any[]) {
 
   const endIndex = startIndex + names.length
   const deps = getDeps(f)
+  const originalDepsSize = (currentRunnerScope.intialContextDeps || []).length
   currentRunnerScope.appendComposeDeps(startIndex, endIndex, composeIndex, deps)
 
   const driverNamespace = getNamespace(f)
@@ -3243,8 +3249,10 @@ export function compose<T extends Driver>(f: T, args?: any[]) {
 
   const afterEnterComposedLength = currentRunnerScope.composes.length
   if (afterEnterComposedLength > composeIndex) {
+    const latestDepsSize = (currentRunnerScope.intialContextDeps || []).length
+
     // tip: there exist deeply composing in child compose driver
-    currentRunnerScope.offsetComposeIndex(composeIndex, afterEnterComposedLength)
+    currentRunnerScope.offsetComposeIndex(composeIndex, afterEnterComposedLength, latestDepsSize - originalDepsSize)
   }
 
   leaveCompose()

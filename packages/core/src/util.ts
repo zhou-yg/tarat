@@ -1016,7 +1016,7 @@ export function constructDataGraph(contextDeps: THookDeps) {
     get?.forEach(idOrArr => {
       if (Array.isArray(idOrArr)) {
         throw new Error(
-          '[getRelatedIndexes] 1 not support compose. transform it to hook index before calling'
+          `[getRelatedIndexes] 1 not support compose. transform it to hook index before calling id=${id}`
         )
       } else {
         let parent = nodesMap.get(idOrArr)
@@ -1034,7 +1034,7 @@ export function constructDataGraph(contextDeps: THookDeps) {
     set?.forEach(idOrArr => {
       if (Array.isArray(idOrArr)) {
         throw new Error(
-          '[getRelatedIndexes] 1 not support compose. transform it to hook index before calling'
+          `[getRelatedIndexes] 2 not support compose. transform it to hook index before calling id=${id}`
         )
       } else {
         let child = nodesMap.get(idOrArr)

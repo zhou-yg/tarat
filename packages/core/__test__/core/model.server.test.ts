@@ -267,28 +267,6 @@ describe('model', () => {
         ])
       })
     })
-
-    describe('with writeModel', () => {
-
-      it('connectModel', async () => {
-        const runner = new Runner(mockBM.writeModelWithSource)
-        const result = runner.init()
-
-        await runner.ready()
-
-        result.name(() => 'c')
-        await result.createItem('')
-
-        await runner.scope.ready()
-
-        expect(result.items()[2].name).toEqual('c')
-
-        await result.createItem('ddd')
-        await runner.scope.ready()
-
-        expect(result.items()[3].name).toEqual('ddd')
-      })
-    })
   })
   describe('update model', () => {
     it('find immediate', async () => {
@@ -356,6 +334,44 @@ describe('model', () => {
         { id: 1, name: 'sub-a' },
         { id: 2, name: 'sub-b' },
       ])
+    })
+  })
+
+  // writing here temporarily
+  describe('write model', () => {
+    it('inject write model', async () => {  
+      const runner = new Runner(mockBM.writeWritePrisma)
+      const result = runner.init()
+      
+      await runner.scope.ready()
+      expect(result.itemsLength()).toBe(2)
+  
+      await result.ic()
+  
+      expect(result.itemsLength()).toBe(3)
+      expect(result.p1()).toEqual([
+        { id: 1, name: 'a' },
+        { id: 2, name: 'b' },
+        { id: 10, name: 'aa'}
+      ])
+    })
+    it('connectModel', async () => {
+      const runner = new Runner(mockBM.writeModelWithSource)
+      const result = runner.init()
+
+      await runner.ready()
+
+      result.name(() => 'c')
+      await result.createItem('')
+
+      await runner.scope.ready()
+
+      expect(result.items()[2].name).toEqual('c')
+
+      await result.createItem('ddd')
+      await runner.scope.ready()
+
+      expect(result.items()[3].name).toEqual('ddd')
     })
   })
 })
