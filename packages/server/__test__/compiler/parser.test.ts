@@ -114,6 +114,7 @@ describe('parser', () => {
     const code = mockUtil.readMock(BM)
 
     const deps = parse(code)
+    console.log('deps: ', deps.writeModelDriver.deps);
 
     expect(deps).toEqual({
       writeModelDriver: {
@@ -122,11 +123,13 @@ describe('parser', () => {
           [1, 'items'],
           [2, 'writeItems'],
           [3, 'ic'],
+          [4, 'createItems'],
         ],
         deps: [
           ['h', 1, [0]],
           ['ic', 2, [0], [1]],
           ['ic', 3, [], [2]],
+          ['ic', 4, [], [1]],
         ]
       }
     })
@@ -151,7 +154,7 @@ describe('parser', () => {
       }
     })
   })
-  it.only('call compose sub member', () => {
+  it('call compose sub member', () => {
     const BM = 'compose3.js'
     const code = mockUtil.readMock(BM)
 

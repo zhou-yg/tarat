@@ -253,7 +253,6 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
       }
 
       /** find which hook use this */
-      console.log('existSourceInScope: ', lastCalleeName);
       if (existSourceInScope) {
         
         const parentCallerHook = findParentCallerHook(ancestor)

@@ -3,7 +3,8 @@ import {
   inputComputeInServer,
   model,
   state,
-  writePrisma
+  writePrisma,
+  createPrisma,
 } from 'tarat-core'
 
 export default function writeModelDriver () {
@@ -17,10 +18,13 @@ export default function writeModelDriver () {
     b: 2,
     c: s1()
   }))
+
   // 3
   const ic = inputComputeInServer(() => {
     writeItems.create()
   })
+
+  const createItems = createPrisma(items)
 
   return { ic, writeItems }
 }
