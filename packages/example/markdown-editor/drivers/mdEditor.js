@@ -53,6 +53,7 @@ export default function mdEditor(q = {}) {
   });
 
   return {
+    currentId,
     currentProgress,
     displayMD,
     postedMD,

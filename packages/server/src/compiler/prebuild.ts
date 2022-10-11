@@ -645,7 +645,7 @@ async function esbuildDrivers (
       if (!obj.isDir) {
         if (/\.ts$/.test(obj.path)) {
           fs.rmSync(obj.path)
-        } else {
+        } else if (/\.js$/) {
           removeUnusedImports(obj.path)
           if (env) {
             replaceImportDriverPath(config, obj.path, format, env)

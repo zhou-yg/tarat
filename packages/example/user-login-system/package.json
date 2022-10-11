@@ -1,6 +1,6 @@
 {
   "name": "tarat-user-login-system",
-  "version": "0.0.29",
+  "version": "0.0.30",
   "tarat": {},
   "description": "tarat service application for todos example",
   "main": "index.js",
