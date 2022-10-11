@@ -384,7 +384,7 @@ describe('model', () => {
       await result.createItem()
 
       expect(result.items().length).toEqual(3)
-      expect(result.items()[2].name).toEqual('c')
+      expect(result.items()[2].name).toEqual('cc')
 
       const id = result.items()[2].id
       result.name(() => 'ccc')
