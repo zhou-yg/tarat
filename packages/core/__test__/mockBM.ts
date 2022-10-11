@@ -24,7 +24,8 @@ import {
   createPrisma,
   updatePrisma,
   removePrisma,
-  injectWrite
+  injectWrite,
+  injectModel
 } from '../src/'
 import { loadPlugin } from '../src/plugin'
 
@@ -539,6 +540,24 @@ export function userPessimisticModel() {
   const users = model('item', () => ({}), {
     immediate: true,
     pessimisticUpdate: true
+  })
+
+  return {
+    users
+  }
+}
+export function userInjectFindModel() {
+  const users = model<{ id: number, name: string }[]>('item', () => ({}), {
+    immediate: true,
+    pessimisticUpdate: true
+  })
+
+  injectModel(users, () => {
+    return {
+      where: {
+        name: 'b'
+      }
+    }
   })
 
   return {

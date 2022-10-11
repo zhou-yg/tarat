@@ -89,6 +89,20 @@ describe('model', () => {
         { id: 2, name: 'b' },
       ])
     })
+    it('find with injectModel', async () => {
+      const runner = new Runner(mockBM.userInjectFindModel)
+      const result = runner.init()
+      
+      expect(runner.state()).toBe('pending')
+
+      await runner.ready()
+
+      expect(runner.state()).toBe('idle')
+
+      expect(result.users()).toEqual([
+        { id: 2, name: 'b' },
+      ])
+    })
   
     it('check exist before create', async () => {
       const runner = new Runner(mockBM.userModelInputeCompute)

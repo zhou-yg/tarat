@@ -53,6 +53,7 @@ import {
   IModelQuery,
   TCacheFrom
 } from './plugin'
+import { merge } from './lib/merge'
 
 const { produceWithPatches, enablePatches, applyPatches } = immer
 
@@ -303,6 +304,7 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
   queryWhereComputed: Computed<IModelQuery['query'] | void> | null = null
   watcher: Watcher = new Watcher(this)
   entity: string
+  findGetters: Array<() => IModelQuery['query'] | undefined> = []
   constructor(
     entity: string,
     getter: (() => IModelQuery['query'] | undefined) | undefined = undefined,
@@ -332,6 +334,10 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
     }
   }
 
+  injectFindGetter (fn: () => IModelQuery['query'] | undefined) {
+    this.findGetters.push(fn)
+  }
+
   setGetter(fn: () => IModelQuery['query'] | undefined) {
     this.queryWhereComputed.getter = fn
   }
@@ -357,6 +363,12 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
         // queryWhereComputed hadnt run.
         this.query()
       } else {
+        const extra = this.findGetters.map(fn => fn()).filter(Boolean)
+        if (extra.length > 0) {
+          return extra.reduce((pre, current) => {
+            return merge(pre, current)
+          }, queryWhereValue as IModelQuery['query'])
+        }
         return queryWhereValue as IModelQuery['query']
       }
     }
@@ -413,7 +425,7 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
   ): Promise<void>
 }
 
-type TWriteMethod = 'create' | 'update' | 'remove'
+type TWriteMethod = 'create' | 'update' | 'remove' | 'find'
 
 export abstract class WriteModel<T extends Object> extends AsyncState<
   T | Symbol
@@ -425,7 +437,8 @@ export abstract class WriteModel<T extends Object> extends AsyncState<
   extraGetters: Record<TWriteMethod, Array<() => T>> = {
     create: [],
     update: [],
-    remove: []
+    remove: [],
+    find: [] // useless
   }
 
   constructor(
@@ -451,7 +464,13 @@ export abstract class WriteModel<T extends Object> extends AsyncState<
     return this.sourceModel?.refresh()
   }
   injectGetter(fn: () => T, method: TWriteMethod) {
-    this.extraGetters[method].push(fn)
+    if (method === 'find') {
+      if (this.sourceModel instanceof Model) {
+        this.sourceModel.injectFindGetter(fn)
+      }
+    } else {
+      this.extraGetters[method].push(fn)
+    }
   }
   getData(method: TWriteMethod): T {
     const arr = this.extraGetters[method]
@@ -3438,22 +3457,30 @@ export function injectWrite<T>(
   dataGetter: TGetterData<T>,
 ): void
 export function injectWrite<T>(
-  modelGetter: ReturnType<typeof writePrisma>,
-  method: 'create' | 'update' | 'remove',
+  modelGetter: ReturnType<typeof model<T[]>>,
+  dataGetter: () => IModelQuery['query'] | undefined
+): void
+export function injectWrite<T>(
+  modelGetter: ReturnType<typeof writeModel>,
+  method: TWriteMethod,
   dataGetter: TGetterData<T>
 ): void
-export function injectWrite(...args: any[]) {
+export function injectWrite<T>(...args: any[]) {
   const [ modelGetter, methodOrDataGetter, dataGetter ] = args
-  if (args.length === 3) {
+  if (dataGetter) {
     modelGetter._hook.injectGetter(dataGetter, methodOrDataGetter)
-  } else if (args.length === 2) {
-    modelGetter._hook.injectGetter(methodOrDataGetter, modelGetter._method)
   } else {
-    throw new Error('[injectWrite] invalid parameters')
+    if (modelGetter._hook instanceof Model) {
+      modelGetter._hook.injectFindGetter(methodOrDataGetter)
+    } else if (modelGetter._hook instanceof WriteModel) {
+      modelGetter._hook.injectGetter(methodOrDataGetter, modelGetter._method)
+    } else {
+      throw new Error('[injectWrite] invalid getter._hook type')
+    }
   }
 }
 
-
+export const injectModel = injectWrite
 
 export function progress<T = any>(getter: {
   _hook: AsyncState<T> | AsyncInputCompute<T[]>
