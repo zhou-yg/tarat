@@ -9,6 +9,7 @@ import taratRunner from "./middlewares/runner";
 import page from "./middlewares/page";
 import unserializeWithFile from "./middlewares/unserialize";
 import aliasDriverRollupPlugin from './compiler/plugins/rollup-plugin-alias-driver';
+import react from '@vitejs/plugin-react'
 
 import { createServer as createViteServer } from "vite";
 import tsconfigPaths from 'vite-tsconfig-paths'
@@ -85,6 +86,7 @@ export async function createDevServer (c: IConfig) {
     plugins: [
       tsconfigPaths(),
       { ...aliasDriverRollupPlugin(c, 'client'), enforce: 'pre' },
+      react(),
     ],
     resolve: {
       extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx', '.json'],
