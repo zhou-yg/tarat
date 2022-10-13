@@ -1,7 +1,7 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import l from 'lodash'
-import { readViews } from './config/routes'
+import { defineRoutesTree, readViews } from './config/routes'
 import { isFileEmpty, loadJSON, logFrame } from './util'
 import chalk from 'chalk'
 import { findDependencies } from './config/deps'
@@ -248,6 +248,30 @@ export interface IPackageJSON {
   name: string
 }
 
+function getAppRootFile (cwd: string, c: IDefaultConfig) {
+  let f = path.join(cwd, c.appDirectory, c.appRoot)
+
+  const tsx = '.tsx'
+  const jsx = '.jsx'
+
+  if (c.ts && fs.existsSync(`${f}${tsx}`)) {
+    return {
+      file: `${f}${tsx}`,
+      path: f,
+      name: c.appRoot,
+      ext: tsx
+    }
+  }
+  if (!c.ts && fs.existsSync(`${f}${jsx}`)) {
+    return {
+      file: `${f}${jsx}`,
+      path: f,
+      name: c.appRoot,
+      ext: jsx
+    }
+  }
+}
+
 export async function readConfig (arg: {
   cwd: string,
   isProd?: boolean
@@ -275,6 +299,7 @@ export async function readConfig (arg: {
   })
 
   const pages = readPages(pagesDirectory, '/')
+  // complement page file with page directory
   pages.forEach(c => {
     c.file = path.join('./', config.appDirectory, config.pageDirectory, c.file)
   })
@@ -296,8 +321,14 @@ export async function readConfig (arg: {
 
   const dependencyModules = findDependencies(cwd, pacakgeJSON)
 
+  const appRootFile = getAppRootFile(cwd, config)
+
+  const routesTree = defineRoutesTree(pages)
+
   return {
     ...config,
+    appRootFile,
+    routesTree,
     pacakgeJSON,
     isProd,
     entryCSS,

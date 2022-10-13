@@ -78,6 +78,7 @@ export async function createDevServer (c: IConfig) {
   }))
 
   const vite = await createViteServer({
+    clearScreen: false,
     root: c.cwd,
     server:{ middlewareMode: 'ssr' },
     optimizeDeps: {

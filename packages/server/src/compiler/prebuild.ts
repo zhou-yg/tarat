@@ -195,30 +195,6 @@ function getEntryFile (c: IConfig) {
   }
 }
 
-function getAppRootFile (c: IConfig) {
-  let f = path.join(c.cwd, c.appDirectory, c.appRoot)
-
-  const tsx = '.tsx'
-  const jsx = '.jsx'
-
-  if (c.ts && fs.existsSync(`${f}${tsx}`)) {
-    return {
-      file: `${f}${tsx}`,
-      path: f,
-      name: c.appRoot,
-      ext: tsx
-    }
-  }
-  if (!c.ts && fs.existsSync(`${f}${jsx}`)) {
-    return {
-      file: `${f}${jsx}`,
-      path: f,
-      name: c.appRoot,
-      ext: jsx
-    }
-  }
-}
-
 function upperFirstVariable (s: string = '') {
   s = s.replace(/\:|-/g, '_').replace(/^_/, '')
   return s ? (s[0].toUpperCase() + s.substring(1)) : ''
@@ -300,41 +276,22 @@ function implicitImportPath (path: string, ts: boolean) {
   return path
 }
 
-export async function buildServerRoutes(c: IConfig) {
-
+export async function generateClientRoutes(c: IConfig) {
   const {
-    outputDir,
-    autoGenerateServerRoutes,
-    distServerRoutes,
     autoGenerateClientRoutes,
-    outputAppServerDir,
-    distServerRoutesCSS
   } = c.pointFiles
 
-  const appRootFile = getAppRootFile(c)
-
-  const routesTreeArr = defineRoutesTree(c.pages)
-
+  const {
+    appRootFile,
+    routesTree: routesTreeArr,
+  } = c
+  
   const imports = generateRoutesImports(routesTreeArr)
+  const r = generateRoutesContent(routesTreeArr)
 
   const importsWithAbsolutePathClient = imports.map(([n, f]) => {
     return `import ${n} from '${implicitImportPath(path.join(c.cwd, f), c.ts)}'`
   }).join('\n')
-  const importsWithAbsolutePathServer = imports.map(([n, f]) => {
-    return `import ${n} from '${implicitImportPath(path.join(c.cwd, f), c.ts)}'`
-  }).join('\n')
-
-  const includingTs = imports.some(([n, f]) => /\.ts(x?)$/.test(f))
-  if (includingTs && !c.ts) {
-    throw new Error('[tarat] you are using ts file. please specific "ts:true" in tarat.config.js')
-  }
-
-  const r = generateRoutesContent(routesTreeArr)
-
-  let entryCSSPath = ''
-  if (c.entryCSS) {
-    entryCSSPath = `import "${c.entryCSS}"`
-  }
 
   const rootName = upperFirstVariable(appRootFile?.name)
 
@@ -345,6 +302,47 @@ export async function buildServerRoutes(c: IConfig) {
     rootEnd: appRootFile?.name ? `</${rootName}>` : ''
   }
 
+  const routesStr2 = routesClientTemplate({
+    ...rootAppInfo,
+    imports: importsWithAbsolutePathClient,
+    routes: r
+  })
+  // generate for vite.js so that this file doesn't need to be compiled to js
+  fs.writeFileSync(autoGenerateClientRoutes, prettier.format(routesStr2, { parser: 'babel' }))
+}
+export async function buildServerRoutes(c: IConfig) {
+  const {
+    autoGenerateServerRoutes,
+    distServerRoutes,
+    distServerRoutesCSS
+  } = c.pointFiles
+
+  const {
+    appRootFile,
+    routesTree: routesTreeArr,
+  } = c
+
+  const imports = generateRoutesImports(routesTreeArr)
+  const r = generateRoutesContent(routesTreeArr)
+
+  const importsWithAbsolutePathServer = imports.map(([n, f]) => {
+    return `import ${n} from '${implicitImportPath(path.join(c.cwd, f), c.ts)}'`
+  }).join('\n')
+
+
+  let entryCSSPath = ''
+  if (c.entryCSS) {
+    entryCSSPath = `import "${c.entryCSS}"`
+  }
+
+  const rootName = upperFirstVariable(appRootFile?.name)
+  const rootAppInfo = {
+    rootPath: appRootFile?.path,
+    rootName,
+    rootStart: appRootFile?.name ? `<${rootName}>` : '',
+    rootEnd: appRootFile?.name ? `</${rootName}>` : ''
+  }
+  
   const modelIndexesJSON = path.join(c.cwd, c.modelsDirectory, c.schemaIndexes)
   let modelIndexes = '{}'
   if (fs.existsSync(modelIndexesJSON)) {
@@ -360,13 +358,6 @@ export async function buildServerRoutes(c: IConfig) {
   })
   fs.writeFileSync(autoGenerateServerRoutes, prettier.format(routesStr, { parser: 'babel' }))
 
-  const routesStr2 = routesClientTemplate({
-    ...rootAppInfo,
-    imports: importsWithAbsolutePathClient,
-    routes: r
-  })
-  // generate for vite.js so that this file doesn't need to be compiled to js
-  fs.writeFileSync(autoGenerateClientRoutes, prettier.format(routesStr2, { parser: 'babel' }))
 
   const myPlugins = getPlugins({
     css: distServerRoutesCSS,
@@ -645,7 +636,7 @@ async function esbuildDrivers (
       if (!obj.isDir) {
         if (/\.ts$/.test(obj.path)) {
           fs.rmSync(obj.path)
-        } else if (/\.js$/) {
+        } else if (/\.js$/.test(obj.path)) {
           removeUnusedImports(obj.path)
           if (env) {
             replaceImportDriverPath(config, obj.path, format, env)

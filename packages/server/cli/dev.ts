@@ -1,6 +1,6 @@
 import * as path from 'path'
 import exitHook from 'exit-hook'
-import chokidar from 'chokidar'
+import chokidar, { FSWatcher } from 'chokidar'
 import chalk from 'chalk'
 import {
   IConfig,
@@ -10,7 +10,8 @@ import {
   composeDriver,
   buildEntryServer, buildDrivers, buildServerRoutes,
   generateHookDeps,
-  emptyDirectory, logFrame, tryMkdir, time, buildModelIndexes
+  emptyDirectory, logFrame, tryMkdir, time, buildModelIndexes,
+  generateClientRoutes
 } from "../src/";
 
 export async function buildEverything (c: IConfig) {
@@ -29,7 +30,10 @@ export async function buildEverything (c: IConfig) {
   // must executeafter driver building
   await Promise.all([
     buildServerRoutes(c).then(() => {
-      logFrame(`build routes end. cost ${chalk.green(cost())} sec`)
+      logFrame(`build routes(server) end. cost ${chalk.green(cost())} sec`)
+    }),
+    generateClientRoutes(c).then(() => {
+      logFrame(`generate routes(client) end. cost ${chalk.green(cost())} sec`)
     }),
     buildEntryServer(c).then(() => {
       logFrame(`build entryServer end. cost ${chalk.green(cost())} sec`)
@@ -53,6 +57,147 @@ export function prepareDir (c: IConfig) {
   })
 }
 
+const chokidarOptions = () => ({
+  persistent: true,
+  ignoreInitial: true,
+  awaitWriteFinish: {
+    stabilityThreshold: 100,
+    pollInterval: 100,
+  },
+})
+
+interface IWatcherConfig {
+  watcher: chokidar.FSWatcher
+  name: string
+  event: 'add' | 'change' | 'error' | 'unlink'
+  callbacks: ((c: IConfig) => Promise<void>)[]
+  callbackMode?: 'cocurrent' | 'sequence'
+}
+
+function watchByConfig (cwd: string, config: IWatcherConfig[]) {
+  const eventCallbackRunningState = new Map<FSWatcher, Map<string, boolean>>()
+
+  const eventCalbackLastWaiter = new Map<FSWatcher, Map<string, true>>()
+  
+  function existsLastWaiterAndCallback (wc: IWatcherConfig, newConfig: IConfig) {
+    const { watcher, name, event, callbacks } = wc
+    const queue = eventCalbackLastWaiter.get(watcher) || new Map()
+    const hasLastWaiter = queue.get(event) || false
+
+    const state = eventCallbackRunningState.get(watcher) || new Map()
+
+    if (hasLastWaiter) {
+      queue.set(event, false)
+      readConfig({ cwd }).then(newConfig => {
+        existsLastWaiterAndCallback(wc, newConfig)
+      })
+    } else {
+      state.set(event, true)
+      const cost = time()
+      if (wc.callbackMode === 'sequence') {
+        callbacks.reduce((p, cb) => {
+          return p.then(() => cb(newConfig))
+        }, Promise.resolve()).then(() => {
+          logFrame(`[${name}.${event}] end. cost ${chalk.green(cost())} sec`)
+          state.set(event, false)
+        })
+      } else {
+        Promise.all(callbacks.map(cb => cb(newConfig))).then(() => {
+          logFrame(`[${name}.${event}] end. cost ${chalk.green(cost())} sec`)
+          state.set(event, false)
+        })
+      }
+    }
+  }
+
+  function executeCallbacks (wc: IWatcherConfig) {
+    const { watcher, name, event } = wc
+
+    const state = eventCallbackRunningState.get(watcher) || new Map()
+    const isRunning = state.get(event) || false
+
+    if (isRunning) {
+      const queue = eventCalbackLastWaiter.get(watcher) || new Map()
+      queue.set(event, true)
+      return
+    }
+    readConfig({ cwd }).then(newConfig => {
+      existsLastWaiterAndCallback(wc, newConfig)
+    })
+  }
+
+  config.forEach((wc) => {
+    const { watcher, name, event } = wc
+    watcher.on(event, (path) => {
+      if (/(\.css|\.less|\.scss)$/.test(path)) {
+        logFrame(`[${name}.${event}] ingored by "${path}"`)
+        return
+      }
+      logFrame(`[${name}.${event}] trigger by "${path}"`)
+      executeCallbacks(wc)
+    })
+  })
+
+  exitHook(() => {
+    console.log('[startCompile] exithook callback')
+    config.forEach((wc) => {
+      wc.watcher.close()
+    })
+  }) 
+}
+
+function watchEverything (c: IConfig) {
+  const appGroup = [
+    path.join(c.cwd, c.appDirectory), // -> client routes
+  ]
+  const viewsGroup = [
+    path.join(c.cwd, c.viewsDirectory),
+  ]
+  const driversGroup = [
+    path.join(c.cwd, c.driversDirectory),
+    path.join(c.cwd, c.modelsDirectory, c.targetSchemaPrisma)
+  ]
+
+  const appWatcher = chokidar.watch(appGroup, chokidarOptions())
+  const viewsWatcher = chokidar.watch(viewsGroup, chokidarOptions())
+  const driversWatcher = chokidar.watch(driversGroup, chokidarOptions())
+
+  const config: IWatcherConfig[] = [
+    {
+      watcher: appWatcher,
+      name: 'app',
+      event: 'change',
+      callbacks: [buildServerRoutes]
+    },
+    {
+      watcher: appWatcher,
+      name: 'app',
+      event: 'add',
+      callbacks: [generateClientRoutes]
+    },
+    {
+      watcher: appWatcher,
+      name: 'app',
+      event: 'unlink',
+      callbacks: [generateClientRoutes]
+    },
+    {
+      watcher: viewsWatcher,
+      name: 'views',
+      event: 'change',
+      callbacks: [buildServerRoutes]
+    },
+    {
+      watcher: driversWatcher,
+      name: 'drivers',
+      event: 'change',
+      callbackMode: 'sequence',
+      callbacks: [buildDrivers, buildServerRoutes],
+    }
+  ]
+
+  watchByConfig(c.cwd, config)
+}
 
 async function startCompile (c: IConfig) {
 
@@ -64,69 +209,67 @@ async function startCompile (c: IConfig) {
 
   await buildEverything(c)
 
-  const watchTarget = [
-    path.join(c.cwd, c.appDirectory),
-    path.join(c.cwd, c.driversDirectory),
-    path.join(c.cwd, c.viewsDirectory),
-  ]
+  watchEverything(c)
 
-  const watcher = chokidar.watch(watchTarget, {
-    persistent: true,
-    ignoreInitial: true,
-    awaitWriteFinish: {
-      stabilityThreshold: 100,
-      pollInterval: 100,
-    },
-  })
-  const watcher2 = chokidar.watch([
-    path.join(c.cwd, c.modelsDirectory, c.targetSchemaPrisma)
-  ], {
-    persistent: true,
-    ignoreInitial: true,
-    awaitWriteFinish: {
-      stabilityThreshold: 100,
-      pollInterval: 100,
-    },
-  })
-  watcher2.on('change', path => {
-    buildModelIndexes(c).then(() => {
-      logFrame(`build modelIndexes end. cost ${chalk.green(cost())} sec`)
-    })  
-  })
+  // const watchTarget = [
+  //   path.join(c.cwd, c.appDirectory),
+  //   path.join(c.cwd, c.driversDirectory),
+  //   path.join(c.cwd, c.viewsDirectory),
+  // ]
 
-  watcher
-    .on('error', console.error)
-    .on('change', (path) => {
-      if (/(\.css|\.less|\.scss)$/.test(path)) {
-        return
-      }
+  // const watcher = chokidar.watch(watchTarget, {
+  //   persistent: true,
+  //   ignoreInitial: true,
+  //   awaitWriteFinish: {
+  //     stabilityThreshold: 100,
+  //     pollInterval: 100,
+  //   },
+  // })
+  // const watcher2 = chokidar.watch([
+  //   path.join(c.cwd, c.modelsDirectory, c.targetSchemaPrisma)
+  // ], {
+  //   persistent: true,
+  //   ignoreInitial: true,
+  //   awaitWriteFinish: {
+  //     stabilityThreshold: 100,
+  //     pollInterval: 100,
+  //   },
+  // })
 
-      const cost = time()
-      logFrame(`[change] re-run compiling from "${path}"`)
-      readConfig({ cwd: c.cwd }).then(newConfig => {
-        return buildEverything(newConfig)
-      }).then(() => {
-        logFrame(`[change] comipling ${chalk.green(cost())} sec`)
-      })
-    })
-    .on('add', (path) => {
-      logFrame(`[add] ${chalk.green('re-run compiling')}  from "${path}"`)
-      readConfig({ cwd: c.cwd }).then(newConfig => {
-        buildEverything(newConfig)
-      })
-    })
-    .on('unlink', (path) => {
-      logFrame(`[unlink] ${chalk.red('re-run compiling')}  from "${path}"`)
-      readConfig({ cwd: c.cwd }).then(newConfig => {
-        buildEverything(newConfig)
-      })
-    })
+  // watcher2.on('change', path => {
+  //   buildModelIndexes(c).then(() => {
+  //     logFrame(`build modelIndexes end. cost ${chalk.green(cost())} sec`)
+  //   })  
+  // })
 
-  
-  exitHook(() => {
-    console.log('[startCompile] exithook callback')
-    watcher.close()
-  })  
+  // watcher
+  //   .on('error', console.error)
+  //   .on('change', (path) => {
+  //     if (/(\.css|\.less|\.scss)$/.test(path)) {
+  //       return
+  //     }
+
+  //     const cost = time()
+  //     logFrame(`[change] re-run compiling from "${path}"`)
+  //     readConfig({ cwd: c.cwd }).then(newConfig => {
+  //       return buildEverything(newConfig)
+  //     }).then(() => {
+  //       logFrame(`[change] comipling ${chalk.green(cost())} sec`)
+  //     })
+  //   })
+  //   .on('add', (path) => {
+  //     logFrame(`[add] ${chalk.green('re-run compiling')}  from "${path}"`)
+  //     readConfig({ cwd: c.cwd }).then(newConfig => {
+  //       buildEverything(newConfig)
+  //     })
+  //   })
+  //   .on('unlink', (path) => {
+  //     logFrame(`[unlink] ${chalk.red('re-run compiling')}  from "${path}"`)
+  //     readConfig({ cwd: c.cwd }).then(newConfig => {
+  //       buildEverything(newConfig)
+  //     })
+  //   })
+
 }
 
 export default async (cwd: string) => {
