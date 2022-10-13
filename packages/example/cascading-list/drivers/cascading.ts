@@ -23,7 +23,7 @@ export interface FolderItem {
   folderId?: number;
 }
 
-const INITIAL_FOLDER_NAME = "新建文件夹";
+export const INITIAL_FOLDER_NAME = "新建文件夹";
 const INITIAL_ITEM_NAME = "新建文件";
 
 export enum ETypes {
