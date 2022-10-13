@@ -334,7 +334,7 @@ export abstract class Model<T extends any[]> extends AsyncState<T[]> {
     }
   }
 
-  injectFindGetter (fn: () => IModelQuery['query'] | undefined) {
+  injectFindGetter(fn: () => IModelQuery['query'] | undefined) {
     this.findGetters.push(fn)
   }
 
@@ -667,7 +667,11 @@ export class WritePrisma<T> extends WriteModel<T> {
   }
   async createRow(obj?: Partial<T>, include?: { [k in keyof T]: boolean }) {
     log('[WritePrisma.createRow]')
-    const defaults = this.getData('create')
+
+    const newReactiveChain = currentReactiveChain?.addCall(this)
+    const defaults = ReactiveChain.withChain(newReactiveChain, () => {
+      return this.getData('create')
+    })
 
     if (currentInputeCompute) {
       const d: T = Object.assign(defaults, obj)
@@ -687,7 +691,10 @@ export class WritePrisma<T> extends WriteModel<T> {
   async updateRow(where: number, obj?: { [k: string]: any }) {
     log('[WritePrisma.updateRow]')
     if (currentInputeCompute) {
-      const defaults = this.getData('update')
+      const newReactiveChain = currentReactiveChain?.addCall(this)
+      const defaults = ReactiveChain.withChain(newReactiveChain, () => {
+        return this.getData('update')
+      })
       const d: T = Object.assign(defaults, obj)
       this.addComputePatches(undefined, [
         {
@@ -705,7 +712,10 @@ export class WritePrisma<T> extends WriteModel<T> {
   async removeRow(where?: number) {
     log('[WritePrisma.removeRow]')
     if (currentInputeCompute) {
-      const defaults = this.getData('remove')
+      const newReactiveChain = currentReactiveChain?.addCall(this)
+      const defaults = ReactiveChain.withChain(newReactiveChain, () => {
+        return this.getData('remove')
+      })
       this.addComputePatches(undefined, [
         {
           op: 'remove',
@@ -2879,7 +2889,7 @@ function mountCreatePrisma<T>(
   }
   const newCaller = Object.assign(caller, {
     _method: 'create',
-    _hook: hook,
+    _hook: hook
   })
   return newCaller
 }
@@ -2901,7 +2911,7 @@ function mountUpdatePrisma<T>(
   }
   const newCaller = Object.assign(caller, {
     _method: 'udpate',
-    _hook: hook,
+    _hook: hook
   })
   return newCaller
 }
@@ -2923,7 +2933,7 @@ function mountRemovePrisma<T>(
   }
   const newCaller = Object.assign(caller, {
     _method: 'remove',
-    _hook: hook,
+    _hook: hook
   })
   return newCaller
 }
@@ -3420,7 +3430,10 @@ export function compose<T extends Driver>(f: T, args?: any[]) {
     currentRunnerScope.runnerContext.driverName,
     !!currentRunnerScope.modelIndexes
   )
-  const leaveCompose = currentRunnerScope.enterComposeDriver(driverNamespace, driverName)
+  const leaveCompose = currentRunnerScope.enterComposeDriver(
+    driverNamespace,
+    driverName
+  )
   const insideResult: ReturnType<T> = executeDriver(f, args)
 
   const afterEnterComposedLength = currentRunnerScope.composes.length
@@ -3453,8 +3466,11 @@ export function connectModel<T>(
 }
 
 export function injectWrite<T>(
-  modelGetter: ReturnType<typeof createPrisma> | ReturnType<typeof updatePrisma> | ReturnType<typeof removePrisma>,
-  dataGetter: TGetterData<T>,
+  modelGetter:
+    | ReturnType<typeof createPrisma>
+    | ReturnType<typeof updatePrisma>
+    | ReturnType<typeof removePrisma>,
+  dataGetter: TGetterData<T>
 ): void
 export function injectWrite<T>(
   modelGetter: ReturnType<typeof model<T[]>>,
@@ -3466,7 +3482,7 @@ export function injectWrite<T>(
   dataGetter: TGetterData<T>
 ): void
 export function injectWrite<T>(...args: any[]) {
-  const [ modelGetter, methodOrDataGetter, dataGetter ] = args
+  const [modelGetter, methodOrDataGetter, dataGetter] = args
   if (dataGetter) {
     modelGetter._hook.injectGetter(dataGetter, methodOrDataGetter)
   } else {

@@ -547,7 +547,7 @@ export function userPessimisticModel() {
   }
 }
 export function userInjectFindModel() {
-  const users = model<{ id: number, name: string }[]>('item', () => ({}), {
+  const users = model<{ id: number; name: string }[]>('item', () => ({}), {
     immediate: true,
     pessimisticUpdate: true
   })
