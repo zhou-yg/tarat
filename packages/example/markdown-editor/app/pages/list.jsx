@@ -1,7 +1,9 @@
-import React, { useEffect} from 'react'
+import React from 'react'
 import mdDriver from '../../drivers/mdList'
 import { useTarat } from 'tarat/connect'
 import { Link } from 'react-router-dom'
+
+import LoadingButton from '@mui/lab/LoadingButton'
 
 export default function List () {
   const md = useTarat(mdDriver)
@@ -16,7 +18,7 @@ export default function List () {
     <div className="">
       <div className="p-4 flex">
         <input onChange={e => md.title(() => e.target.value)} value={md.title()} className="border-x p-2 mr-2 flex-1 border-y" />
-        <button className="bg-black text-white p-2" onClick={create}>create markdown</button>
+        <LoadingButton variant='outlined' onClick={create}>create markdown</LoadingButton>
       </div>
 
       <ul className="border-x border-y m-4">

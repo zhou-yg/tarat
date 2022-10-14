@@ -1,9 +1,5 @@
-import React, { createContext } from 'react'
+import React from 'react'
 
-export default (doc) => {
-  return (
-    <div id="server-side-render">
-      {doc}
-    </div>
-  )
+export default doc => {
+  return <div id="server-side-render">{doc}</div>
 }

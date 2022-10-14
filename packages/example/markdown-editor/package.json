@@ -11,7 +11,8 @@
     "p:dev": "prisma migrate dev && prisma generate",
     "p:gen": "prisma generate",
     "p:deploy": "prisma migrate deploy",
-    "p:studio": "prisma studio"
+    "p:studio": "prisma studio",
+    "format": "prettier --write --parser typescript \"*/*.js?(x)\""
   },
   "prisma": {
     "schema": "./models/schema.prisma"
@@ -25,6 +26,11 @@
     "README.md"
   ],
   "dependencies": {
+    "@emotion/react": "^11.10.4",
+    "@emotion/styled": "^11.10.4",
+    "@mui/lab": "5.0.0-alpha.103",
+    "@mui/material": "^5.10.9",
+    "@vitejs/plugin-react": "^2.1.0",
     "markdown-it": "^13.0.1",
     "react": "^18.2.0",
     "react-markdown-editor-lite": "^1.3.2"
