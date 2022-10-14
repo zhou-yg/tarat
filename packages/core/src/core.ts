@@ -2850,7 +2850,7 @@ function mountPrisma<T extends any[]>(
   return newSetterGetter
 }
 // TIP: "function updateWritePrisma" same as mountWritePrisma
-function mountWritePrisma<T>(source: { _hook: Model<T[]> }, q: () => T) {
+function mountWritePrisma<T>(source: { _hook: Model<T[]> }, q: () => Partial<T>) {
   const hook =
     process.env.TARGET === 'server'
       ? new WritePrisma(source, q, currentRunnerScope)
@@ -3160,7 +3160,10 @@ export function prisma<T extends any[]>(
   return currentHookFactory.prisma<T>(e, q, op)
 }
 
-export function writePrisma<T>(source: { _hook: Model<T[]> }, q?: () => T) {
+export function writePrisma<T>(
+  source: { _hook: Model<T[]> },
+  q?: () => Partial<T>
+) {
   if (!currentRunnerScope) {
     throw new Error('[writePrisma] must under a tarat runner')
   }
