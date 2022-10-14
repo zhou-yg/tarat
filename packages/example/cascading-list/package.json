@@ -11,7 +11,8 @@
     "p:dev": "prisma migrate dev && prisma generate",
     "p:gen": "prisma generate",
     "p:deploy": "prisma migrate deploy",
-    "p:studio": "prisma studio"
+    "p:studio": "prisma studio",
+    "format": "prettier --write --parser typescript \"*/*.ts?(x)\""
   },
   "files": [
     "dist",
@@ -41,6 +42,11 @@
     "tarat": "workspace:~*"
   },
   "dependencies": {
-    "@ant-design/icons": "^4.7.0"
+    "@ant-design/icons": "^4.7.0",
+    "@emotion/react": "^11.10.4",
+    "@emotion/styled": "^11.10.4",
+    "@mui/icons-material": "^5.10.9",
+    "@mui/material": "^5.10.9",
+    "date-fns": "^2.28.0"
   }
 }

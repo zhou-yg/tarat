@@ -3,12 +3,12 @@ import {
   inputComputeInServer,
   prisma,
   state,
-  writePrisma,
-} from "tarat/core";
+  writePrisma
+} from 'tarat/core'
 
 export default function single() {
-  const name = state("init");
+  const name = state('init')
   return {
-    name,
-  };
+    name
+  }
 }

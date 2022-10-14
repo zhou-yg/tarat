@@ -3,124 +3,125 @@ import {
   inputComputeInServer,
   prisma,
   state,
-  writePrisma,
-} from "tarat/core";
-import rename from "./rename";
+  writePrisma
+} from 'tarat/core'
+import rename from './rename'
 import indexes from '@/models/indexes.json'
 
 export type { RenameTarget } from './rename'
 
 export interface Folder {
-  id?: number;
-  name: string;
-  rm: boolean;
-  items: FolderItem[];
+  id?: number
+  name: string
+  rm: boolean
+  items: FolderItem[]
 }
 
 export interface FolderItem {
-  id?: number;
-  name: string;
-  folderId?: number;
+  id?: number
+  name: string
+  folderId?: number
+  modifiedAt: Date
 }
 
-export const INITIAL_FOLDER_NAME = "新建文件夹";
-const INITIAL_ITEM_NAME = "新建文件";
+export const INITIAL_FOLDER_NAME = '新建文件夹'
+const INITIAL_ITEM_NAME = '新建文件'
 
 export enum ETypes {
-  folder = "folder",
-  item = "item",
+  folder = 'folder',
+  item = 'item'
 }
 
 function cascading() {
-  const folders = prisma<Folder[]>(indexes.folder, () => ({}));
+  const folders = prisma<Folder[]>(indexes.folder, () => ({}))
 
-  const renameFolderCompose = compose(rename);
+  const renameFolderCompose = compose(rename)
 
-  const folderName = state(INITIAL_FOLDER_NAME);
+  const folderName = state(INITIAL_FOLDER_NAME)
 
   const createOrUpdateFolers = writePrisma(folders, () => ({
-    name: folderName(),
-  }));
+    name: folderName()
+  }))
 
   const removeFolders = writePrisma(folders, () => ({
-    rm: true,
-  }));
+    rm: true
+  }))
 
   const createFolder = inputComputeInServer(function* () {
-    yield createOrUpdateFolers.create();
-    folderName(() => INITIAL_FOLDER_NAME);
-  });
+    yield createOrUpdateFolers.create()
+    folderName(() => INITIAL_FOLDER_NAME)
+  })
 
   const updateFolder = inputComputeInServer(function* () {
-    yield createOrUpdateFolers.update(renameFolderCompose.currentId());
-    folderName(() => INITIAL_FOLDER_NAME);
-  });
+    yield createOrUpdateFolers.update(renameFolderCompose.currentId())
+    folderName(() => INITIAL_FOLDER_NAME)
+  })
 
   const removeFolder = inputComputeInServer(function* (folder?: Folder) {
-    yield removeFolders.remove(folder.id || renameFolderCompose.currentId());
-    renameFolderCompose.currentId(() => folders()[0]?.id);
-  });
+    yield removeFolders.remove(folder.id || renameFolderCompose.currentId())
+    renameFolderCompose.currentId(() => folders()[0]?.id)
+  })
 
   const renameFolder = inputComputeInServer(function* () {
-    const input = renameFolderCompose.renameInput();
+    const input = renameFolderCompose.renameInput()
     if (input.id) {
-      folderName(() => input.name);
-      yield updateFolder();
-      renameFolderCompose.endRename();
+      folderName(() => input.name)
+      yield updateFolder()
+      renameFolderCompose.endRename()
     }
-  });
+  })
 
   const items = prisma<FolderItem[]>(indexes.item, () => {
-    const fid = renameFolderCompose.currentId();
+    const fid = renameFolderCompose.currentId()
     if (fid) {
       return {
         where: {
-          folderId: fid,
-        },
-      };
+          folderId: fid
+        }
+      }
     }
-  });
+  })
 
-  const myItemId = state<number>();
+  const myItemId = state<number>()
 
-  const renameItemCompose = compose(rename);
+  const renameItemCompose = compose(rename)
 
-  const itemName = state(INITIAL_ITEM_NAME);
+  const itemName = state(INITIAL_ITEM_NAME)
 
   const writeItems = writePrisma(items, () => ({
     folder: {
       connect: {
-        id: renameFolderCompose.currentId(),
-      },
+        id: renameFolderCompose.currentId()
+      }
     },
-    name: itemName(),
-  }));
+    name: itemName()
+  }))
 
   const createItem = inputComputeInServer(function* () {
-    yield writeItems.create();
-    itemName(() => INITIAL_ITEM_NAME);
-  });
+    yield writeItems.create()
+    itemName(() => INITIAL_ITEM_NAME)
+  })
 
   const updateItem = inputComputeInServer(function* () {
-    yield writeItems.update(renameItemCompose.currentId());
-    itemName(() => INITIAL_ITEM_NAME);
-  });
+    yield writeItems.update(renameItemCompose.currentId())
+    itemName(() => INITIAL_ITEM_NAME)
+  })
 
   const removeItem = inputComputeInServer(function* (item?: FolderItem) {
-    yield writeItems.remove(item.id || renameItemCompose.currentId());
-    myItemId(() => folders()[0]?.id);
-  });
+    yield writeItems.remove(item.id || renameItemCompose.currentId())
+    myItemId(() => folders()[0]?.id)
+  })
 
   const renameItem = inputComputeInServer(function* () {
-    const input = renameItemCompose.renameInput();
+    const input = renameItemCompose.renameInput()
     if (input.id) {
-      itemName(() => input.name);
-      yield updateItem();
-      renameItemCompose.endRename();
+      itemName(() => input.name)
+      yield updateItem()
+      renameItemCompose.endRename()
     }
-  });
+  })
 
-  const ss = state("");
+  const ss = state('')
 
   return {
     ss,
@@ -148,8 +149,8 @@ function cascading() {
     // item rename
     renameItemInput: renameItemCompose.renameInput,
     startItemRename: renameItemCompose.startRename,
-    renameItem,
-  };
+    renameItem
+  }
 }
 
-export default cascading;
+export default cascading

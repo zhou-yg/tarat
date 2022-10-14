@@ -3,53 +3,53 @@ import {
   inputComputeInServer,
   prisma,
   state,
-  writePrisma,
-} from "tarat/core";
+  writePrisma
+} from 'tarat/core'
 
 export interface RenameTarget {
-  id?: number;
-  name: string;
+  id?: number
+  name: string
 }
 
 function rename() {
   const renameInput = state<RenameTarget>({
     id: undefined,
-    name: "",
-  });
-  const currentId = state<number>();
+    name: ''
+  })
+  const currentId = state<number>()
 
   const startRename = inputCompute((f: RenameTarget) => {
-    renameInput((v) => {
+    renameInput(v => {
       Object.assign(v, {
         id: f.id,
-        name: f.name,
-      });
-    });
-    currentId(() => f.id);
-  });
+        name: f.name
+      })
+    })
+    currentId(() => f.id)
+  })
 
   const switchCurrent = inputCompute((f: RenameTarget) => {
     if (f.id !== currentId()) {
-      currentId(() => f.id);
-      renameInput((v) => {
-        v.id = null;
-      });
+      currentId(() => f.id)
+      renameInput(v => {
+        v.id = null
+      })
     }
-  });
+  })
 
   const endRename = inputCompute(() => {
-    renameInput((v) => {
-      v.id = null;
-    });
-  });
+    renameInput(v => {
+      v.id = null
+    })
+  })
 
   return {
     currentId,
     renameInput,
     startRename,
     endRename,
-    switchCurrent,
-  };
+    switchCurrent
+  }
 }
 
-export default rename;
+export default rename
