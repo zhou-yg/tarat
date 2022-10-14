@@ -1,6 +1,6 @@
 {
   "name": "tarat",
-  "version": "0.0.63",
+  "version": "0.0.64",
   "description": "a super fast application framework",
   "bin": {
     "tarat": "./cli/index.js"
@@ -101,6 +101,7 @@
     "rollup-plugin-typescript2": "^0.31.2",
     "@schemastore/package": "^0.0.6",
     "rollup-plugin-es-module-interop": "^2.1.0",
-    "@remix-run/router": "^1.0.1"
+    "@remix-run/router": "^1.0.1",
+    "@vitejs/plugin-react": "^2.1.0"
   }
 }
