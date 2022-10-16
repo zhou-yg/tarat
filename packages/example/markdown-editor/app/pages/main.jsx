@@ -12,9 +12,11 @@ export default function Main () {
   console.log('editorProgress: ', editorProgress);
 
   return (
-    <div className="px-4">
+    <div className="px-4 flex flex-col" style={{ height: '100vh' }}>
       <Link className="underline" to="/list" >&lt; back</Link>
-      <Editor {...mdHook} editorProgress={editorProgress} />
+      <div className='flex-1'>
+        <Editor {...mdHook} editorProgress={editorProgress} />
+      </div>
     </div>
   )
 }

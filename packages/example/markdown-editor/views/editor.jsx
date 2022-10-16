@@ -1,5 +1,4 @@
 import React from 'react'
-import s from './editor.module.less'
 import MDEditor from 'react-markdown-editor-lite'
 
 import MarkdownIt from 'markdown-it'
@@ -22,7 +21,7 @@ export default function Editor(props) {
   // const saveLoading = mdEditorHook.saveProgess().state === 'pending'
 
   return (
-    <div className={s.editor}>
+    <div className='h-full flex flex-col' >
       <div className="my-2 flex ">
         <input
           value={mdEditorHook.displayTitle()}
@@ -36,10 +35,10 @@ export default function Editor(props) {
         </LoadingButton>
       </div>
       {editorProgress.state === 'idle' ? (
-        <div className="my-2">
+        <div className="my-2 flex-1">
           <MDEditor
             defaultValue={defualtMD}
-            style={{ height: `${height}px` }}
+            style={{ height: `100%` }}
             renderHTML={text => {
               return mdParser.render(text)
             }}
