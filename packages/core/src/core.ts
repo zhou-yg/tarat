@@ -3494,7 +3494,9 @@ export function injectWrite<T>(...args: any[]) {
     } else if (modelGetter._hook instanceof WriteModel) {
       modelGetter._hook.injectGetter(methodOrDataGetter, modelGetter._method)
     } else {
-      throw new Error('[injectWrite] invalid getter._hook type')
+      /** @TODO "_hook" maybe created by createUnaccessModelGetter */
+      // throw new Error('[injectWrite] invalid getter._hook type')
+      console.error('[injectWrite] invalid getter._hook type')
     }
   }
 }
