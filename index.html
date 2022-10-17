@@ -1,100 +1,137 @@
 <!DOCTYPE html>
 <html lang="cn">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tarat</title>
-  <link type="text/css" rel="stylesheet" href="./content.css" />
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-M9SQ5X1VYY"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+    <title>Tarat</title>
+    <link type="text/css" rel="stylesheet" href="./content.css" />
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-M9SQ5X1VYY"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || []
+      function gtag() {
+        dataLayer.push(arguments)
+      }
+      gtag('js', new Date())
 
-    gtag('config', 'G-M9SQ5X1VYY');
-  </script>
-</head>
-<body>
-  <header>Tarat</header>
-  <aside>
-    <div class="group-title" >Introduction</div>
-<div class="child-title" ><a href="#Overview" >Overview</a></div>
-<div class="child-title" ><a href="#Quick Start" >Quick Start</a></div>
-<div class="group-title" >Concepts</div>
-<div class="child-title" ><a href="#composable" >composable</a></div>
-<div class="child-title" ><a href="#model first" >model first</a></div>
-  </aside>
-  <main>
-    <a class="a-link" href="#Overview" name="Overview" >
-  <article>
-    <div class="markdown-body">
-      <h1>Overview</h1>
-<p>Welcome to the tarat documention!</p>
-<p>Tarat is a meta framework for acclerating your development</p>
-
-    </div>
-  
-  </article>
-</a>
-<a class="a-link" href="#Quick Start" name="Quick Start" >
-  <article>
-    <div class="markdown-body">
-      <h1>Quick Start</h1>
-<p>Follow the steps below to complete a Markdown-Editor application like Apple Notes and you'll find it out that building application so easy while working with tarat</p>
-<p>Bofore this quckstart, we assumed that you are fimilar with the &quot;nodejs&quot; and &quot;react&quot; technology ecosystem. if having no idea with these keywords, you ought to learn it first.</p>
-<p>guides:</p>
-<ul>
-<li><a href="https://reactjs.org/">react</a></li>
-<li><a href="https://nodejs.org/en/">nodejs</a></li>
-</ul>
-<h2>Pre-requisite</h2>
-<p>In this tutorial, it's very important for you to have these things locally on you own computer:</p>
-<ul>
-<li><a href="https://nodejs.org/en/">Node.js</a> (16.18.0 LTS version is recommended)</li>
-<li>npm 8 or greater</li>
-<li>A code editor (<a href="https://code.visualstudio.com/">VSCode</a> is a nice one)</li>
-</ul>
-<h2>Creating the project</h2>
-<p>Quickly initialize a new tarat project, we recommend using tarat cli directly</p>
-<blockquote>
-<p>npx create-tarat@latest</p>
-</blockquote>
-<p>After few interactive questions, the project is ready to run.</p>
-<p>Let start the dev server:</p>
-<blockquote>
-<p>npm run dev</p>
-</blockquote>
-<p>Open up <a href="http://localhost:9100">http://localhost:9100</a>, you can see the first page.</p>
-<p>And this pristine project needs to add more sepecific to turn it into an Markdown-Editor</p>
-
-    </div>
-  
-  </article>
-</a>
-<a class="a-link" href="#composable" name="composable" >
-  <article>
-    <div class="markdown-body">
-      <h1>composable</h1>
-<p>every tarrat project treat as a basic unit</p>
-<p>so that they can compose each other to build a completable application</p>
-
-    </div>
-  
-  </article>
-</a>
-<a class="a-link" href="#model first" name="model first" >
-  <article>
-    <div class="markdown-body">
-      <h1>model first</h1>
-
-    </div>
-  
-  </article>
-</a>
-  </main>
-</body>
-<script src="./content-script.js" ></script>
+      gtag('config', 'G-M9SQ5X1VYY')
+    </script>
+    <style>
+      @font-face {
+        font-family: 'crackman';
+        src: url('./crackman.ttf');
+      }
+      .logo-font {
+        font-family: 'crackman', cursive;
+      }
+    </style>
+  </head>
+  <body>
+    <header><span class="logo-font">T</span>arat</header>
+    <aside>
+      <div class="group-title">Introduction</div>
+      <div class="child-title"><a href="#Overview">Overview</a></div>
+      <div class="child-title"><a href="#Quick Start">Quick Start</a></div>
+      <div class="group-title">Concepts</div>
+      <div class="child-title"><a href="#composable">composable</a></div>
+      <div class="child-title"><a href="#model first">model first</a></div>
+    </aside>
+    <main>
+      <a class="a-link" href="#Overview" name="Overview">
+        <article>
+          <div class="markdown-body">
+            <h1>Overview</h1>
+            <p>Welcome to the tarat documention!</p>
+            <p>Tarat is a meta framework for acclerating your development</p>
+          </div>
+        </article>
+      </a>
+      <a class="a-link" href="#Quick Start" name="Quick Start">
+        <article>
+          <div class="markdown-body">
+            <h1>Quick Start</h1>
+            <p>
+              Follow the steps below to complete a Markdown-Editor application
+              like Apple Notes and you'll find it out that building application
+              so easy while working with tarat
+            </p>
+            <p>
+              Bofore this quckstart, we assumed that you are fimilar with the
+              &quot;nodejs&quot; and &quot;react&quot; technology ecosystem. if
+              having no idea with these keywords, you ought to learn it first.
+            </p>
+            <p>guides:</p>
+            <ul>
+              <li><a href="https://reactjs.org/">react</a></li>
+              <li><a href="https://nodejs.org/en/">nodejs</a></li>
+            </ul>
+            <h2>Pre-requisite</h2>
+            <p>
+              In this tutorial, it's very important for you to have these things
+              locally on you own computer:
+            </p>
+            <ul>
+              <li>
+                <a href="https://nodejs.org/en/">Node.js</a> (16.18.0 LTS
+                version is recommended)
+              </li>
+              <li>npm 8 or greater</li>
+              <li>
+                A code editor (<a href="https://code.visualstudio.com/"
+                  >VSCode</a
+                >
+                is a nice one)
+              </li>
+            </ul>
+            <h2>Creating the project</h2>
+            <p>
+              Quickly initialize a new tarat project, we recommend using tarat
+              cli directly
+            </p>
+            <blockquote>
+              <p>npx create-tarat@latest</p>
+            </blockquote>
+            <p>After few interactive questions, the project is ready to run.</p>
+            <p>Let start the dev server:</p>
+            <blockquote>
+              <p>npm run dev</p>
+            </blockquote>
+            <p>
+              Open up <a href="http://localhost:9100">http://localhost:9100</a>,
+              you can see the first page.
+            </p>
+            <p>
+              And this pristine project needs to add more sepecific to turn it
+              into an Markdown-Editor
+            </p>
+          </div>
+        </article>
+      </a>
+      <a class="a-link" href="#composable" name="composable">
+        <article>
+          <div class="markdown-body">
+            <h1>composable</h1>
+            <p>every tarrat project treat as a basic unit</p>
+            <p>
+              so that they can compose each other to build a completable
+              application
+            </p>
+          </div>
+        </article>
+      </a>
+      <a class="a-link" href="#model first" name="model first">
+        <article>
+          <div class="markdown-body">
+            <h1>model first</h1>
+          </div>
+        </article>
+      </a>
+    </main>
+  </body>
+  <script src="./content-script.js"></script>
 </html>
-
