@@ -13,7 +13,7 @@ guides:
 - [react](https://reactjs.org/)
 - [nodejs](https://nodejs.org/en/)
 
-## Pre-requisite
+## Pre-requisites
 
 In this tutorial, it's very important for you to have these things locally on you own computer:
 
@@ -37,6 +37,22 @@ Open up [http://localhost:9100](http://localhost:9100), you can see the first pa
 
 And this pristine project needs to add more sepecific to turn it into an Markdown-Editor
 
+## My first tarat-module composing
 
+As we all know that a simplest editor consist of 2 parts:
+
+- a double column list
+- a editor
+- a user login/signup system
+
+Benefit from tarat's composable module system, we are not necessarily implement these function from 0.
+
+There already exists similar tarat-module, like:
+
+- [tarat-cascading-list](https://www.npmjs.com/package/tarat-cascading-list)
+- [tarat-markdown-editor](https://www.npmjs.com/package/tarat-markdown-editor)
+- [tarat-user-login-system](https://www.npmjs.com/package/tarat-user-login-system)
+
+let's compose it directly.
 
 
