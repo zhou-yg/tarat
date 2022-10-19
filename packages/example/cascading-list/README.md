@@ -1,3 +1,3 @@
-# my-tarat-app
+# tarat-cascading-list
 
 using typescript

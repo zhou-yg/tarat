@@ -35,10 +35,10 @@ export default function Editor(props) {
         </LoadingButton>
       </div>
       {editorProgress.state === 'idle' ? (
-        <div className="my-2 flex-1">
+        <div className="mt-2 flex-1">
           <MDEditor
             defaultValue={defualtMD}
-            style={{ height: `100%` }}
+            style={{ height: `100%`, borderBottom: 0 }}
             renderHTML={text => {
               return mdParser.render(text)
             }}
