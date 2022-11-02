@@ -253,13 +253,6 @@ export type TContextData =
   | 'clientPrisma'
   | 'clientPrismaModel'
 
-interface IContextHookPatch {
-  op: 'replace'
-  index: number
-  name?: string
-  oldValue: any
-}
-
 export interface IModelPatchRecord {
   timing: number
   patch: IModelPatch[]

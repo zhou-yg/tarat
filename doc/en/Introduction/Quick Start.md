@@ -37,7 +37,7 @@ Open up [http://localhost:9100](http://localhost:9100), you can see the first pa
 
 And this pristine project needs to add more sepecific to turn it into an Markdown-Editor
 
-## My first tarat-module composing
+## Prepare for composing tarat-module 
 
 As we all know that a simplest editor consist of 2 parts:
 
@@ -55,4 +55,49 @@ There already exists similar tarat-module, like:
 
 let's compose it directly.
 
+## Integrate tarat-modules
+
+In our application, every time we create new item in folder we create a new markdown meantime.
+
+So we need a junction between **item** and **markdown**
+
+Firstly, let's install them
+
+> npm i -S tarat-cascading-list tarat-markdown-editor tarat-user-login-system
+
+Now these modules are totally independent, we need to build model relations with each other
+
+create new file in **models/**
+
+> touch ./models/model.enhance.json
+
+And then write some correlation code about models
+
+```javascript
+// model.enhance.json
+{
+  "extraRelation": [
+    {
+      "from": {
+        "model": "Tarat_cascading_list_Item",
+        "field": "markdown"
+      },
+      "type": "1:1",
+      "to": {
+        "model": "Tarat_markdown_editor_Markdown",
+        "field": "listItem"
+      }
+    }
+  ]
+}
+```
+
+With knowing "Entity Relationship (ER) Diagram Model", you'll find it out there is a new 1 to 1 relation connected with
+model "item" in [tarat-cascading-list](https://www.npmjs.com/package/tarat-cascading-list) and model "markdown" in [tarat-markdown-editor](https://www.npmjs.com/package/tarat-markdown-editor)
+
+Until now, we achieve our first goal by completion fundamental ER models
+
+## Your first page
+
+Our editor application need a fundamental function named "login/signup", so that oneself or others can access to the application
 
