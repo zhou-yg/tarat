@@ -16,15 +16,6 @@
 
     gtag('config', 'G-M9SQ5X1VYY');
   </script>
-  <style>
-    @font-face {
-      font-family: 'crackman';
-      src: url('./crackman.ttf');
-    }
-    .logo-font {
-      font-family: 'crackman', cursive;
-    }
-  </style>
 </head>
 <body>
   <header>
@@ -63,7 +54,7 @@
 <li><a href="https://reactjs.org/">react</a></li>
 <li><a href="https://nodejs.org/en/">nodejs</a></li>
 </ul>
-<h2>Pre-requisite</h2>
+<h2>Pre-requisites</h2>
 <p>In this tutorial, it's very important for you to have these things locally on you own computer:</p>
 <ul>
 <li><a href="https://nodejs.org/en/">Node.js</a> (16.18.0 LTS version is recommended)</li>
@@ -82,6 +73,56 @@
 </blockquote>
 <p>Open up <a href="http://localhost:9100">http://localhost:9100</a>, you can see the first page.</p>
 <p>And this pristine project needs to add more sepecific to turn it into an Markdown-Editor</p>
+<h2>Prepare for composing tarat-module</h2>
+<p>As we all know that a simplest editor consist of 2 parts:</p>
+<ul>
+<li>a double column list</li>
+<li>a editor</li>
+<li>a user login/signup system</li>
+</ul>
+<p>Benefit from tarat's composable module system, we are not necessarily implement these function from 0.</p>
+<p>There already exists similar tarat-module, like:</p>
+<ul>
+<li><a href="https://www.npmjs.com/package/tarat-cascading-list">tarat-cascading-list</a></li>
+<li><a href="https://www.npmjs.com/package/tarat-markdown-editor">tarat-markdown-editor</a></li>
+<li><a href="https://www.npmjs.com/package/tarat-user-login-system">tarat-user-login-system</a></li>
+</ul>
+<p>let's compose it directly.</p>
+<h2>Integrate tarat-modules</h2>
+<p>In our application, every time we create new item in folder we create a new markdown meantime.</p>
+<p>So we need a junction between <strong>item</strong> and <strong>markdown</strong></p>
+<p>Firstly, let's install them</p>
+<blockquote>
+<p>npm i -S tarat-cascading-list tarat-markdown-editor tarat-user-login-system</p>
+</blockquote>
+<p>Now these modules are totally independent, we need to build model relations with each other</p>
+<p>create new file in <strong>models/</strong></p>
+<blockquote>
+<p>touch ./models/model.enhance.json</p>
+</blockquote>
+<p>And then write some correlation code about models</p>
+<pre><code class="language-javascript">// model.enhance.json
+{
+  &quot;extraRelation&quot;: [
+    {
+      &quot;from&quot;: {
+        &quot;model&quot;: &quot;Tarat_cascading_list_Item&quot;,
+        &quot;field&quot;: &quot;markdown&quot;
+      },
+      &quot;type&quot;: &quot;1:1&quot;,
+      &quot;to&quot;: {
+        &quot;model&quot;: &quot;Tarat_markdown_editor_Markdown&quot;,
+        &quot;field&quot;: &quot;listItem&quot;
+      }
+    }
+  ]
+}
+</code></pre>
+<p>With knowing &quot;Entity Relationship (ER) Diagram Model&quot;, you'll find it out there is a new 1 to 1 relation connected with
+model &quot;item&quot; in <a href="https://www.npmjs.com/package/tarat-cascading-list">tarat-cascading-list</a> and model &quot;markdown&quot; in <a href="https://www.npmjs.com/package/tarat-markdown-editor">tarat-markdown-editor</a></p>
+<p>Until now, we achieve our first goal by completion fundamental ER models</p>
+<h2>Your first page</h2>
+<p>Our editor application need a fundamental function named &quot;login/signup&quot;, so that oneself or others can access to the application</p>
 
   </div>
 
