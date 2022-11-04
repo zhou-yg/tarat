@@ -16,3 +16,6 @@ inspired by:
 - event sourcing
 - immer
 - prisma
+- recoiljs
+- rxjs
+- type system
