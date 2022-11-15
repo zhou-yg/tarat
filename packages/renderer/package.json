@@ -1,0 +1,52 @@
+{
+  "name": "tarat-renderer",
+  "version": "0.0.0",
+  "description": "useHook serverless framework",
+  "main": "./dist/renderer.js",
+  "module": "./dist/renderer.esm.js",
+  "types": "./dist/renderer.d.ts",
+  "scripts": {
+    "watch-unit": "jest --watch -- __test__/core/context.test.ts",
+    "wu": "sh scripts/dev-unit.sh",
+    "test-unit": "jest",
+    "test-ci": "TEST=CI jest",
+    "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
+    "format:commit": "npm run format && git commit -a -m 'feat(core): lint'",
+    "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs && node after-build.js",
+    "build:watch": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs --watch"
+  },
+  "files": [
+    "src",
+    "dist",
+    "package.json"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhou-yg/tarat.git"
+  },
+  "author": "zhouyg",
+  "bugs": {
+    "url": "https://github.com/zhou-yg/tarat/issues"
+  },
+  "homepage": "https://github.com/zhou-yg/tarat#readme",
+  "dependencies": {
+    "@types/node": "^18.6.2",
+    "@types/react": "^18.0.15",
+    "atomic-signal": "workspace:^0.0.2",
+    "react": "^18.2.0",
+    "swr": "^1.3.0",
+    "tarat": "workspace:*"
+  },
+  "devDependencies": {
+    "@jsdevtools/version-bump-prompt": "6.1.0",
+    "@rollup/plugin-alias": "^3.1.9",
+    "@rollup/plugin-node-resolve": "^13.3.0",
+    "@rollup/plugin-replace": "^4.0.0",
+    "@rollup/plugin-typescript": "^6.1.0",
+    "rollup": "^2.74.1",
+    "rollup-plugin-dts": "^4.2.2",
+    "rollup-plugin-typescript2": "^0.31.2",
+    "test": "^3.2.1",
+    "tslib": "^2.4.0"
+  }
+}
