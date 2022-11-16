@@ -2,7 +2,7 @@ import { SingleFileModule, VirualLayoutJSON } from "../types";
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
-import { traverse, traverseLayoutTree, unstable_serialize } from '../utils'
+import { proxyLayoutJSON, unstable_serialize } from '../utils'
 
 
 declare global {
@@ -22,7 +22,7 @@ interface ICacheDriver<T extends Driver> {
 
 const scopeSymbol = Symbol.for('@NewRendererReactScope')
 
-function useReactLogic<T extends Driver>(react: any, hook: T, args: Parameters<T>) {
+function runReactLogic<T extends Driver>(react: any, hook: T, args: Parameters<T>) {
   const { useRef, useEffect, useState } = react
   const init = useRef(null) as { current: ICacheDriver<T> | null }
 
@@ -92,11 +92,38 @@ function useReactLogic<T extends Driver>(react: any, hook: T, args: Parameters<T
   return hookResult as ReturnType<T>
 }
 
-export function createReactContainer (React: any, module: SingleFileModule) {
+interface ModuleCache {
+  layout: VirualLayoutJSON
+}
 
-  const useLogic = useReactLogic.bind(null, React, module.logic)
+export function createReactContainer (React: any, module: SingleFileModule) {
+  const cacheSymbol = Symbol('cacheSymbol')
+
+  const runLogic = runReactLogic.bind(null, React, module.logic)
+
+  function getLayoutFromModule (props: any) {
+    const cache: ModuleCache = module[cacheSymbol]
+
+    if (cache) {
+      return cache.layout
+    }
+
+    const layout = module.layout?.(props)
+
+    if (layout) {
+      module[cacheSymbol] = {
+        layout
+      }
+    }
+
+    return layout
+  }
 
   function createElementDepth (json: VirualLayoutJSON) {
+    if (!json) {
+      return
+    }
+
     let children = json.children
     if (Array.isArray(json.children)) {
       children = json.children.map(createElementDepth)
@@ -105,16 +132,24 @@ export function createReactContainer (React: any, module: SingleFileModule) {
   }
   
   function render (props?: any) {
-
-    const json = module.layout(props)
+    const json = getLayoutFromModule(props)
+    // inject & keep referrence
+    module.style?.(props)
 
     const root = createElementDepth(json)
 
     return root
   }
 
+  function genLayout (props?: any) {
+    const json = getLayoutFromModule(props)
+    const jsonObjectTree = proxyLayoutJSON(json)
+    return jsonObjectTree
+  }
+
   return {
-    useLogic,
     render,
+    runLogic,
+    genLayout,
   }
 }

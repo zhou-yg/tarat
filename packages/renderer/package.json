@@ -1,6 +1,6 @@
 {
   "name": "tarat-renderer",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "useHook serverless framework",
   "main": "./dist/renderer.js",
   "module": "./dist/renderer.esm.js",
@@ -30,12 +30,7 @@
   },
   "homepage": "https://github.com/zhou-yg/tarat#readme",
   "dependencies": {
-    "@types/node": "^18.6.2",
-    "@types/react": "^18.0.15",
-    "atomic-signal": "workspace:^0.0.2",
-    "react": "^18.2.0",
-    "swr": "^1.3.0",
-    "tarat": "workspace:*"
+    "atomic-signal": "workspace:^0.0.2"
   },
   "devDependencies": {
     "@jsdevtools/version-bump-prompt": "6.1.0",

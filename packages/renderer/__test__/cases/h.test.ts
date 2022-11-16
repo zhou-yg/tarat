@@ -3,6 +3,7 @@ import {
   simpleModule,
   layoutUseLogic,
   MockRectFramework,
+  useStyleInLayout,
 } from '../mock'
 
 describe('h factory and hooks', () => {
@@ -34,6 +35,20 @@ describe('h factory and hooks', () => {
       tag: 'div',
       props: { name: 'test' },
       children: 1
+    })
+  })
+
+  it('layout use style', () => {
+    const rr = createRenderer(useStyleInLayout(), {
+      framework: MockRectFramework
+    })
+    const rr2 = rr.render({ name: 'test2' })
+
+    expect(rr2).toEqual({
+      id: 0 + 2,
+      tag: 'div',
+      props: { name: 'test2', style: { color: 'red' } },
+      children: { id: 0, tag: 'span', props: null, children: 1 }
     })
   })
 })

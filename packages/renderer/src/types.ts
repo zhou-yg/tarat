@@ -1,4 +1,17 @@
 type BaseDataType = string | number | boolean | null | undefined
+// const root = {
+//   div: {
+//     span: {
+
+//     }
+//   },
+//   props: {
+
+//   }
+// }
+export type JSONObjectTree = {
+  [key: string]: JSONObjectTree | any
+}
 
 export interface SingleFileModule {
   logic?: (...args: any[]) => Record<string, any>
@@ -32,6 +45,7 @@ export interface RenderHost {
 type FrameworkVirtualNode = any
 
 export interface ModuleRenderContainer {
-  useLogic: (...args: any[]) => Record<string, any>
+  runLogic: (...args: any[]) => Record<string, any>
   render: (props?: any) => FrameworkVirtualNode
+  genLayout: (props?: any) => JSONObjectTree
 }

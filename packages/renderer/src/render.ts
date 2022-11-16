@@ -93,6 +93,9 @@ export function h(
   }
 }
 
+/**
+ * export hooks
+ */
 export function createLayout(layoutFn: (...args: any[]) => VirualLayoutJSON) {}
 
 export function useLogic<T = any>(...args: any[]): T {
@@ -100,7 +103,7 @@ export function useLogic<T = any>(...args: any[]): T {
   if (!renderer) {
     throw new Error('useLogic must be called in render function')
   }
-  return renderer.renderHooksContainer.useLogic(...args) as T
+  return renderer.renderHooksContainer.runLogic(...args) as T
 }
 
 export function useModule(
@@ -113,4 +116,12 @@ export function useModule(
   }
   const subModuleRenderer = createRenderer(module, renderer.renderHost)
   return subModuleRenderer.render(props)
+}
+
+export function useLayout () {
+  const renderer = getCurrentRenderer()
+  if (!renderer) {
+    throw new Error('useLayout must be called in render function')
+  }
+  return renderer.renderHooksContainer.genLayout()
 }

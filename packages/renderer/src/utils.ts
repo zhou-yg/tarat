@@ -1,14 +1,47 @@
-import { VirualLayoutJSON } from './types'
+import { VirualLayoutJSON, JSONObjectTree } from './types'
+
+export function isVirtualNode (node: any): node is VirualLayoutJSON {
+  return node && typeof node === 'object' && 'tag' in node && 'props' in node && 'children' in node
+}
+
+export function proxyLayoutJSON (json: VirualLayoutJSON) {
+  let root: JSONObjectTree = {}
+
+  function buildRoot (target: JSONObjectTree, source: VirualLayoutJSON) {
+    if (typeof source.tag === 'string') {
+      const tag = source.tag
+      /**
+       * @TODO how to keep referrence to original "props object"?
+       */
+      target[tag] = <JSONObjectTree>{
+        props: source.props,
+      }
+      if (
+        Array.isArray(source.children) ||
+        isVirtualNode(source.children)
+      ) {
+        [].concat(source.children).forEach(child => {
+          buildRoot(target[tag], child)
+        })
+      }
+    }
+  }
+
+  buildRoot(root, json)
+
+  return root
+}
 
 export function traverse(
   obj: any,
-  callback: (k: string, v: any) => boolean | void
+  callback: (k: string[], v: any) => boolean | void,
+  path: string[] = []
 ) {
   if (!obj || typeof obj !== 'object') return
   for (let k in obj) {
     const v = obj[k]
-    if (callback(k, v)) {
-      traverse(v, callback)
+    if (callback(path.concat(k), v)) {
+      traverse(v, callback, path.concat(k))
     }
   }
 }
@@ -126,3 +159,54 @@ export const serialize = (key: any): [string, any] => {
 }
 
 export const unstable_serialize = (key: Object) => serialize(key)[0]
+
+export const isArray = Array.isArray
+
+export function last<T>(arr: T[]): T {
+  return arr[arr.length - 1]
+}
+
+export function set(obj: any, path: string | (number | string)[], value: any) {
+  let base = obj
+  const currentFieldPath = isArray(path)
+    ? path.slice(0)
+    : path.split
+    ? path.split('.')
+    : [path]
+  if (currentFieldPath.length > 0) {
+    const fieldName = currentFieldPath.pop()
+    currentFieldPath.forEach((p, i) => {
+      if (base[p] === undefined) base[p] = {}
+      base = base[p]
+    })
+    if (base instanceof Map) {
+      base.set(fieldName, value)
+    } else if (base instanceof Set) {
+      base.add(value)
+    } else {
+      base[fieldName!] = value
+    }
+  }
+}
+
+export function get(obj: any, path: string | (number | string)[]) {
+  let base = obj
+  const pathArr = isArray(path)
+    ? path.slice(0)
+    : path.split
+    ? path.split('.')
+    : [path]
+  if (pathArr.length === 0) {
+    return obj
+  }
+  const currentPathArr = pathArr.slice(0, -1)
+  const key = last(pathArr)
+  for (const p of currentPathArr) {
+    if (base[p] === undefined) return undefined
+    base = base[p]
+  }
+  if (base instanceof Map) {
+    return base.get(key)
+  }
+  return base[key]
+}
