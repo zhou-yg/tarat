@@ -1,7 +1,5 @@
 /* @jsxFactory h  */
-import {
-  h, useLogic
-} from '../src/index'
+import { h, useLogic } from '../src/index'
 import { SingleFileModule } from '../src/types'
 
 export const MockRectFramework = {
@@ -14,36 +12,26 @@ export const MockRectFramework = {
   }
 }
 
-export function simpleModule (): SingleFileModule {
+export function simpleModule(): SingleFileModule {
   return {
-    logic () {
+    logic() {
       return {}
     },
-    layout () {
-      return (
-        <div>
-    
-        </div>
-      )
+    layout() {
+      return <div></div>
     }
   }
 }
 
-
-export function layoutUseLogic () :SingleFileModule {
-
+export function layoutUseLogic(): SingleFileModule {
   return {
-    logic () {
+    logic() {
       return { num: 1 }
     },
-    layout (props: { name: string }) {
+    layout(props: { name: string }) {
       const logic = useLogic<{ num: number }>()
 
-      return (
-        <div name={props.name} >
-          {logic.num}    
-        </div>
-      )
+      return <div name={props.name}>{logic.num}</div>
     }
   }
 }

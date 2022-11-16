@@ -1,4 +1,9 @@
-import { ModuleRenderContainer, RenderHost, SingleFileModule, VirualLayoutJSON } from './types'
+import {
+  ModuleRenderContainer,
+  RenderHost,
+  SingleFileModule,
+  VirualLayoutJSON
+} from './types'
 
 import { createReactContainer } from './frameworks/react'
 
@@ -18,18 +23,19 @@ class Renderer {
   mounted: boolean = false
 
   renderHooksContainer: ModuleRenderContainer = null
-  constructor(
-    public module: SingleFileModule,
-    public renderHost: RenderHost) {
+  constructor(public module: SingleFileModule, public renderHost: RenderHost) {
     this.createHooksContainer()
   }
 
-  createHooksContainer () {
+  createHooksContainer() {
     const { framework } = this.renderHost
     switch (framework.name) {
       case 'react':
         {
-          this.renderHooksContainer = createReactContainer(framework.lib, this.module)
+          this.renderHooksContainer = createReactContainer(
+            framework.lib,
+            this.module
+          )
         }
         break
     }
@@ -37,7 +43,7 @@ class Renderer {
 
   render(props?: any) {
     pushCurrentRenderer(this)
-    let r;
+    let r
 
     if (this.mounted) {
       r = this.update(props)
@@ -59,15 +65,14 @@ class Renderer {
   }
 }
 
-export function createRenderer(module: SingleFileModule, renderHost: RenderHost) {
-  const renderer = new Renderer(
-    module,
-    renderHost
-  )
+export function createRenderer(
+  module: SingleFileModule,
+  renderHost: RenderHost
+) {
+  const renderer = new Renderer(module, renderHost)
 
   return renderer
 }
-
 
 let idIndex = 0
 
@@ -88,9 +93,7 @@ export function h(
   }
 }
 
-export function createLayout(layoutFn: (...args: any[]) => VirualLayoutJSON) {
-
-}
+export function createLayout(layoutFn: (...args: any[]) => VirualLayoutJSON) {}
 
 export function useLogic<T = any>(...args: any[]): T {
   const renderer = getCurrentRenderer()
@@ -100,7 +103,10 @@ export function useLogic<T = any>(...args: any[]): T {
   return renderer.renderHooksContainer.useLogic(...args) as T
 }
 
-export function useModule (module: SingleFileModule, props: Record<string, any>) {
+export function useModule(
+  module: SingleFileModule,
+  props: Record<string, any>
+) {
   const renderer = getCurrentRenderer()
   if (!renderer) {
     throw new Error('useModule must be called in render function')

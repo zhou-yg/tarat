@@ -9,7 +9,7 @@ const base = {
     }),
   ],
   input: 'src/index.ts',
-  external: ['react', 'tarat/core', 'swr'],
+  external: [],
 }
 
 export default [

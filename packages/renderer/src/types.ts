@@ -18,7 +18,7 @@ export interface RenderHost {
   framework: {
     name: string
     lib: any
-  };
+  }
   // frameworkAPI?: {
   //   createElement: (
   //     tag: string | Function,

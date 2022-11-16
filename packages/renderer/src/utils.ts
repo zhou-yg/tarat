@@ -1,6 +1,9 @@
-import { VirualLayoutJSON } from "./types"
+import { VirualLayoutJSON } from './types'
 
-export function traverse (obj: any, callback: (k: string, v: any) => boolean | void) {
+export function traverse(
+  obj: any,
+  callback: (k: string, v: any) => boolean | void
+) {
   if (!obj || typeof obj !== 'object') return
   for (let k in obj) {
     const v = obj[k]
@@ -10,26 +13,26 @@ export function traverse (obj: any, callback: (k: string, v: any) => boolean | v
   }
 }
 
-export function traverseLayoutTree (layoutTree: VirualLayoutJSON, callback: (n: VirualLayoutJSON) => void) {
+export function traverseLayoutTree(
+  layoutTree: VirualLayoutJSON,
+  callback: (n: VirualLayoutJSON) => void
+) {
   traverse(layoutTree, (k, v) => {
     if (
       typeof v === 'object' &&
-      Reflect.has(v, 'tag') && 
+      Reflect.has(v, 'tag') &&
       Reflect.has(v, 'props') &&
       Reflect.has(v, 'children')
     ) {
       callback(v)
-    } 
+    }
   })
 }
-
-
-
 
 /** fork from swr */
 export const noop = () => {}
 
-export const UNDEFINED = (/*#__NOINLINE__*/ noop()) as undefined
+export const UNDEFINED = /*#__NOINLINE__*/ noop() as undefined
 
 export const OBJECT = Object
 
