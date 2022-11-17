@@ -85,13 +85,16 @@ export function h(
   props: Record<string, any> | null,
   ...children: VirtualLayoutJSON[]
 ) {
-  
-
   return {
     id: idIndex++,
     tag,
     props: props || {},
-    children: children.length === 0 ? undefined : children.length === 1 ? children[0] : children
+    children:
+      children.length === 0
+        ? undefined
+        : children.length === 1
+        ? children[0]
+        : children
   }
 }
 
