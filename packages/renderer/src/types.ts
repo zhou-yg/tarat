@@ -15,16 +15,16 @@ export type JSONObjectTree = {
 
 export interface SingleFileModule {
   logic?: (...args: any[]) => Record<string, any>
-  layout?: (...args: any[]) => VirualLayoutJSON
+  layout?: (...args: any[]) => VirtualLayoutJSON
   designPatthern?: (...args: any[]) => void
   style?: (...args: any[]) => void
 }
 
-export interface VirualLayoutJSON {
+export interface VirtualLayoutJSON {
   id: number
   tag: string | Function
   props: Record<string, any>
-  children: VirualLayoutJSON[] | BaseDataType
+  children: VirtualLayoutJSON[] | BaseDataType
 }
 
 export interface RenderHost {
@@ -36,9 +36,9 @@ export interface RenderHost {
   //   createElement: (
   //     tag: string | Function,
   //     props: Record<string, any>,
-  //     children: VirualLayoutJSON[]
+  //     children: VirtualLayoutJSON[]
   //   ) => any
-  //   createFragment: (children: VirualLayoutJSON[]) => any
+  //   createFragment: (children: VirtualLayoutJSON[]) => any
   // }
 }
 

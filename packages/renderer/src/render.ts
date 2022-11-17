@@ -2,7 +2,7 @@ import {
   ModuleRenderContainer,
   RenderHost,
   SingleFileModule,
-  VirualLayoutJSON
+  VirtualLayoutJSON
 } from './types'
 
 import { createReactContainer } from './frameworks/react'
@@ -83,7 +83,7 @@ export function clearIdIndex() {
 export function h(
   tag: string | Function,
   props: Record<string, any> | null,
-  children: VirualLayoutJSON[]
+  children: VirtualLayoutJSON[]
 ) {
   return {
     id: idIndex++,
@@ -96,7 +96,7 @@ export function h(
 /**
  * export hooks
  */
-export function createLayout(layoutFn: (...args: any[]) => VirualLayoutJSON) {}
+export function createLayout(layoutFn: (...args: any[]) => VirtualLayoutJSON) {}
 
 export function useLogic<T = any>(...args: any[]): T {
   const renderer = getCurrentRenderer()
@@ -118,7 +118,7 @@ export function useModule(
   return subModuleRenderer.render(props)
 }
 
-export function useLayout () {
+export function useLayout() {
   const renderer = getCurrentRenderer()
   if (!renderer) {
     throw new Error('useLayout must be called in render function')

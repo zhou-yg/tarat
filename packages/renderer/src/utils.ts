@@ -1,26 +1,29 @@
-import { VirualLayoutJSON, JSONObjectTree } from './types'
+import { VirtualLayoutJSON, JSONObjectTree } from './types'
 
-export function isVirtualNode (node: any): node is VirualLayoutJSON {
-  return node && typeof node === 'object' && 'tag' in node && 'props' in node && 'children' in node
+export function isVirtualNode(node: any): node is VirtualLayoutJSON {
+  return (
+    node &&
+    typeof node === 'object' &&
+    'tag' in node &&
+    'props' in node &&
+    'children' in node
+  )
 }
 
-export function proxyLayoutJSON (json: VirualLayoutJSON) {
+export function proxyLayoutJSON(json: VirtualLayoutJSON) {
   let root: JSONObjectTree = {}
 
-  function buildRoot (target: JSONObjectTree, source: VirualLayoutJSON) {
+  function buildRoot(target: JSONObjectTree, source: VirtualLayoutJSON) {
     if (typeof source.tag === 'string') {
       const tag = source.tag
       /**
        * @TODO how to keep referrence to original "props object"?
        */
       target[tag] = <JSONObjectTree>{
-        props: source.props,
+        props: source.props
       }
-      if (
-        Array.isArray(source.children) ||
-        isVirtualNode(source.children)
-      ) {
-        [].concat(source.children).forEach(child => {
+      if (Array.isArray(source.children) || isVirtualNode(source.children)) {
+        ;[].concat(source.children).forEach(child => {
           buildRoot(target[tag], child)
         })
       }
@@ -47,8 +50,8 @@ export function traverse(
 }
 
 export function traverseLayoutTree(
-  layoutTree: VirualLayoutJSON,
-  callback: (n: VirualLayoutJSON) => void
+  layoutTree: VirtualLayoutJSON,
+  callback: (n: VirtualLayoutJSON) => void
 ) {
   traverse(layoutTree, (k, v) => {
     if (

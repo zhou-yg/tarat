@@ -42,13 +42,17 @@ export function useStyleInLayout(): SingleFileModule {
     },
     layout(props: { name: string }) {
       const logic = useLogic<{ num: number }>()
-      return <div name={props.name}><span>{logic.num}</span></div>
+      return (
+        <div name={props.name}>
+          <span>{logic.num}</span>
+        </div>
+      )
     },
     style(props: { name: string }) {
       const root = useLayout()
       root.div.props.style = {
         color: 'red'
       }
-    },
+    }
   }
 }

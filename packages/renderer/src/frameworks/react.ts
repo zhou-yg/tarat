@@ -1,4 +1,4 @@
-import { SingleFileModule, VirualLayoutJSON } from "../types";
+import { SingleFileModule, VirtualLayoutJSON } from "../types";
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
@@ -93,7 +93,7 @@ function runReactLogic<T extends Driver>(react: any, hook: T, args: Parameters<T
 }
 
 interface ModuleCache {
-  layout: VirualLayoutJSON
+  layout: VirtualLayoutJSON
 }
 
 export function createReactContainer (React: any, module: SingleFileModule) {
@@ -119,7 +119,7 @@ export function createReactContainer (React: any, module: SingleFileModule) {
     return layout
   }
 
-  function createElementDepth (json: VirualLayoutJSON) {
+  function createElementDepth (json: VirtualLayoutJSON) {
     if (!json) {
       return
     }
