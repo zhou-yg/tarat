@@ -1,6 +1,7 @@
 import { clearIdIndex, createRenderer } from '../../src'
 import {
   simpleModule,
+  moduleHasMultipleChild,
   layoutUseLogic,
   MockRectFramework,
   useStyleInLayout,
@@ -22,6 +23,29 @@ describe('h factory and hooks', () => {
       children: undefined
     })
   })
+  it('simple has multiple', () => {
+    const r = moduleHasMultipleChild().layout()
+
+    expect(r).toEqual({
+      id: 2,
+      tag: 'div',
+      props: { id: 1 },
+      children: [
+        {
+          id: 0,
+          tag: 'div',
+          props: {},
+          children: '1'    
+        },
+        {
+          id: 1,
+          tag: 'div',
+          props: {},
+          children: '2'    
+        },
+      ]
+    })
+  })
   it('layout use logic', () => {
 
     const rr = createRenderer(layoutUseLogic(), {
@@ -33,7 +57,7 @@ describe('h factory and hooks', () => {
     expect(rr2).toEqual({
       id: 0 + 1, // 这里用 h mock了，h 多执行了1次，所以 id + 1 了
       tag: 'div',
-      props: { name: 'test' },
+      props: { name: 'test', container: true },
       children: 1
     })
   })

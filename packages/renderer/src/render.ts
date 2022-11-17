@@ -83,13 +83,15 @@ export function clearIdIndex() {
 export function h(
   tag: string | Function,
   props: Record<string, any> | null,
-  children: VirtualLayoutJSON[]
+  ...children: VirtualLayoutJSON[]
 ) {
+  
+
   return {
     id: idIndex++,
     tag,
     props: props || {},
-    children
+    children: children.length === 0 ? undefined : children.length === 1 ? children[0] : children
   }
 }
 

@@ -23,6 +23,22 @@ export function simpleModule(): SingleFileModule {
   }
 }
 
+export function moduleHasMultipleChild(): SingleFileModule {
+  return {
+    logic() {
+      return {}
+    },
+    layout() {
+      return (
+        <div id={1}>
+          <div>1</div>
+          <div>2</div>
+        </div>
+      )
+    }
+  }
+}
+
 export function layoutUseLogic(): SingleFileModule {
   return {
     logic() {
@@ -30,7 +46,11 @@ export function layoutUseLogic(): SingleFileModule {
     },
     layout(props: { name: string }) {
       const logic = useLogic<{ num: number }>()
-      return <div name={props.name}>{logic.num}</div>
+      return (
+        <div name={props.name} container>
+          {logic.num}
+        </div>
+      )
     }
   }
 }

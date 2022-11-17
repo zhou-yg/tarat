@@ -135,7 +135,7 @@ export function createReactContainer (React: any, module: SingleFileModule) {
   
   function render (props?: any) {
     const json = getLayoutFromModule(props)
-    // inject & keep referrence
+    // inject & keep reference
     module.style?.(props)
 
     const root = createElementDepth(json)

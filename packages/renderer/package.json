@@ -1,6 +1,6 @@
 {
   "name": "tarat-renderer",
-  "version": "0.0.3",
+  "version": "0.0.6",
   "description": "useHook serverless framework",
   "main": "./dist/renderer.js",
   "module": "./dist/renderer.esm.js",
@@ -12,14 +12,15 @@
     "test-ci": "TEST=CI jest",
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
     "format:commit": "npm run format && git commit -a -m 'feat(core): lint'",
-    "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs && node after-build.js",
+    "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs && sh after-build.sh",
     "build:watch": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs --watch",
-    "release": "npm run build && pnpm publish --no-git-checks"
+    "release": "bump && npm run build && pnpm publish --no-git-checks"
   },
   "files": [
     "src",
     "dist",
-    "package.json"
+    "package.json",
+    "jsx-runtime.d.ts"
   ],
   "repository": {
     "type": "git",
@@ -31,7 +32,8 @@
   },
   "homepage": "https://github.com/zhou-yg/tarat#readme",
   "dependencies": {
-    "atomic-signal": "workspace:^0.0.2"
+    "atomic-signal": "workspace:*",
+    "csstype": "^3.1.1"
   },
   "devDependencies": {
     "@jsdevtools/version-bump-prompt": "6.1.0",
