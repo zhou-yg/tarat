@@ -17,7 +17,7 @@
   },
   "files": [
     "dist",
-    "pacakge.json",
+    "package.json",
     "types",
     "README.md"
   ],

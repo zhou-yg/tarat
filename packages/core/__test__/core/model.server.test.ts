@@ -331,7 +331,7 @@ describe('model', () => {
         beleiveContext: true,
         modelIndexes: {
           item: 'item',
-          'sub/pacakge': {
+          'sub/package': {
             item: 'sub_package_Item'
           }
         }

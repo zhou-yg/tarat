@@ -11,7 +11,7 @@
     "src",
     "cli",
     "adaptors",
-    "pacakge.json",
+    "package.json",
     "dist"
   ],
   "scripts": {

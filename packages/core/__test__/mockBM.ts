@@ -1111,7 +1111,7 @@ export function subPackageDriver() {
 
 Object.assign(subPackageDriver, {
   __names__: [[0, 'm1']],
-  __namespace__: 'sub/pacakge'
+  __namespace__: 'sub/package'
 })
 
 export function composeDriverWithNamespace() {
