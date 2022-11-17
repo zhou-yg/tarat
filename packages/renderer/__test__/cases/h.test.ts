@@ -18,7 +18,7 @@ describe('h factory and hooks', () => {
     expect(r).toEqual({
       id: 0,
       tag: 'div',
-      props: null,
+      props: {},
       children: undefined
     })
   })
@@ -45,10 +45,10 @@ describe('h factory and hooks', () => {
     const rr2 = rr.render({ name: 'test2' })
 
     expect(rr2).toEqual({
-      id: 0 + 2,
+      id: 0 + 2 + 1, // 因为有2个tag，所以多了 1
       tag: 'div',
       props: { name: 'test2', style: { color: 'red' } },
-      children: { id: 0, tag: 'span', props: null, children: 1 }
+      children: { id: 0 + 2, tag: 'span', props: {}, children: 1 }
     })
   })
 })

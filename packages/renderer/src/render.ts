@@ -82,13 +82,13 @@ export function clearIdIndex() {
 
 export function h(
   tag: string | Function,
-  props: Record<string, any>,
+  props: Record<string, any> | null,
   children: VirualLayoutJSON[]
 ) {
   return {
     id: idIndex++,
     tag,
-    props,
+    props: props || {},
     children
   }
 }

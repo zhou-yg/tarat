@@ -2,7 +2,7 @@ import { SingleFileModule, VirualLayoutJSON } from "../types";
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
-import { proxyLayoutJSON, unstable_serialize } from '../utils'
+import { isVirtualNode, proxyLayoutJSON, unstable_serialize } from '../utils'
 
 
 declare global {
@@ -127,6 +127,8 @@ export function createReactContainer (React: any, module: SingleFileModule) {
     let children = json.children
     if (Array.isArray(json.children)) {
       children = json.children.map(createElementDepth)
+    } else if (isVirtualNode(json.children)) {
+      children = createElementDepth(json.children)
     }
     return React.createElement(json.tag, json.props, children)
   }
