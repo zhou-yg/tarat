@@ -1,4 +1,12 @@
-import { VirtualLayoutJSON, JSONObjectTree } from './types'
+import { VirtualLayoutJSON, JSONObjectTree, StyleRule } from './types'
+
+function assignRules (json: VirtualLayoutJSON, rules: StyleRule[]) {
+
+}
+
+function assignPattern () {
+
+}
 
 export function isVirtualNode(node: any): node is VirtualLayoutJSON {
   return (
@@ -17,7 +25,7 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
     if (typeof source.tag === 'string') {
       const tag = source.tag
       /**
-       * @TODO how to keep referrence to original "props object"?
+       * @TODO how to keep reference to original "props object"?
        */
       target[tag] = <JSONObjectTree>{
         props: source.props

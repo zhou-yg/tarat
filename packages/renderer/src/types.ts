@@ -1,4 +1,7 @@
+import type * as CSS from 'csstype'
+
 type BaseDataType = string | number | boolean | null | undefined
+
 // const root = {
 //   div: {
 //     span: {
@@ -13,11 +16,17 @@ export type JSONObjectTree = {
   [key: string]: JSONObjectTree | any
 }
 
+export interface StyleRule {
+  selector: string
+  condition?: string
+  style: CSS.Properties
+}
+
 export interface SingleFileModule {
   logic?: (...args: any[]) => Record<string, any>
   layout?: (...args: any[]) => VirtualLayoutJSON
-  designPatthern?: (...args: any[]) => void
-  style?: (...args: any[]) => void
+  designPattern?: (...args: any[]) => void
+  styleRules?: (...args: any[]) => StyleRule[]
 }
 
 export interface VirtualLayoutJSON {
