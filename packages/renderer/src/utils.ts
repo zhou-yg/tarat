@@ -1,5 +1,5 @@
 import { VirtualLayoutJSON, JSONObjectTree, StyleRule } from './types'
-
+import { deepClone }  from './lib/deepClone'
 function assignRules (json: VirtualLayoutJSON, rules: StyleRule[]) {
 
 }
@@ -18,12 +18,119 @@ export function isVirtualNode(node: any): node is VirtualLayoutJSON {
   )
 }
 
-export function proxyLayoutJSON(json: VirtualLayoutJSON) {
+export interface JSONPatch {
+  op: 'replace' // | 'add' | 'remove'
+  path: string[]
+  value: any
+}
+
+const ExportPropKey = 'props'
+
+/**
+ * key point: apply path to children array with same tag
+ * patch[]{
+ *   path: ['div', 'div', 'props', 'id'],
+ * }
+ */
+export function applyJSONTreePatches (source: VirtualLayoutJSON, patches: JSONPatch[]) {
+  const target = deepClone(source)
+
+  for (const patch of patches) {
+    const { op, path, value } = patch
+
+    let current = [target]
+    let i = 0
+    for (; i < path.length - 1; i++) {
+      const tag = path[i]
+      if (tag === ExportPropKey) {
+        break
+      }
+      const newCurrent: VirtualLayoutJSON[] = []
+      for (const node of current) {
+        if (isVirtualNode(node)) {
+          if (node.tag === tag) {
+            if (path[i + 1] === ExportPropKey) {
+              newCurrent.push(node)
+            } else if (Array.isArray(node.children)) {
+              newCurrent.push(...node.children)
+            }
+          }
+        }
+      }
+      current = newCurrent
+    }
+    const restKeys = path.slice(i)
+    switch (op) {
+      case 'replace':
+        current.forEach(node => {
+          set(node, restKeys, value)
+        })
+        break;
+    }
+  }
+
+  return target
+}
+
+/**
+ * 代理json并记录patch
+ * 关键要点：因为有同名节点的存在，同一数组下的同名节点会被合并
+ * 
+ * 返回的是 Proxy对象，只需要考虑 Object，只收集 set
+ */
+export function proxyLayoutJSON (json: VirtualLayoutJSON) {
+  const patches: JSONPatch[] = []
+
+  const jsonTree = buildLayoutNestedObj(json)
+
+  function createProxy (target: JSONObjectTree, pathArr: string[] = []) {
+    const proxy = new Proxy(target, {
+      get (target, key: string) {
+        const v = Reflect.get(target, key)
+        // console.log('target=', target, 'key=', key, 'value=',v);
+        if (typeof v === 'object') {
+          return createProxy(v, pathArr.concat(key))
+        }
+        return v
+      },
+      set (target, key:string, value: any) {
+        const currentPathArr = pathArr.concat(key)
+        patches.push({
+          op: 'replace',
+          path: currentPathArr,
+          value
+        })
+        Reflect.set(target, key, value)
+        return true
+      }
+    })
+    return proxy
+  }
+  
+  function applyPatches () {
+    const newObj = applyJSONTreePatches(json, patches)
+    return newObj
+  }
+
+  const draftJSON: JSONObjectTree = createProxy(jsonTree)
+
+  return {
+    patches,
+    draft: draftJSON,
+    apply: applyPatches
+  }
+}
+
+/**
+ * eg: 
+ *  json: ['div', MyCpt, 'div']
+ */
+export function buildLayoutNestedObj(json: VirtualLayoutJSON) {
   let root: JSONObjectTree = {}
 
   function buildRoot(target: JSONObjectTree, source: VirtualLayoutJSON) {
-    if (typeof source.tag === 'string') {
-      const tag = source.tag
+    const tag = source.tag
+    if (typeof tag === 'string') {
       /**
        * @TODO how to keep reference to original "props object"?
        */
@@ -35,6 +142,10 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
           buildRoot(target[tag], child)
         })
       }
+    } else {
+      /**
+       * @TODO support custom component
+       */      
     }
   }
 

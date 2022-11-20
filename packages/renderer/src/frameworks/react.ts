@@ -2,7 +2,7 @@ import { SingleFileModule, VirtualLayoutJSON } from "../types";
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
-import { isVirtualNode, proxyLayoutJSON, unstable_serialize } from '../utils'
+import { isVirtualNode, buildLayoutNestedObj, unstable_serialize } from '../utils'
 
 
 declare global {
@@ -147,7 +147,7 @@ export function createReactContainer (React: any, module: SingleFileModule) {
 
   function genLayout (props?: any) {
     const json = getLayoutFromModule(props)
-    const jsonObjectTree = proxyLayoutJSON(json)
+    const jsonObjectTree = buildLayoutNestedObj(json)
     return jsonObjectTree
   }
 

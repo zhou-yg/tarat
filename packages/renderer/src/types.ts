@@ -26,7 +26,7 @@ export interface SingleFileModule {
   logic?: (...args: any[]) => Record<string, any>
   layout?: (...args: any[]) => VirtualLayoutJSON
   designPattern?: (...args: any[]) => void
-  styleRules?: (...args: any[]) => StyleRule[]
+  styleRules?: (...args: any[]) => StyleRule[] | void
 }
 
 export interface VirtualLayoutJSON {

@@ -68,7 +68,7 @@ export function useStyleInLayout(): SingleFileModule {
         </div>
       )
     },
-    style(props: { name: string }) {
+    styleRules(props: { name: string }) {
       const root = useLayout()
       root.div.props.style = {
         color: 'red'
