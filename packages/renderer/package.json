@@ -9,7 +9,7 @@
     "watch-unit": "jest --watch -- __test__/core/context.test.ts",
     "wu": "sh scripts/dev-unit.sh",
     "test-unit": "jest",
-    "test-ci": "TEST=CI jest",
+    "test-ci": "jest --coverage",
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
     "format:commit": "npm run format && git commit -a -m 'feat(core): lint'",
     "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs && sh after-build.sh",
