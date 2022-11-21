@@ -1,6 +1,6 @@
 {
   "name": "tarat-renderer",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "useHook serverless framework",
   "main": "./dist/renderer.js",
   "module": "./dist/renderer.esm.js",

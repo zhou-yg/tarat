@@ -1,4 +1,5 @@
 import {
+  matchPatternMatrix,
   assignRules,
   applyJSONTreePatches,
   buildLayoutNestedObj,
@@ -6,6 +7,7 @@ import {
   VirtualLayoutJSON,
   proxyLayoutJSON,
   StyleRule,
+  assignPattern,
 } from '../../src'
 
 describe('utils', () => {
@@ -241,6 +243,88 @@ describe('utils', () => {
             style: {
               fontSize: 14,
               color: 'blue'
+            }
+          },
+          children: undefined
+        },
+      ]
+    })
+  })
+  it('matchPatternMatrix', () => {
+    const json: VirtualLayoutJSON = {
+      id: 1,
+      tag: 'div',
+      props: {
+        id: 'root',
+        ['is-container']: true
+      },
+      children: [
+        {
+          id: 0,
+          tag: 'div',
+          props: {
+            id: 'child'
+          },
+          children: undefined
+        },
+        {
+          id: 0,
+          tag: 'span',
+          props: {
+            id: 'child2',
+            ['is-text']: true,
+            style: {
+              fontSize: 14,
+            }
+          },
+          children: undefined
+        },
+      ]
+    }
+    const patternResult = matchPatternMatrix([true, false])({
+      container: {
+        backgroundColor: {
+          red: [true, false],
+          blue: [false, true],
+        }
+      },
+      text: {
+        fontSize: {
+          small: [true, false],
+          middle: [true, false],
+        },
+      }
+    })
+
+    const result = assignPattern(json, patternResult)
+
+    expect(result).toEqual({
+      id: 1,
+      tag: 'div',
+      props: {
+        id: 'root',
+        ['is-container']: true,
+        style: {
+          backgroundColor: 'red'
+        }
+      },
+      children: [
+        {
+          id: 0,
+          tag: 'div',
+          props: {
+            id: 'child'
+          },
+          children: undefined
+        },
+        {
+          id: 0,
+          tag: 'span',
+          props: {
+            id: 'child2',
+            ['is-text']: true,
+            style: {
+              fontSize: 'middle',
             }
           },
           children: undefined

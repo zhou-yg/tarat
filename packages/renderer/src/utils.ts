@@ -1,4 +1,4 @@
-import { VirtualLayoutJSON, JSONObjectTree, StyleRule } from './types'
+import { VirtualLayoutJSON, JSONObjectTree, StyleRule, PatternStructure } from './types'
 import { deepClone }  from './lib/deepClone'
 import { CSSProperties } from '../jsx-runtime'
 
@@ -18,10 +18,84 @@ export function assignRules (draft: JSONObjectTree, rules: StyleRule[]) {
     }
   }
 }
-
-function assignPattern () {
-
+/**
+ * key point: pattern implicitly match every JSON Node
+ */
+const SEMATIC_RELATION_IS = 'is'
+const SEMATIC_RELATION_Has = 'has'
+function checkSematic(sematic: string, props: VirtualLayoutJSON['props']) {
+  let result = false
+  const kvArr = Object.entries(props)
+  for (const [k, v] of kvArr) {
+    const [relationField, ...sematicArr] = k.split('-')
+    if (relationField === SEMATIC_RELATION_IS && sematicArr.length > 1) {
+      throw new Error('[checkSematic] the node can not be multiply sematic at the same time')
+    }
+    if ([SEMATIC_RELATION_IS, SEMATIC_RELATION_Has].includes(relationField)) {
+      result = result || sematicArr.includes(sematic)
+    }
+    if (result) {
+      break
+    }
+  }
+  return result
 }
+export function assignPattern (json: VirtualLayoutJSON, pattern: PatternStructure):VirtualLayoutJSON {
+  const source = deepClone(json)
+
+  traverseLayoutTree(source, (node) => {
+    const { props } = node
+    for (const sematic in pattern) {
+      if (checkSematic(sematic, props)) {
+        const style = pattern[sematic]
+        if (!props.style) {
+          props.style = {}
+        }
+        Object.entries(style || {}).forEach(([k, v]) => {
+          if (Array.isArray(v)) {
+            props.style[k] = last(v)
+          } else {
+            props.style[k] = v
+          }
+        })
+      }
+    }
+  })
+  return source
+}
+type PatternStructureValueMatcher = (number | string | boolean)[]
+
+interface PatternMatrix<T extends PatternStructureValueMatcher> {
+  [mainSematic: string]: { 
+    [propertyKey: string]: {
+      [value: string]: T
+    }  
+  }
+}
+
+function equal (arr: any[], arr2: any[]) {
+  return arr.length === arr2.length && arr.every((v, i) => v === arr2[i])
+}
+
+export function matchPatternMatrix<T extends PatternStructureValueMatcher> (pm: T) {
+  return (ps: PatternMatrix<T>) => {
+    let result: PatternStructure = {}
+    for (let mainSemantic in ps) {
+      result[mainSemantic] = {}
+      for (let propertyKey in ps[mainSemantic]) {
+        result[mainSemantic][propertyKey] = []
+        for (let value in ps[mainSemantic][propertyKey]) {
+          const matcher = ps[mainSemantic][propertyKey][value]
+          if (equal(matcher, pm)) {
+            result[mainSemantic][propertyKey].push(value)
+          }
+        }
+      }
+    }
+    return result
+  }
+}
+
 
 export function isVirtualNode(node: any): node is VirtualLayoutJSON {
   return (
@@ -187,13 +261,16 @@ export function traverse(
   callback: (k: string[], v: any) => boolean | void,
   path: string[] = []
 ) {
-  if (!obj || typeof obj !== 'object') return
-  for (let k in obj) {
-    const v = obj[k]
-    if (callback(path.concat(k), v)) {
-      traverse(v, callback, path.concat(k))
+  if (callback(path, obj) !== false) {
+    if (!obj || typeof obj !== 'object') return
+    for (let k in obj) {
+      const v = obj[k]
+      if (callback(path.concat(k), v) !== false) {
+        traverse(v, callback, path.concat(k))
+      }
     }
   }
+
 }
 
 export function traverseLayoutTree(

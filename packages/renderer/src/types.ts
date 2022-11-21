@@ -23,10 +23,16 @@ export interface StyleRule {
   style: CSS.Properties
 }
 
+export interface PatternStructure {
+  [mainSematic: string]: { 
+    [propertyKey: string]: string[]
+  }
+}
+
 export interface SingleFileModule {
   logic?: (...args: any[]) => Record<string, any>
   layout?: (...args: any[]) => VirtualLayoutJSON
-  designPattern?: (...args: any[]) => void
+  designPattern?: (...args: any[]) => PatternStructure | void
   styleRules?: (...args: any[]) => StyleRule[] | void
 }
 

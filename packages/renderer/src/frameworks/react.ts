@@ -2,7 +2,7 @@ import { JSONObjectTree, SingleFileModule, VirtualLayoutJSON } from "../types";
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
-import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules } from '../utils'
+import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern } from '../utils'
 
 
 declare global {
@@ -144,9 +144,13 @@ export function createReactContainer (React: any, module: SingleFileModule) {
     if (rules) {
       assignRules(proxyHandler.draft, rules)
     }
-    const patternResult = module.designPattern?.(props)
 
-    const newJSON = proxyHandler.apply()
+    let newJSON = proxyHandler.apply()
+
+    const patternResult = module.designPattern?.(props)
+    if (patternResult) {
+      newJSON = assignPattern(newJSON, patternResult)
+    }
     // assignPattern(json)
     const root = createElementDepth(newJSON)
 
