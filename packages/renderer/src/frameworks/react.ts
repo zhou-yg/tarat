@@ -93,7 +93,8 @@ function runReactLogic<T extends Driver>(react: any, hook: T, args: Parameters<T
 }
 
 interface ModuleCache {
-  proxyHandler: ProxyLayoutHandler
+  props?: any;
+  proxyHandler?: ProxyLayoutHandler
 }
 
 export function createReactContainer (React: any, module: SingleFileModule) {
@@ -101,23 +102,44 @@ export function createReactContainer (React: any, module: SingleFileModule) {
 
   const runLogic = runReactLogic.bind(null, React, module.logic)
 
-  function getLayoutFromModule (props: any) {
+  function runLogicWithCacheProps () {
+    const cache: ModuleCache = module[cacheSymbol]
+    if (cache) {
+      return runLogic(cache.props)
+    }
+    throw new Error('[runLogic] must run with cached props')
+  }
+
+  function getLayoutFromModule (props: any): ModuleCache {
     const cache: ModuleCache = module[cacheSymbol]
 
     if (cache) {
-      return cache.proxyHandler
+      return cache
+    }
+    const cacheObj: ModuleCache = {
+      props,
+    }
+    if (!module[cacheSymbol]) {
+      module[cacheSymbol] = cacheObj
+    } else {
+      module[cacheSymbol] = {
+        ...module[cacheSymbol],
+        ...cacheObj,
+      }
     }
 
     const json = module.layout?.(props)
     const handler = proxyLayoutJSON(json)
+    cacheObj.proxyHandler = handler
 
     if (json) {
       module[cacheSymbol] = {
-        proxyHandler: handler
+        ...module[cacheSymbol],
+        ...cacheObj,
       }
     }
 
-    return handler
+    return cacheObj
   }
   function disposeFromModule () {
     delete module[cacheSymbol]
@@ -138,33 +160,39 @@ export function createReactContainer (React: any, module: SingleFileModule) {
   }
   
   function render (props?: any) {
-    const proxyHandler = getLayoutFromModule(props)
-    // inject & keep reference
-    const rules = module.styleRules?.(props)
-    if (rules) {
-      assignRules(proxyHandler.draft, rules)
+    if (!props) {
+      props = {}
     }
+    const { proxyHandler } = getLayoutFromModule(props)
+    if (proxyHandler) {
+      // inject & keep reference
+      const rules = module.styleRules?.(props)
+      if (rules) {
+        assignRules(proxyHandler.draft, rules)
+      }
+      let newJSON = proxyHandler.apply()
+      const patternResult = module.designPattern?.(props)
+      if (patternResult) {
+        newJSON = assignPattern(newJSON, patternResult)
+      }
+      // assignPattern(json)
+      const root = createElementDepth(newJSON)
+  
+      disposeFromModule()
 
-    let newJSON = proxyHandler.apply()
-
-    const patternResult = module.designPattern?.(props)
-    if (patternResult) {
-      newJSON = assignPattern(newJSON, patternResult)
+      return root
     }
-    // assignPattern(json)
-    const root = createElementDepth(newJSON)
-
-    return root
+    return null
   }
 
   function genLayout (props?: any) {
-    const proxyHandler = getLayoutFromModule(props)
-    return proxyHandler.draft
+    const { proxyHandler } = getLayoutFromModule(props)
+    return proxyHandler?.draft
   }
 
   return {
     render,
-    runLogic,
+    runLogic: runLogicWithCacheProps,
     genLayout,
   }
 }
