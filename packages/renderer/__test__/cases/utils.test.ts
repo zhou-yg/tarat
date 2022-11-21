@@ -1,9 +1,11 @@
 import {
+  assignRules,
   applyJSONTreePatches,
   buildLayoutNestedObj,
   JSONPatch,
   VirtualLayoutJSON,
   proxyLayoutJSON,
+  StyleRule,
 } from '../../src'
 
 describe('utils', () => {
@@ -162,6 +164,87 @@ describe('utils', () => {
           },
           children: undefined
         }
+      ]
+    })
+  })
+  it('assignRules', () => {
+    const json: VirtualLayoutJSON = {
+      id: 1,
+      tag: 'div',
+      props: {
+        id: 'root'
+      },
+      children: [
+        {
+          id: 0,
+          tag: 'div',
+          props: {
+            id: 'child'
+          },
+          children: undefined
+        },
+        {
+          id: 0,
+          tag: 'span',
+          props: {
+            id: 'child2',
+            style: {
+              fontSize: 14,
+            }
+          },
+          children: undefined
+        },
+      ]
+    }
+    const { draft, apply } = proxyLayoutJSON(json)
+    const rules: StyleRule[] = [
+      {
+        selector: draft.div,
+        condition: true,
+        style: {
+          color: 'red'
+        }
+      },
+      {
+        selector: draft.div.span,
+        condition: true,
+        style: {
+          color: 'blue'
+        }
+      }
+    ]
+    assignRules(draft, rules);
+    const result = apply()
+    expect(result).toEqual({
+      id: 1,
+      tag: 'div',
+      props: {
+        id: 'root',
+        style: {
+          color: 'red'
+        }
+      },
+      children: [
+        {
+          id: 0,
+          tag: 'div',
+          props: {
+            id: 'child'
+          },
+          children: undefined
+        },
+        {
+          id: 0,
+          tag: 'span',
+          props: {
+            id: 'child2',
+            style: {
+              fontSize: 14,
+              color: 'blue'
+            }
+          },
+          children: undefined
+        },
       ]
     })
   })

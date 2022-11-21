@@ -40,7 +40,7 @@ function isCyclic (data: Object): boolean {
   return detect(data);
 }
 
-export const deepClone = function (data: Object): Object | undefined {
+export function deepClone(data: Object): any {
   // If the data is null or undefined then we return undefined
   if (data === null || data === undefined) {
       return undefined;

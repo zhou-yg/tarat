@@ -1,7 +1,22 @@
 import { VirtualLayoutJSON, JSONObjectTree, StyleRule } from './types'
 import { deepClone }  from './lib/deepClone'
-function assignRules (json: VirtualLayoutJSON, rules: StyleRule[]) {
+import { CSSProperties } from '../jsx-runtime'
 
+
+export function assignRules (draft: JSONObjectTree, rules: StyleRule[]) {
+  for (const rule of rules) {
+    const { condition, selector, style } = rule
+    if (!!condition || condition === undefined) {
+      const pathInDraft: string[] = (selector as any)[handlerPathKeySymbol]
+      const stylePath = pathInDraft.concat(['props', 'style'])
+      if (!get(draft, stylePath)) {
+        set(draft, stylePath, {})
+      }
+      Object.entries(style).forEach(([k, v]) => {
+        set(draft, stylePath.concat(k), v)
+      })
+    }
+  }
 }
 
 function assignPattern () {
@@ -26,6 +41,33 @@ export interface JSONPatch {
 
 const ExportPropKey = 'props'
 
+function getChildrenByPath (
+  source: VirtualLayoutJSON, path: (string | number)[]
+): [VirtualLayoutJSON[], number] {
+  let current = [source]
+  let i = 0
+  for (; i < path.length - 1; i++) {
+    const tag = path[i]
+    if (tag === ExportPropKey) {
+      break
+    }
+    const newCurrent: VirtualLayoutJSON[] = []
+    for (const node of current) {
+      if (isVirtualNode(node)) {
+        if (node.tag === tag) {
+          if (path[i + 1] === ExportPropKey) {
+            newCurrent.push(node)
+          } else if (Array.isArray(node.children)) {
+            newCurrent.push(...node.children)
+          }
+        }
+      }
+    }
+    current = newCurrent
+  }
+  return [current, i]
+}
+
 /**
  * key point: apply path to children array with same tag
  * patch[]{
@@ -33,32 +75,12 @@ const ExportPropKey = 'props'
  * }
  */
 export function applyJSONTreePatches (source: VirtualLayoutJSON, patches: JSONPatch[]) {
-  const target = deepClone(source)
+  const target: VirtualLayoutJSON = deepClone(source)
 
   for (const patch of patches) {
     const { op, path, value } = patch
 
-    let current = [target]
-    let i = 0
-    for (; i < path.length - 1; i++) {
-      const tag = path[i]
-      if (tag === ExportPropKey) {
-        break
-      }
-      const newCurrent: VirtualLayoutJSON[] = []
-      for (const node of current) {
-        if (isVirtualNode(node)) {
-          if (node.tag === tag) {
-            if (path[i + 1] === ExportPropKey) {
-              newCurrent.push(node)
-            } else if (Array.isArray(node.children)) {
-              newCurrent.push(...node.children)
-            }
-          }
-        }
-      }
-      current = newCurrent
-    }
+    let [current, i] = getChildrenByPath(target, path)
     const restKeys = path.slice(i)
     switch (op) {
       case 'replace':
@@ -72,12 +94,15 @@ export function applyJSONTreePatches (source: VirtualLayoutJSON, patches: JSONPa
   return target
 }
 
+
 /**
  * 代理json并记录patch
  * 关键要点：因为有同名节点的存在，同一数组下的同名节点会被合并
  * 
  * 返回的是 Proxy对象，只需要考虑 Object，只收集 set
  */
+export const handlerPathKeySymbol = Symbol('handlerPathKeySymbol')
+export type ProxyLayoutHandler = ReturnType<typeof proxyLayoutJSON>
 export function proxyLayoutJSON (json: VirtualLayoutJSON) {
   const patches: JSONPatch[] = []
 
@@ -85,10 +110,13 @@ export function proxyLayoutJSON (json: VirtualLayoutJSON) {
 
   function createProxy (target: JSONObjectTree, pathArr: string[] = []) {
     const proxy = new Proxy(target, {
-      get (target, key: string) {
+      get (target, key: string | symbol) {
+        if (key === handlerPathKeySymbol) {
+          return pathArr
+        }
         const v = Reflect.get(target, key)
         // console.log('target=', target, 'key=', key, 'value=',v);
-        if (typeof v === 'object') {
+        if (typeof v === 'object' && typeof key === 'string') {
           return createProxy(v, pathArr.concat(key))
         }
         return v
@@ -135,7 +163,7 @@ export function buildLayoutNestedObj(json: VirtualLayoutJSON) {
        * @TODO how to keep reference to original "props object"?
        */
       target[tag] = <JSONObjectTree>{
-        props: source.props
+        [ExportPropKey]: source.props
       }
       if (Array.isArray(source.children) || isVirtualNode(source.children)) {
         ;[].concat(source.children).forEach(child => {

@@ -1,8 +1,8 @@
-import { SingleFileModule, VirtualLayoutJSON } from "../types";
+import { JSONObjectTree, SingleFileModule, VirtualLayoutJSON } from "../types";
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
-import { isVirtualNode, buildLayoutNestedObj, unstable_serialize } from '../utils'
+import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules } from '../utils'
 
 
 declare global {
@@ -93,7 +93,7 @@ function runReactLogic<T extends Driver>(react: any, hook: T, args: Parameters<T
 }
 
 interface ModuleCache {
-  layout: VirtualLayoutJSON
+  proxyHandler: ProxyLayoutHandler
 }
 
 export function createReactContainer (React: any, module: SingleFileModule) {
@@ -105,18 +105,22 @@ export function createReactContainer (React: any, module: SingleFileModule) {
     const cache: ModuleCache = module[cacheSymbol]
 
     if (cache) {
-      return cache.layout
+      return cache.proxyHandler
     }
 
-    const layout = module.layout?.(props)
+    const json = module.layout?.(props)
+    const handler = proxyLayoutJSON(json)
 
-    if (layout) {
+    if (json) {
       module[cacheSymbol] = {
-        layout
+        proxyHandler: handler
       }
     }
 
-    return layout
+    return handler
+  }
+  function disposeFromModule () {
+    delete module[cacheSymbol]
   }
 
   function createElementDepth (json: VirtualLayoutJSON) {
@@ -134,21 +138,24 @@ export function createReactContainer (React: any, module: SingleFileModule) {
   }
   
   function render (props?: any) {
-    const json = getLayoutFromModule(props)
+    const proxyHandler = getLayoutFromModule(props)
     // inject & keep reference
     const rules = module.styleRules?.(props)
-    // assignRules
+    if (rules) {
+      assignRules(proxyHandler.draft, rules)
+    }
     const patternResult = module.designPattern?.(props)
+
+    const newJSON = proxyHandler.apply()
     // assignPattern(json)
-    const root = createElementDepth(json)
+    const root = createElementDepth(newJSON)
 
     return root
   }
 
   function genLayout (props?: any) {
-    const json = getLayoutFromModule(props)
-    const jsonObjectTree = buildLayoutNestedObj(json)
-    return jsonObjectTree
+    const proxyHandler = getLayoutFromModule(props)
+    return proxyHandler.draft
   }
 
   return {

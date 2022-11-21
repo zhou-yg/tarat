@@ -1,4 +1,5 @@
 import type * as CSS from 'csstype'
+import type { ProxyLayoutHandler } from './utils'
 
 type BaseDataType = string | number | boolean | null | undefined
 
@@ -17,8 +18,8 @@ export type JSONObjectTree = {
 }
 
 export interface StyleRule {
-  selector: string
-  condition?: string
+  selector: ProxyLayoutHandler['draft']
+  condition?: boolean
   style: CSS.Properties
 }
 
