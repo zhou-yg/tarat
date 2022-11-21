@@ -105,7 +105,7 @@ export function createReactContainer (React: any, module: SingleFileModule) {
   function runLogicWithCacheProps () {
     const cache: ModuleCache = module[cacheSymbol]
     if (cache) {
-      return runLogic(cache.props)
+      return runLogic([cache.props])
     }
     throw new Error('[runLogic] must run with cached props')
   }
