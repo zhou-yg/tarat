@@ -1,9 +1,13 @@
-import { VirtualLayoutJSON, JSONObjectTree, StyleRule, PatternStructure } from './types'
-import { deepClone }  from './lib/deepClone'
+import {
+  VirtualLayoutJSON,
+  JSONObjectTree,
+  StyleRule,
+  PatternStructure
+} from './types'
+import { deepClone } from './lib/deepClone'
 import { CSSProperties } from '../jsx-runtime'
 
-
-export function assignRules (draft: JSONObjectTree, rules: StyleRule[]) {
+export function assignRules(draft: JSONObjectTree, rules: StyleRule[]) {
   for (const rule of rules) {
     const { condition, selector, style } = rule
     if (!!condition || condition === undefined) {
@@ -29,7 +33,9 @@ function checkSematic(sematic: string, props: VirtualLayoutJSON['props']) {
   for (const [k, v] of kvArr) {
     const [relationField, ...sematicArr] = k.split('-')
     if (relationField === SEMATIC_RELATION_IS && sematicArr.length > 1) {
-      throw new Error('[checkSematic] the node can not be multiply sematic at the same time')
+      throw new Error(
+        '[checkSematic] the node can not be multiply sematic at the same time'
+      )
     }
     if ([SEMATIC_RELATION_IS, SEMATIC_RELATION_Has].includes(relationField)) {
       result = result || sematicArr.includes(sematic)
@@ -40,10 +46,13 @@ function checkSematic(sematic: string, props: VirtualLayoutJSON['props']) {
   }
   return result
 }
-export function assignPattern (json: VirtualLayoutJSON, pattern: PatternStructure):VirtualLayoutJSON {
+export function assignPattern(
+  json: VirtualLayoutJSON,
+  pattern: PatternStructure
+): VirtualLayoutJSON {
   const source = deepClone(json)
 
-  traverseLayoutTree(source, (node) => {
+  traverseLayoutTree(source, node => {
     const { props } = node
     for (const sematic in pattern) {
       if (checkSematic(sematic, props)) {
@@ -66,18 +75,20 @@ export function assignPattern (json: VirtualLayoutJSON, pattern: PatternStructur
 type PatternStructureValueMatcher = (number | string | boolean)[]
 
 interface PatternMatrix<T extends PatternStructureValueMatcher> {
-  [mainSematic: string]: { 
+  [mainSematic: string]: {
     [propertyKey: string]: {
       [value: string]: T
-    }  
+    }
   }
 }
 
-function equal (arr: any[], arr2: any[]) {
+function equal(arr: any[], arr2: any[]) {
   return arr.length === arr2.length && arr.every((v, i) => v === arr2[i])
 }
 
-export function matchPatternMatrix<T extends PatternStructureValueMatcher> (pm: T) {
+export function matchPatternMatrix<T extends PatternStructureValueMatcher>(
+  pm: T
+) {
   return (ps: PatternMatrix<T>) => {
     let result: PatternStructure = {}
     for (let mainSemantic in ps) {
@@ -95,7 +106,6 @@ export function matchPatternMatrix<T extends PatternStructureValueMatcher> (pm: 
     return result
   }
 }
-
 
 export function isVirtualNode(node: any): node is VirtualLayoutJSON {
   return (
@@ -115,8 +125,9 @@ export interface JSONPatch {
 
 const ExportPropKey = 'props'
 
-function getChildrenByPath (
-  source: VirtualLayoutJSON, path: (string | number)[]
+function getChildrenByPath(
+  source: VirtualLayoutJSON,
+  path: (string | number)[]
 ): [VirtualLayoutJSON[], number] {
   let current = [source]
   let i = 0
@@ -148,7 +159,10 @@ function getChildrenByPath (
  *   path: ['div', 'div', 'props', 'id'],
  * }
  */
-export function applyJSONTreePatches (source: VirtualLayoutJSON, patches: JSONPatch[]) {
+export function applyJSONTreePatches(
+  source: VirtualLayoutJSON,
+  patches: JSONPatch[]
+) {
   const target: VirtualLayoutJSON = deepClone(source)
 
   for (const patch of patches) {
@@ -161,30 +175,29 @@ export function applyJSONTreePatches (source: VirtualLayoutJSON, patches: JSONPa
         current.forEach(node => {
           set(node, restKeys, value)
         })
-        break;
+        break
     }
   }
 
   return target
 }
 
-
 /**
  * 代理json并记录patch
  * 关键要点：因为有同名节点的存在，同一数组下的同名节点会被合并
- * 
+ *
  * 返回的是 Proxy对象，只需要考虑 Object，只收集 set
  */
 export const handlerPathKeySymbol = Symbol('handlerPathKeySymbol')
 export type ProxyLayoutHandler = ReturnType<typeof proxyLayoutJSON>
-export function proxyLayoutJSON (json: VirtualLayoutJSON) {
+export function proxyLayoutJSON(json: VirtualLayoutJSON) {
   const patches: JSONPatch[] = []
 
   const jsonTree = buildLayoutNestedObj(json)
 
-  function createProxy (target: JSONObjectTree, pathArr: string[] = []) {
+  function createProxy(target: JSONObjectTree, pathArr: string[] = []) {
     const proxy = new Proxy(target, {
-      get (target, key: string | symbol) {
+      get(target, key: string | symbol) {
         if (key === handlerPathKeySymbol) {
           return pathArr
         }
@@ -195,7 +208,7 @@ export function proxyLayoutJSON (json: VirtualLayoutJSON) {
         }
         return v
       },
-      set (target, key:string, value: any) {
+      set(target, key: string, value: any) {
         const currentPathArr = pathArr.concat(key)
         patches.push({
           op: 'replace',
@@ -208,8 +221,8 @@ export function proxyLayoutJSON (json: VirtualLayoutJSON) {
     })
     return proxy
   }
-  
-  function applyPatches () {
+
+  function applyPatches() {
     const newObj = applyJSONTreePatches(json, patches)
     return newObj
   }
@@ -224,7 +237,7 @@ export function proxyLayoutJSON (json: VirtualLayoutJSON) {
 }
 
 /**
- * eg: 
+ * eg:
  *  json: ['div', MyCpt, 'div']
  */
 export function buildLayoutNestedObj(json: VirtualLayoutJSON) {
@@ -247,7 +260,7 @@ export function buildLayoutNestedObj(json: VirtualLayoutJSON) {
     } else {
       /**
        * @TODO support custom component
-       */      
+       */
     }
   }
 
@@ -270,7 +283,6 @@ export function traverse(
       }
     }
   }
-
 }
 
 export function traverseLayoutTree(

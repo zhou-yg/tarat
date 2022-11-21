@@ -24,7 +24,7 @@ export interface StyleRule {
 }
 
 export interface PatternStructure {
-  [mainSematic: string]: { 
+  [mainSematic: string]: {
     [propertyKey: string]: string[]
   }
 }
