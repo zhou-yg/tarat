@@ -2,7 +2,7 @@ import { JSONObjectTree, SingleFileModule, VirtualLayoutJSON } from "../types";
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
-import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern } from '../utils'
+import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern, SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS } from '../utils'
 
 
 declare global {
@@ -105,6 +105,24 @@ interface ModuleCache {
   proxyHandler?: ProxyLayoutHandler
   logicResult?: any
 }
+/**
+ * fix error:
+ *    react-dom.development.js:86 Warning: Received `true` for a non-boolean attribute `is-container`.If you want to write it to the DOM, pass a string instead: is-container="true" or is-container={value.toString()}.
+ */
+function filterProps(props?: any) {
+  if (!props) {
+    return props
+  }
+  const obj = {}
+  Object.keys(props).forEach(key => {
+    if (key.startsWith(`${SEMATIC_RELATION_IS}-`) || key.startsWith(`${SEMATIC_RELATION_HAS}-`)) {
+      obj[key] = 1
+    } else {
+      obj[key] = props[key]
+    }
+  })
+  return obj
+}
 
 export function createReactContainer (React: any, module: SingleFileModule) {
   const cacheSymbol = Symbol('cacheSymbol')
@@ -162,7 +180,7 @@ export function createReactContainer (React: any, module: SingleFileModule) {
     } else if (isVirtualNode(json.children)) {
       children = createElementDepth(json.children)
     }
-    return React.createElement(json.tag, json.props, children)
+    return React.createElement(json.tag, filterProps(json.props), children)
   }
   
   function render (props?: any) {

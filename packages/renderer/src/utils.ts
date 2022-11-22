@@ -25,8 +25,8 @@ export function assignRules(draft: JSONObjectTree, rules: StyleRule[]) {
 /**
  * key point: pattern implicitly match every JSON Node
  */
-const SEMATIC_RELATION_IS = 'is'
-const SEMATIC_RELATION_Has = 'has'
+export const SEMATIC_RELATION_IS = 'is'
+export const SEMATIC_RELATION_HAS = 'has'
 function checkSematic(sematic: string, props: VirtualLayoutJSON['props']) {
   let result = false
   const kvArr = Object.entries(props)
@@ -37,7 +37,7 @@ function checkSematic(sematic: string, props: VirtualLayoutJSON['props']) {
         '[checkSematic] the node can not be multiply sematic at the same time'
       )
     }
-    if ([SEMATIC_RELATION_IS, SEMATIC_RELATION_Has].includes(relationField)) {
+    if ([SEMATIC_RELATION_IS, SEMATIC_RELATION_HAS].includes(relationField)) {
       result = result || sematicArr.includes(sematic)
     }
     if (result) {
@@ -74,22 +74,29 @@ export function assignPattern(
 }
 type PatternStructureValueMatcher = (number | string | boolean)[]
 
-interface PatternMatrix<T extends PatternStructureValueMatcher> {
+type MatcherValueOrStar<T extends PatternStructureValueMatcher> = {
+  [K in keyof T]: T[K] | '*'
+}
+
+interface PatternMatrix {
   [mainSematic: string]: {
     [propertyKey: string]: {
-      [value: string]: T
+      [value: string]: (number | string | boolean)[]
     }
   }
 }
 
-function equal(arr: any[], arr2: any[]) {
-  return arr.length === arr2.length && arr.every((v, i) => v === arr2[i])
+function equal(setting: any[], arr2: any[]) {
+  return (
+    setting.length === arr2.length &&
+    setting.every((v, i) => v === arr2[i] || v === '*' || v === '/')
+  )
 }
 
 export function matchPatternMatrix<T extends PatternStructureValueMatcher>(
   pm: T
 ) {
-  return (ps: PatternMatrix<T>) => {
+  return (ps: PatternMatrix) => {
     let result: PatternStructure = {}
     for (let mainSemantic in ps) {
       result[mainSemantic] = {}
@@ -97,7 +104,7 @@ export function matchPatternMatrix<T extends PatternStructureValueMatcher>(
         result[mainSemantic][propertyKey] = []
         for (let value in ps[mainSemantic][propertyKey]) {
           const matcher = ps[mainSemantic][propertyKey][value]
-          if (equal(matcher, pm)) {
+          if (equal(matcher, pm) || matcher.length === 0) {
             result[mainSemantic][propertyKey].push(value)
           }
         }
