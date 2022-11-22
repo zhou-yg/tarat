@@ -51,11 +51,17 @@ function runReactLogic<T extends Driver>(react: any, hook: T, args: Parameters<T
 
       const runner = new Runner(
         hook,
+        {
+          updateCallbackSync: true,
+          beleiveContext: true,
+        }
       )
 
       const initialContext = ssrContext.pop()
 
       const scope = runner.prepareScope(args, initialContext)
+
+      ;(window as any).scope = scope;
 
       const r = runner.executeDriver(scope)
 
@@ -82,9 +88,11 @@ function runReactLogic<T extends Driver>(react: any, hook: T, args: Parameters<T
     function fn() {
       setHookResult({ ...init.current.result })
     }
-    init.current.scope.onActivate(fn)
+    init.current.scope.activate()
+    const unListen = init.current.scope.onUpdate(fn)
     return () => {
-      init.current.scope.deactivate(fn)
+      init.current.scope.deactivate()
+      unListen()
     }
   }, [])
 
@@ -95,6 +103,7 @@ function runReactLogic<T extends Driver>(react: any, hook: T, args: Parameters<T
 interface ModuleCache {
   props?: any;
   proxyHandler?: ProxyLayoutHandler
+  logicResult?: any
 }
 
 export function createReactContainer (React: any, module: SingleFileModule) {
@@ -102,10 +111,22 @@ export function createReactContainer (React: any, module: SingleFileModule) {
 
   const runLogic = runReactLogic.bind(null, React, module.logic)
 
-  function runLogicWithCacheProps () {
+  function initLogic (props?: any) {
+    const r = runLogic([props])
     const cache: ModuleCache = module[cacheSymbol]
     if (cache) {
-      return runLogic([cache.props])
+      cache.logicResult = r
+      cache.props = props
+    } else [
+      module[cacheSymbol] = { logicResult: r, props }
+    ]
+    return r
+  }
+
+  function runLogicFromCache () {
+    const cache: ModuleCache = module[cacheSymbol]
+    if (cache) {
+      return cache.logicResult
     }
     throw new Error('[runLogic] must run with cached props')
   }
@@ -113,33 +134,18 @@ export function createReactContainer (React: any, module: SingleFileModule) {
   function getLayoutFromModule (props: any): ModuleCache {
     const cache: ModuleCache = module[cacheSymbol]
 
-    if (cache) {
+    if (cache && cache.proxyHandler) {
       return cache
-    }
-    const cacheObj: ModuleCache = {
-      props,
-    }
-    if (!module[cacheSymbol]) {
-      module[cacheSymbol] = cacheObj
-    } else {
-      module[cacheSymbol] = {
-        ...module[cacheSymbol],
-        ...cacheObj,
-      }
     }
 
     const json = module.layout?.(props)
     const handler = proxyLayoutJSON(json)
-    cacheObj.proxyHandler = handler
-
+    
     if (json) {
-      module[cacheSymbol] = {
-        ...module[cacheSymbol],
-        ...cacheObj,
-      }
+      cache.proxyHandler = handler
     }
 
-    return cacheObj
+    return cache
   }
   function disposeFromModule () {
     delete module[cacheSymbol]
@@ -163,6 +169,8 @@ export function createReactContainer (React: any, module: SingleFileModule) {
     if (!props) {
       props = {}
     }
+    initLogic(props)
+
     const { proxyHandler } = getLayoutFromModule(props)
     if (proxyHandler) {
       // inject & keep reference
@@ -192,7 +200,7 @@ export function createReactContainer (React: any, module: SingleFileModule) {
 
   return {
     render,
-    runLogic: runLogicWithCacheProps,
+    runLogic: runLogicFromCache,
     genLayout,
   }
 }
