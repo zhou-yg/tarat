@@ -173,7 +173,9 @@ export function createReactContainer (React: any, module: SingleFileModule) {
     if (!json) {
       return
     }
-
+    if (!isVirtualNode(json)) {
+      return json
+    }
     let children = json.children
     if (Array.isArray(json.children)) {
       children = json.children.map(createElementDepth)
