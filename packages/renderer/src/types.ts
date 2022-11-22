@@ -18,7 +18,7 @@ export type JSONObjectTree = {
 }
 
 export interface StyleRule {
-  selector: ProxyLayoutHandler['draft']
+  target: ProxyLayoutHandler['draft']
   condition?: boolean
   style: CSS.Properties
 }

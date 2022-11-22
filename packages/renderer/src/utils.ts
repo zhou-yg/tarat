@@ -9,9 +9,9 @@ import { CSSProperties } from '../jsx-runtime'
 
 export function assignRules(draft: JSONObjectTree, rules: StyleRule[]) {
   for (const rule of rules) {
-    const { condition, selector, style } = rule
+    const { condition, target, style } = rule
     if (!!condition || condition === undefined) {
-      const pathInDraft: string[] = (selector as any)[handlerPathKeySymbol]
+      const pathInDraft: string[] = (target as any)[handlerPathKeySymbol]
       const stylePath = pathInDraft.concat(['props', 'style'])
       if (!get(draft, stylePath)) {
         set(draft, stylePath, {})
