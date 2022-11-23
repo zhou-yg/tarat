@@ -66,7 +66,6 @@ export interface ModuleRenderContainer {
   genLayout: (props?: any) => JSONObjectTree
 }
 
-
 export interface OverrideModule {
   layout?: (jsonTree: JSONObjectTree) => void
 }

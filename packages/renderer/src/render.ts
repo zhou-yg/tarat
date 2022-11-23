@@ -120,17 +120,21 @@ export function useLogic<T = any>(...args: any[]): T {
   return renderer.renderHooksContainer.runLogic(...args) as T
 }
 
-export function useModule<T extends Record<string, any>>(module: SingleFileModule, override?: OverrideModule) {
+export function useModule<T extends Record<string, any>>(
+  module: SingleFileModule,
+  override?: OverrideModule
+) {
   const renderer = getCurrentRenderer()
   if (!renderer) {
     throw new Error('useModule must be called in render function')
   }
-  const subModuleRenderer = createRenderer(module, renderer.renderHost, override)
+  const subModuleRenderer = createRenderer(
+    module,
+    renderer.renderHost,
+    override
+  )
 
-  return (
-    props: T & { className?: string },
-    override?: OverrideModule
-  ) => {
+  return (props: T & { className?: string }, override?: OverrideModule) => {
     return subModuleRenderer.render(props, override)
   }
 }

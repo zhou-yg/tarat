@@ -9,7 +9,7 @@ import {
 import { deepClone } from './lib/deepClone'
 import { CSSProperties } from '../jsx-runtime'
 
-export function mergeOverrideModules (modules: OverrideModule[]) {
+export function mergeOverrideModules(modules: OverrideModule[]) {
   const result: OverrideModule = {}
   for (const module of modules) {
     if (module) {
@@ -37,7 +37,10 @@ export function mergeOverrideModules (modules: OverrideModule[]) {
   return result
 }
 
-export function mergeClassNameFromProps (json: VirtualLayoutJSON, props: Record<string, any>) {
+export function mergeClassNameFromProps(
+  json: VirtualLayoutJSON,
+  props: Record<string, any>
+) {
   const { className } = props
   if (className) {
     if (json.props.className) {
@@ -292,7 +295,10 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
 export function buildLayoutNestedObj(json: VirtualLayoutJSON) {
   let root: JSONObjectTree = {}
 
-  function buildRoot(target: JSONObjectTree, source: VirtualLayoutJSON | BaseDataType) {
+  function buildRoot(
+    target: JSONObjectTree,
+    source: VirtualLayoutJSON | BaseDataType
+  ) {
     if (isVirtualNode(source)) {
       const tag = source?.tag
       if (typeof tag === 'string') {
