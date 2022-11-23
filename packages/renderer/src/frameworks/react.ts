@@ -61,8 +61,6 @@ function runReactLogic<T extends Driver>(react: any, hook: T, args: Parameters<T
 
       const scope = runner.prepareScope(args, initialContext)
 
-      ;(window as any).scope = scope;
-
       const r = runner.executeDriver(scope)
 
       init.current = {
@@ -177,12 +175,17 @@ export function createReactContainer (React: any, module: SingleFileModule) {
       return json
     }
     let children = json.children
+    let elementArgs = [json.tag, filterProps(json.props)]
     if (Array.isArray(json.children)) {
       children = json.children.map(createElementDepth)
-    } else if (isVirtualNode(json.children)) {
-      children = createElementDepth(json.children)
+      elementArgs.push(...children)
+    } else {
+      if (isVirtualNode(json.children)) {
+        children = createElementDepth(json.children)
+      }
+      elementArgs.push(children)
     }
-    return React.createElement(json.tag, filterProps(json.props), children)
+    return React.createElement(...elementArgs)
   }
   
   function render (props?: any, override?: OverrideModule) {

@@ -170,7 +170,7 @@ export function isVirtualNode(node: any): node is VirtualLayoutJSON {
 }
 
 export interface JSONPatch {
-  op: 'replace' // | 'add' | 'remove'
+  op: 'replace' | 'insertNode' // | 'add' | 'remove'
   path: string[]
   value: any
 }
@@ -228,6 +228,15 @@ export function applyJSONTreePatches(
           set(node, restKeys, value)
         })
         break
+      case 'insertNode':
+        current.forEach(node => {
+          if (node.children) {
+            node.children = [].concat(node.children).concat(value)
+          } else {
+            node.children= [value]
+          }
+        })
+        break
     }
   }
 
@@ -247,6 +256,8 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
 
   const jsonTree = buildLayoutNestedObj(json)
 
+  const jsonOperates = ['insert']
+
   function createProxy(target: JSONObjectTree, pathArr: string[] = []) {
     const proxy = new Proxy(target, {
       get(target, key: string | symbol) {
@@ -255,8 +266,12 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
         }
         const v = Reflect.get(target, key)
         // console.log('target=', target, 'key=', key, 'value=',v);
-        if (typeof v === 'object' && typeof key === 'string') {
-          return createProxy(v, pathArr.concat(key))
+        if (typeof key === 'string') {
+          if (typeof v === 'object') {
+            return createProxy(v, pathArr.concat(key))
+          } else if (jsonOperates.includes(key)) {
+            return createProxy(() => {}, pathArr)
+          }
         }
         return v
       },
@@ -269,7 +284,15 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
         })
         Reflect.set(target, key, value)
         return true
-      }
+      },
+      apply(target, thisArg, argArray) {
+        const currentPathArr = pathArr;
+        patches.push({
+          op: 'insertNode',
+          path: currentPathArr,
+          value: argArray[0]
+        })
+      },
     })
     return proxy
   }

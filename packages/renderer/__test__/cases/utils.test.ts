@@ -127,6 +127,73 @@ describe('utils', () => {
       ]
     })
   })
+  it('applyJSONTreePatches with insertNode', () => {
+    const json: VirtualLayoutJSON = {
+      id: 1,
+      tag: 'div',
+      props: {
+        id: 'root'
+      },
+      children: [
+        {
+          id: 0,
+          tag: 'div',
+          props: {
+            id: 'child1'
+          },
+          children: 1
+        },
+        {
+          id: 0,
+          tag: 'div',
+          props: {
+            id: 'child2'
+          },
+          children: undefined
+        },
+      ]
+    }
+    const patches: JSONPatch[] = [
+      {
+        op: 'insertNode',
+        path: ['div'],
+        value: 1
+      },
+      {
+        op: 'insertNode',
+        path: ['div', 'div'],
+        value: 2
+      },
+    ]
+
+    const result = applyJSONTreePatches(json, patches)
+    expect(result).toEqual({
+      id: 1,
+      tag: 'div',
+      props: {
+        id: 'root'
+      },
+      children: [
+        {
+          id: 0,
+          tag: 'div',
+          props: {
+            id: 'child1'
+          },
+          children: [1, 2]
+        },
+        {
+          id: 0,
+          tag: 'div',
+          props: {
+            id: 'child2'
+          },
+          children: [2]
+        },
+        1
+      ]
+    })
+  })
   it('proxyLayoutJSON', () => {
     const json: VirtualLayoutJSON = {
       id: 1,
@@ -169,6 +236,49 @@ describe('utils', () => {
       ]
     })
   })
+  it('proxyLayoutJSON with operates', () => {
+    const json: VirtualLayoutJSON = {
+      id: 1,
+      tag: 'div',
+      props: {
+        id: 'root'
+      },
+      children: [
+        {
+          id: 0,
+          tag: 'div',
+          props: {
+            id: 'child'
+          },
+          children: undefined
+        }
+      ]
+    }
+    const { draft, apply } = proxyLayoutJSON(json)
+    draft.div.insert(0)
+    draft.div.div.insert(1)
+
+    const result = apply()
+
+    expect(result).toEqual({
+      id: 1,
+      tag: 'div',
+      props: {
+        id: 'root'
+      },
+      children: [
+        {
+          id: 0,
+          tag: 'div',
+          props: {
+            id: 'child'
+          },
+          children: [1]
+        },
+        0,
+      ]
+    })
+  })
   it('assignRules', () => {
     const json: VirtualLayoutJSON = {
       id: 1,
@@ -201,14 +311,14 @@ describe('utils', () => {
     const { draft, apply } = proxyLayoutJSON(json)
     const rules: StyleRule[] = [
       {
-        selector: draft.div,
+        target: draft.div,
         condition: true,
         style: {
           color: 'red'
         }
       },
       {
-        selector: draft.div.span,
+        target: draft.div.span,
         condition: true,
         style: {
           color: 'blue'
