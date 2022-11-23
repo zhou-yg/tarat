@@ -1,6 +1,6 @@
 {
   "name": "tarat-renderer",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "useHook serverless framework",
   "main": "./dist/renderer.js",
   "module": "./dist/renderer.esm.js",
@@ -11,7 +11,6 @@
     "test-unit": "jest",
     "test-ci": "jest --coverage",
     "format": "prettier --write --parser typescript \"*/*.ts?(x)\"",
-    "format:commit": "npm run format && git commit -a -m 'feat(core): lint'",
     "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs && sh after-build.sh",
     "build:watch": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs --watch",
     "release": "bump && npm run build && pnpm publish --no-git-checks"

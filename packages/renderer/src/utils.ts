@@ -233,7 +233,7 @@ export function applyJSONTreePatches(
           if (node.children) {
             node.children = [].concat(node.children).concat(value)
           } else {
-            node.children= [value]
+            node.children = [value]
           }
         })
         break
@@ -286,13 +286,13 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
         return true
       },
       apply(target, thisArg, argArray) {
-        const currentPathArr = pathArr;
+        const currentPathArr = pathArr
         patches.push({
           op: 'insertNode',
           path: currentPathArr,
           value: argArray[0]
         })
-      },
+      }
     })
     return proxy
   }

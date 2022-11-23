@@ -123,6 +123,7 @@ function filterProps(props?: any) {
 }
 
 export function createReactContainer (React: any, module: SingleFileModule) {
+  module = {...module}
   const cacheSymbol = Symbol('cacheSymbol')
 
   const runLogic = runReactLogic.bind(null, React, module.logic)
