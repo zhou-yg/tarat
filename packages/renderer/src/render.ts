@@ -111,13 +111,13 @@ export function useLogic<T = any>(...args: any[]): T {
   return renderer.renderHooksContainer.runLogic(...args) as T
 }
 
-export function useModule(module: SingleFileModule) {
+export function useModule<T extends Record<string, any>>(module: SingleFileModule) {
   const renderer = getCurrentRenderer()
   if (!renderer) {
     throw new Error('useModule must be called in render function')
   }
   const subModuleRenderer = createRenderer(module, renderer.renderHost)
-  return (props: Record<string, any>) => {
+  return (props: T) => {
     return subModuleRenderer.render(props)
   }
 }
