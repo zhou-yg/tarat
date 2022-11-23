@@ -1,11 +1,13 @@
 import {
   ModuleRenderContainer,
+  OverrideModule,
   RenderHost,
   SingleFileModule,
   VirtualLayoutJSON
 } from './types'
 
 import { createReactContainer } from './frameworks/react'
+import { mergeOverrideModules } from './utils'
 
 let globalCurrentRenderer: Renderer | null = null
 
@@ -23,7 +25,11 @@ class Renderer {
   mounted: boolean = false
 
   renderHooksContainer: ModuleRenderContainer = null
-  constructor(public module: SingleFileModule, public renderHost: RenderHost) {
+  constructor(
+    public module: SingleFileModule,
+    public renderHost: RenderHost,
+    public override?: OverrideModule
+  ) {
     this.createHooksContainer()
   }
 
@@ -41,14 +47,14 @@ class Renderer {
     }
   }
 
-  render(props?: any) {
+  render(props?: any, override?: OverrideModule) {
     pushCurrentRenderer(this)
     let r
 
     if (this.mounted) {
-      r = this.update(props)
+      r = this.update(props, override)
     } else {
-      r = this.mount(props)
+      r = this.mount(props, override)
     }
 
     popCurrentRenderer()
@@ -56,20 +62,23 @@ class Renderer {
     return r
   }
 
-  mount(props?: any) {
+  mount(props?: any, override?: OverrideModule) {
     this.mounted = true
-    return this.renderHooksContainer.render(props)
+    const mergedOverride = mergeOverrideModules([this.override, override])
+    return this.renderHooksContainer.render(props, mergedOverride)
   }
-  update(props?: any) {
-    return this.renderHooksContainer.render(props)
+  update(props?: any, override?: OverrideModule) {
+    const mergedOverride = mergeOverrideModules([this.override, override])
+    return this.renderHooksContainer.render(props, mergedOverride)
   }
 }
 
 export function createRenderer(
   module: SingleFileModule,
-  renderHost: RenderHost
+  renderHost: RenderHost,
+  override?: OverrideModule
 ) {
-  const renderer = new Renderer(module, renderHost)
+  const renderer = new Renderer(module, renderHost, override)
 
   return renderer
 }
@@ -111,14 +120,18 @@ export function useLogic<T = any>(...args: any[]): T {
   return renderer.renderHooksContainer.runLogic(...args) as T
 }
 
-export function useModule<T extends Record<string, any>>(module: SingleFileModule) {
+export function useModule<T extends Record<string, any>>(module: SingleFileModule, override?: OverrideModule) {
   const renderer = getCurrentRenderer()
   if (!renderer) {
     throw new Error('useModule must be called in render function')
   }
-  const subModuleRenderer = createRenderer(module, renderer.renderHost)
-  return (props: T) => {
-    return subModuleRenderer.render(props)
+  const subModuleRenderer = createRenderer(module, renderer.renderHost, override)
+
+  return (
+    props: T & { className?: string },
+    override?: OverrideModule
+  ) => {
+    return subModuleRenderer.render(props, override)
   }
 }
 

@@ -1,7 +1,7 @@
 import type * as CSS from 'csstype'
 import type { ProxyLayoutHandler } from './utils'
 
-type BaseDataType = string | number | boolean | null | undefined
+export type BaseDataType = string | number | boolean | null | undefined
 
 // const root = {
 //   div: {
@@ -40,7 +40,7 @@ export interface VirtualLayoutJSON {
   id: number
   tag: string | Function
   props: Record<string, any>
-  children: VirtualLayoutJSON[] | BaseDataType
+  children: (VirtualLayoutJSON | BaseDataType)[] | BaseDataType
 }
 
 export interface RenderHost {
@@ -62,6 +62,11 @@ type FrameworkVirtualNode = any
 
 export interface ModuleRenderContainer {
   runLogic: (...args: any[]) => Record<string, any>
-  render: (props?: any) => FrameworkVirtualNode
+  render: (props?: any, override?: OverrideModule) => FrameworkVirtualNode
   genLayout: (props?: any) => JSONObjectTree
+}
+
+
+export interface OverrideModule {
+  layout?: (jsonTree: JSONObjectTree) => void
 }

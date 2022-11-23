@@ -2,10 +2,52 @@ import {
   VirtualLayoutJSON,
   JSONObjectTree,
   StyleRule,
-  PatternStructure
+  PatternStructure,
+  BaseDataType,
+  OverrideModule
 } from './types'
 import { deepClone } from './lib/deepClone'
 import { CSSProperties } from '../jsx-runtime'
+
+export function mergeOverrideModules (modules: OverrideModule[]) {
+  const result: OverrideModule = {}
+  for (const module of modules) {
+    if (module) {
+      for (const key in module) {
+        if (result[key]) {
+          result[key] = [].concat(result[key]).concat(module[key])
+        } else {
+          result[key] = module[key]
+        }
+      }
+    }
+  }
+
+  Object.entries(result).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      // compose function array
+      result[key] = value.reduceRight((prev, cur) => {
+        return (props: any) => {
+          return cur(prev(props))
+        }
+      })
+    }
+  })
+
+  return result
+}
+
+export function mergeClassNameFromProps (json: VirtualLayoutJSON, props: Record<string, any>) {
+  const { className } = props
+  if (className) {
+    if (json.props.className) {
+      json.props.className = `${json.props.className} ${className}`
+    } else {
+      json.props.className = className
+    }
+  }
+  return json
+}
 
 export function assignRules(draft: JSONObjectTree, rules: StyleRule[]) {
   for (const rule of rules) {
@@ -150,7 +192,7 @@ function getChildrenByPath(
           if (path[i + 1] === ExportPropKey) {
             newCurrent.push(node)
           } else if (Array.isArray(node.children)) {
-            newCurrent.push(...node.children)
+            newCurrent.push(...node.children.filter(isVirtualNode))
           }
         }
       }
@@ -250,24 +292,26 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
 export function buildLayoutNestedObj(json: VirtualLayoutJSON) {
   let root: JSONObjectTree = {}
 
-  function buildRoot(target: JSONObjectTree, source: VirtualLayoutJSON) {
-    const tag = source.tag
-    if (typeof tag === 'string') {
-      /**
-       * @TODO how to keep reference to original "props object"?
-       */
-      target[tag] = <JSONObjectTree>{
-        [ExportPropKey]: source.props
+  function buildRoot(target: JSONObjectTree, source: VirtualLayoutJSON | BaseDataType) {
+    if (isVirtualNode(source)) {
+      const tag = source?.tag
+      if (typeof tag === 'string') {
+        /**
+         * @TODO how to keep reference to original "props object"?
+         */
+        target[tag] = <JSONObjectTree>{
+          [ExportPropKey]: source.props
+        }
+        if (Array.isArray(source.children) || isVirtualNode(source.children)) {
+          ;[].concat(source.children).forEach(child => {
+            buildRoot(target[tag], child)
+          })
+        }
+      } else {
+        /**
+         * @TODO support custom component
+         */
       }
-      if (Array.isArray(source.children) || isVirtualNode(source.children)) {
-        ;[].concat(source.children).forEach(child => {
-          buildRoot(target[tag], child)
-        })
-      }
-    } else {
-      /**
-       * @TODO support custom component
-       */
     }
   }
 

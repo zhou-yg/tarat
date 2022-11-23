@@ -1,8 +1,8 @@
-import { JSONObjectTree, SingleFileModule, VirtualLayoutJSON } from "../types";
+import { JSONObjectTree, OverrideModule, SingleFileModule, VirtualLayoutJSON } from "../types";
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
-import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern, SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS } from '../utils'
+import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern, SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeClassNameFromProps } from '../utils'
 
 
 declare global {
@@ -185,7 +185,7 @@ export function createReactContainer (React: any, module: SingleFileModule) {
     return React.createElement(json.tag, filterProps(json.props), children)
   }
   
-  function render (props?: any) {
+  function render (props?: any, override?: OverrideModule) {
     if (!props) {
       props = {}
     }
@@ -198,11 +198,20 @@ export function createReactContainer (React: any, module: SingleFileModule) {
       if (rules) {
         assignRules(proxyHandler.draft, rules)
       }
+
+      if (override) {
+        override.layout?.(proxyHandler.draft)
+      }
+
       let newJSON = proxyHandler.apply()
+      
+      newJSON = mergeClassNameFromProps(newJSON, props)
+
       const patternResult = module.designPattern?.(props)
       if (patternResult) {
         newJSON = assignPattern(newJSON, patternResult)
       }
+
       // assignPattern(json)
       const root = createElementDepth(newJSON)
   
