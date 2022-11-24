@@ -25,7 +25,7 @@ describe('render', () => {
 
     expect(rr3).toEqual({
       type: 'div',
-      props: { name: 'test', container: true },
+      props: { name: 'test', container: 1 },
       children: 1
     })
   })
