@@ -107,7 +107,7 @@ interface ModuleCache {
  * fix error:
  *    react-dom.development.js:86 Warning: Received `true` for a non-boolean attribute `is-container`.If you want to write it to the DOM, pass a string instead: is-container="true" or is-container={value.toString()}.
  */
-function filterProps(props?: any) {
+function filterPatternSematicProps(props?: any) {
   if (!props) {
     return props
   }
@@ -176,7 +176,8 @@ export function createReactContainer (React: any, module: SingleFileModule) {
       return json
     }
     let children = json.children
-    let elementArgs = [json.tag, filterProps(json.props)]
+    let elementArgs = [json.tag, filterPatternSematicProps(json.props)]
+
     if (Array.isArray(json.children)) {
       children = json.children.map(createElementDepth)
       elementArgs.push(...children)

@@ -40,7 +40,7 @@ export interface VirtualLayoutJSON {
   id: number
   tag: string | Function
   props: Record<string, any>
-  children: (VirtualLayoutJSON | BaseDataType)[] | BaseDataType
+  children: (VirtualLayoutJSON | BaseDataType)[] | BaseDataType | VirtualLayoutJSON
 }
 
 export interface RenderHost {

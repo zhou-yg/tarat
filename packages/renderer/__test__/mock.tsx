@@ -1,11 +1,34 @@
 /* @jsxFactory h  */
 import { h, useLayout, useLogic } from '../src/index'
-import { SingleFileModule } from '../src/types'
+import { BaseDataType, SingleFileModule, VirtualLayoutJSON } from '../src/types'
+
+export interface MockReactElement {
+  // $$typeof: symbol
+  props: Record<string, any>
+  type: string | Function
+  children?: (BaseDataType | MockReactElement)[] | MockReactElement | BaseDataType
+}
 
 export const MockRectFramework = {
   name: 'react',
   lib: {
-    createElement: h,
+    createElement(
+      type: string | Function,
+      props: Record<string, any> | null,
+      ...children: MockReactElement[]
+    ): MockReactElement {
+      return {
+        // $$typeof: Symbol.for('react.element'),
+        type,
+        props: props || {},
+        children:
+          children.length === 0
+            ? undefined
+            : children.length === 1
+            ? children[0]
+            : children
+      }
+    },
     useRef: (v = null) => ({ current: v }),
     useState: (v = undefined) => [v, () => {}],
     useEffect: () => {}
