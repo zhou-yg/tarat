@@ -5,6 +5,7 @@ import {
   layoutUseLogic,
   MockRectFramework,
   useStyleInLayout,
+  useOtherModule,
 } from '../mock'
 
 describe('render', () => {
@@ -19,9 +20,10 @@ describe('render', () => {
       framework: MockRectFramework
     })
 
-    const rr2 = rr.render({ name: 'test' })
+    rr.construct({ name: 'test' })
+    const rr3 = rr.render()
 
-    expect(rr2).toEqual({
+    expect(rr3).toEqual({
       type: 'div',
       props: { name: 'test', container: true },
       children: 1
@@ -32,12 +34,39 @@ describe('render', () => {
     const rr = createRenderer(useStyleInLayout(), {
       framework: MockRectFramework
     })
-    const rr2 = rr.render({ name: 'test2' })
+    const rr2 = rr.construct({ name: 'test2' })
+    const rr3 = rr.render()
 
-    expect(rr2).toEqual({
+    expect(rr3).toEqual({
       type: 'div',
       props: { name: 'test2', style: { color: 'red' } },
       children: { type: 'span', props: {}, children: 1 }
+    })
+  })
+
+  it('layout use other module', () => {
+    const rr = createRenderer(useOtherModule(), {
+      framework: MockRectFramework
+    })
+    const rr2 = rr.construct()
+    const rr3 = rr.render()
+    console.log('rr3: ', rr3.children);
+
+    expect(rr3).toEqual({
+      type: 'div',
+      props: { style: { color: 'red' } },
+      children: [
+        {
+          type: 'span',
+          props: {},
+          children: 1,
+        },
+        {
+          type: 'div',
+          props: { name: 'm2', 'is-container': 1 },
+          children: 1,        
+        }
+      ]
     })
   })
 })

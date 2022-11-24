@@ -1,5 +1,5 @@
 /* @jsxFactory h  */
-import { h, useLayout, useLogic } from '../src/index'
+import { h, useLayout, useLogic, useModule } from '../src/index'
 import { BaseDataType, SingleFileModule, VirtualLayoutJSON } from '../src/types'
 
 export interface MockReactElement {
@@ -70,7 +70,7 @@ export function layoutUseLogic(): SingleFileModule {
     layout(props: { name: string }) {
       const logic = useLogic<{ num: number }>()
       return (
-        <div name={props.name} container>
+        <div name={props.name} is-container>
           {logic.num}
         </div>
       )
@@ -92,6 +92,57 @@ export function useStyleInLayout(): SingleFileModule {
       )
     },
     styleRules(props: { name: string }) {
+      const root = useLayout()
+      root.div.props.style = {
+        color: 'red'
+      }
+    }
+  }
+}
+
+export function useOtherModule (): SingleFileModule {
+  return {
+    logic() {
+      return { num: 1 }
+    },
+    layout() {
+      const logic = useLogic<{ num: number }>()
+      const M2 = useModule(layoutUseLogic())
+      return (
+        <div>
+          <span>{logic.num}</span>
+
+          {M2({ name: 'm2' })}
+        </div>
+      )
+    },
+    styleRules() {
+      const root = useLayout()
+      root.div.props.style = {
+        color: 'red'
+      }
+    }
+  }
+}
+export function useOtherComponentModule (): SingleFileModule {
+  return {
+    logic() {
+      return { num: 1 }
+    },
+    layout() {
+      const logic = useLogic<{ num: number }>()
+      const M2 = useModule(layoutUseLogic())
+      return (
+        <div>
+          <span>{logic.num}</span>
+
+          {M2({ name: 'm2' })}
+
+          {/* <M2 name="m2" /> */}
+        </div>
+      )
+    },
+    styleRules() {
       const root = useLayout()
       root.div.props.style = {
         color: 'red'

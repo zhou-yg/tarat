@@ -190,7 +190,7 @@ export function createReactContainer (React: any, module: SingleFileModule) {
     return React.createElement(...elementArgs)
   }
   
-  function render (props?: any, override?: OverrideModule) {
+  function construct (props?: any, override?: OverrideModule) {
     if (!props) {
       props = {}
     }
@@ -218,23 +218,29 @@ export function createReactContainer (React: any, module: SingleFileModule) {
       }
 
       // assignPattern(json)
-      const root = createElementDepth(newJSON)
-  
+      // const root = createElementDepth(newJSON) 
+
       disposeFromModule()
 
-      return root
+      return newJSON
     }
     return null
   }
 
-  function genLayout (props?: any) {
+  function render (json: VirtualLayoutJSON) {
+    const root = createElementDepth(json)
+    return root
+  }
+
+  function getLayout (props?: any) {
     const { proxyHandler } = getLayoutFromModule(props)
     return proxyHandler?.draft
   }
 
   return {
     render,
+    construct,
     runLogic: runLogicFromCache,
-    genLayout,
+    getLayout,
   }
 }

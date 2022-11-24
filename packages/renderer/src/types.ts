@@ -62,8 +62,9 @@ type FrameworkVirtualNode = any
 
 export interface ModuleRenderContainer {
   runLogic: (...args: any[]) => Record<string, any>
-  render: (props?: any, override?: OverrideModule) => FrameworkVirtualNode
-  genLayout: (props?: any) => JSONObjectTree
+  render: (json: VirtualLayoutJSON) => FrameworkVirtualNode
+  construct: (props?: any, override?: OverrideModule) => VirtualLayoutJSON;
+  getLayout: (props?: any) => JSONObjectTree
 }
 
 export interface OverrideModule {
