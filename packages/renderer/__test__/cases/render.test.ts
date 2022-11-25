@@ -25,7 +25,7 @@ describe('render', () => {
 
     expect(rr3).toEqual({
       type: 'div',
-      props: { name: 'test', container: 1 },
+      props: { name: 'test', "is-container": 1 },
       children: 1
     })
   })
@@ -50,7 +50,6 @@ describe('render', () => {
     })
     const rr2 = rr.construct()
     const rr3 = rr.render()
-    console.log('rr3: ', rr3.children);
 
     expect(rr3).toEqual({
       type: 'div',

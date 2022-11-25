@@ -26,7 +26,7 @@ class Renderer {
 
   renderHooksContainer: ModuleRenderContainer = null
 
-  layoutJSON: VirtualLayoutJSON;
+  layoutJSON: VirtualLayoutJSON
 
   constructor(
     public module: SingleFileModule,
@@ -60,8 +60,8 @@ class Renderer {
   construct(props?: any, override?: OverrideModule) {
     pushCurrentRenderer(this)
 
-    let r = this.mount(props, override);
-    this.layoutJSON = r;
+    let r = this.mount(props, override)
+    this.layoutJSON = r
 
     popCurrentRenderer()
 
@@ -124,7 +124,7 @@ export function useLogic<T = any>(...args: any[]): T {
 
 export function useModule<T extends Record<string, any>>(
   module: SingleFileModule,
-  override?: OverrideModule,
+  override?: OverrideModule
 ) {
   const renderer = getCurrentRenderer()
   if (!renderer) {
@@ -143,7 +143,7 @@ export function useModule<T extends Record<string, any>>(
 }
 export function useComponentModule<T extends Record<string, any>>(
   module: SingleFileModule,
-  override?: OverrideModule,
+  override?: OverrideModule
 ) {
   const renderer = getCurrentRenderer()
   if (!renderer) {

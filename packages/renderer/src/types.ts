@@ -40,7 +40,10 @@ export interface VirtualLayoutJSON {
   id: number
   tag: string | Function
   props: Record<string, any>
-  children: (VirtualLayoutJSON | BaseDataType)[] | BaseDataType | VirtualLayoutJSON
+  children:
+    | (VirtualLayoutJSON | BaseDataType)[]
+    | BaseDataType
+    | VirtualLayoutJSON
 }
 
 export interface RenderHost {
@@ -63,7 +66,7 @@ type FrameworkVirtualNode = any
 export interface ModuleRenderContainer {
   runLogic: (...args: any[]) => Record<string, any>
   render: (json: VirtualLayoutJSON) => FrameworkVirtualNode
-  construct: (props?: any, override?: OverrideModule) => VirtualLayoutJSON;
+  construct: (props?: any, override?: OverrideModule) => VirtualLayoutJSON
   getLayout: (props?: any) => JSONObjectTree
 }
 

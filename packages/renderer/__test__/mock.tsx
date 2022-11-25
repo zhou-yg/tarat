@@ -6,7 +6,10 @@ export interface MockReactElement {
   // $$typeof: symbol
   props: Record<string, any>
   type: string | Function
-  children?: (BaseDataType | MockReactElement)[] | MockReactElement | BaseDataType
+  children?:
+    | (BaseDataType | MockReactElement)[]
+    | MockReactElement
+    | BaseDataType
 }
 
 export const MockRectFramework = {
@@ -100,7 +103,7 @@ export function useStyleInLayout(): SingleFileModule {
   }
 }
 
-export function useOtherModule (): SingleFileModule {
+export function useOtherModule(): SingleFileModule {
   return {
     logic() {
       return { num: 1 }
@@ -124,7 +127,7 @@ export function useOtherModule (): SingleFileModule {
     }
   }
 }
-export function useOtherComponentModule (): SingleFileModule {
+export function useOtherComponentModule(): SingleFileModule {
   return {
     logic() {
       return { num: 1 }
