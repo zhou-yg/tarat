@@ -5,7 +5,7 @@
  *  in Other, by extension institution
  */
 import {
-  CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
+  CurrentRunnerScope, Driver, getNamespace, IHookContext, isSignal, Runner
 } from 'atomic-signal'
 import { StateManagementConfig, VirtualLayoutJSON } from '../types'
 import { isFunction, last, traverse, traverseLayoutTree, unstable_serialize } from '../utils'
@@ -29,7 +29,7 @@ function transform (json: VirtualLayoutJSON) {
       Object.entries(props).forEach(([key, value]) => {
         // if support two binding calling
         if (
-          typeof value === 'function' &&
+          isSignal(value) &&
           key === 'value' && 
           node.tag === 'input'
         ) {

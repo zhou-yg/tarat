@@ -34,7 +34,7 @@ export interface SingleFileModule {
   layout?: (...args: any[]) => VirtualLayoutJSON
   designPattern?: (...args: any[]) => PatternStructure | void
   styleRules?: (...args: any[]) => StyleRule[] | void
-  config?: (...args: any[]) => ModuleConfig,
+  config?: (...args: any[]) => ModuleConfig
 }
 
 export interface VirtualLayoutJSON {
@@ -95,6 +95,10 @@ export interface StateManagementMatch {
 
 export interface StateManagementConfig {
   matches: StateManagementMatch[]
-  runLogic: <T extends Func>(react: any, hook: T, args: Parameters<T>) => ReturnType<T>;
+  runLogic: <T extends Func>(
+    react: any,
+    hook: T,
+    args: Parameters<T>
+  ) => ReturnType<T>
   transform: (json: VirtualLayoutJSON) => VirtualLayoutJSON
 }

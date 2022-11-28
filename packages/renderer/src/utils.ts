@@ -371,10 +371,7 @@ export function traverseLayoutTree(
   callback: (n: VirtualLayoutJSON) => void
 ) {
   traverse(layoutTree, (k, v) => {
-    if (
-      typeof v === 'object' &&
-      isVirtualNode(v)
-    ) {
+    if (typeof v === 'object' && isVirtualNode(v)) {
       callback(v)
     }
   })

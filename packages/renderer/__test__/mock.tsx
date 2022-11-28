@@ -1,6 +1,9 @@
 /* @jsxFactory h  */
 import { h, useLayout, useLogic, useModule } from '../src/index'
 import { BaseDataType, SingleFileModule, VirtualLayoutJSON } from '../src/types'
+import {
+  signal
+} from 'atomic-signal'
 
 export interface MockReactElement {
   // $$typeof: symbol
@@ -154,11 +157,10 @@ export function useOtherComponentModule(): SingleFileModule {
   }
 }
 
-export function hasInputInLayout (): SingleFileModule {
+export function hasInputInLayout(): SingleFileModule {
   return {
     logic() {
-      const num = () => {
-      }
+      const num = signal(0)
       return { num }
     },
     layout() {
