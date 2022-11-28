@@ -1,4 +1,4 @@
-import { clearIdIndex, createRenderer } from '../../src'
+import { clearIdIndex, createRenderer, isVirtualNode, VirtualLayoutJSON } from '../../src'
 import {
   simpleModule,
   moduleHasMultipleChild,
@@ -6,6 +6,7 @@ import {
   MockRectFramework,
   useStyleInLayout,
   useOtherModule,
+  hasInputInLayout,
 } from '../mock'
 
 describe('render', () => {
@@ -67,5 +68,15 @@ describe('render', () => {
         }
       ]
     })
+  })
+
+  it.only('auto add input handler', () => {
+    const rr = createRenderer(hasInputInLayout(), {
+      framework: MockRectFramework
+    })
+    const rr2 = rr.construct()
+
+    expect(isVirtualNode(rr2.children)).toBe(true)
+    expect((rr2.children as VirtualLayoutJSON).props.onInput.name).toBe('reactSignalTransformOnInput')
   })
 })

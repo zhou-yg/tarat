@@ -153,3 +153,21 @@ export function useOtherComponentModule(): SingleFileModule {
     }
   }
 }
+
+export function hasInputInLayout (): SingleFileModule {
+  return {
+    logic() {
+      const num = () => {
+      }
+      return { num }
+    },
+    layout() {
+      const logic = useLogic<{ num: number }>()
+      return (
+        <div>
+          <input value={logic.num} />
+        </div>
+      )
+    }
+  }
+}

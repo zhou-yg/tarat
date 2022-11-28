@@ -1,102 +1,14 @@
-import { JSONObjectTree, OverrideModule, SingleFileModule, VirtualLayoutJSON } from "../types";
+import { JSONObjectTree, OverrideModule, SingleFileModule, StateManagementConfig, VirtualLayoutJSON } from "../types";
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
 import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern, SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeClassNameFromProps } from '../utils'
-
-
-declare global {
-  var dc: any
-  var driverWeakMap: Map<Driver, ArgResultMap>
-}
+import { ExtensionCore } from "../extension";
 
 type ArgResultMap = Map<string, any>
 const driverWeakMap = new Map<Driver, ArgResultMap>()
 
 typeof window !== 'undefined' && (window.driverWeakMap = driverWeakMap)
-
-interface ICacheDriver<T extends Driver> {
-  scope: CurrentRunnerScope<T>
-  result: ReturnType<T>
-}
-
-const scopeSymbol = Symbol.for('@NewRendererReactScope')
-
-function runReactLogic<T extends Driver>(react: any, hook: T, args: Parameters<T>) {
-  const { useRef, useEffect, useState } = react
-  const init = useRef(null) as { current: ICacheDriver<T> | null }
-
-  if (!init.current) {
-
-    const serializedArgs = unstable_serialize(args)
-    const cachedDriverResult: {
-      scope: CurrentRunnerScope<T>
-      result: ReturnType<T>
-    } = driverWeakMap.get(hook)?.get(serializedArgs)
-
-    // match the cache
-    if (cachedDriverResult) {
-      init.current = {
-        scope: cachedDriverResult.scope,
-        result: Object.assign({
-          [scopeSymbol]: cachedDriverResult.scope,
-        }, cachedDriverResult.result),
-      }
-    } else {
-      const bmName: string = hook.__name__ || hook.name
-      let ssrContext: IHookContext[] = []
-  
-      const namespace = getNamespace(hook)
-      const isComposedDriver  = !!(hook as any).__tarat_compose__
-
-      const runner = new Runner(
-        hook,
-        {
-          updateCallbackSync: true,
-          beleiveContext: true,
-        }
-      )
-
-      const initialContext = ssrContext.pop()
-
-      const scope = runner.prepareScope(args, initialContext)
-
-      const r = runner.executeDriver(scope)
-
-      init.current = {
-        scope,
-        result: Object.assign({
-          [scopeSymbol]: scope,
-        }, r)
-      }
-  
-      let m = driverWeakMap.get(hook)
-      if (!m) {
-        m = new Map
-        driverWeakMap.set(hook, m)
-      }
-      m.set(serializedArgs, {
-        scope,
-        result: r,
-      })
-    }
-  }
-  // release event
-  useEffect(() => {
-    function fn() {
-      setHookResult({ ...init.current.result })
-    }
-    init.current.scope.activate()
-    const unListen = init.current.scope.onUpdate(fn)
-    return () => {
-      init.current.scope.deactivate()
-      unListen()
-    }
-  }, [])
-
-  const [hookResult, setHookResult] = useState(init.current.result)
-  return hookResult as ReturnType<T>
-}
 
 interface ModuleCache {
   props?: any;
@@ -122,14 +34,25 @@ function filterPatternSematicProps(props?: any) {
   return obj
 }
 
-export function createReactContainer (React: any, module: SingleFileModule) {
+export function createReactContainer (
+  React: any,
+  module: SingleFileModule,
+  extensionCore: ExtensionCore
+) {
   module = {...module}
   const cacheSymbol = Symbol('cacheSymbol')
 
-  const runLogic = runReactLogic.bind(null, React, module.logic)
+  const moduleConfig = module.config?.() || {}
+
+  const stateManagement = extensionCore.match('react', moduleConfig.logicLib?.name)
+  
+  const runReactLogic = stateManagement?.runLogic.bind(null, React, module.logic)
 
   function initLogic (props?: any) {
-    const r = runLogic([props])
+    if (!runReactLogic) {
+      return
+    }
+    const r = runReactLogic([props])
     const cache: ModuleCache = module[cacheSymbol]
     if (cache) {
       cache.logicResult = r
@@ -217,6 +140,8 @@ export function createReactContainer (React: any, module: SingleFileModule) {
         newJSON = assignPattern(newJSON, patternResult)
       }
 
+      /** modify layout json */
+      stateManagement?.transform(newJSON)
       // assignPattern(json)
       // const root = createElementDepth(newJSON) 
 

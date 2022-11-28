@@ -3,11 +3,14 @@ import {
   OverrideModule,
   RenderHost,
   SingleFileModule,
+  StateManagementConfig,
+  StateManagementMatch,
   VirtualLayoutJSON
 } from './types'
 
 import { createReactContainer } from './frameworks/react'
 import { last, mergeOverrideModules } from './utils'
+import { extensionCore } from './extension'
 
 let globalCurrentRenderer: Renderer[] = []
 
@@ -43,7 +46,8 @@ class Renderer {
         {
           this.renderHooksContainer = createReactContainer(
             framework.lib,
-            this.module
+            this.module,
+            extensionCore
           )
         }
         break

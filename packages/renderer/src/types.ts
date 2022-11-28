@@ -34,6 +34,7 @@ export interface SingleFileModule {
   layout?: (...args: any[]) => VirtualLayoutJSON
   designPattern?: (...args: any[]) => PatternStructure | void
   styleRules?: (...args: any[]) => StyleRule[] | void
+  config?: (...args: any[]) => ModuleConfig,
 }
 
 export interface VirtualLayoutJSON {
@@ -51,6 +52,10 @@ export interface RenderHost {
     name: string
     lib: any
   }
+  stateManagement?: {
+    name: string // default is 'signal'
+    lib: any
+  }
   // frameworkAPI?: {
   //   createElement: (
   //     tag: string | Function,
@@ -63,6 +68,13 @@ export interface RenderHost {
 
 type FrameworkVirtualNode = any
 
+export interface ModuleConfig {
+  // default is 'signal'
+  logicLib?: {
+    name: string
+  }
+}
+
 export interface ModuleRenderContainer {
   runLogic: (...args: any[]) => Record<string, any>
   render: (json: VirtualLayoutJSON) => FrameworkVirtualNode
@@ -72,4 +84,17 @@ export interface ModuleRenderContainer {
 
 export interface OverrideModule {
   layout?: (jsonTree: JSONObjectTree) => void
+}
+
+type Func = (...args: any[]) => any
+
+export interface StateManagementMatch {
+  renderFramework: string
+  stateManagement: string
+}
+
+export interface StateManagementConfig {
+  matches: StateManagementMatch[]
+  runLogic: <T extends Func>(react: any, hook: T, args: Parameters<T>) => ReturnType<T>;
+  transform: (json: VirtualLayoutJSON) => VirtualLayoutJSON
 }

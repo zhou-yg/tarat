@@ -4,7 +4,8 @@ import {
   StyleRule,
   PatternStructure,
   BaseDataType,
-  OverrideModule
+  OverrideModule,
+  StateManagementMatch
 } from './types'
 import { deepClone } from './lib/deepClone'
 import { CSSProperties } from '../jsx-runtime'
@@ -372,9 +373,7 @@ export function traverseLayoutTree(
   traverse(layoutTree, (k, v) => {
     if (
       typeof v === 'object' &&
-      Reflect.has(v, 'tag') &&
-      Reflect.has(v, 'props') &&
-      Reflect.has(v, 'children')
+      isVirtualNode(v)
     ) {
       callback(v)
     }
