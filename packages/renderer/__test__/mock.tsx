@@ -1,9 +1,7 @@
 /* @jsxFactory h  */
 import { h, useLayout, useLogic, useModule } from '../src/index'
 import { BaseDataType, SingleFileModule, VirtualLayoutJSON } from '../src/types'
-import {
-  signal
-} from 'atomic-signal'
+import { signal } from 'atomic-signal'
 
 export interface MockReactElement {
   // $$typeof: symbol

@@ -41,6 +41,7 @@ function transform (json: VirtualLayoutJSON) {
           if (props.onInput && isFunction(props.onInput)) {
             fns.push(props.onInput)
           }
+          props.value = value()
           props.onInput = function reactSignalTransformOnInput (e: { target: { value: number | string } }) {
             fns.forEach(fn => {
               fn(e)
