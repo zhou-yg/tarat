@@ -31,6 +31,7 @@
   },
   "homepage": "https://github.com/zhou-yg/tarat#readme",
   "dependencies": {
+    "@emotion/css": "^11.10.5",
     "atomic-signal": "workspace:*",
     "csstype": "^3.1.1"
   },

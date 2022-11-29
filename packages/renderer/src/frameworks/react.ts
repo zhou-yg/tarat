@@ -142,8 +142,6 @@ export function createReactContainer (
 
       /** modify layout json */
       stateManagement?.transform(newJSON)
-      // assignPattern(json)
-      // const root = createElementDepth(newJSON) 
 
       disposeFromModule()
 

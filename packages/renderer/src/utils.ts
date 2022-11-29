@@ -5,10 +5,12 @@ import {
   PatternStructure,
   BaseDataType,
   OverrideModule,
-  StateManagementMatch
+  StateManagementMatch,
+  PatternStructureResult
 } from './types'
 import { deepClone } from './lib/deepClone'
 import { CSSProperties } from '../jsx-runtime'
+import { css } from '@emotion/css'
 
 export function mergeOverrideModules(modules: OverrideModule[]) {
   const result: OverrideModule = {}
@@ -92,11 +94,36 @@ function checkSematic(sematic: string, props: VirtualLayoutJSON['props']) {
   }
   return result
 }
+
+function selectorHasPseudoClass(selector: string) {
+  return selector.includes(':')
+}
+
+function camelToLine(str: string) {
+  return str.replace(/([A-Z])/g, '-$1').toLowerCase()
+}
+
+function patternResultToEmotionCSS(
+  style: PatternStructureResult,
+  pseudo?: string
+) {
+  let styleRows: string[] = []
+  Object.entries(style || {}).forEach(([k, v]) => {
+    const r = Array.isArray(v) ? last(v) : v
+    styleRows.push(`${camelToLine(k)}: ${r};`)
+  })
+
+  return css`
+    ${styleRows.join('\n')}
+  `
+}
+
 export function assignPattern(
   json: VirtualLayoutJSON,
   pattern: PatternStructure
 ): VirtualLayoutJSON {
-  const source = deepClone(json)
+  // const source = deepClone(json)
+  const source = json
 
   traverseLayoutTree(source, node => {
     const { props } = node
@@ -106,13 +133,12 @@ export function assignPattern(
         if (!props.style) {
           props.style = {}
         }
-        Object.entries(style || {}).forEach(([k, v]) => {
-          if (Array.isArray(v)) {
-            props.style[k] = last(v)
-          } else {
-            props.style[k] = v
-          }
-        })
+        const cls = patternResultToEmotionCSS(style)
+        if (props.className) {
+          props.className = `${props.className} ${cls}`
+        } else {
+          props.className = cls
+        }
       }
     }
   })

@@ -23,10 +23,12 @@ export interface StyleRule {
   style: CSS.Properties
 }
 
+export interface PatternStructureResult {
+  [propertyKey: string]: string[]
+}
+
 export interface PatternStructure {
-  [mainSematic: string]: {
-    [propertyKey: string]: string[]
-  }
+  [mainSematic: string]: PatternStructureResult
 }
 
 export interface SingleFileModule {
