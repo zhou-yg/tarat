@@ -168,21 +168,19 @@ interface PatternMatrix {
 }
 
 function equalMatcher(setting: any[] | any[][], inputs: any[]) {
-  return (
-    setting.length === inputs.length &&
-    (setting.every((v, i) => v === inputs[i] || v === '*' || v === '/') ||
+  return setting.every((v, i) => v === inputs[i] || v === '*') ||
       setting.some(arr2 => {
         if (Array.isArray(arr2)) {
           return equalMatcher(arr2, inputs)
         }
         return false
-      }))
-  )
+      })
 }
 
 export function matchPatternMatrix<T extends PatternStructureValueMatcher>(
   patternInputs: T
 ) {
+
   return (ps: PatternMatrix) => {
     let result: PatternStructure = {}
     for (let mainSemantic in ps) {
@@ -191,6 +189,7 @@ export function matchPatternMatrix<T extends PatternStructureValueMatcher>(
         result[mainSemantic][propertyKey] = []
         for (let value in ps[mainSemantic][propertyKey]) {
           const matcher = ps[mainSemantic][propertyKey][value]
+
           if (equalMatcher(matcher, patternInputs) || matcher.length === 0) {
             result[mainSemantic][propertyKey].push(value)
           }

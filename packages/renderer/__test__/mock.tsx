@@ -1,11 +1,5 @@
 /* @jsxFactory h  */
-import {
-  h,
-  matchPatternMatrix,
-  useLayout,
-  useLogic,
-  useModule
-} from '../src/index'
+import { h, matchPatternMatrix, useLayout, useLogic, useModule } from '../src/index'
 import { BaseDataType, SingleFileModule, VirtualLayoutJSON } from '../src/types'
 import { signal } from 'atomic-signal'
 
@@ -178,19 +172,45 @@ export function hasInputInLayout(): SingleFileModule {
   }
 }
 
-export function patternHasMultiMatchers(): SingleFileModule {
+export function patternHasMultiMatchers (): SingleFileModule {
   return {
-    layout() {
-      return <div is-container>i am container</div>
+    layout () {
+      return (
+        <div is-container>
+          i am container
+        </div>
+      )
     },
-    designPattern(props: { v1: boolean; v2: boolean }) {
+    designPattern (props: { v1: boolean, v2: boolean }) {
       const p = matchPatternMatrix([props.v1, props.v2])({
         container: {
           backgroundColor: {
             red: [true, false],
             green: [
               [false, true],
-              [true, true]
+              [true, true],
+            ],
+          }
+        }
+      })
+      return p
+    }
+  }
+}
+
+export function patternHasMultiMatchers2(): SingleFileModule {
+  return {
+    layout() {
+      return <div is-container>i am container</div>
+    },
+    designPattern(props: { v1: boolean }) {
+      const p = matchPatternMatrix([props.v1, false, false, false])({
+        container: {
+          backgroundColor: {
+            red: [],
+            green: [
+              [true, '*', '*', false],
+              ['*', '*', true, false]
             ]
           }
         }
