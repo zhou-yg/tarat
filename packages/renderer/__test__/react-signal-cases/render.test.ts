@@ -70,7 +70,7 @@ describe('render', () => {
     })
   })
 
-  it.only('auto add input handler', () => {
+  it('auto add input handler', () => {
     const rr = createRenderer(hasInputInLayout(), {
       framework: MockRectFramework
     })

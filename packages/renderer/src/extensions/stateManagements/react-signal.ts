@@ -7,8 +7,8 @@
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, isSignal, Runner
 } from 'atomic-signal'
-import { StateManagementConfig, VirtualLayoutJSON } from '../types'
-import { isFunction, last, traverse, traverseLayoutTree, unstable_serialize } from '../utils'
+import { StateManagementConfig, VirtualLayoutJSON } from '../../types'
+import { isFunction, last, traverse, traverseLayoutTree, unstable_serialize } from '../../utils'
 
 export const config: StateManagementConfig = {
   matches: [
@@ -130,16 +130,24 @@ function runReactLogic<T extends Driver>(react: any, hook: T, args: Parameters<T
       })
     }
   }
+  // confirm only run once in React18 with strict mode or in development
+  const didMount = useRef(false)
   // release event
   useEffect(() => {
-    function fn() {
-      setHookResult({ ...init.current.result })
-    }
+    if (didMount.current === true) return
+    didMount.current = true
+
     init.current.scope.activate()
-    const unListen = init.current.scope.onUpdate(fn)
+    const unListen = init.current.scope.onUpdate(() => {
+      setHookResult({ ...init.current.result })
+    })
+
     return () => {
-      init.current.scope.deactivate()
       unListen()
+      init.current.scope.deactivate()
+      init.current.scope.dispose()
+      init.current = null
+      didMount.current = false
     }
   }, [])
 

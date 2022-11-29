@@ -8,7 +8,6 @@ import {
   VirtualLayoutJSON
 } from './types'
 
-import { createReactContainer } from './frameworks/react'
 import { last, mergeOverrideModules } from './utils'
 import { extensionCore } from './extension'
 
@@ -41,17 +40,17 @@ class Renderer {
 
   createHooksContainer() {
     const { framework } = this.renderHost
-    switch (framework.name) {
-      case 'react':
-        {
-          this.renderHooksContainer = createReactContainer(
-            framework.lib,
-            this.module,
-            extensionCore
-          )
-        }
-        break
-    }
+
+    const containerCreator = extensionCore.getContainerCreator(framework.name)
+
+    this.renderHooksContainer = containerCreator(
+      framework.lib,
+      this.module,
+      extensionCore,
+      {
+        useEmotion: this.renderHost.useEmotion
+      }
+    )
   }
 
   render() {

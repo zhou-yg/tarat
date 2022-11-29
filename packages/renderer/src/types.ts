@@ -1,4 +1,5 @@
 import type * as CSS from 'csstype'
+import { ExtensionCore } from './extension'
 import type { ProxyLayoutHandler } from './utils'
 
 export type BaseDataType = string | number | boolean | null | undefined
@@ -58,6 +59,7 @@ export interface RenderHost {
     name: string // default is 'signal'
     lib: any
   }
+  useEmotion?: boolean
   // frameworkAPI?: {
   //   createElement: (
   //     tag: string | Function,
@@ -103,4 +105,13 @@ export interface StateManagementConfig {
     args: Parameters<T>
   ) => ReturnType<T>
   transform: (json: VirtualLayoutJSON) => VirtualLayoutJSON
+}
+
+export interface RenderContainer {
+  (
+    framework: any,
+    module: SingleFileModule,
+    extensionCore: ExtensionCore,
+    options?: { useEmotion: boolean }
+  ): ModuleRenderContainer
 }

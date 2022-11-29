@@ -1,4 +1,8 @@
-import { StateManagementConfig, StateManagementMatch } from './types'
+import type {
+  ModuleRenderContainer,
+  RenderContainer,
+  StateManagementConfig
+} from './types'
 
 export const DEFAULT_STATE_MANAGEMENT = 'signal'
 
@@ -38,6 +42,20 @@ export class ExtensionCore {
     }
     return firstMatchedResult
   }
+
+  containerCreators = new Map<string, RenderContainer>()
+
+  getContainerCreator(frameworkName: string): RenderContainer {
+    const containerCreator = this.containerCreators.get(frameworkName)
+    if (!containerCreator) {
+      throw new Error(`No container found for framework: ${frameworkName}`)
+    }
+    return containerCreator
+  }
+
+  addContainerCreator(frameworkName: string, container: RenderContainer) {
+    this.containerCreators.set(frameworkName, container)
+  }
 }
 
 export const extensionCore = new ExtensionCore()
@@ -46,6 +64,10 @@ export const extensionCore = new ExtensionCore()
  * @TODO provisional built-in
  */
 
-import * as signal from './stateManagements/react-signal'
+import * as signal from './extensions/stateManagements/react-signal'
 
 extensionCore.add(signal.config)
+
+import { createReactContainer } from './extensions/frameworks/react'
+
+extensionCore.addContainerCreator('react', createReactContainer)

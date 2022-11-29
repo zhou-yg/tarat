@@ -120,7 +120,8 @@ function patternResultToEmotionCSS(
 
 export function assignPattern(
   json: VirtualLayoutJSON,
-  pattern: PatternStructure
+  pattern: PatternStructure,
+  useEmotion?: boolean
 ): VirtualLayoutJSON {
   // const source = deepClone(json)
   const source = json
@@ -130,21 +131,29 @@ export function assignPattern(
     for (const sematic in pattern) {
       if (checkSematic(sematic, props)) {
         const style = pattern[sematic]
-        if (!props.style) {
-          props.style = {}
-        }
-        const cls = patternResultToEmotionCSS(style)
-        if (props.className) {
-          props.className = `${props.className} ${cls}`
+        if (useEmotion) {
+          const cls = patternResultToEmotionCSS(style)
+          if (props.className) {
+            props.className = `${props.className} ${cls}`
+          } else {
+            props.className = cls
+          }
         } else {
-          props.className = cls
+          if (!props.style) {
+            props.style = {}
+          }
+          Object.entries(style).forEach(([k, v]) => {
+            props.style[k] = Array.isArray(v) ? last(v) : v
+          })
         }
       }
     }
   })
   return source
 }
-type PatternStructureValueMatcher = (number | string | boolean)[]
+type PatternStructureValueMatcher =
+  | (number | string | boolean)[]
+  | (number | string | boolean)[][]
 
 type MatcherValueOrStar<T extends PatternStructureValueMatcher> = {
   [K in keyof T]: T[K] | '*'
@@ -153,20 +162,26 @@ type MatcherValueOrStar<T extends PatternStructureValueMatcher> = {
 interface PatternMatrix {
   [mainSematic: string]: {
     [propertyKey: string]: {
-      [value: string]: (number | string | boolean)[]
+      [value: string]: PatternStructureValueMatcher
     }
   }
 }
 
-function equal(setting: any[], arr2: any[]) {
+function equalMatcher(setting: any[] | any[][], inputs: any[]) {
   return (
-    setting.length === arr2.length &&
-    setting.every((v, i) => v === arr2[i] || v === '*' || v === '/')
+    setting.length === inputs.length &&
+    (setting.every((v, i) => v === inputs[i] || v === '*' || v === '/') ||
+      setting.some(arr2 => {
+        if (Array.isArray(arr2)) {
+          return equalMatcher(arr2, inputs)
+        }
+        return false
+      }))
   )
 }
 
 export function matchPatternMatrix<T extends PatternStructureValueMatcher>(
-  pm: T
+  patternInputs: T
 ) {
   return (ps: PatternMatrix) => {
     let result: PatternStructure = {}
@@ -176,7 +191,7 @@ export function matchPatternMatrix<T extends PatternStructureValueMatcher>(
         result[mainSemantic][propertyKey] = []
         for (let value in ps[mainSemantic][propertyKey]) {
           const matcher = ps[mainSemantic][propertyKey][value]
-          if (equal(matcher, pm) || matcher.length === 0) {
+          if (equalMatcher(matcher, patternInputs) || matcher.length === 0) {
             result[mainSemantic][propertyKey].push(value)
           }
         }

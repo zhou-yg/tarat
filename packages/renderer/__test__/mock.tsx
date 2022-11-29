@@ -1,5 +1,11 @@
 /* @jsxFactory h  */
-import { h, useLayout, useLogic, useModule } from '../src/index'
+import {
+  h,
+  matchPatternMatrix,
+  useLayout,
+  useLogic,
+  useModule
+} from '../src/index'
 import { BaseDataType, SingleFileModule, VirtualLayoutJSON } from '../src/types'
 import { signal } from 'atomic-signal'
 
@@ -168,6 +174,28 @@ export function hasInputInLayout(): SingleFileModule {
           <input value={logic.num} />
         </div>
       )
+    }
+  }
+}
+
+export function patternHasMultiMatchers(): SingleFileModule {
+  return {
+    layout() {
+      return <div is-container>i am container</div>
+    },
+    designPattern(props: { v1: boolean; v2: boolean }) {
+      const p = matchPatternMatrix([props.v1, props.v2])({
+        container: {
+          backgroundColor: {
+            red: [true, false],
+            green: [
+              [false, true],
+              [true, true]
+            ]
+          }
+        }
+      })
+      return p
     }
   }
 }

@@ -1,9 +1,9 @@
-import { JSONObjectTree, OverrideModule, SingleFileModule, StateManagementConfig, VirtualLayoutJSON } from "../types";
+import { JSONObjectTree, OverrideModule, SingleFileModule, StateManagementConfig, VirtualLayoutJSON } from "../../types";
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
-import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern, SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeClassNameFromProps } from '../utils'
-import { ExtensionCore } from "../extension";
+import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern, SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeClassNameFromProps } from '../../utils'
+import { ExtensionCore } from "../../extension";
 
 type ArgResultMap = Map<string, any>
 const driverWeakMap = new Map<Driver, ArgResultMap>()
@@ -37,7 +37,8 @@ function filterPatternSematicProps(props?: any) {
 export function createReactContainer (
   React: any,
   module: SingleFileModule,
-  extensionCore: ExtensionCore
+  extensionCore: ExtensionCore,
+  options?: { useEmotion: boolean }
 ) {
   module = {...module}
   const cacheSymbol = Symbol('cacheSymbol')
@@ -49,17 +50,21 @@ export function createReactContainer (
   const runReactLogic = stateManagement?.runLogic.bind(null, React, module.logic)
 
   function initLogic (props?: any) {
-    if (!runReactLogic) {
+    let cache: ModuleCache = module[cacheSymbol]
+    if (cache) {
+      cache.props = props
+    } else {
+      module[cacheSymbol] = { props }
+      cache = module[cacheSymbol]
+    }
+
+    if (!runReactLogic || !module.logic) {
       return
     }
     const r = runReactLogic([props])
-    const cache: ModuleCache = module[cacheSymbol]
-    if (cache) {
-      cache.logicResult = r
-      cache.props = props
-    } else [
-      module[cacheSymbol] = { logicResult: r, props }
-    ]
+    cache.logicResult = r
+    cache.props = props
+
     return r
   }
 
@@ -137,7 +142,7 @@ export function createReactContainer (
 
       const patternResult = module.designPattern?.(props)
       if (patternResult) {
-        newJSON = assignPattern(newJSON, patternResult)
+        newJSON = assignPattern(newJSON, patternResult, options.useEmotion)
       }
 
       /** modify layout json */
