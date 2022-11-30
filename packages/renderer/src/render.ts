@@ -99,6 +99,14 @@ export function h(
   props: Record<string, any> | null,
   ...children: VirtualLayoutJSON[]
 ) {
+  /** compatible with different versions jsx: children in props, and key in children */
+  if (props.children) {
+    if (children.length !== 0) {
+      props.key = children      
+    }
+    children = props.children
+  }
+  delete props.children
   return {
     id: idIndex++,
     tag,
