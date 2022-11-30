@@ -2,6 +2,11 @@ import * as CSS from 'csstype'
 import { VirtualLayoutJSON } from './src/types'
 import type { StateSignal, ComputedSignal } from 'atomic-signal'
 
+import { h } from './src/index'
+
+export const jsx = h;
+export const jsxs = h;
+
 export interface CSSProperties extends CSS.Properties<string | number> {
 }
 

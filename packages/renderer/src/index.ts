@@ -1,3 +1,7 @@
+/**
+ * @jsx h
+ */
+// @ts
 export * from './render'
 export * from './types'
 export * from './utils'
