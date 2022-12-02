@@ -100,13 +100,13 @@ export function h(
   ...children: VirtualLayoutJSON[]
 ) {
   /** compatible with different versions jsx: children in props, and key in children */
-  if (props.children) {
+  if (props?.children) {
     if (children.length !== 0) {
-      props.key = children      
+      props.key = children
     }
     children = props.children
+    delete props.children
   }
-  delete props.children
   return {
     id: idIndex++,
     tag,

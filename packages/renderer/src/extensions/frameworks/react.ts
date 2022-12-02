@@ -84,7 +84,6 @@ export function createReactContainer (
     }
 
     const json = module.layout?.(props)
-    console.log('json: ', json);
     const handler = proxyLayoutJSON(json)
     
     if (json) {

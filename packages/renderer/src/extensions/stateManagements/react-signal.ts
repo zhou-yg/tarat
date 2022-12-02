@@ -5,7 +5,9 @@
  *  in Other, by extension institution
  */
 import {
-  CurrentRunnerScope, Driver, getNamespace, IHookContext, isSignal, Runner
+  after,
+  Computed,
+  CurrentRunnerScope, Driver, getNamespace, IHookContext, isSignal, Runner, signal, State, StateSignal
 } from 'atomic-signal'
 import { StateManagementConfig, VirtualLayoutJSON } from '../../types'
 import { isFunction, last, traverse, traverseLayoutTree, unstable_serialize } from '../../utils'
@@ -67,69 +69,84 @@ typeof window !== 'undefined' && (window.driverWeakMap = driverWeakMap)
 interface ICacheDriver<T extends Driver> {
   scope: CurrentRunnerScope<T>
   result: ReturnType<T>
+  signalProps: Record<string, StateSignal<any>>
+}
+
+function convertArgsToSignal (args: Record<string, any> = {}) {
+  const signalArgs: Record<string, StateSignal<any>> = {}
+  Object.entries(args).forEach(([key, value]) => {
+    if (isSignal(value)) {
+      signalArgs[key] = value
+    } else if (!isFunction(value)) {
+      signalArgs[key] = signal(value)
+    }
+  })
+  return signalArgs
 }
 
 const scopeSymbol = Symbol.for('@NewRendererReactScope')
 
-function runReactLogic<T extends Driver>(react: any, hook: T, args: Parameters<T>) {
+function runReactLogic<T extends Driver>(react: any, hook: T, props: Parameters<T>) {
   const { useRef, useEffect, useState } = react
   const init = useRef(null) as { current: ICacheDriver<T> | null }
 
   if (!init.current) {
+    const signalProps = convertArgsToSignal(props[0])
 
-    const serializedArgs = unstable_serialize(args)
-    const cachedDriverResult: {
-      scope: CurrentRunnerScope<T>
-      result: ReturnType<T>
-    } = driverWeakMap.get(hook)?.get(serializedArgs)
+    let ssrContext: IHookContext[] = []
 
-    // match the cache
-    if (cachedDriverResult) {
-      init.current = {
-        scope: cachedDriverResult.scope,
-        result: Object.assign({
-          [scopeSymbol]: cachedDriverResult.scope,
-        }, cachedDriverResult.result),
+    const runner = new Runner(
+      hook,
+      {
+        updateCallbackSync: true,
+        beleiveContext: true,
       }
-    } else {
-      const bmName: string = hook.__name__ || hook.name
-      let ssrContext: IHookContext[] = []
-  
-      const namespace = getNamespace(hook)
-      const isComposedDriver  = !!(hook as any).__tarat_compose__
+    )
 
-      const runner = new Runner(
-        hook,
-        {
-          updateCallbackSync: true,
-          beleiveContext: true,
-        }
-      )
+    const initialContext = ssrContext.pop()
 
-      const initialContext = ssrContext.pop()
+    const scope = runner.prepareScope([signalProps] as Parameters<T>, initialContext)
 
-      const scope = runner.prepareScope(args, initialContext)
+    const r = runner.executeDriver(scope)
 
-      const r = runner.executeDriver(scope)
-
-      init.current = {
-        scope,
-        result: Object.assign({
-          [scopeSymbol]: scope,
-        }, r)
-      }
-  
-      let m = driverWeakMap.get(hook)
-      if (!m) {
-        m = new Map
-        driverWeakMap.set(hook, m)
-      }
-      m.set(serializedArgs, {
-        scope,
-        result: r,
-      })
+    init.current = {
+      scope,
+      result: Object.assign({
+        [scopeSymbol]: scope,
+      }, r),
+      signalProps,
     }
   }
+
+  const [upc, updatePropsCount] = useState(0)
+  // watch props
+  useEffect(() => {
+    let unListenCallbacks: Function[] = []
+    if (init.current) {
+      const { signalProps } = init.current
+      const deps = Object.values(signalProps).filter(v => isSignal(v))
+      const unListen = after(() => {
+        updatePropsCount((v: number) => v + 1)
+      }, deps)
+      unListenCallbacks.push(unListen)
+    }
+    return () => {
+      unListenCallbacks.forEach(fn => fn())
+    }
+  }, [])
+
+  useEffect(() => {
+    if (init.current) {
+      const { signalProps } = init.current
+
+      Object.entries(props[0] || {}).forEach(([key, value]) => {
+        if (!isFunction(value)) { 
+          signalProps[key](value)
+        }
+      })
+    }
+  }, [props[0]])
+
   // confirm only run once in React18 with strict mode or in development
   const didMount = useRef(false)
   // release event

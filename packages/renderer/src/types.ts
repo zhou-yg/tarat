@@ -1,6 +1,7 @@
 import type * as CSS from 'csstype'
-import { ExtensionCore } from './extension'
+import type { ExtensionCore } from './extension'
 import type { ProxyLayoutHandler } from './utils'
+import type { StateSignal } from 'atomic-signal'
 
 export type BaseDataType = string | number | boolean | null | undefined
 
@@ -114,4 +115,10 @@ export interface RenderContainer {
     extensionCore: ExtensionCore,
     options?: { useEmotion: boolean }
   ): ModuleRenderContainer
+}
+
+export type SignalProps<T extends Object> = {
+  [P in keyof T]: T[P] extends (...args: any[]) => any
+    ? T[P]
+    : StateSignal<T[P]>
 }
