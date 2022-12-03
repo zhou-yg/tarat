@@ -2,7 +2,7 @@ import { JSONObjectTree, OverrideModule, SingleFileModule, StateManagementConfig
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
-import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern, SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeClassNameFromProps } from '../../utils'
+import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern, SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeClassNameFromProps, mergeOverrideModules } from '../../utils'
 import { ExtensionCore } from "../../extension";
 
 type ArgResultMap = Map<string, any>
@@ -40,6 +40,7 @@ export function createReactContainer (
   extensionCore: ExtensionCore,
   options?: { useEmotion: boolean }
 ) {
+  // shallow copy so that can mark cache in module
   module = {...module}
   const cacheSymbol = Symbol('cacheSymbol')
 
@@ -132,8 +133,9 @@ export function createReactContainer (
         assignRules(proxyHandler.draft, rules)
       }
 
-      if (override) {
-        override.layout?.(proxyHandler.draft)
+      const mergedOverride = mergeOverrideModules([...(moduleConfig.overrides || []), override])
+      if (mergedOverride.layout) {
+        mergedOverride.layout?.(props, proxyHandler.draft)
       }
 
       let newJSON = proxyHandler.apply()

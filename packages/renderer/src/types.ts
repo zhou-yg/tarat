@@ -33,12 +33,12 @@ export interface PatternStructure {
   [mainSematic: string]: PatternStructureResult
 }
 
-export interface SingleFileModule {
+export interface SingleFileModule<Props extends VirtualLayoutJSON['props'] = any > {
   logic?: (...args: any[]) => Record<string, any>
-  layout?: (...args: any[]) => VirtualLayoutJSON
-  designPattern?: (...args: any[]) => PatternStructure | void
-  styleRules?: (...args: any[]) => StyleRule[] | void
-  config?: (...args: any[]) => ModuleConfig
+  layout?: (p?: Props) => VirtualLayoutJSON
+  designPattern?: (p?: Props) => PatternStructure | void
+  styleRules?: (p?: Props) => StyleRule[] | void
+  config?: (...args: any[]) => ModuleConfig<Props>
 }
 
 export interface VirtualLayoutJSON {
@@ -73,22 +73,23 @@ export interface RenderHost {
 
 type FrameworkVirtualNode = any
 
-export interface ModuleConfig {
+export interface ModuleConfig<Props extends VirtualLayoutJSON['props'] > {
   // default is 'signal'
   logicLib?: {
     name: string
-  }
+  },
+  overrides?: OverrideModule<Props>[],
 }
 
-export interface ModuleRenderContainer {
+export interface ModuleRenderContainer<Props extends VirtualLayoutJSON['props'] = any> {
   runLogic: (...args: any[]) => Record<string, any>
   render: (json: VirtualLayoutJSON) => FrameworkVirtualNode
-  construct: (props?: any, override?: OverrideModule) => VirtualLayoutJSON
-  getLayout: (props?: any) => JSONObjectTree
+  construct: (props?: Props, override?: OverrideModule<Props>) => VirtualLayoutJSON
+  getLayout: (props?: Props) => JSONObjectTree
 }
 
-export interface OverrideModule {
-  layout?: (jsonTree: JSONObjectTree) => void
+export interface OverrideModule<Props extends VirtualLayoutJSON['props'] = any> {
+  layout?: (props: Props, jsonTree: JSONObjectTree) => void
 }
 
 type Func = (...args: any[]) => any

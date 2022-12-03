@@ -97,7 +97,7 @@ export function clearIdIndex() {
 export function h(
   tag: string | Function,
   props: Record<string, any> | null,
-  ...children: VirtualLayoutJSON[]
+  ...children: VirtualLayoutJSON['children'][]
 ) {
   /** compatible with different versions jsx: children in props, and key in children */
   if (props?.children) {
@@ -179,4 +179,20 @@ export function useLayout() {
     throw new Error('useLayout must be called in render function')
   }
   return renderer.renderHooksContainer.getLayout()
+}
+
+export function extendModule<Props> (
+  module: SingleFileModule<Props>,
+  override: OverrideModule<Props>
+): SingleFileModule<Props> {
+  return {
+    ...module,
+    config () {
+      const sourceConfig = module.config?.() || {};
+      return {
+        ...sourceConfig,
+        overrides: sourceConfig.overrides ? sourceConfig.overrides.concat(override) : [override]
+      }
+    },
+  }
 }
