@@ -30,8 +30,9 @@ export function mergeOverrideModules(modules: OverrideModule[]) {
     if (Array.isArray(value)) {
       // compose function array
       result[key] = value.reduceRight((prev, cur) => {
-        return (props: any) => {
-          return cur(prev(props))
+        return (...args: any[]) => {
+          cur(...args)
+          prev(...args)
         }
       })
     }
@@ -200,6 +201,8 @@ export function matchPatternMatrix<T extends PatternStructureValueMatcher>(
     return result
   }
 }
+
+export const renderHTMLProp = '_html'
 
 export function isVirtualNode(node: any): node is VirtualLayoutJSON {
   return (
