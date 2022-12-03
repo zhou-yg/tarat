@@ -2,7 +2,7 @@ import { JSONObjectTree, OverrideModule, SingleFileModule, StateManagementConfig
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
-import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern, SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeClassNameFromProps, mergeOverrideModules } from '../../utils'
+import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern, SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeClassNameFromProps, mergeOverrideModules, renderHTMLProp } from '../../utils'
 import { ExtensionCore } from "../../extension";
 
 type ArgResultMap = Map<string, any>
@@ -23,14 +23,17 @@ function filterPatternSematicProps(props?: any) {
   if (!props) {
     return props
   }
-  const obj = {}
+  const obj: VirtualLayoutJSON['props'] = {}
   Object.keys(props).forEach(key => {
     if (key.startsWith(`${SEMATIC_RELATION_IS}-`) || key.startsWith(`${SEMATIC_RELATION_HAS}-`)) {
       obj[key] = 1
+    } else if (key === renderHTMLProp) {
+      obj.dangerouslySetInnerHTML =  { __html: props[key] }
     } else {
       obj[key] = props[key]
     }
   })
+
   return obj
 }
 

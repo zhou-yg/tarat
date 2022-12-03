@@ -69,16 +69,20 @@ typeof window !== 'undefined' && (window.driverWeakMap = driverWeakMap)
 interface ICacheDriver<T extends Driver> {
   scope: CurrentRunnerScope<T>
   result: ReturnType<T>
-  signalProps: Record<string, StateSignal<any>>
+  signalProps: Record<string, StateSignal<any> | Function>
 }
 
 function convertArgsToSignal (args: Record<string, any> = {}) {
-  const signalArgs: Record<string, StateSignal<any>> = {}
+  const signalArgs: Record<string, StateSignal<any> | Function> = {}
   Object.entries(args).forEach(([key, value]) => {
     if (isSignal(value)) {
       signalArgs[key] = value
-    } else if (!isFunction(value)) {
-      signalArgs[key] = signal(value)
+    } else {
+      if (isFunction(value)) {
+        signalArgs[key] = value
+      } else {
+        signalArgs[key] = signal(value)
+      }
     }
   })
   return signalArgs
@@ -124,7 +128,7 @@ function runReactLogic<T extends Driver>(react: any, hook: T, props: Parameters<
     let unListenCallbacks: Function[] = []
     if (init.current) {
       const { signalProps } = init.current
-      const deps = Object.values(signalProps).filter(v => isSignal(v))
+      const deps = Object.values(signalProps).filter((v: any) => isSignal(v)) as StateSignal<any>[]
       const unListen = after(() => {
         updatePropsCount((v: number) => v + 1)
       }, deps)
