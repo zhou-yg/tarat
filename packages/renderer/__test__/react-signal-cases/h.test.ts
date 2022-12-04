@@ -18,7 +18,7 @@ describe('h factory and hooks', () => {
 
     expect(r).toEqual({
       id: 0,
-      tag: 'div',
+      type: 'div',
       props: {},
       children: undefined
     })
@@ -28,18 +28,18 @@ describe('h factory and hooks', () => {
 
     expect(r).toEqual({
       id: 2,
-      tag: 'div',
-      props: { id: 1 },
+      type: 'div',
+      props: { id: '1' },
       children: [
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {},
           children: '1'    
         },
         {
           id: 1,
-          tag: 'div',
+          type: 'div',
           props: {},
           children: '2'    
         },

@@ -33,7 +33,7 @@ function transform (json: VirtualLayoutJSON) {
         if (
           isSignal(value) &&
           key === 'value' && 
-          node.tag === 'input'
+          node.type === 'input'
         ) {
           const fns: ((...args: any[]) => void)[] = [
             (e: { target: { value: number | string } }) => {

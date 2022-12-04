@@ -1,5 +1,6 @@
 /* @jsxFactory h  */
 import {
+  createComponent,
   h,
   matchPatternMatrix,
   useLayout,
@@ -63,7 +64,7 @@ export function moduleHasMultipleChild(): SingleFileModule {
     },
     layout() {
       return (
-        <div id={1}>
+        <div id="1">
           <div>1</div>
           <div>2</div>
         </div>
@@ -218,6 +219,22 @@ export function patternHasMultiMatchers2(): SingleFileModule {
         }
       })
       return p
+    }
+  }
+}
+
+const MyCpt = createComponent((p: { value: string }) => {
+  return <span>value is {p.value}</span>
+})
+
+export function insideVNodeComponent() {
+  return {
+    layout() {
+      return (
+        <div>
+          <MyCpt value="123" />
+        </div>
+      )
     }
   }
 }

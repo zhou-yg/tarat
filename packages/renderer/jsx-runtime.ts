@@ -137,6 +137,7 @@ type Numberish = number | string;
 export interface HTMLAttributes extends EventHandlers<Events> {
   _html?: string
   children?: any
+  name?: string
 
 
   className?: any;
@@ -626,10 +627,7 @@ export interface WebViewHTMLAttributes extends HTMLAttributes {
 }
 
 export interface SVGAttributes
-  extends AriaAttributes,
-    DOMAttributes,
-    LayoutAttributes,
-    EventHandlers<Events> {
+  extends EventHandlers<Events> {
   /**
    * SVG Styling Attributes
    * @see https://www.w3.org/TR/SVG/styling.html#ElementSpecificStyling
@@ -1278,7 +1276,8 @@ declare global {
     //   _html?: string
     // }
 
-    interface Element {
+    interface Element extends VirtualLayoutJSON{
+
     }
   }
 }

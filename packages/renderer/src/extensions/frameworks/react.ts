@@ -108,7 +108,7 @@ export function createReactContainer (
       return json
     }
     let children = json.children
-    let elementArgs = [json.tag, filterPatternSematicProps(json.props)]
+    let elementArgs = [json.type, filterPatternSematicProps(json.props)]
 
     if (Array.isArray(json.children)) {
       children = json.children.map(createElementDepth)

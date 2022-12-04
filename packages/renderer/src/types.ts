@@ -33,7 +33,9 @@ export interface PatternStructure {
   [mainSematic: string]: PatternStructureResult
 }
 
-export interface SingleFileModule<Props extends VirtualLayoutJSON['props'] = any > {
+export interface SingleFileModule<
+  Props extends VirtualLayoutJSON['props'] = any
+> {
   logic?: (...args: any[]) => Record<string, any>
   layout?: (p?: Props) => VirtualLayoutJSON
   designPattern?: (p?: Props) => PatternStructure | void
@@ -43,7 +45,8 @@ export interface SingleFileModule<Props extends VirtualLayoutJSON['props'] = any
 
 export interface VirtualLayoutJSON {
   id: number
-  tag: string | Function
+  key?: any
+  type: string | Function
   props: Record<string, any>
   children:
     | (VirtualLayoutJSON | BaseDataType)[]
@@ -73,22 +76,29 @@ export interface RenderHost {
 
 type FrameworkVirtualNode = any
 
-export interface ModuleConfig<Props extends VirtualLayoutJSON['props'] > {
+export interface ModuleConfig<Props extends VirtualLayoutJSON['props']> {
   // default is 'signal'
   logicLib?: {
     name: string
-  },
-  overrides?: OverrideModule<Props>[],
+  }
+  overrides?: OverrideModule<Props>[]
 }
 
-export interface ModuleRenderContainer<Props extends VirtualLayoutJSON['props'] = any> {
+export interface ModuleRenderContainer<
+  Props extends VirtualLayoutJSON['props'] = any
+> {
   runLogic: (...args: any[]) => Record<string, any>
   render: (json: VirtualLayoutJSON) => FrameworkVirtualNode
-  construct: (props?: Props, override?: OverrideModule<Props>) => VirtualLayoutJSON
+  construct: (
+    props?: Props,
+    override?: OverrideModule<Props>
+  ) => VirtualLayoutJSON
   getLayout: (props?: Props) => JSONObjectTree
 }
 
-export interface OverrideModule<Props extends VirtualLayoutJSON['props'] = any> {
+export interface OverrideModule<
+  Props extends VirtualLayoutJSON['props'] = any
+> {
   layout?: (props: Props, jsonTree: JSONObjectTree) => void
 }
 
@@ -123,3 +133,7 @@ export type SignalProps<T extends Object> = {
     ? T[P]
     : StateSignal<T[P]>
 }
+
+export type VNodeComponent = (
+  props?: VirtualLayoutJSON['props']
+) => VirtualLayoutJSON & {}

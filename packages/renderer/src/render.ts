@@ -1,14 +1,21 @@
 import {
+  BaseDataType,
   ModuleRenderContainer,
   OverrideModule,
   RenderHost,
   SingleFileModule,
   StateManagementConfig,
   StateManagementMatch,
-  VirtualLayoutJSON
+  VirtualLayoutJSON,
+  VNodeComponent
 } from './types'
 
-import { last, mergeOverrideModules } from './utils'
+import {
+  isVNodeComponent,
+  last,
+  mergeOverrideModules,
+  VNodeComponentSymbol
+} from './utils'
 import { extensionCore } from './extension'
 
 let globalCurrentRenderer: Renderer[] = []
@@ -93,12 +100,33 @@ let idIndex = 0
 export function clearIdIndex() {
   idIndex = 0
 }
-
+export function createComponent<T extends VNodeComponent>(func: T) {
+  function component(...args: Parameters<T>): ReturnType<VNodeComponent> {
+    return func.apply(null, args)
+  }
+  Object.defineProperty(component, 'name', {
+    get() {
+      return func.name
+    }
+  })
+  component[VNodeComponentSymbol] = true
+  Object.keys(func).forEach(key => {
+    component[key] = func[key]
+  })
+  return component
+}
 export function h(
-  tag: string | Function,
+  type: string | Function,
   props: Record<string, any> | null,
-  ...children: VirtualLayoutJSON['children'][]
+  ...children: (VirtualLayoutJSON | BaseDataType)[]
 ) {
+  if (isVNodeComponent(type)) {
+    const json = (type as any)({
+      ...(props || {}),
+      children
+    })
+    return json
+  }
   /** compatible with different versions jsx: children in props, and key in children */
   if (props?.children) {
     if (children.length !== 0) {
@@ -107,9 +135,10 @@ export function h(
     children = props.children
     delete props.children
   }
-  return {
+
+  const result: VirtualLayoutJSON = {
     id: idIndex++,
-    tag,
+    type,
     props: props || {},
     children:
       children.length === 0
@@ -118,6 +147,13 @@ export function h(
         ? children[0]
         : children
   }
+
+  let key = props?.key
+  if (key) {
+    result.key = key
+  }
+
+  return result
 }
 
 /**
@@ -181,18 +217,20 @@ export function useLayout() {
   return renderer.renderHooksContainer.getLayout()
 }
 
-export function extendModule<Props> (
+export function extendModule<Props>(
   module: SingleFileModule<Props>,
   override: OverrideModule<Props>
 ): SingleFileModule<Props> {
   return {
     ...module,
-    config () {
-      const sourceConfig = module.config?.() || {};
+    config() {
+      const sourceConfig = module.config?.() || {}
       return {
         ...sourceConfig,
-        overrides: sourceConfig.overrides ? sourceConfig.overrides.concat(override) : [override]
+        overrides: sourceConfig.overrides
+          ? sourceConfig.overrides.concat(override)
+          : [override]
       }
-    },
+    }
   }
 }

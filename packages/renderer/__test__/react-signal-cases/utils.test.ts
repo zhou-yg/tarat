@@ -15,14 +15,14 @@ describe('utils', () => {
   it('buildLayoutNestedObj', () => {
     const json: VirtualLayoutJSON = {
       id: 1,
-      tag: 'div',
+      type: 'div',
       props: {
         id: 'root'
       },
       children: [
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: 'child'
           },
@@ -47,14 +47,14 @@ describe('utils', () => {
   it('applyJSONTreePatches', () => {
     const json: VirtualLayoutJSON = {
       id: 1,
-      tag: 'div',
+      type: 'div',
       props: {
         id: 'root'
       },
       children: [
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: 'child1'
           },
@@ -62,7 +62,7 @@ describe('utils', () => {
         },
         {
           id: 0,
-          tag: 'span',
+          type: 'span',
           props: {
             id: 'child2'
           },
@@ -70,7 +70,7 @@ describe('utils', () => {
         },
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: 'child3'
           },
@@ -95,14 +95,14 @@ describe('utils', () => {
     const result = applyJSONTreePatches(json, patches)
     expect(result).toEqual({
       id: 1,
-      tag: 'div',
+      type: 'div',
       props: {
         id: v1
       },
       children: [
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: v2
           },
@@ -110,7 +110,7 @@ describe('utils', () => {
         },
         {
           id: 0,
-          tag: 'span',
+          type: 'span',
           props: {
             id: 'child2'
           },
@@ -118,7 +118,7 @@ describe('utils', () => {
         },
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: v2
           },
@@ -130,14 +130,14 @@ describe('utils', () => {
   it('applyJSONTreePatches with insertNode', () => {
     const json: VirtualLayoutJSON = {
       id: 1,
-      tag: 'div',
+      type: 'div',
       props: {
         id: 'root'
       },
       children: [
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: 'child1'
           },
@@ -145,7 +145,7 @@ describe('utils', () => {
         },
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: 'child2'
           },
@@ -169,14 +169,14 @@ describe('utils', () => {
     const result = applyJSONTreePatches(json, patches)
     expect(result).toEqual({
       id: 1,
-      tag: 'div',
+      type: 'div',
       props: {
         id: 'root'
       },
       children: [
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: 'child1'
           },
@@ -184,7 +184,7 @@ describe('utils', () => {
         },
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: 'child2'
           },
@@ -197,14 +197,14 @@ describe('utils', () => {
   it('proxyLayoutJSON', () => {
     const json: VirtualLayoutJSON = {
       id: 1,
-      tag: 'div',
+      type: 'div',
       props: {
         id: 'root'
       },
       children: [
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: 'child'
           },
@@ -220,14 +220,14 @@ describe('utils', () => {
 
     expect(result).toEqual({
       id: 1,
-      tag: 'div',
+      type: 'div',
       props: {
         id: 'root2'
       },
       children: [
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: 'child2'
           },
@@ -239,14 +239,14 @@ describe('utils', () => {
   it('proxyLayoutJSON with operates', () => {
     const json: VirtualLayoutJSON = {
       id: 1,
-      tag: 'div',
+      type: 'div',
       props: {
         id: 'root'
       },
       children: [
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: 'child'
           },
@@ -262,14 +262,14 @@ describe('utils', () => {
 
     expect(result).toEqual({
       id: 1,
-      tag: 'div',
+      type: 'div',
       props: {
         id: 'root'
       },
       children: [
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: 'child'
           },
@@ -282,14 +282,14 @@ describe('utils', () => {
   it('assignRules', () => {
     const json: VirtualLayoutJSON = {
       id: 1,
-      tag: 'div',
+      type: 'div',
       props: {
         id: 'root'
       },
       children: [
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: 'child'
           },
@@ -297,7 +297,7 @@ describe('utils', () => {
         },
         {
           id: 0,
-          tag: 'span',
+          type: 'span',
           props: {
             id: 'child2',
             style: {
@@ -329,7 +329,7 @@ describe('utils', () => {
     const result = apply()
     expect(result).toEqual({
       id: 1,
-      tag: 'div',
+      type: 'div',
       props: {
         id: 'root',
         style: {
@@ -339,7 +339,7 @@ describe('utils', () => {
       children: [
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: 'child'
           },
@@ -347,7 +347,7 @@ describe('utils', () => {
         },
         {
           id: 0,
-          tag: 'span',
+          type: 'span',
           props: {
             id: 'child2',
             style: {
@@ -363,7 +363,7 @@ describe('utils', () => {
   it('matchPatternMatrix', () => {
     const json: VirtualLayoutJSON = {
       id: 1,
-      tag: 'div',
+      type: 'div',
       props: {
         id: 'root',
         ['is-container']: true
@@ -371,7 +371,7 @@ describe('utils', () => {
       children: [
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: 'child'
           },
@@ -379,7 +379,7 @@ describe('utils', () => {
         },
         {
           id: 0,
-          tag: 'span',
+          type: 'span',
           props: {
             id: 'child2',
             ['is-text']: true,
@@ -410,7 +410,7 @@ describe('utils', () => {
 
     expect(result).toEqual({
       id: 1,
-      tag: 'div',
+      type: 'div',
       props: {
         id: 'root',
         ['is-container']: true,
@@ -421,7 +421,7 @@ describe('utils', () => {
       children: [
         {
           id: 0,
-          tag: 'div',
+          type: 'div',
           props: {
             id: 'child'
           },
@@ -429,7 +429,7 @@ describe('utils', () => {
         },
         {
           id: 0,
-          tag: 'span',
+          type: 'span',
           props: {
             id: 'child2',
             ['is-text']: true,

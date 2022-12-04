@@ -7,6 +7,7 @@ import {
   useStyleInLayout,
   useOtherModule,
   hasInputInLayout,
+  insideVNodeComponent,
 } from '../mock'
 
 describe('render', () => {
@@ -78,5 +79,24 @@ describe('render', () => {
 
     expect(isVirtualNode(rr2.children)).toBe(true)
     expect((rr2.children as VirtualLayoutJSON).props.onInput.name).toBe('reactSignalTransformOnInput')
+  })
+
+  it('using VNode Component', () => {
+    const rr = createRenderer(insideVNodeComponent(), {
+      framework: MockRectFramework
+    })
+    const rr2 = rr.construct()
+
+    const rr3 = rr.render()
+
+    expect(rr3).toEqual({
+      type: 'div',
+      props: {},
+      children: {
+        type: 'span',
+        props: {},
+        children: ['value is ',  '123'],
+      }
+    })
   })
 })

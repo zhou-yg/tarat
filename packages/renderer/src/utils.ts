@@ -208,7 +208,7 @@ export function isVirtualNode(node: any): node is VirtualLayoutJSON {
   return (
     node &&
     typeof node === 'object' &&
-    'tag' in node &&
+    'type' in node &&
     'props' in node &&
     'children' in node
   )
@@ -236,7 +236,7 @@ function getChildrenByPath(
     const newCurrent: VirtualLayoutJSON[] = []
     for (const node of current) {
       if (isVirtualNode(node)) {
-        if (node.tag === tag) {
+        if (node.type === tag) {
           if (path[i + 1] === ExportPropKey) {
             newCurrent.push(node)
           } else if (Array.isArray(node.children)) {
@@ -368,7 +368,7 @@ export function buildLayoutNestedObj(json: VirtualLayoutJSON) {
     source: VirtualLayoutJSON | BaseDataType
   ) {
     if (isVirtualNode(source)) {
-      const tag = source?.tag
+      const tag = source?.type
       if (typeof tag === 'string') {
         /**
          * @TODO how to keep reference to original "props object"?
@@ -568,4 +568,8 @@ export function get(obj: any, path: string | (number | string)[]) {
     return base.get(key)
   }
   return base[key]
+}
+export const VNodeComponentSymbol = Symbol('VNodeComponentSymbol')
+export function isVNodeComponent(target: any) {
+  return target && !!target[VNodeComponentSymbol]
 }
