@@ -14,6 +14,7 @@ import {
   isVNodeComponent,
   last,
   mergeOverrideModules,
+  VirtualNodeTypeSymbol,
   VNodeComponentSymbol
 } from './utils'
 import { extensionCore } from './extension'
@@ -138,6 +139,7 @@ export function h(
 
   const result: VirtualLayoutJSON = {
     id: idIndex++,
+    flags: VirtualNodeTypeSymbol,
     type,
     props: props || {},
     children:
@@ -170,7 +172,7 @@ export function useLogic<T = any>(...args: any[]): T {
 }
 
 export function useModule<T extends Record<string, any>>(
-  module: SingleFileModule,
+  module: SingleFileModule<T>,
   override?: OverrideModule
 ) {
   const renderer = getCurrentRenderer()
@@ -183,10 +185,10 @@ export function useModule<T extends Record<string, any>>(
     override
   )
 
-  return (props: T & { override?: OverrideModule }) => {
+  return createComponent((props: T & { override?: OverrideModule }) => {
     const { override, ...rest } = props
     return subModuleRenderer.construct(rest, override)
-  }
+  })
 }
 export function useComponentModule<T extends Record<string, any>>(
   module: SingleFileModule,

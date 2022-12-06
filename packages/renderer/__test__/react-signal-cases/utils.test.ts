@@ -8,6 +8,7 @@ import {
   proxyLayoutJSON,
   StyleRule,
   assignPattern,
+  VirtualNodeTypeSymbol,
 } from '../../src'
 
 describe('utils', () => {
@@ -16,6 +17,7 @@ describe('utils', () => {
     const json: VirtualLayoutJSON = {
       id: 1,
       type: 'div',
+      flags: VirtualNodeTypeSymbol,
       props: {
         id: 'root'
       },
@@ -23,6 +25,7 @@ describe('utils', () => {
         {
           id: 0,
           type: 'div',
+          flags: VirtualNodeTypeSymbol,
           props: {
             id: 'child'
           },
@@ -48,11 +51,13 @@ describe('utils', () => {
     const json: VirtualLayoutJSON = {
       id: 1,
       type: 'div',
+      flags: VirtualNodeTypeSymbol,
       props: {
         id: 'root'
       },
       children: [
         {
+          flags: VirtualNodeTypeSymbol,
           id: 0,
           type: 'div',
           props: {
@@ -63,6 +68,7 @@ describe('utils', () => {
         {
           id: 0,
           type: 'span',
+          flags: VirtualNodeTypeSymbol,
           props: {
             id: 'child2'
           },
@@ -70,6 +76,7 @@ describe('utils', () => {
         },
         {
           id: 0,
+          flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: 'child3'
@@ -96,12 +103,14 @@ describe('utils', () => {
     expect(result).toEqual({
       id: 1,
       type: 'div',
+      flags: VirtualNodeTypeSymbol,
       props: {
         id: v1
       },
       children: [
         {
           id: 0,
+          flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: v2
@@ -110,6 +119,7 @@ describe('utils', () => {
         },
         {
           id: 0,
+          flags: VirtualNodeTypeSymbol,
           type: 'span',
           props: {
             id: 'child2'
@@ -118,6 +128,7 @@ describe('utils', () => {
         },
         {
           id: 0,
+          flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: v2
@@ -134,9 +145,11 @@ describe('utils', () => {
       props: {
         id: 'root'
       },
+      flags: VirtualNodeTypeSymbol,
       children: [
         {
           id: 0,
+          flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: 'child1'
@@ -146,6 +159,7 @@ describe('utils', () => {
         {
           id: 0,
           type: 'div',
+          flags: VirtualNodeTypeSymbol,
           props: {
             id: 'child2'
           },
@@ -173,9 +187,11 @@ describe('utils', () => {
       props: {
         id: 'root'
       },
+      flags: VirtualNodeTypeSymbol,
       children: [
         {
           id: 0,
+          flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: 'child1'
@@ -183,6 +199,7 @@ describe('utils', () => {
           children: [1, 2]
         },
         {
+          flags: VirtualNodeTypeSymbol,
           id: 0,
           type: 'div',
           props: {
@@ -201,9 +218,11 @@ describe('utils', () => {
       props: {
         id: 'root'
       },
+      flags: VirtualNodeTypeSymbol,
       children: [
         {
           id: 0,
+          flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: 'child'
@@ -224,9 +243,11 @@ describe('utils', () => {
       props: {
         id: 'root2'
       },
+      flags: VirtualNodeTypeSymbol,
       children: [
         {
           id: 0,
+          flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: 'child2'
@@ -243,9 +264,11 @@ describe('utils', () => {
       props: {
         id: 'root'
       },
+      flags: VirtualNodeTypeSymbol,
       children: [
         {
           id: 0,
+          flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: 'child'
@@ -263,11 +286,13 @@ describe('utils', () => {
     expect(result).toEqual({
       id: 1,
       type: 'div',
+      flags: VirtualNodeTypeSymbol,
       props: {
         id: 'root'
       },
       children: [
         {
+          flags: VirtualNodeTypeSymbol,
           id: 0,
           type: 'div',
           props: {
@@ -286,10 +311,12 @@ describe('utils', () => {
       props: {
         id: 'root'
       },
+      flags: VirtualNodeTypeSymbol,
       children: [
         {
           id: 0,
           type: 'div',
+          flags: VirtualNodeTypeSymbol,
           props: {
             id: 'child'
           },
@@ -297,6 +324,7 @@ describe('utils', () => {
         },
         {
           id: 0,
+          flags: VirtualNodeTypeSymbol,
           type: 'span',
           props: {
             id: 'child2',
@@ -330,6 +358,7 @@ describe('utils', () => {
     expect(result).toEqual({
       id: 1,
       type: 'div',
+      flags: VirtualNodeTypeSymbol,
       props: {
         id: 'root',
         style: {
@@ -339,6 +368,7 @@ describe('utils', () => {
       children: [
         {
           id: 0,
+          flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: 'child'
@@ -347,6 +377,7 @@ describe('utils', () => {
         },
         {
           id: 0,
+          flags: VirtualNodeTypeSymbol,
           type: 'span',
           props: {
             id: 'child2',
@@ -368,9 +399,11 @@ describe('utils', () => {
         id: 'root',
         ['is-container']: true
       },
+      flags: VirtualNodeTypeSymbol,
       children: [
         {
           id: 0,
+          flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: 'child'
@@ -380,6 +413,7 @@ describe('utils', () => {
         {
           id: 0,
           type: 'span',
+          flags: VirtualNodeTypeSymbol,
           props: {
             id: 'child2',
             ['is-text']: true,
@@ -410,6 +444,7 @@ describe('utils', () => {
 
     expect(result).toEqual({
       id: 1,
+      flags: VirtualNodeTypeSymbol,
       type: 'div',
       props: {
         id: 'root',
@@ -421,6 +456,7 @@ describe('utils', () => {
       children: [
         {
           id: 0,
+          flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: 'child'
@@ -430,6 +466,7 @@ describe('utils', () => {
         {
           id: 0,
           type: 'span',
+          flags: VirtualNodeTypeSymbol,
           props: {
             id: 'child2',
             ['is-text']: true,

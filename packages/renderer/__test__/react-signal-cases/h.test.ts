@@ -1,4 +1,4 @@
-import { clearIdIndex, createRenderer } from '../../src'
+import { clearIdIndex, createRenderer, VirtualNodeTypeSymbol } from '../../src'
 import {
   simpleModule,
   moduleHasMultipleChild,
@@ -20,7 +20,8 @@ describe('h factory and hooks', () => {
       id: 0,
       type: 'div',
       props: {},
-      children: undefined
+      children: undefined,
+      flags: VirtualNodeTypeSymbol,
     })
   })
   it('simple has multiple', () => {
@@ -29,17 +30,20 @@ describe('h factory and hooks', () => {
     expect(r).toEqual({
       id: 2,
       type: 'div',
+      flags: VirtualNodeTypeSymbol,
       props: { id: '1' },
       children: [
         {
           id: 0,
           type: 'div',
+          flags: VirtualNodeTypeSymbol,
           props: {},
           children: '1'    
         },
         {
           id: 1,
           type: 'div',
+          flags: VirtualNodeTypeSymbol,
           props: {},
           children: '2'    
         },

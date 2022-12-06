@@ -9,7 +9,6 @@ import {
   PatternStructureResult
 } from './types'
 import { deepClone } from './lib/deepClone'
-import { CSSProperties } from '../jsx-runtime'
 import { css } from '@emotion/css'
 
 export function mergeOverrideModules(modules: OverrideModule[]) {
@@ -201,8 +200,10 @@ export function matchPatternMatrix<T extends PatternStructureValueMatcher>(
     return result
   }
 }
-
+// in html attributes
 export const renderHTMLProp = '_html'
+
+export const VirtualNodeTypeSymbol = Symbol.for('polymitaVirtualNodeSymbol')
 
 export function isVirtualNode(node: any): node is VirtualLayoutJSON {
   return (
@@ -210,7 +211,8 @@ export function isVirtualNode(node: any): node is VirtualLayoutJSON {
     typeof node === 'object' &&
     'type' in node &&
     'props' in node &&
-    'children' in node
+    'children' in node &&
+    node.flags === VirtualNodeTypeSymbol
   )
 }
 
@@ -394,31 +396,45 @@ export function buildLayoutNestedObj(json: VirtualLayoutJSON) {
   return root
 }
 
+let max = 1e3
 export function traverse(
   obj: any,
   callback: (k: string[], v: any) => boolean | void,
-  path: string[] = []
+  path: string[] = [],
+  cache: Set<any> = new Set()
 ) {
+  if (cache.has(obj)) {
+    return
+  }
+  cache.add(obj)
   if (callback(path, obj) !== false) {
     if (!obj || typeof obj !== 'object') return
     for (let k in obj) {
       const v = obj[k]
       if (callback(path.concat(k), v) !== false) {
-        traverse(v, callback, path.concat(k))
+        traverse(v, callback, path.concat(k), cache)
       }
     }
   }
 }
 
 export function traverseLayoutTree(
-  layoutTree: VirtualLayoutJSON,
+  layoutTree: VirtualLayoutJSON | any,
   callback: (n: VirtualLayoutJSON) => void
 ) {
-  traverse(layoutTree, (k, v) => {
-    if (typeof v === 'object' && isVirtualNode(v)) {
-      callback(v)
+  if (isVirtualNode(layoutTree)) {
+    callback(layoutTree)
+
+    if (layoutTree.children) {
+      if (Array.isArray(layoutTree.children)) {
+        layoutTree.children.forEach(child => {
+          traverseLayoutTree(child, callback)
+        })
+      } else {
+        traverseLayoutTree(layoutTree.children, callback)
+      }
     }
-  })
+  }
 }
 
 /** fork from swr */
