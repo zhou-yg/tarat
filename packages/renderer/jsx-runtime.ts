@@ -135,6 +135,7 @@ type Booleanish = boolean | "true" | "false";
 type Numberish = number | string;
 
 export interface HTMLAttributes extends EventHandlers<Events> {
+  key?: any;
   _html?: string
   children?: any
   name?: string
