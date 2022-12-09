@@ -1,15 +1,17 @@
 import {
   VirtualLayoutJSON,
-  JSONObjectTree,
+  LayoutTreeProxyDraft,
   StyleRule,
   PatternStructure,
   BaseDataType,
   OverrideModule,
   StateManagementMatch,
-  PatternStructureResult
+  PatternStructureResult,
+  LayoutTreeDraft
 } from './types'
 import { deepClone } from './lib/deepClone'
 import { css } from '@emotion/css'
+import { LayoutStructTree } from './types-layout'
 
 export function mergeOverrideModules(modules: OverrideModule[]) {
   const result: OverrideModule = {}
@@ -55,7 +57,7 @@ export function mergeClassNameFromProps(
   return json
 }
 
-export function assignRules(draft: JSONObjectTree, rules: StyleRule[]) {
+export function assignRules(draft: LayoutTreeProxyDraft, rules: StyleRule[]) {
   for (const rule of rules) {
     const { condition, target, style } = rule
     if (!!condition || condition === undefined) {
@@ -305,7 +307,7 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
 
   const jsonOperates = ['insert']
 
-  function createProxy(target: JSONObjectTree, pathArr: string[] = []) {
+  function createProxy(target: LayoutTreeDraft, pathArr: string[] = []) {
     const proxy = new Proxy(target, {
       get(target, key: string | symbol) {
         if (key === handlerPathKeySymbol) {
@@ -349,7 +351,8 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
     return newObj
   }
 
-  const draftJSON: JSONObjectTree = createProxy(jsonTree)
+  // 此处的类型应该根据 layout 结构生成得出，但这里是通用方法，无法精确取得类型
+  const draftJSON: LayoutTreeProxyDraft = createProxy(jsonTree)
 
   return {
     patches,
@@ -362,11 +365,11 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
  * eg:
  *  json: ['div', MyCpt, 'div']
  */
-export function buildLayoutNestedObj(json: VirtualLayoutJSON) {
-  let root: JSONObjectTree = {}
+export function buildLayoutNestedObj<T extends LayoutStructTree>(json: VirtualLayoutJSON): LayoutTreeDraft {
+  let root: LayoutTreeDraft = {}
 
   function buildRoot(
-    target: JSONObjectTree,
+    target: LayoutTreeDraft,
     source: VirtualLayoutJSON | BaseDataType
   ) {
     if (isVirtualNode(source)) {
@@ -375,7 +378,7 @@ export function buildLayoutNestedObj(json: VirtualLayoutJSON) {
         /**
          * @TODO how to keep reference to original "props object"?
          */
-        target[tag] = <JSONObjectTree>{
+        target[tag] = <LayoutTreeDraft>{
           [ExportPropKey]: source.props
         }
         if (Array.isArray(source.children) || isVirtualNode(source.children)) {

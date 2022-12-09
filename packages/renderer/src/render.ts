@@ -18,6 +18,7 @@ import {
   VNodeComponentSymbol
 } from './utils'
 import { extensionCore } from './extension'
+import { LayoutStructTree } from './types-layout'
 
 let globalCurrentRenderer: Renderer[] = []
 
@@ -211,12 +212,12 @@ export function useComponentModule<T extends Record<string, any>>(
   }
 }
 
-export function useLayout() {
+export function useLayout<T extends LayoutStructTree = any>() {
   const renderer = getCurrentRenderer()
   if (!renderer) {
     throw new Error('useLayout must be called in render function')
   }
-  return renderer.renderHooksContainer.getLayout()
+  return renderer.renderHooksContainer.getLayout<T>()
 }
 
 export function extendModule<Props>(

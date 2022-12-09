@@ -2,6 +2,7 @@ import type * as CSS from 'csstype'
 import type { ExtensionCore } from './extension'
 import type { ProxyLayoutHandler } from './utils'
 import type { StateSignal } from 'atomic-signal'
+import { LayoutStructTree, PrintLayoutStructTree, TransformToLayoutTreeDraft } from './types-layout'
 
 export type BaseDataType = string | number | boolean | null | undefined
 
@@ -15,8 +16,11 @@ export type BaseDataType = string | number | boolean | null | undefined
 
 //   }
 // }
-export type JSONObjectTree = {
-  [key: string]: JSONObjectTree | any
+export type LayoutTreeDraft = {
+  [key: string]: LayoutTreeDraft | any
+}
+export type LayoutTreeProxyDraft = {
+  [key: string]: LayoutTreeProxyDraft | any
 }
 
 export interface StyleRule {
@@ -86,7 +90,8 @@ export interface ModuleConfig<Props extends VirtualLayoutJSON['props']> {
 }
 
 export interface ModuleRenderContainer<
-  Props extends VirtualLayoutJSON['props'] = any
+  Props extends VirtualLayoutJSON['props'] = any,
+  
 > {
   runLogic: (...args: any[]) => Record<string, any>
   render: (json: VirtualLayoutJSON) => FrameworkVirtualNode
@@ -94,13 +99,13 @@ export interface ModuleRenderContainer<
     props?: Props,
     override?: OverrideModule<Props>
   ) => VirtualLayoutJSON
-  getLayout: (props?: Props) => JSONObjectTree
+  getLayout: <L extends LayoutStructTree>(props?: Props) => TransformToLayoutTreeDraft<L>
 }
 
 export interface OverrideModule<
   Props extends VirtualLayoutJSON['props'] = any
 > {
-  layout?: (props: Props, jsonTree: JSONObjectTree) => void
+  layout?: (props: Props, jsonTree: LayoutTreeProxyDraft) => void
 }
 
 type Func = (...args: any[]) => any

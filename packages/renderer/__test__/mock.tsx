@@ -3,6 +3,7 @@ import {
   createComponent,
   h,
   matchPatternMatrix,
+  StyleRule,
   useLayout,
   useLogic,
   useModule
@@ -104,9 +105,14 @@ export function useStyleInLayout(): SingleFileModule {
     },
     styleRules(props: { name: string }) {
       const root = useLayout()
-      root.div.props.style = {
-        color: 'red'
-      }
+      return [
+        {
+          target: root.div,
+          style: {
+            color: 'red'
+          }
+        }
+      ]
     }
   }
 }
@@ -129,9 +135,14 @@ export function useOtherModule(): SingleFileModule {
     },
     styleRules() {
       const root = useLayout()
-      root.div.props.style = {
-        color: 'red'
-      }
+      return [
+        {
+          target: root.div,
+          style: {
+            color: 'red'
+          }
+        }
+      ]
     }
   }
 }
@@ -155,9 +166,14 @@ export function useOtherComponentModule(): SingleFileModule {
     },
     styleRules() {
       const root = useLayout()
-      root.div.props.style = {
-        color: 'red'
-      }
+      return [
+        {
+          target: root.div,
+          style: {
+            color: 'red'
+          }
+        }
+      ]
     }
   }
 }
@@ -235,6 +251,39 @@ export function insideVNodeComponent() {
           <MyCpt value="123" />
         </div>
       )
+    }
+  }
+}
+
+export interface LayoutHasTypesStruct {
+  type: 'div',
+  children: [
+    {
+      type: 'div',
+    }
+  ]
+} 
+export function layoutHasTypes () {
+  return {
+    layout() {
+      return (
+        <div>
+          <div>123</div>
+        </div>
+      )
+    },
+    cssRules (): StyleRule[] {
+      const root = useLayout<LayoutHasTypesStruct>()
+      
+      return [
+        {
+          target: root.div,
+          condition: true,
+          style: {
+            color: 'red'
+          }
+        }
+      ]
     }
   }
 }

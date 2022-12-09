@@ -1,9 +1,10 @@
-import { JSONObjectTree, OverrideModule, SingleFileModule, StateManagementConfig, VirtualLayoutJSON } from "../../types";
+import { ModuleRenderContainer, OverrideModule, SingleFileModule, VirtualLayoutJSON } from "../../types";
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
 import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern, SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeClassNameFromProps, mergeOverrideModules, renderHTMLProp } from '../../utils'
 import { ExtensionCore } from "../../extension";
+import { LayoutStructTree, TransformToLayoutTreeDraft } from "../../types-layout";
 
 type ArgResultMap = Map<string, any>
 const driverWeakMap = new Map<Driver, ArgResultMap>()
@@ -42,7 +43,7 @@ export function createReactContainer (
   module: SingleFileModule,
   extensionCore: ExtensionCore,
   options?: { useEmotion: boolean }
-) {
+): ModuleRenderContainer {
   // shallow copy so that can mark cache in module
   module = {...module}
   const cacheSymbol = Symbol('cacheSymbol')
@@ -165,9 +166,9 @@ export function createReactContainer (
     return root
   }
 
-  function getLayout (props?: any) {
+  function getLayout<T extends LayoutStructTree> (props?: any) {
     const { proxyHandler } = getLayoutFromModule(props)
-    return proxyHandler?.draft
+    return proxyHandler?.draft as TransformToLayoutTreeDraft<T>
   }
 
   return {
