@@ -1,11 +1,15 @@
 {
   "name": "tarat-renderer",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "useHook serverless framework",
   "main": "./dist/renderer.js",
   "module": "./dist/renderer.esm.js",
   "types": "./dist/renderer.d.ts",
+  "bin": {
+    "tarat-render": "./dist/renderer-cli.js"
+  },
   "scripts": {
+    "tsd": "tsd",
     "watch-unit": "jest --watch -- __test__/core/context.test.ts",
     "wu": "sh scripts/dev-unit.sh",
     "test-unit": "jest",
@@ -14,6 +18,12 @@
     "build": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs && sh after-build.sh",
     "build:watch": "rm -rf dist/ && npm run format && rollup --config rollup.config.mjs --watch",
     "release": "bump && npm run build && pnpm publish --no-git-checks"
+  },
+  "tsd": {
+    "directory": "__test_types__",
+    "compilerOptions": {
+      "strict": false
+    }
   },
   "files": [
     "src",
@@ -45,6 +55,7 @@
     "rollup-plugin-dts": "^4.2.2",
     "rollup-plugin-typescript2": "^0.31.2",
     "test": "^3.2.1",
+    "tsd": "^0.25.0",
     "tslib": "^2.4.0"
   }
 }

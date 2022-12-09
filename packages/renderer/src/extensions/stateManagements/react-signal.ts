@@ -152,11 +152,11 @@ function runReactLogic<T extends Driver>(react: any, hook: T, props: Parameters<
   }, [props[0]])
 
   // confirm only run once in React18 with strict mode or in development
-  const didMount = useRef(false)
+  // const didMount = useRef(false)
   // release event
   useEffect(() => {
-    if (didMount.current === true) return
-    didMount.current = true
+    // if (didMount.current === true) return
+    // didMount.current = true
 
     init.current.scope.activate()
     const unListen = init.current.scope.onUpdate(() => {
@@ -168,7 +168,7 @@ function runReactLogic<T extends Driver>(react: any, hook: T, props: Parameters<
       init.current.scope.deactivate()
       init.current.scope.dispose()
       init.current = null
-      didMount.current = false
+      // didMount.current = false
     }
   }, [])
 

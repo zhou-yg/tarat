@@ -53,8 +53,9 @@
     A.vue直接传props即可， 将 React ModuleCpt 当成一个完全受控组件，且接受reactiveData的组件，处理过程参考上面
  
  adaptor logic:
-  step 1: 
+  step 1: 如果下级是signal，且props声明了只接收signal，那么传参必须经过
  
+
  优先级2：
  
  signal -> signal
