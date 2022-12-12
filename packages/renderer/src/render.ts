@@ -18,21 +18,21 @@ import {
   VNodeComponentSymbol
 } from './utils'
 import { extensionCore } from './extension'
-import { LayoutStructTree } from './types-layout'
+import { LayoutStructTree, MergedPatchCommandsToModule, PatchCommand } from './types-layout'
 
-let globalCurrentRenderer: Renderer[] = []
+let globalCurrentRenderer: Renderer<any, any, any>[] = []
 
 function getCurrentRenderer() {
   return last(globalCurrentRenderer)
 }
-function pushCurrentRenderer(renderer: Renderer) {
+function pushCurrentRenderer(renderer: Renderer<any, any, any>) {
   globalCurrentRenderer.push(renderer)
 }
 function popCurrentRenderer() {
   globalCurrentRenderer.pop()
 }
 
-class Renderer {
+class Renderer<P extends Record<string, any>, L extends LayoutStructTree, PC extends PatchCommand[]> {
   mounted: boolean = false
 
   renderHooksContainer: ModuleRenderContainer = null
@@ -40,7 +40,7 @@ class Renderer {
   layoutJSON: VirtualLayoutJSON
 
   constructor(
-    public module: SingleFileModule,
+    public module: SingleFileModule<P, L, PC>,
     public renderHost: RenderHost,
     public override?: OverrideModule
   ) {
@@ -87,8 +87,8 @@ class Renderer {
   }
 }
 
-export function createRenderer(
-  module: SingleFileModule,
+export function createRenderer<P extends Record<string, any>, L extends LayoutStructTree, PC extends PatchCommand[]>(
+  module: SingleFileModule<P, L, PC>,
   renderHost: RenderHost,
   override?: OverrideModule
 ) {
@@ -172,8 +172,8 @@ export function useLogic<T = any>(...args: any[]): T {
   return renderer.renderHooksContainer.runLogic(...args) as T
 }
 
-export function useModule<T extends Record<string, any>>(
-  module: SingleFileModule<T>,
+export function useModule<P extends Record<string, any>, L extends LayoutStructTree, PC extends PatchCommand[]>(
+  module: SingleFileModule<P, L, PC>,
   override?: OverrideModule
 ) {
   const renderer = getCurrentRenderer()
@@ -186,13 +186,13 @@ export function useModule<T extends Record<string, any>>(
     override
   )
 
-  return createComponent((props: T & { override?: OverrideModule }) => {
+  return createComponent((props: P & { override?: OverrideModule }) => {
     const { override, ...rest } = props
     return subModuleRenderer.construct(rest, override)
   })
 }
-export function useComponentModule<T extends Record<string, any>>(
-  module: SingleFileModule,
+export function useComponentModule<T extends Record<string, any>, L extends LayoutStructTree, PC extends PatchCommand[]>(
+  module: SingleFileModule<T, L, PC>,
   override?: OverrideModule
 ) {
   const renderer = getCurrentRenderer()
@@ -220,20 +220,31 @@ export function useLayout<T extends LayoutStructTree = any>() {
   return renderer.renderHooksContainer.getLayout<T>()
 }
 
-export function extendModule<Props>(
-  module: SingleFileModule<Props>,
-  override: OverrideModule<Props>
-): SingleFileModule<Props> {
+export function extendModule<
+  Props,
+  L extends LayoutStructTree,
+  PC extends readonly any[],
+  NewPC extends readonly any[]
+>(
+  module: SingleFileModule<Props, L, PC>,
+  override: () => OverrideModule<Props, L, NewPC>
+): SingleFileModule<
+  Props,
+  L,
+  readonly[...PC, ...NewPC]
+> {
   return {
     ...module,
-    config() {
-      const sourceConfig = module.config?.() || {}
+    override () {
+      const p1 = (module.override?.() || {})
+      const p2 = override()
       return {
-        ...sourceConfig,
-        overrides: sourceConfig.overrides
-          ? sourceConfig.overrides.concat(override)
-          : [override]
-      }
+        patchLayout (...rest) {
+          const r1 = p1.patchLayout?.(...rest)
+          const r2 = p2.patchLayout?.(...rest)
+          return [].concat(r1).concat(r2) as any
+        }
+      } as MergedPatchCommandsToModule<Props, L, PC, NewPC>
     }
   }
 }

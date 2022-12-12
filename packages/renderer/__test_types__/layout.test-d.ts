@@ -1,6 +1,6 @@
 import { expectType } from 'tsd'
 import {
-  Assign, DoCommand, PatchLayout, PrintLayoutStructTree,
+  Assign, DoPatchCommand, PatchLayout, PrintLayoutStructTree,
   RemoveItem,
   TransformToLayoutTreeDraft,
 
@@ -46,26 +46,29 @@ type MyLayoutTree = {
   ]
 }
 
-type DoCommandV1 = DoCommand<MyLayoutTree, { op: 'addChild', parent: [], child: { type: 'p' } }>
-type DoCommandV1Display = PrintLayoutStructTree<DoCommandV1>
-expectType<DoCommandV1Display>({
+const addOp = { op: 'addChild', parent: [], child: { type: 'p' } } as const
+type AddOp = typeof addOp
+
+type DoPatchCommandV1 = DoPatchCommand<MyLayoutTree, AddOp>
+type DoPatchCommandV1Display = PrintLayoutStructTree<DoPatchCommandV1>
+expectType<DoPatchCommandV1Display>({
   type: 'div',
   children: [
     { type: 'div' },
-    { type: 'p' }
+    { type: 'p' } as const // @TODO here looks like a bug
   ]
 })
 
-type DoCommandV2 = DoCommand<MyLayoutTree, { op: 'removeChild', parent: [], child: { type: 'div' } }>
-type DoCommandV2Display = PrintLayoutStructTree<DoCommandV2>
-expectType<DoCommandV2Display>({
+type DoPatchCommandV2 = DoPatchCommand<MyLayoutTree, { op: 'removeChild', parent: [], child: { type: 'div' } }>
+type DoPatchCommandV2Display = PrintLayoutStructTree<DoPatchCommandV2>
+expectType<DoPatchCommandV2Display>({
   type: 'div',
   children: []
 })
 
-type DoCommandV3 = DoCommand<MyLayoutTree, { op: 'replaceChild', parent: [], child: { type: 'p' } }>
-type DoCommandV3Display = PrintLayoutStructTree<DoCommandV3>
-expectType<DoCommandV3Display>({
+type DoPatchCommandV3 = DoPatchCommand<MyLayoutTree, { op: 'replaceChild', parent: [], child: { type: 'p' } }>
+type DoPatchCommandV3Display = PrintLayoutStructTree<DoPatchCommandV3>
+expectType<DoPatchCommandV3Display>({
   type: 'p'
 })
 
@@ -170,7 +173,9 @@ type TransformV1 = TransformToLayoutTreeDraft<MyTransformLayoutTree>
 type TransformV1Display = PrintLayoutStructTree<TransformV1>
 expectType<TransformV1Display>({
   div: {
-    div: {}
+    div: {
+      paths: ['div', 'div']
+    }
   }
 })
 
@@ -178,7 +183,11 @@ type TransformV2 = TransformToLayoutTreeDraft<MyTransformLayoutTree2>
 type TransformV2Display = PrintLayoutStructTree<TransformV2>
 expectType<TransformV2Display>({
   div: {
-    div: {},
-    p: {}
+    div: {
+      paths: ['div', 'div']
+    },
+    p: {
+      paths: ['div', 'p']
+    }
   }
 })

@@ -40,7 +40,7 @@ function filterPatternSematicProps(props?: any) {
 
 export function createReactContainer (
   React: any,
-  module: SingleFileModule,
+  module: SingleFileModule<any, any, any>,
   extensionCore: ExtensionCore,
   options?: { useEmotion: boolean }
 ): ModuleRenderContainer {
@@ -49,6 +49,7 @@ export function createReactContainer (
   const cacheSymbol = Symbol('cacheSymbol')
 
   const moduleConfig = module.config?.() || {}
+  const moduleOverride = module.override?.() || {}
 
   const stateManagement = extensionCore.match('react', moduleConfig.logicLib?.name)
   
@@ -137,7 +138,7 @@ export function createReactContainer (
         assignRules(proxyHandler.draft, rules)
       }
 
-      const mergedOverride = mergeOverrideModules([...(moduleConfig.overrides || []), override])
+      const mergedOverride = mergeOverrideModules([moduleOverride, override])
       if (mergedOverride.layout) {
         mergedOverride.layout?.(props, proxyHandler.draft)
       }

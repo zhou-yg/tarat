@@ -3,41 +3,19 @@
  * some type utility functions
  * 
  */
-
- export interface LayoutStructTree {
+export interface LayoutStructTree {
   type: string
   children?: LayoutStructTree[]
+  value?: any
 }
 
 /**
  * explicity convert layout tree to layout tree draft
  */
-type MyLayoutTree = {
-  type: 'div',
-  children: [
-    {
-      type: 'div',
-    },
-    {
-      type: 'div',
-    },
-    {
-      type: 'p'
-    }
-  ]
-}
-
-type TargetResult = {
-  div: {
-    div: {}
-  }
-}
-
-type r =  TransformToLayoutTreeDraft<MyLayoutTree>
-type r2 = PrintLayoutStructTree<r>
-
-export type TransformToLayoutTreeDraft<T extends LayoutStructTree> = {
-  [K in T['type']]: T['children'] extends any[] ? TransformToLayoutTreeDraft<T['children'][number]> : {}
+export type TransformToLayoutTreeDraft<T extends LayoutStructTree, Keys extends unknown[] = []> = {
+  [K in T['type']]: T['children'] extends any[]
+    ? TransformToLayoutTreeDraft<T['children'][number], [...Keys, K]>
+    : { paths: [...Keys, K]  }
 }
 
 
@@ -45,10 +23,19 @@ export type TransformToLayoutTreeDraft<T extends LayoutStructTree> = {
  * patch cmd to struct
  */
 
-interface Command {
-  op: 'addChild' | 'removeChild' | 'replaceChild',
-  parent: LayoutStructTree['type'][]
-  child: LayoutStructTree
+const a = {
+  type: 'a',
+  arr: [1,2],
+  child: { k : 'v'}
+} as const
+
+export interface PatchCommand {
+  readonly op: 'addChild' | 'removeChild' | 'replaceChild',
+  readonly parent: readonly LayoutStructTree['type'][]
+  readonly child: {
+    readonly type: string
+    readonly value?: any
+  }
 }
 
 export type Assign<U, T> = Omit<U, keyof T> & T
@@ -63,7 +50,7 @@ export type RemoveItem<Children extends LayoutStructTree['children'], child exte
     : []
 
 
-export type DoCommand<T extends LayoutStructTree, Cmd extends Command> =
+export type DoPatchCommand<T extends LayoutStructTree, Cmd extends PatchCommand> =
   Cmd['op'] extends 'addChild'
     ? T['children'] extends LayoutStructTree['children']
       ? Assign<T, { children: [...T['children'], Cmd['child']] }>
@@ -74,7 +61,7 @@ export type DoCommand<T extends LayoutStructTree, Cmd extends Command> =
         ? Cmd['child']
         : never
 
-type PatchToLayoutChildren<T extends LayoutStructTree['children'], Cmd extends Command> =
+type PatchToLayoutChildren<T extends LayoutStructTree['children'], Cmd extends PatchCommand> =
   T extends [infer FirstChild, ...infer RestChildren]
     ? FirstChild extends LayoutStructTree 
       ? RestChildren extends LayoutStructTree['children']
@@ -83,13 +70,13 @@ type PatchToLayoutChildren<T extends LayoutStructTree['children'], Cmd extends C
       : never
     : T
 
-export type PatchLayout<T extends LayoutStructTree, Cmd extends Command> = 
+export type PatchLayout<T extends LayoutStructTree, Cmd extends PatchCommand> = 
   Cmd['parent'] extends [infer First, ...infer Rest]
     ? Rest extends []
       ? T extends { type: First } 
-        ? DoCommand<T, Cmd>
+        ? DoPatchCommand<T, Cmd>
         : never
-      : Rest extends Command['parent']
+      : Rest extends PatchCommand['parent']
         ? Assign<T, { children: PatchToLayoutChildren<T['children'], Assign<Cmd, { parent: Rest }>> }>
         : never
     : T;
@@ -103,13 +90,21 @@ export type PrintLayoutStructTree<T> = {
           },
           ...PrintLayoutStructTree<Rest>
         ]
-      : T[P] extends object
-        ? T[P] extends []
-          ? []
-          : {} extends T[P]
-            ? { a: 1 }
+      : T[P] extends []
+        ? []
+        : T[P] extends Record<string, unknown>
+          ? {} extends T[P]
+            ? {}
             : {
                 [P2 in keyof T[P]]: T[P][P2]
               }
-        : T[P]
+          : T[P]
+}
+
+/**
+ * module extend
+ */
+
+export type MergedPatchCommandsToModule<Props, L extends LayoutStructTree , P1 extends readonly any[], P2 extends readonly any[]>= {
+  patchLayout: (props: Props, jsonTree: TransformToLayoutTreeDraft<L>) => readonly [...P1, ...P2]
 }

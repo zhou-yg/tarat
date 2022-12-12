@@ -2,7 +2,7 @@ import type * as CSS from 'csstype'
 import type { ExtensionCore } from './extension'
 import type { ProxyLayoutHandler } from './utils'
 import type { StateSignal } from 'atomic-signal'
-import { LayoutStructTree, PrintLayoutStructTree, TransformToLayoutTreeDraft } from './types-layout'
+import { LayoutStructTree, PatchCommand, PrintLayoutStructTree, TransformToLayoutTreeDraft } from './types-layout'
 
 export type BaseDataType = string | number | boolean | null | undefined
 
@@ -38,13 +38,17 @@ export interface PatternStructure {
 }
 
 export interface SingleFileModule<
-  Props extends VirtualLayoutJSON['props'] = any
+  Props extends VirtualLayoutJSON['props'],
+  L extends LayoutStructTree,
+  PC extends readonly PatchCommand[],
 > {
+  layoutTree?: TransformToLayoutTreeDraft<L>
   logic?: (...args: any[]) => Record<string, any>
   layout?: (p?: Props) => VirtualLayoutJSON
   designPattern?: (p?: Props) => PatternStructure | void
   styleRules?: (p?: Props) => StyleRule[] | void
-  config?: (...args: any[]) => ModuleConfig<Props>
+  config?: (...args: any[]) => ModuleConfig
+  override?: () => OverrideModule<Props, L, PC>
 }
 
 export interface VirtualLayoutJSON {
@@ -81,31 +85,33 @@ export interface RenderHost {
 
 type FrameworkVirtualNode = any
 
-export interface ModuleConfig<Props extends VirtualLayoutJSON['props']> {
+export interface ModuleConfig {
   // default is 'signal'
   logicLib?: {
     name: string
   }
-  overrides?: OverrideModule<Props>[]
 }
 
 export interface ModuleRenderContainer<
-  Props extends VirtualLayoutJSON['props'] = any,
-  
+  Props extends VirtualLayoutJSON['props'] = unknown,
+  L extends LayoutStructTree = any,
 > {
   runLogic: (...args: any[]) => Record<string, any>
   render: (json: VirtualLayoutJSON) => FrameworkVirtualNode
   construct: (
     props?: Props,
-    override?: OverrideModule<Props>
+    override?: OverrideModule<Props, L>
   ) => VirtualLayoutJSON
   getLayout: <L extends LayoutStructTree>(props?: Props) => TransformToLayoutTreeDraft<L>
 }
 
 export interface OverrideModule<
-  Props extends VirtualLayoutJSON['props'] = any
+  Props extends VirtualLayoutJSON['props'] = unknown,
+  L extends LayoutStructTree = any,
+  PC extends readonly PatchCommand[] = []
 > {
-  layout?: (props: Props, jsonTree: LayoutTreeProxyDraft) => void
+  layout?: (props: Props, jsonTree: TransformToLayoutTreeDraft<L>) => void
+  patchLayout?: (props: Props, jsonTree: TransformToLayoutTreeDraft<L>) => PC
 }
 
 type Func = (...args: any[]) => any
@@ -125,10 +131,10 @@ export interface StateManagementConfig {
   transform: (json: VirtualLayoutJSON) => VirtualLayoutJSON
 }
 
-export interface RenderContainer {
+export interface RenderContainer<P extends Record<string, any>, L extends LayoutStructTree, PC extends PatchCommand[]> {
   (
     framework: any,
-    module: SingleFileModule,
+    module: SingleFileModule<P, L, PC>,
     extensionCore: ExtensionCore,
     options?: { useEmotion: boolean }
   ): ModuleRenderContainer

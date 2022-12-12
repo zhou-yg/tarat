@@ -1,5 +1,4 @@
 import type {
-  ModuleRenderContainer,
   RenderContainer,
   StateManagementConfig
 } from './types'
@@ -43,9 +42,9 @@ export class ExtensionCore {
     return firstMatchedResult
   }
 
-  containerCreators = new Map<string, RenderContainer>()
+  containerCreators = new Map<string, RenderContainer<any, any, any>>()
 
-  getContainerCreator(frameworkName: string): RenderContainer {
+  getContainerCreator(frameworkName: string): RenderContainer<any, any, any> {
     const containerCreator = this.containerCreators.get(frameworkName)
     if (!containerCreator) {
       throw new Error(`No container found for framework: ${frameworkName}`)
@@ -53,7 +52,7 @@ export class ExtensionCore {
     return containerCreator
   }
 
-  addContainerCreator(frameworkName: string, container: RenderContainer) {
+  addContainerCreator(frameworkName: string, container: RenderContainer<any, any, any>) {
     this.containerCreators.set(frameworkName, container)
   }
 }
