@@ -1,6 +1,6 @@
 import { expectType } from 'tsd'
 import {
-  Assign, DoPatchCommand, PatchLayout, PrintLayoutStructTree,
+  Assign, DoPatchCommand, FlatPatchCommandsArr, PatchLayout, PatchLayoutWithCommands, PrintLayoutStructTree,
   RemoveItem
 } from '../src/types-layout'
 
@@ -88,7 +88,7 @@ expectType<DoPatchCommandV2Display>({
   children: []
 } as {
   type: 'div',
-  readonly children: []
+  readonly children: readonly []
 })
 
 type DoPatchCommandV3 = DoPatchCommand<MyLayoutTree, { op: 'replaceChild', parent: [], child: { type: 'p' } }>
@@ -211,11 +211,11 @@ expectType<PatchLayoutV3Display>({
   readonly children: readonly [
     {
       type: 'div',
-      readonly children: []
+      readonly children: readonly []
     },
     {
       type: 'div',
-      readonly children: []
+      readonly children: readonly []
     },
   ]
 })
@@ -259,5 +259,136 @@ expectType<PatchLayoutReadonlyV1Display>({
       type: 'div',
       children: []
     },
+  ]
+} as const)
+
+
+// patch layout with command list
+
+
+const patchAddCommandValues = [
+  { op: 'addChild', parent: ['div'], child: { type: 'p', children: [] } },
+  { op: 'addChild', parent: ['div', 'p'], child: { type: 'span', children: [] } },
+] as const
+
+type PatchAddCommandArr = typeof patchAddCommandValues
+
+const myLayoutTreeInArr = {
+  type: 'div',
+  children: [
+    {
+      type: 'p',
+    }
+  ]
+} as const
+type MyLayoutTreeInArr = typeof myLayoutTreeInArr
+
+type PatchLayoutWithCommandListV1 = PatchLayoutWithCommands<MyLayoutTreeInArr, PatchAddCommandArr>
+type PatchLayoutWithCommandListV1Display = PrintLayoutStructTree<PatchLayoutWithCommandListV1>
+
+expectType<PatchLayoutWithCommandListV1Display>({
+  type: 'div',
+  children: [
+    {
+      type: 'p',
+      children: [
+        {
+          type: 'span',
+          children: []
+        }
+      ]
+    },
+    {
+      type: 'p',
+      children: [
+        {
+          type: 'span',
+          children: []
+        }
+      ]
+    }
+  ]
+} as const)
+
+
+
+// flat two dimensional array patch commands
+
+const patchAddCommandValues2Arr = [
+  [
+    { op: 'addChild', parent: ['div'], child: { type: 'p', children: [] } },
+    { op: 'addChild', parent: ['div', 'p'], child: { type: 'span', children: [] } },
+  ],
+  [
+    { op: 'removeChild', parent: ['div', 'p'], child: { type: 'span' } },
+  ]
+] as const
+
+type PatchAddCommand2Arr = typeof patchAddCommandValues2Arr
+
+type FlatCmdArr = FlatPatchCommandsArr<PatchAddCommand2Arr>
+type FlatArrDisplay = PrintLayoutStructTree<FlatCmdArr>
+
+type PatchLayoutWithCommandListV12Arr = PatchLayoutWithCommands<MyLayoutTreeInArr, FlatCmdArr>
+type PatchLayoutWithCommandListV12ArrDisplay = PrintLayoutStructTree<PatchLayoutWithCommandListV12Arr>
+
+expectType<PatchLayoutWithCommandListV12ArrDisplay>({
+  type: 'div',
+  children: [
+    {
+      type: 'p',
+      children: [
+      ]
+    },
+    {
+      type: 'p',
+      children: [
+      ]
+    }
+  ]
+} as const)
+
+
+type BaseFPC3Arr = [{
+  readonly op: "addChild";
+  readonly parent: readonly ["div"];
+  readonly child: {
+      readonly type: "p";
+      readonly value: "123";
+  };
+}, {
+  readonly op: "addChild";
+  readonly parent: readonly ["div", "p"];
+  readonly child: {
+      readonly type: "text";
+      readonly value: "hello";
+  };
+}]
+type BaseBaseL3 = {
+  readonly type: 'div';
+  children: [{
+      readonly type: 'div';
+  }];
+}
+
+type FL = PatchLayoutWithCommands<BaseBaseL3, BaseFPC3Arr>
+type FLDisplay = PrintLayoutStructTree<FL>
+
+expectType<FLDisplay>({
+  type: 'div',
+  children: [
+    {
+      type: 'div',
+    },
+    {
+      type: 'p',
+      value: '123',
+      children: [
+        {
+          type: 'text',
+          value: 'hello'
+        }
+      ]
+    }
   ]
 } as const)

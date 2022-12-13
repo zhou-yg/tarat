@@ -25,6 +25,19 @@ expectType<O1>({
 
 // convert
 
+type LT = {
+  type: 'div';
+  readonly children: readonly [{
+      type: 'div';
+  }, {
+      readonly type: "p";
+  }];
+}
+
+type LTNested = ConvertToLayoutTreeDraft<LT>
+type LT2Layer = LTNested['div']
+
+
 type MyTransformLayoutTree = {
   type: 'div',
   children: [
@@ -100,3 +113,33 @@ type PickBack2 = ShallowCopyArray<NestedTransformType['div']['div']>
 expectType<PickBack1>(['div'] as const)
 expectType<PickBack2>(['div', 'div'] as const)
 
+
+type a = 0 | 1 | 2
+
+type c = {
+  [k in a]: k
+}
+
+type CC = a extends infer A | [] ? A : false
+type CC0 = CC extends infer B | [number] ? B : false
+
+type CC1 = Extract<CC, [number]>
+
+type CMD = [] | [{ type: 'div' }] | [{ type: 'p' }]
+
+
+type b = 0
+
+type vv = [] extends CMD ? true : false
+
+type AA = {
+  div?: {
+    div: ['div', 'div']
+  }
+}
+
+const aa: AA = {
+}
+
+const parent = [...aa.div.div] as const
+type pt = typeof parent

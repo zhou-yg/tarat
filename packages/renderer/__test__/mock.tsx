@@ -1,5 +1,6 @@
 /* @jsxFactory h  */
 import {
+  ConvertToLayoutTreeDraft,
   createComponent,
   extendModule,
   h,
@@ -8,8 +9,8 @@ import {
   PatchCommand,
   PrintLayoutStructTree,
   PrintObjectLike,
+  ShallowCopyArray,
   StyleRule,
-  TransformToLayoutTreeDraft,
   useLayout,
   useLogic,
   useModule
@@ -96,7 +97,16 @@ export function layoutUseLogic(): SingleFileModule<{ name: string }, any, []> {
   }
 }
 
-export function useStyleInLayout(): SingleFileModule<{}, any, []> {
+type UseStyleInLayoutStruct = {
+  type:'div',
+  children: [
+    {
+      type: 'span'
+    }
+  ]
+}
+
+export function useStyleInLayout(): SingleFileModule<{}, UseStyleInLayoutStruct, []> {
   return {
     logic() {
       return { num: 1 }
@@ -110,7 +120,7 @@ export function useStyleInLayout(): SingleFileModule<{}, any, []> {
       )
     },
     styleRules(props: { name: string }) {
-      const root = useLayout()
+      const root = useLayout<UseStyleInLayoutStruct>()
       return [
         {
           target: root.div,
@@ -123,7 +133,16 @@ export function useStyleInLayout(): SingleFileModule<{}, any, []> {
   }
 }
 
-export function useOtherModule(): SingleFileModule<{}, any, []> {
+type UseOtherModule = {
+  type:'div',
+  children: [
+    {
+      type: 'span'
+    }
+  ]
+}
+
+export function useOtherModule(): SingleFileModule<{}, UseOtherModule, []> {
   return {
     logic() {
       return { num: 1 }
@@ -140,7 +159,7 @@ export function useOtherModule(): SingleFileModule<{}, any, []> {
       )
     },
     styleRules() {
-      const root = useLayout()
+      const root = useLayout<UseOtherModule>()
       return [
         {
           target: root.div,
@@ -152,7 +171,18 @@ export function useOtherModule(): SingleFileModule<{}, any, []> {
     }
   }
 }
-export function useOtherComponentModule(): SingleFileModule<{}, any, []> {
+
+type UseOtherComponentModule = {
+  type:'div',
+  children: [
+    {
+
+      type: 'span'
+    },
+  ]    
+}
+
+export function useOtherComponentModule(): SingleFileModule<{}, UseOtherComponentModule, []> {
   return {
     logic() {
       return { num: 1 }
@@ -171,7 +201,7 @@ export function useOtherComponentModule(): SingleFileModule<{}, any, []> {
       )
     },
     styleRules() {
-      const root = useLayout()
+      const root = useLayout<UseOtherComponentModule>()
       return [
         {
           target: root.div,
@@ -284,10 +314,15 @@ function bb () {
   }
 }
 
+function testL <T extends LayoutStructTree>(): { L?: ConvertToLayoutTreeDraft<T> } {
+  return {}
+}
+
+const v = testL<LayoutHasTypesStruct>()
+
 export function layoutHasTypes<
-T extends { name: string }, 
-L extends LayoutHasTypesStruct, 
-> (): SingleFileModule<T, L, []> {
+T extends { name: string }
+> (): SingleFileModule<{ name: string }, LayoutHasTypesStruct, [[]]> {
   return {
     layout(props: T) {
       return (
@@ -313,15 +348,17 @@ L extends LayoutHasTypesStruct,
 }
 const baseModule = layoutHasTypes()
 type BaseProps = Parameters<(typeof baseModule['layout'])>['0']
-type BaseL = PrintLayoutStructTree<(typeof baseModule['layoutTree'])>
-type BaseOverride = ReturnType<ReturnType<(typeof baseModule['override'])>['patchLayout']>
+type BaseLT = ReturnType<(typeof baseModule['layoutTree'])>
+type BaseL = PrintLayoutStructTree<ReturnType<(typeof baseModule['layoutStruct'])>>
+type BaseOverride = ReturnType<(typeof baseModule['override'])>['0']
+type BaseOverrideL = ReturnType<ReturnType<(typeof baseModule['override'])>['0']['patchLayout']>
 
 const newModule2 = extendModule(baseModule, () => ({
   patchLayout (props, jsonDraft) {
     return [
       {
         op: 'addChild',
-        parent: jsonDraft.div.div as unknown as readonly ['div', 'div'],
+        parent: jsonDraft.div,
         child: {
           type: 'p',
           value: '123'
@@ -332,16 +369,26 @@ const newModule2 = extendModule(baseModule, () => ({
 }))
 
 type BaseProp2 = Parameters<typeof newModule2['layout']>['0']
-type BaseL2 = PrintLayoutStructTree<typeof newModule2['layoutTree']>
+type BaseLT2 = ReturnType<typeof newModule2['layoutTree']>
+type BaseLT2D = BaseLT2['div']
+type BaseLT2DD = BaseLT2['div']['div']
+type BaseLT2DP = BaseLT2['div']['p']
+type BaseBaseL = PrintLayoutStructTree<typeof newModule2['_L']>
+type BasePC2Arr = PrintLayoutStructTree<typeof newModule2['_pc2Arr']>
+type BaseFPC2Arr = PrintLayoutStructTree<typeof newModule2['_fpc2Arr']>
+type BaseL2 = PrintLayoutStructTree<ReturnType< typeof newModule2['layoutStruct']>>
 type BaseOverride2 = ReturnType<typeof newModule2['override']>
-type BaseOverridePatchResult2 = ReturnType<ReturnType<typeof newModule2['override']>['patchLayout']>
+type BaseOverride2I0 = ReturnType<ReturnType<typeof newModule2['override']>['0']['patchLayout']>
+type BaseOverride2I1 = ReturnType<ReturnType<typeof newModule2['override']>['1']['patchLayout']>
 
 const newModule3 = extendModule(newModule2, () => ({
   patchLayout (props, jsonDraft) {
+
     return [
       {
-        op: 'removeChild',
-        parent: jsonDraft.div.div as unknown as readonly ['div', 'div'],
+        op: 'addChild',
+        parent: jsonDraft.div.div, // { paths: [], condition: true }
+        condition: !!props.name,
         child: {
           type: 'text',
           value: 'hello'
@@ -351,17 +398,20 @@ const newModule3 = extendModule(newModule2, () => ({
   }
 }))
 type BaseProp3 = Parameters<typeof newModule3['layout']>['0']
-type BaseL3 = PrintLayoutStructTree<typeof newModule3['layoutTree']>
-type BaseOverride3 = ReturnType<typeof newModule3['override']>['patchLayout']
-type BaseOverridePatchResult3 = PrintObjectLike<ReturnType<BaseOverride3>>
-type BaseOverridePatchResult30 = ReturnType<ReturnType<typeof newModule3['override']>['patchLayout']>['0']
-type BaseOverridePatchResult31 = ReturnType<ReturnType<typeof newModule3['override']>['patchLayout']>['1']
-
-
-// type ExtendTypesModule2 = Patch<LayoutHasTypesStruct, typeof newModule>
+type BaseLT3 = typeof newModule3['layoutTree']
+type BaseBaseL3 = PrintLayoutStructTree<typeof newModule3['_L']>
+type BasePC3Arr = PrintLayoutStructTree<typeof newModule3['_pc2Arr']>
+type BaseFPC3Arr = PrintLayoutStructTree<typeof newModule3['_fpc2Arr']>
+type BaseL3 = PrintLayoutStructTree<ReturnType <typeof newModule3['layoutStruct']>>
+type BaseOverride3 = ReturnType<typeof newModule3['override']>
+type BaseOverride3I0 = ReturnType<ReturnType<typeof newModule3['override']>['0']['patchLayout']>
+type BaseOverride3I1 = ReturnType<ReturnType<typeof newModule3['override']>['1']['patchLayout']>
+type BaseOverride3I2 = ReturnType<ReturnType<typeof newModule3['override']>['2']['patchLayout']>
 
 export function extendTypesModule () {
   return {
-    
+        
   }
 }
+
+

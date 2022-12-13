@@ -18,7 +18,7 @@ import {
   VNodeComponentSymbol
 } from './utils'
 import { extensionCore } from './extension'
-import { LayoutStructTree, MergedPatchCommandsToModule, PatchCommand } from './types-layout'
+import { FormatPatchCommands, LayoutStructTree, MergedPatchCommandsToModule, PatchCommand } from './types-layout'
 
 let globalCurrentRenderer: Renderer<any, any, any>[] = []
 
@@ -212,7 +212,7 @@ export function useComponentModule<T extends Record<string, any>, L extends Layo
   }
 }
 
-export function useLayout<T extends LayoutStructTree = any>() {
+export function useLayout<T extends LayoutStructTree>() {
   const renderer = getCurrentRenderer()
   if (!renderer) {
     throw new Error('useLayout must be called in render function')
@@ -223,28 +223,25 @@ export function useLayout<T extends LayoutStructTree = any>() {
 export function extendModule<
   Props,
   L extends LayoutStructTree,
-  PC extends readonly any[],
-  NewPC extends readonly any[]
+  PCArr extends PatchCommand[][],
+  NewPC,
 >(
-  module: SingleFileModule<Props, L, PC>,
-  override: () => OverrideModule<Props, L, NewPC>
-): SingleFileModule<
-  Props,
-  L,
-  readonly[...PC, ...NewPC]
-> {
+  module: SingleFileModule<Props, L, PCArr>,
+  override: () => OverrideModule<Props, ReturnType<SingleFileModule<Props, L, PCArr>['layoutStruct']>, NewPC>
+) {
   return {
     ...module,
     override () {
-      const p1 = (module.override?.() || {})
+      const p1 = (module.override?.() || [])
       const p2 = override()
-      return {
-        patchLayout (...rest) {
-          const r1 = p1.patchLayout?.(...rest)
-          const r2 = p2.patchLayout?.(...rest)
-          return [].concat(r1).concat(r2) as any
-        }
-      } as MergedPatchCommandsToModule<Props, L, PC, NewPC>
+      return [
+        ...p1,
+        p2,
+      ]
     }
-  }
+  } as unknown as SingleFileModule<
+    Props,
+    L, // ReturnType<SingleFileModule<Props, L, [...PCArr, FormatPatchCommands<NewPC>]>['layoutStruct']>,
+    [...PCArr, FormatPatchCommands<NewPC>]
+  >
 }

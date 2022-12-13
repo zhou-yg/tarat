@@ -2,7 +2,7 @@ import type * as CSS from 'csstype'
 import type { ExtensionCore } from './extension'
 import type { ProxyLayoutHandler } from './utils'
 import type { StateSignal } from 'atomic-signal'
-import { LayoutStructTree, PatchCommand, PrintLayoutStructTree, ConvertToLayoutTreeDraft } from './types-layout'
+import { LayoutStructTree, PatchCommand, PrintLayoutStructTree, ConvertToLayoutTreeDraft, ShallowCopyArray, FormatPatchCommands, PatchLayout, PatchLayoutWithCommands, FlatPatchCommandsArr } from './types-layout'
 
 export type BaseDataType = string | number | boolean | null | undefined
 
@@ -37,19 +37,33 @@ export interface PatternStructure {
   [mainSematic: string]: PatternStructureResult
 }
 
+type PC2ArrToOverrideModule<
+  Props extends VirtualLayoutJSON['props'],
+  L extends LayoutStructTree,
+  PC2Arr
+> = 
+  PC2Arr extends readonly [infer F, ...infer R]
+    ? [OverrideModule<Props, L, F>, ...PC2ArrToOverrideModule<Props, L, R>]
+    : PC2Arr
+
 export interface SingleFileModule<
   Props extends VirtualLayoutJSON['props'],
   L extends LayoutStructTree,
-  PC extends readonly PatchCommand[],
+  PC2Arr,
 > {
-  layoutTree?: ConvertToLayoutTreeDraft<L>
+  layoutTree?: () => ConvertToLayoutTreeDraft<PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>>
+  _fpc2Arr?: FlatPatchCommandsArr<PC2Arr>
+  _pc2Arr?: PC2Arr,
+  _L?: L
+  layoutStruct?:  () => PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
   logic?: (...args: any[]) => Record<string, any>
   layout?: (p?: Props) => VirtualLayoutJSON
   designPattern?: (p?: Props) => PatternStructure | void
   styleRules?: (p?: Props) => StyleRule[] | void
   config?: (...args: any[]) => ModuleConfig
-  override?: () => OverrideModule<Props, L, PC>
+  override?: () => PC2ArrToOverrideModule<Props, L, PC2Arr>
 }
+
 
 export interface VirtualLayoutJSON {
   id: number
@@ -108,7 +122,7 @@ export interface ModuleRenderContainer<
 export interface OverrideModule<
   Props extends VirtualLayoutJSON['props'] = unknown,
   L extends LayoutStructTree = any,
-  PC extends readonly PatchCommand[] = []
+  PC = []
 > {
   layout?: (props: Props, jsonTree: ConvertToLayoutTreeDraft<L>) => void
   patchLayout?: (props: Props, jsonTree: ConvertToLayoutTreeDraft<L>) => PC

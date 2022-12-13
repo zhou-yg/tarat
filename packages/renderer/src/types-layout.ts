@@ -14,7 +14,7 @@ export interface LayoutStructTree {
  */
 
 export type ConvertToLayoutTreeDraft<T extends LayoutStructTree, Keys extends unknown[] = []> = {
-  [K in T['type']]: T['children'] extends unknown[]
+  [K in T['type']]: T['children'] extends readonly unknown[]
     ? {} extends ConvertToLayoutTreeDraft<T['children'][number], [...Keys, K]>
       ? never
       : readonly [...Keys, K] & ConvertToLayoutTreeDraft<T['children'][number], [...Keys, K]>
@@ -58,10 +58,10 @@ export type RemoveItem<Children extends LayoutStructTree['children'], child exte
   Children extends readonly [infer First, ...infer Rest]
     ? First extends child
       ? Rest extends []
-        ? []
+        ? readonly []
         : Rest extends LayoutStructTree['children'] ? RemoveItem<Rest, child> : []
       : Rest extends LayoutStructTree['children'] ? readonly [First, ...RemoveItem<Rest, child>] : []
-    : []
+    : readonly []
 
 
 export type DoPatchCommand<T extends LayoutStructTree, Cmd extends PatchCommand> =
@@ -89,11 +89,22 @@ export type PatchLayout<T extends LayoutStructTree, Cmd extends PatchCommand> =
     ? Rest extends []
       ? T extends { type: First } 
         ? DoPatchCommand<T, Cmd>
-        : never
+        : T
       : Rest extends PatchCommand['parent']
         ? Assign<T, { readonly children: PatchToLayoutChildren<T['children'], Assign<Cmd, { parent: Rest }>> }>
         : never
     : T;
+
+export type PatchLayoutWithCommands<T extends LayoutStructTree, CmdArr> =
+  T extends LayoutStructTree
+    ? CmdArr extends readonly [infer First, ...infer Rest]
+      ? First extends PatchCommand
+        ? Rest extends PatchCommand[]
+          ? PatchLayoutWithCommands<PatchLayout<T, First>, Rest>
+          : PatchLayout<T, First>
+        : never
+      : T
+    : never
 
 export type PrintLayoutStructTree<T> = {
   [P in keyof T]: 
@@ -141,6 +152,42 @@ export type PrintObjectLike<T> =
  * module extend
  */
 
+
+type FormatPatchCommandParent<P> = 
+  P extends PatchCommand
+    ? Readonly<{
+        op: P['op']
+        parent: ShallowCopyArray<P['parent']>
+        child: P['child']
+      }>
+    : P
+
+type VV = PatchCommand[] // readonly [{ readonly op: "addChild"; readonly parent: readonly ["div"] & ConvertToLayoutTreeDraft<{ type: "div"; }, ["div"]>; readonly child: { readonly type: "p"; readonly value: "123"; }; }]
+
+type VV0 = VV extends readonly [infer F, ...infer R] ? 1 : 0
+
+export type FormatPatchCommands<P> = 
+  P extends readonly []
+    ? [] 
+    : P extends readonly [infer F, ...infer R]
+        ? R extends []
+            ? [FormatPatchCommandParent<F>]
+            : R extends readonly PatchCommand[]
+              ? readonly [FormatPatchCommandParent<F>, ...FormatPatchCommands<R>]
+              : never
+        : never
+
 export type MergedPatchCommandsToModule<Props, L extends LayoutStructTree , P1 extends readonly any[], P2 extends readonly any[]>= {
   patchLayout: (props: Props, jsonTree: ConvertToLayoutTreeDraft<L>) => readonly [...P1, ...P2]
 }
+
+
+export type FlatPatchCommandsArr<T> = 
+  T extends readonly [infer F, ...infer R]
+    ? F extends readonly PatchCommand[]
+        ? [...FlatPatchCommandsArr<F>, ...FlatPatchCommandsArr<R>]
+        : F extends PatchCommand
+          ? [F, ...R]
+          : []
+    : []
+        
