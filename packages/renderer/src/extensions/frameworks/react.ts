@@ -4,7 +4,7 @@ import {
 } from 'atomic-signal'
 import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern, SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeClassNameFromProps, mergeOverrideModules, renderHTMLProp } from '../../utils'
 import { ExtensionCore } from "../../extension";
-import { LayoutStructTree, TransformToLayoutTreeDraft } from "../../types-layout";
+import { LayoutStructTree, ConvertToLayoutTreeDraft } from "../../types-layout";
 
 type ArgResultMap = Map<string, any>
 const driverWeakMap = new Map<Driver, ArgResultMap>()
@@ -124,7 +124,7 @@ export function createReactContainer (
     return React.createElement(...elementArgs)
   }
   
-  function construct (props?: any, override?: OverrideModule) {
+  function construct (props?: any, override?: OverrideModule<any, any, any>) {
     if (!props) {
       props = {}
     }
@@ -169,7 +169,7 @@ export function createReactContainer (
 
   function getLayout<T extends LayoutStructTree> (props?: any) {
     const { proxyHandler } = getLayoutFromModule(props)
-    return proxyHandler?.draft as TransformToLayoutTreeDraft<T>
+    return proxyHandler?.draft as ConvertToLayoutTreeDraft<T>
   }
 
   return {

@@ -7,6 +7,7 @@ import {
   matchPatternMatrix,
   PatchCommand,
   PrintLayoutStructTree,
+  PrintObjectLike,
   StyleRule,
   TransformToLayoutTreeDraft,
   useLayout,
@@ -340,7 +341,7 @@ const newModule3 = extendModule(newModule2, () => ({
     return [
       {
         op: 'removeChild',
-        parent: jsonDraft.div.div,
+        parent: jsonDraft.div.div as unknown as readonly ['div', 'div'],
         child: {
           type: 'text',
           value: 'hello'
@@ -351,7 +352,8 @@ const newModule3 = extendModule(newModule2, () => ({
 }))
 type BaseProp3 = Parameters<typeof newModule3['layout']>['0']
 type BaseL3 = PrintLayoutStructTree<typeof newModule3['layoutTree']>
-type BaseOverride3 = ReturnType<typeof newModule3['override']>
+type BaseOverride3 = ReturnType<typeof newModule3['override']>['patchLayout']
+type BaseOverridePatchResult3 = PrintObjectLike<ReturnType<BaseOverride3>>
 type BaseOverridePatchResult30 = ReturnType<ReturnType<typeof newModule3['override']>['patchLayout']>['0']
 type BaseOverridePatchResult31 = ReturnType<ReturnType<typeof newModule3['override']>['patchLayout']>['1']
 

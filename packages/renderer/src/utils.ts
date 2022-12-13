@@ -352,7 +352,7 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
   }
 
   // 此处的类型应该根据 layout 结构生成得出，但这里是通用方法，无法精确取得类型
-  const draftJSON: LayoutTreeProxyDraft = createProxy(jsonTree)
+  const draftJSON = createProxy(jsonTree)
 
   return {
     patches,

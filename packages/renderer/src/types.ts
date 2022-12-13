@@ -2,7 +2,7 @@ import type * as CSS from 'csstype'
 import type { ExtensionCore } from './extension'
 import type { ProxyLayoutHandler } from './utils'
 import type { StateSignal } from 'atomic-signal'
-import { LayoutStructTree, PatchCommand, PrintLayoutStructTree, TransformToLayoutTreeDraft } from './types-layout'
+import { LayoutStructTree, PatchCommand, PrintLayoutStructTree, ConvertToLayoutTreeDraft } from './types-layout'
 
 export type BaseDataType = string | number | boolean | null | undefined
 
@@ -42,7 +42,7 @@ export interface SingleFileModule<
   L extends LayoutStructTree,
   PC extends readonly PatchCommand[],
 > {
-  layoutTree?: TransformToLayoutTreeDraft<L>
+  layoutTree?: ConvertToLayoutTreeDraft<L>
   logic?: (...args: any[]) => Record<string, any>
   layout?: (p?: Props) => VirtualLayoutJSON
   designPattern?: (p?: Props) => PatternStructure | void
@@ -102,7 +102,7 @@ export interface ModuleRenderContainer<
     props?: Props,
     override?: OverrideModule<Props, L>
   ) => VirtualLayoutJSON
-  getLayout: <L extends LayoutStructTree>(props?: Props) => TransformToLayoutTreeDraft<L>
+  getLayout: <L extends LayoutStructTree>(props?: Props) => ConvertToLayoutTreeDraft<L>
 }
 
 export interface OverrideModule<
@@ -110,8 +110,8 @@ export interface OverrideModule<
   L extends LayoutStructTree = any,
   PC extends readonly PatchCommand[] = []
 > {
-  layout?: (props: Props, jsonTree: TransformToLayoutTreeDraft<L>) => void
-  patchLayout?: (props: Props, jsonTree: TransformToLayoutTreeDraft<L>) => PC
+  layout?: (props: Props, jsonTree: ConvertToLayoutTreeDraft<L>) => void
+  patchLayout?: (props: Props, jsonTree: ConvertToLayoutTreeDraft<L>) => PC
 }
 
 type Func = (...args: any[]) => any
