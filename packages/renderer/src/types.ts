@@ -114,7 +114,7 @@ export interface ModuleRenderContainer<
   render: (json: VirtualLayoutJSON) => FrameworkVirtualNode
   construct: (
     props?: Props,
-    override?: OverrideModule<Props, L>
+    overrides?: OverrideModule<Props, L>[]
   ) => VirtualLayoutJSON
   getLayout: <L extends LayoutStructTree>(props?: Props) => ConvertToLayoutTreeDraft<L>
 }

@@ -11,7 +11,7 @@ import {
 } from './types'
 import { deepClone } from './lib/deepClone'
 import { css } from '@emotion/css'
-import { LayoutStructTree } from './types-layout'
+import { CommandOP, LayoutStructTree, PatchCommand } from './types-layout'
 
 export function mergeOverrideModules(modules: OverrideModule[]) {
   const result: OverrideModule = {}
@@ -59,11 +59,13 @@ export function mergeClassNameFromProps(
 
 export function assignRules(draft: LayoutTreeProxyDraft, rules: StyleRule[]) {
   for (const rule of rules) {
-    const { condition, target, style } = rule
+    const { condition, target: draftTarget, style } = rule
     if (!!condition || condition === undefined) {
-      const pathInDraft: string[] = (target as any)[handlerPathKeySymbol]
+      const pathInDraft: string[] = getPathsFromDraft(draftTarget)
       const stylePath = pathInDraft.concat(['props', 'style'])
-      if (!get(draft, stylePath)) {
+
+      const styleObj = get(draft, stylePath)
+      if (isFake(styleObj)) {
         set(draft, stylePath, {})
       }
       Object.entries(style).forEach(([k, v]) => {
@@ -218,15 +220,15 @@ export function isVirtualNode(node: any): node is VirtualLayoutJSON {
   )
 }
 
-export interface JSONPatch {
-  op: 'replace' | 'insertNode' // | 'add' | 'remove'
+export interface DraftPatch {
+  op: DraftOperatesEnum.insert | DraftOperatesEnum.replace | DraftOperatesEnum.remove // | 'add' | 'remove'
   path: string[]
   value: any
 }
 
 const ExportPropKey = 'props'
 
-function getChildrenByPath(
+export function getChildrenByPath(
   source: VirtualLayoutJSON,
   path: (string | number)[]
 ): [VirtualLayoutJSON[], number] {
@@ -251,6 +253,8 @@ function getChildrenByPath(
     }
     current = newCurrent
   }
+  const lastPath = path[i]
+  current = current.filter(n => n.type === lastPath)
   return [current, i]
 }
 
@@ -260,24 +264,36 @@ function getChildrenByPath(
  *   path: ['div', 'div', 'props', 'id'],
  * }
  */
+
+export enum DraftOperatesEnum {
+  insert = 'insert',
+  remove = 'remove',
+  replace = 'replace',
+}
+
+const DRAFT_OPERATES = [
+  DraftOperatesEnum.insert,
+  DraftOperatesEnum.remove,
+  DraftOperatesEnum.replace
+]
+
 export function applyJSONTreePatches(
   source: VirtualLayoutJSON,
-  patches: JSONPatch[]
+  patches: DraftPatch[]
 ) {
-  const target: VirtualLayoutJSON = deepClone(source)
+  const target: VirtualLayoutJSON = (source)
 
   for (const patch of patches) {
     const { op, path, value } = patch
-
     let [current, i] = getChildrenByPath(target, path)
-    const restKeys = path.slice(i)
     switch (op) {
-      case 'replace':
+      case DraftOperatesEnum.replace:
+        const restKeys = path.slice(i)
         current.forEach(node => {
           set(node, restKeys, value)
         })
         break
-      case 'insertNode':
+      case DraftOperatesEnum.insert:
         current.forEach(node => {
           if (node.children) {
             node.children = [].concat(node.children).concat(value)
@@ -285,6 +301,8 @@ export function applyJSONTreePatches(
             node.children = [value]
           }
         })
+        break
+      case DraftOperatesEnum.remove:
         break
     }
   }
@@ -298,28 +316,39 @@ export function applyJSONTreePatches(
  *
  * 返回的是 Proxy对象，只需要考虑 Object，只收集 set
  */
-export const handlerPathKeySymbol = Symbol('handlerPathKeySymbol')
+export const handlerPathKeySymbol = Symbol.for('handlerPathKeySymbol')
 export type ProxyLayoutHandler = ReturnType<typeof proxyLayoutJSON>
+
+function getPathsFromDraft (target: any): string[] {
+  return target[handlerPathKeySymbol]
+}
+
+const draftOperationMethodSymbol = Symbol.for('draftOperationMethod')
+
+const fakeProxyObjectSymbol = Symbol.for('fakeProxyObjectSymbol')
+
+function isFake (obj: any) {
+  return obj && obj[fakeProxyObjectSymbol]
+}
+
 export function proxyLayoutJSON(json: VirtualLayoutJSON) {
-  const patches: JSONPatch[] = []
+  const patches: DraftPatch[] = []
 
   const jsonTree = buildLayoutNestedObj(json)
 
-  const jsonOperates = ['insert']
-
   function createProxy(target: LayoutTreeDraft, pathArr: string[] = []) {
     const proxy = new Proxy(target, {
-      get(target, key: string | symbol) {
+      get(target, key: string | symbol | DraftOperatesEnum) {
         if (key === handlerPathKeySymbol) {
           return pathArr
         }
         const v = Reflect.get(target, key)
         // console.log('target=', target, 'key=', key, 'value=',v);
         if (typeof key === 'string') {
-          if (typeof v === 'object') {
-            return createProxy(v, pathArr.concat(key))
-          } else if (jsonOperates.includes(key)) {
-            return createProxy(() => {}, pathArr)
+          if (DRAFT_OPERATES.includes(key as DraftOperatesEnum)) {
+            return createProxy(Object.assign(() => {}, { [draftOperationMethodSymbol]: key }), pathArr)
+          } else {
+            return createProxy(v || { [fakeProxyObjectSymbol]: true }, pathArr.concat(key))
           }
         }
         return v
@@ -327,23 +356,45 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
       set(target, key: string, value: any) {
         const currentPathArr = pathArr.concat(key)
         patches.push({
-          op: 'replace',
+          op: DraftOperatesEnum.replace,
           path: currentPathArr,
           value
         })
         Reflect.set(target, key, value)
         return true
       },
-      apply(target, thisArg, argArray) {
+      apply(target: any, thisArg, argArray) {
+        // console.log('target: ', target[draftOperationMethodSymbol]);
         const currentPathArr = pathArr
-        patches.push({
-          op: 'insertNode',
-          path: currentPathArr,
-          value: argArray[0]
-        })
+        const op: DraftOperatesEnum = target[draftOperationMethodSymbol]
+        switch (op) {
+          case DraftOperatesEnum.insert:
+            patches.push({
+              op,
+              path: currentPathArr,
+              value: argArray[0]
+            })
+            break
+          case DraftOperatesEnum.remove:
+            patches.push({
+              op,
+              path: currentPathArr,
+              value: argArray[0]
+            })
+          case DraftOperatesEnum.replace:
+            patches.push({
+              op,
+              path: currentPathArr,
+              value: argArray[0]
+            })
+        }
       }
     })
     return proxy
+  }
+
+  function commit () {
+    
   }
 
   function applyPatches() {
@@ -591,4 +642,47 @@ export function get(obj: any, path: string | (number | string)[]) {
 export const VNodeComponentSymbol = Symbol('VNodeComponentSymbol')
 export function isVNodeComponent(target: any) {
   return target && !!target[VNodeComponentSymbol]
+}
+
+
+function createVirtualNode (child: PatchCommand['child']) {
+  return {
+    id: -1,
+    flags: VirtualNodeTypeSymbol,
+    type: child.type,
+    props: {},
+    children: child.value
+  }
+}
+
+function doPatchLayoutCommand(cmd: PatchCommand, draft: LayoutTreeProxyDraft) {
+  let parent = draft;
+
+  const paths = getPathsFromDraft(cmd.parent)
+  
+  paths.forEach(path => parent = parent[path])
+
+  switch (cmd.op) {
+    case CommandOP.addChild:
+      parent.insert(createVirtualNode(cmd.child))
+      break
+    case CommandOP.replaceChild:
+      parent.replace(createVirtualNode(cmd.child))
+      break
+    case CommandOP.removeChild:
+      parent.replace(createVirtualNode(cmd.child))
+      break
+  }
+}
+
+
+export function runOverrides (overrides: OverrideModule<any, { type: string }, PatchCommand[]>[], props: Record<string, any>, draft: LayoutTreeProxyDraft) {
+  // patch layout
+  overrides.forEach(override => {
+    const patchLayoutCommands = override.patchLayout(props, draft)
+
+    patchLayoutCommands.forEach(cmd => {
+      doPatchLayoutCommand(cmd, draft)
+    })
+  })
 }

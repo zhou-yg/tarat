@@ -1,17 +1,27 @@
+import { VirtualLayoutJSON } from "./types"
+
 /**
  * 
  * some type utility functions
  * 
  */
+
 export interface LayoutStructTree {
   readonly type: string
-  readonly children?: readonly LayoutStructTree[]
   readonly value?: any
+  readonly children?: readonly LayoutStructTree[]
 }
 
 /**
  * explicity convert layout tree to layout tree draft
  */
+
+type L = {
+  children: string[] | string
+}
+
+
+
 
 export type ConvertToLayoutTreeDraft<T extends LayoutStructTree, Keys extends unknown[] = []> = {
   [K in T['type']]: T['children'] extends readonly unknown[]
@@ -43,8 +53,14 @@ const a = {
   child: { k : 'v'}
 } as const
 
+export enum CommandOP {
+  addChild = 'addChild',
+  removeChild = 'removeChild',
+  replaceChild = 'replaceChild'
+}
+
 export interface PatchCommand {
-  readonly op: 'addChild' | 'removeChild' | 'replaceChild',
+  readonly op: CommandOP,
   readonly parent: readonly LayoutStructTree['type'][]
   readonly child: {
     readonly type: string
@@ -65,13 +81,13 @@ export type RemoveItem<Children extends LayoutStructTree['children'], child exte
 
 
 export type DoPatchCommand<T extends LayoutStructTree, Cmd extends PatchCommand> =
-  Cmd['op'] extends 'addChild'
+  Cmd['op'] extends CommandOP.addChild
     ? T['children'] extends LayoutStructTree['children']
       ? Assign<T, { readonly children: readonly [...T['children'], Cmd['child']] }>
       : Assign<T, { readonly children: readonly [Cmd['child']] }>
-    : Cmd['op'] extends 'removeChild'
+    : Cmd['op'] extends CommandOP.removeChild
       ? Assign<T, { readonly children: RemoveItem<T['children'], Cmd['child']> }>
-      : Cmd['op'] extends 'replaceChild'
+      : Cmd['op'] extends CommandOP.replaceChild
         ? Cmd['child']
         : never
 

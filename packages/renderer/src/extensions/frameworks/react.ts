@@ -2,7 +2,7 @@ import { ModuleRenderContainer, OverrideModule, SingleFileModule, VirtualLayoutJ
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
-import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern, SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeClassNameFromProps, mergeOverrideModules, renderHTMLProp } from '../../utils'
+import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern, SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeClassNameFromProps, mergeOverrideModules, renderHTMLProp, runOverrides } from '../../utils'
 import { ExtensionCore } from "../../extension";
 import { LayoutStructTree, ConvertToLayoutTreeDraft } from "../../types-layout";
 
@@ -49,7 +49,7 @@ export function createReactContainer (
   const cacheSymbol = Symbol('cacheSymbol')
 
   const moduleConfig = module.config?.() || {}
-  const moduleOverride = module.override?.() || {}
+  const moduleOverrides = module.override?.() || []
 
   const stateManagement = extensionCore.match('react', moduleConfig.logicLib?.name)
   
@@ -124,7 +124,7 @@ export function createReactContainer (
     return React.createElement(...elementArgs)
   }
   
-  function construct (props?: any, override?: OverrideModule<any, any, any>) {
+  function construct (props?: any, overrides?: OverrideModule<any, any, any>[]) {
     if (!props) {
       props = {}
     }
@@ -138,10 +138,12 @@ export function createReactContainer (
         assignRules(proxyHandler.draft, rules)
       }
 
-      const mergedOverride = mergeOverrideModules([moduleOverride, override])
-      if (mergedOverride.layout) {
-        mergedOverride.layout?.(props, proxyHandler.draft)
-      }
+      runOverrides([...moduleOverrides, ...overrides], props, proxyHandler.draft)
+      // console.log('[moduleOverride, ...overrides: ', moduleOverrides, overrides);
+      // const mergedOverride = mergeOverrideModules([moduleOverride, ...overrides])
+      // if (mergedOverride.layout) {
+      //   mergedOverride.layout?.(props, proxyHandler.draft)
+      // }
 
       let newJSON = proxyHandler.apply()
       

@@ -32,7 +32,7 @@ function popCurrentRenderer() {
   globalCurrentRenderer.pop()
 }
 
-class Renderer<P extends Record<string, any>, L extends LayoutStructTree, PC extends PatchCommand[]> {
+class Renderer<P, L extends LayoutStructTree, PC> {
   mounted: boolean = false
 
   renderHooksContainer: ModuleRenderContainer = null
@@ -69,7 +69,7 @@ class Renderer<P extends Record<string, any>, L extends LayoutStructTree, PC ext
     return this.renderHooksContainer.render(this.layoutJSON)
   }
 
-  construct(props?: any, override?: OverrideModule) {
+  construct(props?: P, override?: OverrideModule) {
     pushCurrentRenderer(this)
 
     let r = this.mount(props, override)
@@ -82,12 +82,12 @@ class Renderer<P extends Record<string, any>, L extends LayoutStructTree, PC ext
 
   mount(props?: any, override?: OverrideModule) {
     this.mounted = true
-    const mergedOverride = mergeOverrideModules([this.override, override])
-    return this.renderHooksContainer.construct(props, mergedOverride)
+    const mergedOverrides = [this.override, override].filter(Boolean)
+    return this.renderHooksContainer.construct(props, mergedOverrides)
   }
 }
 
-export function createRenderer<P extends Record<string, any>, L extends LayoutStructTree, PC extends PatchCommand[]>(
+export function createRenderer<P extends Record<string, any>, L extends LayoutStructTree, PC>(
   module: SingleFileModule<P, L, PC>,
   renderHost: RenderHost,
   override?: OverrideModule
@@ -121,7 +121,7 @@ export function h(
   type: string | Function,
   props: Record<string, any> | null,
   ...children: (VirtualLayoutJSON | BaseDataType)[]
-) {
+): VirtualLayoutJSON {
   if (isVNodeComponent(type)) {
     const json = (type as any)({
       ...(props || {}),
@@ -188,7 +188,7 @@ export function useModule<P extends Record<string, any>, L extends LayoutStructT
 
   return createComponent((props: P & { override?: OverrideModule }) => {
     const { override, ...rest } = props
-    return subModuleRenderer.construct(rest, override)
+    return subModuleRenderer.construct(rest as P, override)
   })
 }
 export function useComponentModule<T extends Record<string, any>, L extends LayoutStructTree, PC extends PatchCommand[]>(
@@ -207,7 +207,7 @@ export function useComponentModule<T extends Record<string, any>, L extends Layo
 
   return (props: T & { override?: OverrideModule }) => {
     const { override, ...rest } = props
-    subModuleRenderer.construct(rest, override)
+    subModuleRenderer.construct(rest as T, override)
     return subModuleRenderer.render()
   }
 }

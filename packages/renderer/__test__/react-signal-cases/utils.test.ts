@@ -3,12 +3,15 @@ import {
   assignRules,
   applyJSONTreePatches,
   buildLayoutNestedObj,
-  JSONPatch,
+  DraftPatch,
   VirtualLayoutJSON,
   proxyLayoutJSON,
   StyleRule,
   assignPattern,
   VirtualNodeTypeSymbol,
+  DraftOperatesEnum,
+  h,
+  getChildrenByPath,
 } from '../../src'
 
 describe('utils', () => {
@@ -87,14 +90,14 @@ describe('utils', () => {
     }
     const v1 = 'root2'
     const v2 = 'child33'
-    const patches: JSONPatch[] = [
+    const patches: DraftPatch[] = [
       {
-        op: 'replace',
+        op: DraftOperatesEnum.replace,
         path: ['div', 'props', 'id'],
         value: v1
       },
       {
-        op: 'replace',
+        op: DraftOperatesEnum.replace,
         path: ['div', 'div', 'props', 'id'],
         value: v2
       }
@@ -167,14 +170,14 @@ describe('utils', () => {
         },
       ]
     }
-    const patches: JSONPatch[] = [
+    const patches: DraftPatch[] = [
       {
-        op: 'insertNode',
+        op: DraftOperatesEnum.insert,
         path: ['div'],
         value: 1
       },
       {
-        op: 'insertNode',
+        op: DraftOperatesEnum.insert,
         path: ['div', 'div'],
         value: 2
       },
@@ -478,5 +481,17 @@ describe('utils', () => {
         },
       ]
     })
+  })
+  it('getChildrenByPath', () => {
+    const json = h(
+      'div',
+      {}, 
+      h('div', {}, 1),
+      h('p', {}, 2),
+    );
+    const result = getChildrenByPath(json, ['div', 'p'])
+    
+    expect(result[0].length).toEqual(1)
+    expect(result[0][0].type).toEqual('p')
   })
 })

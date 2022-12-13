@@ -1,7 +1,9 @@
 /* @jsxFactory h  */
 import {
+  CommandOP,
   ConvertToLayoutTreeDraft,
   createComponent,
+  createRenderer,
   extendModule,
   h,
   LayoutStructTree,
@@ -302,24 +304,6 @@ export interface LayoutHasTypesStruct {
   ]
 }
 
-type vv1 = { op: "addChild"; parent: string[]; child: { type: string; value: string; }; }
-
-type vvr = PatchCommand['child'] extends vv1['child']  ? 1 : 2
-type vvrO = PatchCommand['op'] extends vv1['op']  ? 1 : 2
-type vvr2 = vv1 extends PatchCommand ? 1 : 2
-
-function bb () {
-  return {
-    a: 1
-  }
-}
-
-function testL <T extends LayoutStructTree>(): { L?: ConvertToLayoutTreeDraft<T> } {
-  return {}
-}
-
-const v = testL<LayoutHasTypesStruct>()
-
 export function layoutHasTypes<
 T extends { name: string }
 > (): SingleFileModule<{ name: string }, LayoutHasTypesStruct, [[]]> {
@@ -347,21 +331,21 @@ T extends { name: string }
   }
 }
 const baseModule = layoutHasTypes()
-type BaseProps = Parameters<(typeof baseModule['layout'])>['0']
-type BaseLT = ReturnType<(typeof baseModule['layoutTree'])>
-type BaseL = PrintLayoutStructTree<ReturnType<(typeof baseModule['layoutStruct'])>>
-type BaseOverride = ReturnType<(typeof baseModule['override'])>['0']
-type BaseOverrideL = ReturnType<ReturnType<(typeof baseModule['override'])>['0']['patchLayout']>
+// type BaseProps = Parameters<(typeof baseModule['layout'])>['0']
+// type BaseLT = ReturnType<(typeof baseModule['layoutTree'])>
+// type BaseL = PrintLayoutStructTree<ReturnType<(typeof baseModule['layoutStruct'])>>
+// type BaseOverride = ReturnType<(typeof baseModule['override'])>['0']
+// type BaseOverrideL = ReturnType<ReturnType<(typeof baseModule['override'])>['0']['patchLayout']>
 
 const newModule2 = extendModule(baseModule, () => ({
   patchLayout (props, jsonDraft) {
     return [
       {
-        op: 'addChild',
+        op: CommandOP.addChild,
         parent: jsonDraft.div,
         child: {
           type: 'p',
-          value: '123'
+          value: '123',
         }
       }
     ] as const
@@ -381,12 +365,16 @@ type BaseOverride2 = ReturnType<typeof newModule2['override']>
 type BaseOverride2I0 = ReturnType<ReturnType<typeof newModule2['override']>['0']['patchLayout']>
 type BaseOverride2I1 = ReturnType<ReturnType<typeof newModule2['override']>['1']['patchLayout']>
 
+const _cr = createRenderer(newModule2, {
+  framework: MockRectFramework
+})
+
 const newModule3 = extendModule(newModule2, () => ({
   patchLayout (props, jsonDraft) {
 
     return [
       {
-        op: 'addChild',
+        op: CommandOP.addChild,
         parent: jsonDraft.div.div, // { paths: [], condition: true }
         condition: !!props.name,
         child: {
@@ -407,11 +395,3 @@ type BaseOverride3 = ReturnType<typeof newModule3['override']>
 type BaseOverride3I0 = ReturnType<ReturnType<typeof newModule3['override']>['0']['patchLayout']>
 type BaseOverride3I1 = ReturnType<ReturnType<typeof newModule3['override']>['1']['patchLayout']>
 type BaseOverride3I2 = ReturnType<ReturnType<typeof newModule3['override']>['2']['patchLayout']>
-
-export function extendTypesModule () {
-  return {
-        
-  }
-}
-
-
