@@ -13,7 +13,6 @@ import {
 import {
   isVNodeComponent,
   last,
-  mergeOverrideModules,
   VirtualNodeTypeSymbol,
   VNodeComponentSymbol
 } from './utils'
@@ -139,16 +138,11 @@ export function h(
   }
 
   const result: VirtualLayoutJSON = {
-    id: idIndex++,
+    // id: idIndex++,
     flags: VirtualNodeTypeSymbol,
     type,
     props: props || {},
-    children:
-      children.length === 0
-        ? undefined
-        : children.length === 1
-        ? children[0]
-        : children
+    children,
   }
 
   let key = props?.key

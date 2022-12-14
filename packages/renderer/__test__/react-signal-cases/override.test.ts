@@ -13,7 +13,8 @@ describe('override', () => {
           {
             op: CommandOP.addChild,
             parent: jsonDraft.div,
-            child: { type: 'p', value: '123' } // h('p', {}, '123')
+            child: { type: 'p', children: ['123'] } // h('p', {}, '123')
+            // child: h('p', {}, '123')
           }
         ] as const
       }
@@ -43,7 +44,6 @@ describe('override', () => {
           props: {},
           children: '123'
         },
-
       ]
     })
 
@@ -53,7 +53,7 @@ describe('override', () => {
           {
             op: 'addChild',
             parent: root.div.p,
-            child: { type: 'text', value: '456' } // h('text', {}, '456')
+            child: { type: 'text', children: ['456'] } // h('text', {}, '456')
           }
         ] as const 
       }

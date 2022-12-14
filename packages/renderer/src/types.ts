@@ -66,15 +66,11 @@ export interface SingleFileModule<
 
 
 export interface VirtualLayoutJSON {
-  id: number
   key?: any
   flags: symbol | string
   type: string | Function
   props: Record<string, any>
-  children:
-    | (VirtualLayoutJSON | BaseDataType)[]
-    | BaseDataType
-    | VirtualLayoutJSON
+  children?: (VirtualLayoutJSON | BaseDataType)[]
 }
 
 export interface RenderHost {

@@ -6,30 +6,52 @@ import { VirtualLayoutJSON } from "./types"
  * 
  */
 
+// export interface LayoutStructTree {
+//   readonly type: string
+//   readonly value?: any
+//   readonly children?: readonly (LayoutStructTree)[]
+// }
 export interface LayoutStructTree {
   readonly type: string
-  readonly value?: any
-  readonly children?: readonly LayoutStructTree[]
+  readonly children?: readonly (LayoutStructTree | string | number | null)[]
 }
 
 /**
  * explicity convert layout tree to layout tree draft
  */
 
-type L = {
-  children: string[] | string
+type ConvertChildrenToDraft<T extends readonly unknown[], Keys extends string[] = []> = 
+  T extends readonly [infer F, ...infer R]
+    ? F extends LayoutStructTree
+      ? [ConvertToLayoutTreeDraft<F, Keys>, ...ConvertChildrenToDraft<R, Keys>]
+      : ConvertChildrenToDraft<R, Keys>
+    : []
+
+type AssignArray<T> = 
+  T extends readonly [infer F, infer S, ...infer R]
+    ? R extends readonly []
+      ? Assign<F, S>
+      : AssignArray<[Assign<F, S>, ...R]>
+    : T extends readonly [infer F]
+      ? F
+      : {}
+
+
+export type ConvertToLayoutTreeDraft<T extends LayoutStructTree, Keys extends string[] = []> = {
+  [K in T['type']]: 
+    T['children'] extends readonly unknown[]
+      ? readonly [...Keys, K] & AssignArray<ConvertChildrenToDraft<T['children'], [...Keys, K]>>
+      : readonly [...Keys, K]
 }
 
-
-
-
-export type ConvertToLayoutTreeDraft<T extends LayoutStructTree, Keys extends unknown[] = []> = {
-  [K in T['type']]: T['children'] extends readonly unknown[]
-    ? {} extends ConvertToLayoutTreeDraft<T['children'][number], [...Keys, K]>
-      ? never
-      : readonly [...Keys, K] & ConvertToLayoutTreeDraft<T['children'][number], [...Keys, K]>
-    : readonly [...Keys, K]
-}
+// export type ConvertToLayoutTreeDraft<T extends LayoutStructTree, Keys extends unknown[] = []> = {
+//   [K in T['type']]: T['children'] extends readonly unknown[]
+//     ? {} extends ConvertToLayoutTreeDraft<T['children'][number], [...Keys, K]>
+//       ? never
+//       : readonly [...Keys, K] & ConvertToLayoutTreeDraft<T['children'][number], [...Keys, K]>
+          
+//     : readonly [...Keys, K]
+// }
 
 type InternalGenArr<ArrLen, ResultArr extends number[]> = ResultArr['length'] extends ArrLen ? ResultArr : InternalGenArr<ArrLen, [0, ...ResultArr]>
 type GenArr<ArrLen extends number> = ArrLen extends number ? InternalGenArr<ArrLen, []> : []
@@ -62,10 +84,7 @@ export enum CommandOP {
 export interface PatchCommand {
   readonly op: CommandOP,
   readonly parent: readonly LayoutStructTree['type'][]
-  readonly child: {
-    readonly type: string
-    readonly value?: any
-  }
+  readonly child: LayoutStructTree
 }
 
 export type Assign<U, T> = Omit<U, keyof T> & T

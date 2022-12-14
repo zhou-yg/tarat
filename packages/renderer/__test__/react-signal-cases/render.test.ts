@@ -77,8 +77,8 @@ describe('render', () => {
     })
     const rr2 = rr.construct()
 
-    expect(isVirtualNode(rr2.children)).toBe(true)
-    expect((rr2.children as VirtualLayoutJSON).props.onInput.name).toBe('reactSignalTransformOnInput')
+    expect(isVirtualNode(rr2.children[0])).toBe(true)
+    expect((rr2.children[0] as VirtualLayoutJSON).props.onInput.name).toBe('reactSignalTransformOnInput')
   })
 
   it('using VNode Component', () => {

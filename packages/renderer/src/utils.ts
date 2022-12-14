@@ -13,35 +13,6 @@ import { deepClone } from './lib/deepClone'
 import { css } from '@emotion/css'
 import { CommandOP, LayoutStructTree, PatchCommand } from './types-layout'
 
-export function mergeOverrideModules(modules: OverrideModule[]) {
-  const result: OverrideModule = {}
-  for (const module of modules) {
-    if (module) {
-      for (const key in module) {
-        if (result[key]) {
-          result[key] = [].concat(result[key]).concat(module[key])
-        } else {
-          result[key] = module[key]
-        }
-      }
-    }
-  }
-
-  Object.entries(result).forEach(([key, value]) => {
-    if (Array.isArray(value)) {
-      // compose function array
-      result[key] = value.reduceRight((prev, cur) => {
-        return (...args: any[]) => {
-          cur(...args)
-          prev(...args)
-        }
-      })
-    }
-  })
-
-  return result
-}
-
 export function mergeClassNameFromProps(
   json: VirtualLayoutJSON,
   props: Record<string, any>
@@ -97,10 +68,6 @@ function checkSematic(sematic: string, props: VirtualLayoutJSON['props']) {
     }
   }
   return result
-}
-
-function selectorHasPseudoClass(selector: string) {
-  return selector.includes(':')
 }
 
 function camelToLine(str: string) {
@@ -227,34 +194,39 @@ export interface DraftPatch {
 }
 
 const ExportPropKey = 'props'
-
-export function getChildrenByPath(
+/**
+ * source = div/p/span, path=['div'] => div, 1
+ * source = div/span/span, path=['div', 'p'] => null, 1
+ * source = div/p/span, path=['div', 'p', 'props'] => 2
+ */
+export function getVirtualNodesByPath(
   source: VirtualLayoutJSON,
   path: (string | number)[]
 ): [VirtualLayoutJSON[], number] {
   let current = [source]
   let i = 0
-  for (; i < path.length - 1; i++) {
+  for (; i < path.length; i++) {
     const tag = path[i]
-    if (tag === ExportPropKey) {
-      break
-    }
+
     const newCurrent: VirtualLayoutJSON[] = []
     for (const node of current) {
       if (isVirtualNode(node)) {
         if (node.type === tag) {
-          if (path[i + 1] === ExportPropKey) {
-            newCurrent.push(node)
-          } else if (Array.isArray(node.children)) {
-            newCurrent.push(...node.children.filter(isVirtualNode))
-          }
+          newCurrent.push(node)
         }
       }
     }
-    current = newCurrent
+    if (newCurrent.length === 0) {
+      break
+    }
+    const nextType = path[i + 1]
+    const nextChildren = newCurrent.map(n => n.children.filter(n => isVirtualNode(n) && n.type === nextType)).flat() as VirtualLayoutJSON[]
+    if (nextChildren.length === 0) {
+      break
+    }
+    current = nextChildren
   }
-  const lastPath = path[i]
-  current = current.filter(n => n.type === lastPath)
+
   return [current, i]
 }
 
@@ -285,10 +257,11 @@ export function applyJSONTreePatches(
 
   for (const patch of patches) {
     const { op, path, value } = patch
-    let [current, i] = getChildrenByPath(target, path)
+    let [current, i] = getVirtualNodesByPath(target, path)
+
     switch (op) {
       case DraftOperatesEnum.replace:
-        const restKeys = path.slice(i)
+        const restKeys = path.slice(i + 1)
         current.forEach(node => {
           set(node, restKeys, value)
         })
@@ -651,7 +624,7 @@ function createVirtualNode (child: PatchCommand['child']) {
     flags: VirtualNodeTypeSymbol,
     type: child.type,
     props: {},
-    children: child.value
+    children: child.children
   }
 }
 

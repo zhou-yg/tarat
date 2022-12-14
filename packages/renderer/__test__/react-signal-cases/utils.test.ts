@@ -11,14 +11,13 @@ import {
   VirtualNodeTypeSymbol,
   DraftOperatesEnum,
   h,
-  getChildrenByPath,
+  getVirtualNodesByPath,
 } from '../../src'
 
 describe('utils', () => {
 
   it('buildLayoutNestedObj', () => {
     const json: VirtualLayoutJSON = {
-      id: 1,
       type: 'div',
       flags: VirtualNodeTypeSymbol,
       props: {
@@ -26,7 +25,6 @@ describe('utils', () => {
       },
       children: [
         {
-          id: 0,
           type: 'div',
           flags: VirtualNodeTypeSymbol,
           props: {
@@ -51,43 +49,14 @@ describe('utils', () => {
     })
   })
   it('applyJSONTreePatches', () => {
-    const json: VirtualLayoutJSON = {
-      id: 1,
-      type: 'div',
-      flags: VirtualNodeTypeSymbol,
-      props: {
-        id: 'root'
-      },
-      children: [
-        {
-          flags: VirtualNodeTypeSymbol,
-          id: 0,
-          type: 'div',
-          props: {
-            id: 'child1'
-          },
-          children: 1
-        },
-        {
-          id: 0,
-          type: 'span',
-          flags: VirtualNodeTypeSymbol,
-          props: {
-            id: 'child2'
-          },
-          children: 2
-        },
-        {
-          id: 0,
-          flags: VirtualNodeTypeSymbol,
-          type: 'div',
-          props: {
-            id: 'child3'
-          },
-          children: 3
-        }
-      ]
-    }
+    const json: VirtualLayoutJSON = h(
+      'div',
+      { id: 'root' },
+      h('div', { id: 'child1' }, 1),
+      h('span', { id: 'child2' }, 2),
+      h('div', { id: 'child3' }, 3)
+    );
+    
     const v1 = 'root2'
     const v2 = 'child33'
     const patches: DraftPatch[] = [
@@ -104,7 +73,6 @@ describe('utils', () => {
     ]
     const result = applyJSONTreePatches(json, patches)
     expect(result).toEqual({
-      id: 1,
       type: 'div',
       flags: VirtualNodeTypeSymbol,
       props: {
@@ -112,64 +80,40 @@ describe('utils', () => {
       },
       children: [
         {
-          id: 0,
           flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: v2
           },
-          children: 1
+          children: [1]
         },
         {
-          id: 0,
           flags: VirtualNodeTypeSymbol,
           type: 'span',
           props: {
             id: 'child2'
           },
-          children: 2
+          children: [2]
         },
         {
-          id: 0,
           flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: v2
           },
-          children: 3
+          children: [3]
         }
       ]
     })
   })
   it('applyJSONTreePatches with insertNode', () => {
-    const json: VirtualLayoutJSON = {
-      id: 1,
-      type: 'div',
-      props: {
-        id: 'root'
-      },
-      flags: VirtualNodeTypeSymbol,
-      children: [
-        {
-          id: 0,
-          flags: VirtualNodeTypeSymbol,
-          type: 'div',
-          props: {
-            id: 'child1'
-          },
-          children: 1
-        },
-        {
-          id: 0,
-          type: 'div',
-          flags: VirtualNodeTypeSymbol,
-          props: {
-            id: 'child2'
-          },
-          children: undefined
-        },
-      ]
-    }
+    const json: VirtualLayoutJSON = h(
+      'div',
+      { id: 'root' },
+      h('div', { id: 'child1' }, 1),
+      h('div', { id: 'child2' }),
+    )
+    
     const patches: DraftPatch[] = [
       {
         op: DraftOperatesEnum.insert,
@@ -185,7 +129,6 @@ describe('utils', () => {
 
     const result = applyJSONTreePatches(json, patches)
     expect(result).toEqual({
-      id: 1,
       type: 'div',
       props: {
         id: 'root'
@@ -193,7 +136,6 @@ describe('utils', () => {
       flags: VirtualNodeTypeSymbol,
       children: [
         {
-          id: 0,
           flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
@@ -203,7 +145,6 @@ describe('utils', () => {
         },
         {
           flags: VirtualNodeTypeSymbol,
-          id: 0,
           type: 'div',
           props: {
             id: 'child2'
@@ -215,25 +156,12 @@ describe('utils', () => {
     })
   })
   it('proxyLayoutJSON', () => {
-    const json: VirtualLayoutJSON = {
-      id: 1,
-      type: 'div',
-      props: {
-        id: 'root'
-      },
-      flags: VirtualNodeTypeSymbol,
-      children: [
-        {
-          id: 0,
-          flags: VirtualNodeTypeSymbol,
-          type: 'div',
-          props: {
-            id: 'child'
-          },
-          children: undefined
-        }
-      ]
-    }
+    const json: VirtualLayoutJSON = h(
+      'div',
+      { id: 'root' },
+      h('div', { id: 'child' })
+    )
+    
     const { draft, apply } = proxyLayoutJSON(json)
     draft.div.props.id = 'root2'
     draft.div.div.props.id = 'child2'
@@ -241,7 +169,6 @@ describe('utils', () => {
     const result = apply()
 
     expect(result).toEqual({
-      id: 1,
       type: 'div',
       props: {
         id: 'root2'
@@ -249,37 +176,23 @@ describe('utils', () => {
       flags: VirtualNodeTypeSymbol,
       children: [
         {
-          id: 0,
           flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: 'child2'
           },
-          children: undefined
+          children: []
         }
       ]
     })
   })
   it('proxyLayoutJSON with operates', () => {
-    const json: VirtualLayoutJSON = {
-      id: 1,
-      type: 'div',
-      props: {
-        id: 'root'
-      },
-      flags: VirtualNodeTypeSymbol,
-      children: [
-        {
-          id: 0,
-          flags: VirtualNodeTypeSymbol,
-          type: 'div',
-          props: {
-            id: 'child'
-          },
-          children: undefined
-        }
-      ]
-    }
+    const json: VirtualLayoutJSON = h(
+      'div',
+      { id: 'root' },
+      h('div', { id: 'child' })
+    )
+    
     const { draft, apply } = proxyLayoutJSON(json)
     draft.div.insert(0)
     draft.div.div.insert(1)
@@ -287,7 +200,6 @@ describe('utils', () => {
     const result = apply()
 
     expect(result).toEqual({
-      id: 1,
       type: 'div',
       flags: VirtualNodeTypeSymbol,
       props: {
@@ -296,7 +208,6 @@ describe('utils', () => {
       children: [
         {
           flags: VirtualNodeTypeSymbol,
-          id: 0,
           type: 'div',
           props: {
             id: 'child'
@@ -308,37 +219,13 @@ describe('utils', () => {
     })
   })
   it('assignRules', () => {
-    const json: VirtualLayoutJSON = {
-      id: 1,
-      type: 'div',
-      props: {
-        id: 'root'
-      },
-      flags: VirtualNodeTypeSymbol,
-      children: [
-        {
-          id: 0,
-          type: 'div',
-          flags: VirtualNodeTypeSymbol,
-          props: {
-            id: 'child'
-          },
-          children: undefined
-        },
-        {
-          id: 0,
-          flags: VirtualNodeTypeSymbol,
-          type: 'span',
-          props: {
-            id: 'child2',
-            style: {
-              fontSize: 14,
-            }
-          },
-          children: undefined
-        },
-      ]
-    }
+    const json: VirtualLayoutJSON = h(
+      'div',
+      { id: 'root' },
+      h('div', { id: 'child' }),
+      h('span', { id: 'child2', style: { fontSize: 14 }}),
+    )
+    
     const { draft, apply } = proxyLayoutJSON(json)
     const rules: StyleRule[] = [
       {
@@ -359,7 +246,6 @@ describe('utils', () => {
     assignRules(draft, rules);
     const result = apply()
     expect(result).toEqual({
-      id: 1,
       type: 'div',
       flags: VirtualNodeTypeSymbol,
       props: {
@@ -370,16 +256,14 @@ describe('utils', () => {
       },
       children: [
         {
-          id: 0,
           flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: 'child'
           },
-          children: undefined
+          children: []
         },
         {
-          id: 0,
           flags: VirtualNodeTypeSymbol,
           type: 'span',
           props: {
@@ -389,45 +273,25 @@ describe('utils', () => {
               color: 'blue'
             }
           },
-          children: undefined
+          children: []
         },
       ]
     })
   })
   it('matchPatternMatrix', () => {
-    const json: VirtualLayoutJSON = {
-      id: 1,
-      type: 'div',
-      props: {
-        id: 'root',
-        ['is-container']: true
-      },
-      flags: VirtualNodeTypeSymbol,
-      children: [
-        {
-          id: 0,
-          flags: VirtualNodeTypeSymbol,
-          type: 'div',
-          props: {
-            id: 'child'
-          },
-          children: undefined
-        },
-        {
-          id: 0,
-          type: 'span',
-          flags: VirtualNodeTypeSymbol,
-          props: {
-            id: 'child2',
-            ['is-text']: true,
-            style: {
-              fontSize: 14,
-            }
-          },
-          children: undefined
-        },
-      ]
-    }
+    const json: VirtualLayoutJSON = h(
+      'div',
+      { id: 'root', ['is-container']: true },
+      h('div', { id: 'child' }),
+      h('span', {
+        id: 'child2',
+        ['is-text']: true,
+        style: {
+          fontSize: 14,
+        }
+      }),
+    )
+
     const patternResult = matchPatternMatrix([true, false])({
       container: {
         backgroundColor: {
@@ -446,7 +310,6 @@ describe('utils', () => {
     const result = assignPattern(json, patternResult)
 
     expect(result).toEqual({
-      id: 1,
       flags: VirtualNodeTypeSymbol,
       type: 'div',
       props: {
@@ -458,16 +321,14 @@ describe('utils', () => {
       },
       children: [
         {
-          id: 0,
           flags: VirtualNodeTypeSymbol,
           type: 'div',
           props: {
             id: 'child'
           },
-          children: undefined
+          children: []
         },
         {
-          id: 0,
           type: 'span',
           flags: VirtualNodeTypeSymbol,
           props: {
@@ -477,21 +338,26 @@ describe('utils', () => {
               fontSize: 'middle',
             }
           },
-          children: undefined
+          children: []
         },
       ]
     })
   })
-  it('getChildrenByPath', () => {
+  it('getVirtualNodesByPath', () => {
     const json = h(
       'div',
       {}, 
-      h('div', {}, 1),
+      h('div', { id: 1 }, 1),
       h('p', {}, 2),
     );
-    const result = getChildrenByPath(json, ['div', 'p'])
+    const result = getVirtualNodesByPath(json, ['div', 'p'])
     
     expect(result[0].length).toEqual(1)
     expect(result[0][0].type).toEqual('p')
+  
+    const result2 = getVirtualNodesByPath(json, ['div', 'div', 'props'])
+    
+    expect(result2[0].length).toEqual(1)
+    expect(result2[0][0]).toEqual(h('div', { id: 1 }, 1))
   })
 })
