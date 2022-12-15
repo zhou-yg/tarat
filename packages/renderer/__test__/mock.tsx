@@ -17,7 +17,12 @@ import {
   useLogic,
   useModule
 } from '../src/index'
-import { BaseDataType, OverrideModule, SingleFileModule, VirtualLayoutJSON } from '../src/types'
+import {
+  BaseDataType,
+  OverrideModule,
+  SingleFileModule,
+  VirtualLayoutJSON
+} from '../src/types'
 import { signal } from 'atomic-signal'
 
 export interface MockReactElement {
@@ -100,7 +105,7 @@ export function layoutUseLogic(): SingleFileModule<{ name: string }, any, []> {
 }
 
 type UseStyleInLayoutStruct = {
-  type:'div',
+  type: 'div'
   children: [
     {
       type: 'span'
@@ -108,7 +113,11 @@ type UseStyleInLayoutStruct = {
   ]
 }
 
-export function useStyleInLayout(): SingleFileModule<{}, UseStyleInLayoutStruct, []> {
+export function useStyleInLayout(): SingleFileModule<
+  {},
+  UseStyleInLayoutStruct,
+  []
+> {
   return {
     logic() {
       return { num: 1 }
@@ -136,7 +145,7 @@ export function useStyleInLayout(): SingleFileModule<{}, UseStyleInLayoutStruct,
 }
 
 type UseOtherModule = {
-  type:'div',
+  type: 'div'
   children: [
     {
       type: 'span'
@@ -175,16 +184,19 @@ export function useOtherModule(): SingleFileModule<{}, UseOtherModule, []> {
 }
 
 type UseOtherComponentModule = {
-  type:'div',
+  type: 'div'
   children: [
     {
-
       type: 'span'
-    },
-  ]    
+    }
+  ]
 }
 
-export function useOtherComponentModule(): SingleFileModule<{}, UseOtherComponentModule, []> {
+export function useOtherComponentModule(): SingleFileModule<
+  {},
+  UseOtherComponentModule,
+  []
+> {
   return {
     logic() {
       return { num: 1 }
@@ -296,17 +308,19 @@ export function insideVNodeComponent() {
 // for extend module
 
 export interface LayoutHasTypesStruct {
-  type: 'div',
+  type: 'div'
   children: [
     {
-      type: 'div',
+      type: 'div'
     }
   ]
 }
 
-export function layoutHasTypes<
-T extends { name: string }
-> (): SingleFileModule<{ name: string }, LayoutHasTypesStruct, [[]]> {
+export function layoutHasTypes<T extends { name: string }>(): SingleFileModule<
+  { name: string },
+  LayoutHasTypesStruct,
+  [[]]
+> {
   return {
     layout(props: T) {
       return (
@@ -315,9 +329,9 @@ T extends { name: string }
         </div>
       )
     },
-    styleRules (): StyleRule[] {
+    styleRules(): StyleRule[] {
       const root = useLayout<LayoutHasTypesStruct>()
-      
+
       return [
         {
           target: root.div,
@@ -327,7 +341,7 @@ T extends { name: string }
           }
         }
       ]
-    },
+    }
   }
 }
 const baseModule = layoutHasTypes()
@@ -338,14 +352,14 @@ const baseModule = layoutHasTypes()
 // type BaseOverrideL = ReturnType<ReturnType<(typeof baseModule['override'])>['0']['patchLayout']>
 
 const newModule2 = extendModule(baseModule, () => ({
-  patchLayout (props, jsonDraft) {
+  patchLayout(props, jsonDraft) {
     return [
       {
         op: CommandOP.addChild,
         parent: jsonDraft.div,
         child: {
           type: 'p',
-          value: '123',
+          value: '123'
         }
       }
     ] as const
@@ -360,18 +374,23 @@ type BaseLT2DP = BaseLT2['div']['p']
 type BaseBaseL = PrintLayoutStructTree<typeof newModule2['_L']>
 type BasePC2Arr = PrintLayoutStructTree<typeof newModule2['_pc2Arr']>
 type BaseFPC2Arr = PrintLayoutStructTree<typeof newModule2['_fpc2Arr']>
-type BaseL2 = PrintLayoutStructTree<ReturnType< typeof newModule2['layoutStruct']>>
+type BaseL2 = PrintLayoutStructTree<
+  ReturnType<typeof newModule2['layoutStruct']>
+>
 type BaseOverride2 = ReturnType<typeof newModule2['override']>
-type BaseOverride2I0 = ReturnType<ReturnType<typeof newModule2['override']>['0']['patchLayout']>
-type BaseOverride2I1 = ReturnType<ReturnType<typeof newModule2['override']>['1']['patchLayout']>
+type BaseOverride2I0 = ReturnType<
+  ReturnType<typeof newModule2['override']>['0']['patchLayout']
+>
+type BaseOverride2I1 = ReturnType<
+  ReturnType<typeof newModule2['override']>['1']['patchLayout']
+>
 
 const _cr = createRenderer(newModule2, {
   framework: MockRectFramework
 })
 
 const newModule3 = extendModule(newModule2, () => ({
-  patchLayout (props, jsonDraft) {
-
+  patchLayout(props, jsonDraft) {
     return [
       {
         op: CommandOP.addChild,
@@ -390,8 +409,16 @@ type BaseLT3 = typeof newModule3['layoutTree']
 type BaseBaseL3 = PrintLayoutStructTree<typeof newModule3['_L']>
 type BasePC3Arr = PrintLayoutStructTree<typeof newModule3['_pc2Arr']>
 type BaseFPC3Arr = PrintLayoutStructTree<typeof newModule3['_fpc2Arr']>
-type BaseL3 = PrintLayoutStructTree<ReturnType <typeof newModule3['layoutStruct']>>
+type BaseL3 = PrintLayoutStructTree<
+  ReturnType<typeof newModule3['layoutStruct']>
+>
 type BaseOverride3 = ReturnType<typeof newModule3['override']>
-type BaseOverride3I0 = ReturnType<ReturnType<typeof newModule3['override']>['0']['patchLayout']>
-type BaseOverride3I1 = ReturnType<ReturnType<typeof newModule3['override']>['1']['patchLayout']>
-type BaseOverride3I2 = ReturnType<ReturnType<typeof newModule3['override']>['2']['patchLayout']>
+type BaseOverride3I0 = ReturnType<
+  ReturnType<typeof newModule3['override']>['0']['patchLayout']
+>
+type BaseOverride3I1 = ReturnType<
+  ReturnType<typeof newModule3['override']>['1']['patchLayout']
+>
+type BaseOverride3I2 = ReturnType<
+  ReturnType<typeof newModule3['override']>['2']['patchLayout']
+>

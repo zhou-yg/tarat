@@ -1,7 +1,4 @@
-import type {
-  RenderContainer,
-  StateManagementConfig
-} from './types'
+import type { RenderContainer, StateManagementConfig } from './types'
 
 export const DEFAULT_STATE_MANAGEMENT = 'signal'
 
@@ -52,7 +49,10 @@ export class ExtensionCore {
     return containerCreator
   }
 
-  addContainerCreator(frameworkName: string, container: RenderContainer<any, any, any>) {
+  addContainerCreator(
+    frameworkName: string,
+    container: RenderContainer<any, any, any>
+  ) {
     this.containerCreators.set(frameworkName, container)
   }
 }

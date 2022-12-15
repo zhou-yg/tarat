@@ -2,9 +2,18 @@ import type * as CSS from 'csstype'
 import type { ExtensionCore } from './extension'
 import type { ProxyLayoutHandler } from './utils'
 import type { StateSignal } from 'atomic-signal'
-import { LayoutStructTree, PatchCommand, PrintLayoutStructTree, ConvertToLayoutTreeDraft, ShallowCopyArray, FormatPatchCommands, PatchLayout, PatchLayoutWithCommands, FlatPatchCommandsArr } from './types-layout'
-
-export type BaseDataType = string | number | boolean | null | undefined
+import {
+  LayoutStructTree,
+  PatchCommand,
+  PrintLayoutStructTree,
+  ConvertToLayoutTreeDraft,
+  ShallowCopyArray,
+  FormatPatchCommands,
+  PatchLayout,
+  PatchLayoutWithCommands,
+  FlatPatchCommandsArr,
+  BaseDataType
+} from './types-layout'
 
 // const root = {
 //   div: {
@@ -41,21 +50,22 @@ type PC2ArrToOverrideModule<
   Props extends VirtualLayoutJSON['props'],
   L extends LayoutStructTree,
   PC2Arr
-> = 
-  PC2Arr extends readonly [infer F, ...infer R]
-    ? [OverrideModule<Props, L, F>, ...PC2ArrToOverrideModule<Props, L, R>]
-    : PC2Arr
+> = PC2Arr extends readonly [infer F, ...infer R]
+  ? [OverrideModule<Props, L, F>, ...PC2ArrToOverrideModule<Props, L, R>]
+  : PC2Arr
 
 export interface SingleFileModule<
   Props extends VirtualLayoutJSON['props'],
   L extends LayoutStructTree,
-  PC2Arr,
+  PC2Arr
 > {
-  layoutTree?: () => ConvertToLayoutTreeDraft<PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>>
+  layoutTree?: () => ConvertToLayoutTreeDraft<
+    PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
+  >
   _fpc2Arr?: FlatPatchCommandsArr<PC2Arr>
-  _pc2Arr?: PC2Arr,
+  _pc2Arr?: PC2Arr
   _L?: L
-  layoutStruct?:  () => PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
+  layoutStruct?: () => PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
   logic?: (...args: any[]) => Record<string, any>
   layout?: (p?: Props) => VirtualLayoutJSON
   designPattern?: (p?: Props) => PatternStructure | void
@@ -64,11 +74,9 @@ export interface SingleFileModule<
   override?: () => PC2ArrToOverrideModule<Props, L, PC2Arr>
 }
 
-
-export interface VirtualLayoutJSON {
+export interface VirtualLayoutJSON extends LayoutStructTree {
   key?: any
   flags: symbol | string
-  type: string | Function
   props: Record<string, any>
   children?: (VirtualLayoutJSON | BaseDataType)[]
 }
@@ -104,7 +112,7 @@ export interface ModuleConfig {
 
 export interface ModuleRenderContainer<
   Props extends VirtualLayoutJSON['props'] = unknown,
-  L extends LayoutStructTree = any,
+  L extends LayoutStructTree = any
 > {
   runLogic: (...args: any[]) => Record<string, any>
   render: (json: VirtualLayoutJSON) => FrameworkVirtualNode
@@ -112,7 +120,9 @@ export interface ModuleRenderContainer<
     props?: Props,
     overrides?: OverrideModule<Props, L>[]
   ) => VirtualLayoutJSON
-  getLayout: <L extends LayoutStructTree>(props?: Props) => ConvertToLayoutTreeDraft<L>
+  getLayout: <L extends LayoutStructTree>(
+    props?: Props
+  ) => ConvertToLayoutTreeDraft<L>
 }
 
 export interface OverrideModule<
@@ -141,7 +151,11 @@ export interface StateManagementConfig {
   transform: (json: VirtualLayoutJSON) => VirtualLayoutJSON
 }
 
-export interface RenderContainer<P extends Record<string, any>, L extends LayoutStructTree, PC extends PatchCommand[]> {
+export interface RenderContainer<
+  P extends Record<string, any>,
+  L extends LayoutStructTree,
+  PC extends PatchCommand[]
+> {
   (
     framework: any,
     module: SingleFileModule<P, L, PC>,

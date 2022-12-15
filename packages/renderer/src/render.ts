@@ -1,5 +1,4 @@
 import {
-  BaseDataType,
   ModuleRenderContainer,
   OverrideModule,
   RenderHost,
@@ -17,7 +16,13 @@ import {
   VNodeComponentSymbol
 } from './utils'
 import { extensionCore } from './extension'
-import { FormatPatchCommands, LayoutStructTree, MergedPatchCommandsToModule, PatchCommand } from './types-layout'
+import {
+  BaseDataType,
+  FormatPatchCommands,
+  LayoutStructTree,
+  MergedPatchCommandsToModule,
+  PatchCommand
+} from './types-layout'
 
 let globalCurrentRenderer: Renderer<any, any, any>[] = []
 
@@ -86,7 +91,11 @@ class Renderer<P, L extends LayoutStructTree, PC> {
   }
 }
 
-export function createRenderer<P extends Record<string, any>, L extends LayoutStructTree, PC>(
+export function createRenderer<
+  P extends Record<string, any>,
+  L extends LayoutStructTree,
+  PC
+>(
   module: SingleFileModule<P, L, PC>,
   renderHost: RenderHost,
   override?: OverrideModule
@@ -116,7 +125,7 @@ export function createComponent<T extends VNodeComponent>(func: T) {
   })
   return component
 }
-export function h(
+export function h<T>(
   type: string | Function,
   props: Record<string, any> | null,
   ...children: (VirtualLayoutJSON | BaseDataType)[]
@@ -142,7 +151,7 @@ export function h(
     flags: VirtualNodeTypeSymbol,
     type,
     props: props || {},
-    children,
+    children
   }
 
   let key = props?.key
@@ -166,10 +175,11 @@ export function useLogic<T = any>(...args: any[]): T {
   return renderer.renderHooksContainer.runLogic(...args) as T
 }
 
-export function useModule<P extends Record<string, any>, L extends LayoutStructTree, PC extends PatchCommand[]>(
-  module: SingleFileModule<P, L, PC>,
-  override?: OverrideModule
-) {
+export function useModule<
+  P extends Record<string, any>,
+  L extends LayoutStructTree,
+  PC extends PatchCommand[]
+>(module: SingleFileModule<P, L, PC>, override?: OverrideModule) {
   const renderer = getCurrentRenderer()
   if (!renderer) {
     throw new Error('useModule must be called in render function')
@@ -185,10 +195,11 @@ export function useModule<P extends Record<string, any>, L extends LayoutStructT
     return subModuleRenderer.construct(rest as P, override)
   })
 }
-export function useComponentModule<T extends Record<string, any>, L extends LayoutStructTree, PC extends PatchCommand[]>(
-  module: SingleFileModule<T, L, PC>,
-  override?: OverrideModule
-) {
+export function useComponentModule<
+  T extends Record<string, any>,
+  L extends LayoutStructTree,
+  PC extends PatchCommand[]
+>(module: SingleFileModule<T, L, PC>, override?: OverrideModule) {
   const renderer = getCurrentRenderer()
   if (!renderer) {
     throw new Error('useModule must be called in render function')
@@ -218,20 +229,21 @@ export function extendModule<
   Props,
   L extends LayoutStructTree,
   PCArr extends PatchCommand[][],
-  NewPC,
+  NewPC
 >(
   module: SingleFileModule<Props, L, PCArr>,
-  override: () => OverrideModule<Props, ReturnType<SingleFileModule<Props, L, PCArr>['layoutStruct']>, NewPC>
+  override: () => OverrideModule<
+    Props,
+    ReturnType<SingleFileModule<Props, L, PCArr>['layoutStruct']>,
+    NewPC
+  >
 ) {
   return {
     ...module,
-    override () {
-      const p1 = (module.override?.() || [])
+    override() {
+      const p1 = module.override?.() || []
       const p2 = override()
-      return [
-        ...p1,
-        p2,
-      ]
+      return [...p1, p2]
     }
   } as unknown as SingleFileModule<
     Props,

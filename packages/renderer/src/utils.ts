@@ -3,7 +3,6 @@ import {
   LayoutTreeProxyDraft,
   StyleRule,
   PatternStructure,
-  BaseDataType,
   OverrideModule,
   StateManagementMatch,
   PatternStructureResult,
@@ -11,7 +10,12 @@ import {
 } from './types'
 import { deepClone } from './lib/deepClone'
 import { css } from '@emotion/css'
-import { CommandOP, LayoutStructTree, PatchCommand } from './types-layout'
+import {
+  CommandOP,
+  LayoutStructTree,
+  PatchCommand,
+  BaseDataType
+} from './types-layout'
 
 export function mergeClassNameFromProps(
   json: VirtualLayoutJSON,
@@ -188,7 +192,10 @@ export function isVirtualNode(node: any): node is VirtualLayoutJSON {
 }
 
 export interface DraftPatch {
-  op: DraftOperatesEnum.insert | DraftOperatesEnum.replace | DraftOperatesEnum.remove // | 'add' | 'remove'
+  op:
+    | DraftOperatesEnum.insert
+    | DraftOperatesEnum.replace
+    | DraftOperatesEnum.remove // | 'add' | 'remove'
   path: string[]
   value: any
 }
@@ -220,7 +227,9 @@ export function getVirtualNodesByPath(
       break
     }
     const nextType = path[i + 1]
-    const nextChildren = newCurrent.map(n => n.children.filter(n => isVirtualNode(n) && n.type === nextType)).flat() as VirtualLayoutJSON[]
+    const nextChildren = newCurrent
+      .map(n => n.children.filter(n => isVirtualNode(n) && n.type === nextType))
+      .flat() as VirtualLayoutJSON[]
     if (nextChildren.length === 0) {
       break
     }
@@ -240,7 +249,7 @@ export function getVirtualNodesByPath(
 export enum DraftOperatesEnum {
   insert = 'insert',
   remove = 'remove',
-  replace = 'replace',
+  replace = 'replace'
 }
 
 const DRAFT_OPERATES = [
@@ -253,7 +262,7 @@ export function applyJSONTreePatches(
   source: VirtualLayoutJSON,
   patches: DraftPatch[]
 ) {
-  const target: VirtualLayoutJSON = (source)
+  const target: VirtualLayoutJSON = source
 
   for (const patch of patches) {
     const { op, path, value } = patch
@@ -292,7 +301,7 @@ export function applyJSONTreePatches(
 export const handlerPathKeySymbol = Symbol.for('handlerPathKeySymbol')
 export type ProxyLayoutHandler = ReturnType<typeof proxyLayoutJSON>
 
-function getPathsFromDraft (target: any): string[] {
+function getPathsFromDraft(target: any): string[] {
   return target[handlerPathKeySymbol]
 }
 
@@ -300,7 +309,7 @@ const draftOperationMethodSymbol = Symbol.for('draftOperationMethod')
 
 const fakeProxyObjectSymbol = Symbol.for('fakeProxyObjectSymbol')
 
-function isFake (obj: any) {
+function isFake(obj: any) {
   return obj && obj[fakeProxyObjectSymbol]
 }
 
@@ -319,9 +328,15 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
         // console.log('target=', target, 'key=', key, 'value=',v);
         if (typeof key === 'string') {
           if (DRAFT_OPERATES.includes(key as DraftOperatesEnum)) {
-            return createProxy(Object.assign(() => {}, { [draftOperationMethodSymbol]: key }), pathArr)
+            return createProxy(
+              Object.assign(() => {}, { [draftOperationMethodSymbol]: key }),
+              pathArr
+            )
           } else {
-            return createProxy(v || { [fakeProxyObjectSymbol]: true }, pathArr.concat(key))
+            return createProxy(
+              v || { [fakeProxyObjectSymbol]: true },
+              pathArr.concat(key)
+            )
           }
         }
         return v
@@ -366,9 +381,7 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
     return proxy
   }
 
-  function commit () {
-    
-  }
+  function commit() {}
 
   function applyPatches() {
     const newObj = applyJSONTreePatches(json, patches)
@@ -389,7 +402,9 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
  * eg:
  *  json: ['div', MyCpt, 'div']
  */
-export function buildLayoutNestedObj<T extends LayoutStructTree>(json: VirtualLayoutJSON): LayoutTreeDraft {
+export function buildLayoutNestedObj<T extends LayoutStructTree>(
+  json: VirtualLayoutJSON
+): LayoutTreeDraft {
   let root: LayoutTreeDraft = {}
 
   function buildRoot(
@@ -617,8 +632,7 @@ export function isVNodeComponent(target: any) {
   return target && !!target[VNodeComponentSymbol]
 }
 
-
-function createVirtualNode (child: PatchCommand['child']) {
+function createVirtualNode(child: PatchCommand['child']) {
   return {
     id: -1,
     flags: VirtualNodeTypeSymbol,
@@ -629,11 +643,11 @@ function createVirtualNode (child: PatchCommand['child']) {
 }
 
 function doPatchLayoutCommand(cmd: PatchCommand, draft: LayoutTreeProxyDraft) {
-  let parent = draft;
+  let parent = draft
 
   const paths = getPathsFromDraft(cmd.parent)
-  
-  paths.forEach(path => parent = parent[path])
+
+  paths.forEach(path => (parent = parent[path]))
 
   switch (cmd.op) {
     case CommandOP.addChild:
@@ -648,8 +662,11 @@ function doPatchLayoutCommand(cmd: PatchCommand, draft: LayoutTreeProxyDraft) {
   }
 }
 
-
-export function runOverrides (overrides: OverrideModule<any, { type: string }, PatchCommand[]>[], props: Record<string, any>, draft: LayoutTreeProxyDraft) {
+export function runOverrides(
+  overrides: OverrideModule<any, { type: string }, PatchCommand[]>[],
+  props: Record<string, any>,
+  draft: LayoutTreeProxyDraft
+) {
   // patch layout
   overrides.forEach(override => {
     const patchLayoutCommands = override.patchLayout(props, draft)
