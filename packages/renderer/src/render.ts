@@ -21,7 +21,8 @@ import {
   FormatPatchCommands,
   LayoutStructTree,
   MergedPatchCommandsToModule,
-  PatchCommand
+  PatchCommand,
+  VLayoutNode
 } from './types-layout'
 
 let globalCurrentRenderer: Renderer<any, any, any>[] = []
@@ -125,7 +126,97 @@ export function createComponent<T extends VNodeComponent>(func: T) {
   })
   return component
 }
-export function h<T>(
+
+export function h2<
+  T extends string | Function,
+  CT1 extends string | Function = undefined,
+  CT2 extends string | Function = undefined,
+  CT3 extends string | Function = undefined,
+  C11 extends string | Function = undefined,
+  C12 extends string | Function = undefined,
+  C13 extends string | Function = undefined,
+  C21 extends string | Function = undefined,
+  C22 extends string | Function = undefined,
+  C23 extends string | Function = undefined,
+  C31 extends string | Function = undefined,
+  C32 extends string | Function = undefined,
+  C33 extends string | Function = undefined,
+  CB1 = undefined,
+  CB2 = undefined,
+  CB3 = undefined
+>(
+  type: T,
+  props?: Record<string, any> | null,
+  c1?: VLayoutNode<CT1, C11, C12, C13> | CB1,
+  c2?: VLayoutNode<CT2, C21, C22, C23> | CB2,
+  c3?: VLayoutNode<CT3, C31, C32, C33> | CB3
+) {
+  if (isVNodeComponent(type)) {
+    const json = (type as any)({
+      ...(props || {})
+    })
+    return json as VLayoutNode<
+      T,
+      CT1,
+      CT2,
+      CT3,
+      C11,
+      C12,
+      C13,
+      C21,
+      C22,
+      C23,
+      C31,
+      C32,
+      C33,
+      CB1,
+      CB2,
+      CB3
+    >
+  }
+  let key: VLayoutNode<string>['key'] = props?.key
+  let children = []
+  if (props?.children) {
+    if (c1) {
+      key = c1
+    }
+    children = props.children
+    delete props.children
+  } else {
+    children = [c1, c2, c3].filter(Boolean)
+  }
+  if (key !== undefined) {
+    props.key = key
+  }
+
+  const vLayoutNode = {
+    type,
+    flags: VirtualNodeTypeSymbol,
+    props: props || {},
+    children: [c1, c2, c3].filter(Boolean)
+  } as unknown as VLayoutNode<
+    T,
+    CT1,
+    CT2,
+    CT3,
+    C11,
+    C12,
+    C13,
+    C21,
+    C22,
+    C23,
+    C31,
+    C32,
+    C33,
+    CB1,
+    CB2,
+    CB3
+  >
+
+  return vLayoutNode
+}
+
+export function h(
   type: string | Function,
   props: Record<string, any> | null,
   ...children: (VirtualLayoutJSON | BaseDataType)[]

@@ -1277,8 +1277,11 @@ declare global {
     //   _html?: string
     // }
 
-    interface Element extends VirtualLayoutJSON{
-
+    // interface Element<T extends string | Function> extends VLayoutNode<T> {
+    //   type: T;
+    // }
+    interface Element extends VirtualLayoutJSON {
+      
     }
   }
 }

@@ -1,5 +1,6 @@
 /* @jsxFactory h  */
 import {
+  BaseDataType,
   CommandOP,
   ConvertToLayoutTreeDraft,
   createComponent,
@@ -15,14 +16,11 @@ import {
   StyleRule,
   useLayout,
   useLogic,
-  useModule
-} from '../src/index'
-import {
-  BaseDataType,
+  useModule,
   OverrideModule,
   SingleFileModule,
   VirtualLayoutJSON
-} from '../src/types'
+} from '../src/index'
 import { signal } from 'atomic-signal'
 
 export interface MockReactElement {
