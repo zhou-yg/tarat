@@ -356,9 +356,55 @@ expectType<PatchLayoutWithCommandListV1Display>({
   ]
 } as const)
 
+
+// flat commands array
+type PatchArrFromTestCaseModules = [
+  [], 
+  [
+    {
+      readonly op: CommandOP.addChild;
+      readonly parent: readonly ["div"];
+      readonly child: {
+          readonly type: "p";
+          readonly children: readonly ["123"];
+      };
+    }
+  ], 
+  [
+    {
+      readonly op: CommandOP.addChild;
+      readonly parent: readonly ["div", "p"];
+      readonly child: {
+          readonly type: "text";
+          readonly children: readonly ["456"];
+      };
+    }
+  ]
+]
+type FlatArray = FlatPatchCommandsArr<PatchArrFromTestCaseModules>
+expectType<FlatArray>([
+  {
+    op: CommandOP.addChild,
+    parent: ['div'],
+    child: {
+        type: 'p',
+        children: ['123']
+    }
+  },
+  {
+    op: CommandOP.addChild,
+    parent: ['div', 'p'],
+    child: {
+        type: 'text',
+        children: ['456'],
+    }
+  }
+] as const)
+
 // flat two dimensional array patch commands
 
 const patchAddCommandValues2Arr = [
+  [],
   [
     {
       op: CommandOP.addChild,
@@ -448,3 +494,4 @@ expectType<FLDisplay>({
     }
   ]
 } as const)
+

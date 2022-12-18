@@ -51,7 +51,7 @@ describe('override', () => {
       patchLayout (props, root) {
         return [
           {
-            op: 'addChild',
+            op: CommandOP.addChild,
             parent: root.div.p,
             child: { type: 'text', children: ['456'] } // h('text', {}, '456')
           }
@@ -89,6 +89,75 @@ describe('override', () => {
           ]
         },
       ]
+    })
+  })
+
+  describe.only('use other module', () => {
+    it ('override at module layer', () => {
+      const module = mock.overrideAtModuleLayer()
+      const r = createRenderer(module, { framework: mock.MockRectFramework })
+      const r1 = r.construct({ text: 'overrideAtModuleLayer' })
+      const r2 = r.render()
+
+      expect(r2).toEqual({
+        type: 'div',
+        props: {
+          'is-container': 1,
+          style: {
+            color: 'red'
+          }
+        },
+        children: [
+          'i am ',
+          'overrideAtModuleLayer',
+          {
+            type: 'p',
+            props: {},
+            children: undefined,
+          }
+        ]
+      })
+    })
+    
+
+    it('override at renderer layer', () => {
+      const m = mock.overrideAtUseModule()
+      const r = createRenderer(m, { framework: mock.MockRectFramework })
+      const r1 = r.construct({ m2Text: 'at renderer layer' })
+      const r2 = r.render()
+
+      expect(r2).toEqual({
+        type: 'usingModule',
+        props: {
+          className: 'at-module'
+        },
+        children: {
+          type: 'div',
+          props: {
+            'is-container': 1,
+            style: {
+              color: 'red'
+            }
+          },
+          children: [
+            'i am ',
+            'at renderer layer',
+            {
+              type: 'p',
+              props: {},
+              children: {
+                type: 'text',
+                props: {},
+                children: 123
+              },
+            }
+          ]    
+        }
+      })
+    })
+
+    it('override at construct layer', () => {
+      const m = mock.overrideAtUseModuleAndRender()
     })
   })
 })

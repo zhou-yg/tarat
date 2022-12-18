@@ -69,7 +69,9 @@ export interface SingleFileModule<
   logic?: (...args: any[]) => Record<string, any>
   layout?: (p?: Props) => VirtualLayoutJSON
   designPattern?: (p?: Props) => PatternStructure | void
-  styleRules?: (p?: Props) => StyleRule[] | void
+  styleRules?: (p?: Props, rootDraft?: ConvertToLayoutTreeDraft<
+    PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
+  >) => StyleRule[] | void
   config?: (...args: any[]) => ModuleConfig
   override?: () => PC2ArrToOverrideModule<Props, L, PC2Arr>
 }
@@ -111,14 +113,19 @@ export interface ModuleConfig {
 }
 
 export interface ModuleRenderContainer<
-  Props extends VirtualLayoutJSON['props'] = unknown,
-  L extends LayoutStructTree = any
+  Props extends VirtualLayoutJSON['props'],
+  L extends LayoutStructTree,
+  PCArr extends PatchCommand[][],
+  NewRenderPC,
 > {
   runLogic: (...args: any[]) => Record<string, any>
   render: (json: VirtualLayoutJSON) => FrameworkVirtualNode
-  construct: (
+  construct: <NewConstructPC>(
     props?: Props,
-    overrides?: OverrideModule<Props, L>[]
+    overrides?: [
+      OverrideModule<Props, ReturnType<SingleFileModule<Props, L, [...PCArr, NewRenderPC]>['layoutStruct']>, NewRenderPC>,
+      OverrideModule<Props, ReturnType<SingleFileModule<Props, L, [...PCArr, NewRenderPC, NewRenderPC]>['layoutStruct']>, NewConstructPC>
+    ]
   ) => VirtualLayoutJSON
   getLayout: <L extends LayoutStructTree>(
     props?: Props
@@ -131,7 +138,7 @@ export interface OverrideModule<
   PC = []
 > {
   layout?: (props: Props, jsonTree: ConvertToLayoutTreeDraft<L>) => void
-  patchLayout?: (props: Props, jsonTree: ConvertToLayoutTreeDraft<L>) => PC
+  patchLayout?: (props: Props, jsonTree: ConvertToLayoutTreeDraft<L>, types?: { l: L, pc: PC }) => PC
 }
 
 type Func = (...args: any[]) => any
@@ -154,14 +161,15 @@ export interface StateManagementConfig {
 export interface RenderContainer<
   P extends Record<string, any>,
   L extends LayoutStructTree,
-  PC extends PatchCommand[]
+  PCArr extends PatchCommand[][],
+  NewPC
 > {
   (
     framework: any,
-    module: SingleFileModule<P, L, PC>,
+    module: SingleFileModule<P, L, PCArr>,
     extensionCore: ExtensionCore,
     options?: { useEmotion: boolean }
-  ): ModuleRenderContainer
+  ): ModuleRenderContainer<P, L, PCArr, NewPC>
 }
 
 export type SignalProps<T extends Object> = {
@@ -173,3 +181,5 @@ export type SignalProps<T extends Object> = {
 export type VNodeComponent = (
   props?: VirtualLayoutJSON['props']
 ) => VirtualLayoutJSON & {}
+
+export type VNodeComponent2 = (...args: any[]) => any

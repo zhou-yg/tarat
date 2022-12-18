@@ -19,7 +19,9 @@ import {
   useModule,
   OverrideModule,
   SingleFileModule,
-  VirtualLayoutJSON
+  VirtualLayoutJSON,
+  PatchLayoutWithCommands,
+  FlatPatchCommandsArr
 } from '../src/index'
 import { signal } from 'atomic-signal'
 
@@ -420,3 +422,143 @@ type BaseOverride3I1 = ReturnType<
 type BaseOverride3I2 = ReturnType<
   ReturnType<typeof newModule3['override']>['2']['patchLayout']
 >
+
+interface BaseModuleForOverrideProps {
+  text: string
+}
+interface BaseModuleForOverrideLayoutStruct {
+  type: 'div',
+  children: [
+    string,
+  ]
+}
+function BaseModuleForOverride (): SingleFileModule<BaseModuleForOverrideProps, BaseModuleForOverrideLayoutStruct, []> {
+  return {
+    layout(props) {
+      return <div is-container>i am {props.text}</div>
+    },
+    styleRules (props, root) {
+      return [
+        {
+          target: root.div,
+          condition: true,
+          style: {
+            color: 'red'
+          }
+        }
+      ]
+    }
+  }
+}
+
+export function overrideAtModuleLayer () {
+  const m2 = extendModule(BaseModuleForOverride(), () => ({
+    patchLayout (props, jsonDraft) {
+      return [
+        {
+          op: CommandOP.addChild,
+          parent: jsonDraft.div,
+          child: <p></p> as { type: 'p' } // must type p
+        }
+      ] as const
+    }
+  }))
+  const m3 = extendModule(m2, () => ({
+    patchLayout (props, jsonDraft) {
+      return [
+        {
+          op: CommandOP.addChild,
+          parent: jsonDraft.div.p,
+          child: <p></p>
+        }
+      ] as const
+    }
+  }))
+
+  return m2;
+}
+
+export function overrideAtUseModule ():
+ SingleFileModule<{ m2Text: string }, { type: 'div' }, []>
+{
+  const m2 = overrideAtModuleLayer()
+
+  type pc2Arr = typeof m2['_pc2Arr']
+
+  return {
+    layout (props) {
+      const UsedM2 = useModule(m2, {
+        patchLayout (props, jsonDraft) {
+          return [
+            {
+              op: CommandOP.addChild,
+              parent: jsonDraft.div.p,
+              child: <text>{123}</text>
+            }
+          ]
+        }
+      })
+      
+      return (
+        <usingModule className="at-module" >
+          <UsedM2 text={props.m2Text} ></UsedM2>
+        </usingModule>
+      )
+    }
+  }
+}
+
+export function overrideAtUseModuleAndRender ():
+ SingleFileModule<{ m2Text: string }, { type: 'div' }, []>
+{
+  const m2 = overrideAtModuleLayer()
+
+  type pc2Arr = typeof m2['_pc2Arr']
+
+  return {
+    layout (props) {
+      const UsedM2 = useModule(m2, {
+        patchLayout (props, jsonDraft) {
+          return [
+            {
+              op: CommandOP.addChild,
+              parent: jsonDraft.div.p,
+              child: <text>123</text> as unknown as { readonly type: 'text', readonly children: readonly ['123'] }
+            }
+          ] as const
+        }
+      })
+      
+      return (
+        <usingModule className="at-module" >
+          <UsedM2 text={props.m2Text} 
+          xTypes={(arg, pcArr, pc) => {
+            type L = typeof arg
+            type LDisplay = PrintLayoutStructTree<L>
+            type PCArr = typeof pcArr
+            type PC = typeof pc
+            type FPC = FlatPatchCommandsArr<[...PCArr, PC]>
+            type NewL = PatchLayoutWithCommands<L, FPC>
+            type NewLDisplay = PrintLayoutStructTree<NewL>
+            type NewD = ConvertToLayoutTreeDraft<PatchLayoutWithCommands<L, FPC>>
+          }}
+          override={{
+            patchLayout (props, jsonDraft, types) {
+              type Draft = typeof jsonDraft
+              type Types = PrintLayoutStructTree< typeof types.l>
+              type Types2 = typeof types
+              return [
+                {
+                  op: CommandOP.addChild,
+                  parent: jsonDraft.div.p.text,
+                  child: <label>{456}</label>
+                }
+              ]
+            }
+          }} ></UsedM2>
+        </usingModule>
+      )
+    }
+  }
+}
+

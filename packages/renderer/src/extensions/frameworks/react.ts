@@ -43,7 +43,7 @@ export function createReactContainer (
   module: SingleFileModule<any, any, any>,
   extensionCore: ExtensionCore,
   options?: { useEmotion: boolean }
-): ModuleRenderContainer {
+) {
   // shallow copy so that can mark cache in module
   module = {...module}
   const cacheSymbol = Symbol('cacheSymbol')
@@ -133,7 +133,7 @@ export function createReactContainer (
     const { proxyHandler } = getLayoutFromModule(props)
     if (proxyHandler) {
       // inject & keep reference
-      const rules = module.styleRules?.(props)
+      const rules = module.styleRules?.(props, proxyHandler.draft)
       if (rules) {
         assignRules(proxyHandler.draft, rules)
       }

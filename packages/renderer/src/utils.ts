@@ -369,12 +369,14 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
               path: currentPathArr,
               value: argArray[0]
             })
+            break
           case DraftOperatesEnum.replace:
             patches.push({
               op,
               path: currentPathArr,
               value: argArray[0]
             })
+            break
         }
       }
     })
@@ -651,13 +653,13 @@ function doPatchLayoutCommand(cmd: PatchCommand, draft: LayoutTreeProxyDraft) {
 
   switch (cmd.op) {
     case CommandOP.addChild:
-      parent.insert(createVirtualNode(cmd.child))
+      parent[DraftOperatesEnum.insert](createVirtualNode(cmd.child))
       break
     case CommandOP.replaceChild:
-      parent.replace(createVirtualNode(cmd.child))
+      parent[DraftOperatesEnum.replace](createVirtualNode(cmd.child))
       break
     case CommandOP.removeChild:
-      parent.replace(createVirtualNode(cmd.child))
+      parent[DraftOperatesEnum.remove](createVirtualNode(cmd.child))
       break
   }
 }

@@ -244,40 +244,42 @@ export type DoPatchCommand<
   ? Cmd['child']
   : never
 
-type PatchToLayoutChildren<
-  T extends LayoutStructTree['children'],
+export type PatchToLayoutChildren<
+  T,
   Cmd extends PatchCommand
-> = T extends readonly [infer FirstChild, ...infer RestChildren]
-  ? FirstChild extends LayoutStructTree
-    ? RestChildren extends LayoutStructTree['children']
-      ? readonly [
-          PatchLayout<FirstChild, Cmd>,
-          ...PatchToLayoutChildren<RestChildren, Cmd>
-        ]
-      : never
-    : never
-  : T
+> = 
+  T extends readonly [infer FirstChild, ...infer RestChildren]
+    ? FirstChild extends LayoutStructTree
+        ? RestChildren extends LayoutStructTree['children']
+            ? readonly [
+                PatchLayout<FirstChild, Cmd>,
+                ...PatchToLayoutChildren<RestChildren, Cmd>
+              ]
+            : never
+        : [FirstChild, ...PatchToLayoutChildren<RestChildren, Cmd>]
+    : T
 
 export type PatchLayout<
   T extends LayoutStructTree,
   Cmd extends PatchCommand
-> = Cmd['parent'] extends readonly [infer First, ...infer Rest]
-  ? Rest extends []
-    ? T extends { type: First }
-      ? DoPatchCommand<T, Cmd>
-      : T
-    : Rest extends PatchCommand['parent']
-    ? Assign<
-        T,
-        {
-          readonly children: PatchToLayoutChildren<
-            T['children'],
-            { op: Cmd['op']; child: Cmd['child']; parent: Rest }
-          >
-        }
-      >
-    : never
-  : T
+> = 
+  Cmd['parent'] extends readonly [infer First, ...infer Rest]
+    ? Rest extends []
+      ? T extends { type: First }
+        ? DoPatchCommand<T, Cmd>
+        : T
+      : Rest extends PatchCommand['parent']
+      ? Assign<
+          T,
+          {
+            readonly children: PatchToLayoutChildren<
+              T['children'],
+              { op: Cmd['op']; child: Cmd['child']; parent: Rest }
+            >
+          }
+        >
+      : never
+    : T
 
 export type PatchLayoutWithCommands<
   T extends LayoutStructTree,
@@ -285,10 +287,10 @@ export type PatchLayoutWithCommands<
 > = T extends LayoutStructTree
   ? CmdArr extends readonly [infer First, ...infer Rest]
     ? First extends PatchCommand
-      ? Rest extends PatchCommand[]
-        ? PatchLayoutWithCommands<PatchLayout<T, First>, Rest>
-        : PatchLayout<T, First>
-      : never
+      ? Rest extends []
+          ? PatchLayout<T, First>
+          : PatchLayoutWithCommands<PatchLayout<T, First>, Rest>
+      : T
     : T
   : never
 
@@ -337,11 +339,11 @@ export type PrintObjectLike<T> = T extends [infer First, ...infer Rest]
  */
 
 type FormatPatchCommandParent<P> = P extends PatchCommand
-  ? Readonly<{
-      op: P['op']
-      parent: ShallowCopyArray<P['parent']>
-      child: P['child']
-    }>
+  ? {
+      readonly op: P['op']
+      readonly parent: ShallowCopyArray<P['parent']>
+      readonly child: P['child']
+    }
   : P
 
 type VV = PatchCommand[] // readonly [{ readonly op: "addChild"; readonly parent: readonly ["div"] & ConvertToLayoutTreeDraft<{ type: "div"; }, ["div"]>; readonly child: { readonly type: "p"; readonly value: "123"; }; }]
@@ -370,10 +372,11 @@ export type MergedPatchCommandsToModule<
   ) => readonly [...P1, ...P2]
 }
 
-export type FlatPatchCommandsArr<T> = T extends readonly [infer F, ...infer R]
-  ? F extends readonly PatchCommand[]
-    ? [...FlatPatchCommandsArr<F>, ...FlatPatchCommandsArr<R>]
-    : F extends PatchCommand
-    ? [F, ...R]
+export type FlatPatchCommandsArr<T> =
+  T extends readonly [infer F, ...infer R]
+    ? F extends readonly PatchCommand[]
+        ? readonly [...FlatPatchCommandsArr<F>, ...FlatPatchCommandsArr<R>]
+        : F extends PatchCommand
+            ? [F, ...R]
+            : []
     : []
-  : []
