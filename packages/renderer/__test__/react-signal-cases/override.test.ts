@@ -156,8 +156,46 @@ describe('override', () => {
       })
     })
 
-    it('override at construct layer', () => {
+    it.only('override at construct layer', () => {
       const m = mock.overrideAtUseModuleAndRender()
+      const r = createRenderer(m, { framework: mock.MockRectFramework })
+      const r1 = r.construct({ m2Text: 'at construct layer' })
+      const r2 = r.render()
+      expect(r2).toEqual({
+        type: 'usingModule',
+        props: {
+          className: 'at-module'
+        },
+        children: {
+          type: 'div',
+          props: {
+            'is-container': 1,
+            style: {
+              color: 'red'
+            }
+          },
+          children: [
+            'i am ',
+            'at construct layer',
+            {
+              type: 'p',
+              props: {},
+              children: {
+                type: 'text',
+                props: {},
+                children: [
+                  '123',
+                  {
+                    type: 'label',
+                    props: {},
+                    children: 456
+                  }
+                ]
+              },
+            }
+          ]    
+        }
+      })
     })
   })
 })

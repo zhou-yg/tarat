@@ -307,10 +307,11 @@ export function useModule<
       P & 
       { 
         override?: OverrideModule<P, ReturnType<SingleFileModule<P, L, [...PCArr, NewPC]>['layoutStruct']>, NewConstructPC>,
-        xTypes?: (
+        checkerTypes?: (arg: {
           l: L,
           pcArr: PCArr,
           newPC: NewPC,
+        }
         ) => void
       }
   ) => {

@@ -531,31 +531,33 @@ export function overrideAtUseModuleAndRender ():
       
       return (
         <usingModule className="at-module" >
-          <UsedM2 text={props.m2Text} 
-          xTypes={(arg, pcArr, pc) => {
-            type L = typeof arg
-            type LDisplay = PrintLayoutStructTree<L>
-            type PCArr = typeof pcArr
-            type PC = typeof pc
-            type FPC = FlatPatchCommandsArr<[...PCArr, PC]>
-            type NewL = PatchLayoutWithCommands<L, FPC>
-            type NewLDisplay = PrintLayoutStructTree<NewL>
-            type NewD = ConvertToLayoutTreeDraft<PatchLayoutWithCommands<L, FPC>>
-          }}
-          override={{
-            patchLayout (props, jsonDraft, types) {
-              type Draft = typeof jsonDraft
-              type Types = PrintLayoutStructTree< typeof types.l>
-              type Types2 = typeof types
-              return [
-                {
-                  op: CommandOP.addChild,
-                  parent: jsonDraft.div.p.text,
-                  child: <label>{456}</label>
-                }
-              ]
-            }
-          }} ></UsedM2>
+          <UsedM2
+            text={props.m2Text} 
+            checkerTypes={({ l, pcArr, newPC }) => {
+              type L = typeof l
+              type LDisplay = PrintLayoutStructTree<L>
+              type PCArr = typeof pcArr
+              type PC = typeof newPC
+              type FPC = FlatPatchCommandsArr<[...PCArr, PC]>
+              type NewL = PatchLayoutWithCommands<L, FPC>
+              type NewLDisplay = PrintLayoutStructTree<NewL>
+              type NewD = ConvertToLayoutTreeDraft<PatchLayoutWithCommands<L, FPC>>
+            }}
+            override={{
+              patchLayout (props, jsonDraft, types) {
+                type Draft = typeof jsonDraft
+                type Types = PrintLayoutStructTree< typeof types.l>
+                type Types2 = typeof types
+                return [
+                  {
+                    op: CommandOP.addChild,
+                    parent: jsonDraft.div.p.text,
+                    child: <label>{456}</label>
+                  }
+                ]
+              }
+            }} >
+          </UsedM2>
         </usingModule>
       )
     }
