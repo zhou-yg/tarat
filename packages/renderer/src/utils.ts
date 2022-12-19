@@ -332,7 +332,7 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
               Object.assign(() => {}, { [draftOperationMethodSymbol]: key }),
               pathArr
             )
-          } else {
+          } else if (typeof v === 'object' || v === undefined || v === null) {
             return createProxy(
               v || { [fakeProxyObjectSymbol]: true },
               pathArr.concat(key)
@@ -352,6 +352,7 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
         return true
       },
       apply(target: any, thisArg, argArray) {
+        // console.log('argArray: ', argArray);
         // console.log('target: ', target[draftOperationMethodSymbol]);
         const currentPathArr = pathArr
         const op: DraftOperatesEnum = target[draftOperationMethodSymbol]
@@ -636,11 +637,11 @@ export function isVNodeComponent(target: any) {
 
 function createVirtualNode(child: PatchCommand['child']) {
   return {
+    ...child,
     id: -1,
     flags: VirtualNodeTypeSymbol,
     type: child.type,
-    props: {},
-    children: child.children
+    children: child.children,
   }
 }
 
@@ -671,10 +672,15 @@ export function runOverrides(
 ) {
   // patch layout
   overrides.forEach(override => {
-    const patchLayoutCommands = override.patchLayout(props, draft)
+    // 兼容逻辑
+    override.layout?.(props, draft)
 
-    patchLayoutCommands.forEach(cmd => {
-      doPatchLayoutCommand(cmd, draft)
-    })
+    if (override.patchLayout) {
+      const patchLayoutCommands = override.patchLayout(props, draft)
+  
+      patchLayoutCommands.forEach(cmd => {
+        doPatchLayoutCommand(cmd, draft)
+      })
+    }
   })
 }

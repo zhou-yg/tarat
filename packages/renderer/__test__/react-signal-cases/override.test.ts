@@ -3,7 +3,7 @@ import * as mock from '../mock'
 
 describe('override', () => {
 
-  it('extend twice', () => {
+  it('extend once', () => {
     
     const baseModule = mock.layoutHasTypes()
 
@@ -13,7 +13,7 @@ describe('override', () => {
           {
             op: CommandOP.addChild,
             parent: jsonDraft.div,
-            child: { type: 'p', children: ['123'] } // h('p', {}, '123')
+            child: { type: 'p', props: { className: 'p-cls' }, children: ['123'] } // h('p', {}, '123')
             // child: h('p', {}, '123')
           }
         ] as const
@@ -41,7 +41,51 @@ describe('override', () => {
         },        
         {
           type: 'p',
+          props: { className: 'p-cls' },
+          children: '123'
+        },
+      ]
+    })
+  })
+  it('extend twice', () => {
+    
+    const baseModule = mock.layoutHasTypes()
+
+    const newModule2 = extendModule(baseModule, () => ({
+      patchLayout (props, jsonDraft) {
+        return [
+          {
+            op: CommandOP.addChild,
+            parent: jsonDraft.div,
+            child: { type: 'p', props: { className: 'p-cls' }, children: ['123'] } // h('p', {}, '123')
+            // child: h('p', {}, '123')
+          }
+        ] as const
+      }
+    }))
+
+    const r = createRenderer(newModule2, {
+      framework: mock.MockRectFramework
+    })
+    const r1 = r.construct({ name: 'newModule2' })
+    const r2 = r.render()
+
+    expect(r2).toEqual({
+      type: 'div',
+      props: {
+        style: {
+          color: 'red'
+        }
+      },
+      children: [
+        {
+          type: 'div',
           props: {},
+          children: 'newModule2'
+        },        
+        {
+          type: 'p',
+          props: { className: 'p-cls' },
           children: '123'
         },
       ]
@@ -91,8 +135,7 @@ describe('override', () => {
       ]
     })
   })
-
-  describe.only('use other module', () => {
+  describe('use other module', () => {
     it ('override at module layer', () => {
       const module = mock.overrideAtModuleLayer()
       const r = createRenderer(module, { framework: mock.MockRectFramework })
@@ -156,7 +199,7 @@ describe('override', () => {
       })
     })
 
-    it.only('override at construct layer', () => {
+    it('override at construct layer', () => {
       const m = mock.overrideAtUseModuleAndRender()
       const r = createRenderer(m, { framework: mock.MockRectFramework })
       const r1 = r.construct({ m2Text: 'at construct layer' })

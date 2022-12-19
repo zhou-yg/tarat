@@ -368,7 +368,7 @@ export type MergedPatchCommandsToModule<
 > = {
   patchLayout: (
     props: Props,
-    jsonTree: ConvertToLayoutTreeDraft<L>
+    layout: ConvertToLayoutTreeDraft<L>
   ) => readonly [...P1, ...P2]
 }
 

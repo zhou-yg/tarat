@@ -59,6 +59,11 @@ export interface SingleFileModule<
   L extends LayoutStructTree,
   PC2Arr
 > {
+  meta?: {
+    props: Props,
+    layoutStruct: L,
+    patchCommands: PC2Arr
+  }
   layoutTree?: () => ConvertToLayoutTreeDraft<
     PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
   >
@@ -137,8 +142,8 @@ export interface OverrideModule<
   L extends LayoutStructTree = any,
   PC = []
 > {
-  layout?: (props: Props, jsonTree: ConvertToLayoutTreeDraft<L>) => void
-  patchLayout?: (props: Props, jsonTree: ConvertToLayoutTreeDraft<L>, types?: { l: L, pc: PC }) => PC
+  layout?: (props: Props, layout: LayoutTreeProxyDraft) => void
+  patchLayout?: (props: Props, layout: ConvertToLayoutTreeDraft<L>, types?: { l: L, pc: PC }) => PC
 }
 
 type Func = (...args: any[]) => any
