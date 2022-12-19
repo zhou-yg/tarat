@@ -259,7 +259,7 @@ export function h(
     flags: VirtualNodeTypeSymbol,
     type,
     props: props || {},
-    children: children.flat(),
+    children: children.flat(), /** @TODO it's danger! */
   }
 
   let key = props?.key

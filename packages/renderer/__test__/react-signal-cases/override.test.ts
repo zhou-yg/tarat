@@ -122,7 +122,7 @@ describe('override', () => {
         },        
         {
           type: 'p',
-          props: {},
+          props: { className: 'p-cls' },
           children: [
             '123',
             {

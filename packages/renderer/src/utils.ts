@@ -639,6 +639,7 @@ function createVirtualNode(child: PatchCommand['child']) {
   return {
     ...child,
     id: -1,
+    props: (child as any).props || {},
     flags: VirtualNodeTypeSymbol,
     type: child.type,
     children: child.children,
