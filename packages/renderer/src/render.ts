@@ -395,5 +395,11 @@ export function override<
     const p2 = override()
     return [...p1, p2]
   }
-  return newOverride as unknown as SingleFileModule<Props, L, [...PCArr, FormatPatchCommands<NewPC>]>['override']
+  return {
+    override: newOverride
+  } as unknown as {
+    // "meta" just for typescript type check
+    meta: SingleFileModule<Props, L, [...PCArr, FormatPatchCommands<NewPC>]>['meta']
+    override: SingleFileModule<Props, L, [...PCArr, FormatPatchCommands<NewPC>]>['override']
+  }
 }

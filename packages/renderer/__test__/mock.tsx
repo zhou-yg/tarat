@@ -466,19 +466,19 @@ export function useSingleOverride () {
       ] as const
     }
   }))
-  let newMetaObj: {
-    meta?: {
-      props: typeof base['_p'],
-      layoutStruct: typeof base['_L'],
-      patchCommands: [ReturnType<ReturnType<typeof singleOverride>['0']['patchLayout']>],
-    }
-  } = {};
+  // let newMetaObj: {
+  //   meta?: {
+  //     props: typeof base['_p'],
+  //     layoutStruct: typeof base['_L'],
+  //     patchCommands: [ReturnType<ReturnType<typeof singleOverride>['0']['patchLayout']>],
+  //   }
+  // } = {};
 
   const m2 = {
-    ...newMetaObj,
+    meta: singleOverride.meta,
     layout: base.layout,
     styleRules: base.styleRules,
-    override: singleOverride,
+    override: singleOverride.override,
   }
 
 
