@@ -377,7 +377,7 @@ export function extendModule<
     [...PCArr, FormatPatchCommands<NewPC>]
   >
 }
-export function override<
+export function overrideModule<
   Props,
   L extends LayoutStructTree,
   PCArr extends PatchCommand[][],

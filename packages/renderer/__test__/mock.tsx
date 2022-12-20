@@ -22,8 +22,8 @@ import {
   VirtualLayoutJSON,
   PatchLayoutWithCommands,
   FlatPatchCommandsArr,
-  override,
-  Assign
+  Assign,
+  overrideModule
 } from '../src/index'
 import { signal } from 'atomic-signal'
 
@@ -455,7 +455,7 @@ function BaseModuleForOverride (): SingleFileModule<BaseModuleForOverrideProps, 
 
 export function useSingleOverride () {
   const base = BaseModuleForOverride()
-  const singleOverride = override(base, () => ({
+  const singleOverride = overrideModule(base, () => ({
     patchLayout (props, jsonDraft) {
       return [
         {
@@ -466,13 +466,6 @@ export function useSingleOverride () {
       ] as const
     }
   }))
-  // let newMetaObj: {
-  //   meta?: {
-  //     props: typeof base['_p'],
-  //     layoutStruct: typeof base['_L'],
-  //     patchCommands: [ReturnType<ReturnType<typeof singleOverride>['0']['patchLayout']>],
-  //   }
-  // } = {};
 
   const m2 = {
     meta: singleOverride.meta,
