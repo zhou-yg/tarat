@@ -3,8 +3,6 @@ import {
   OverrideModule,
   RenderHost,
   SingleFileModule,
-  StateManagementConfig,
-  StateManagementMatch,
   VirtualLayoutJSON,
   VNodeComponent,
   VNodeComponent2
@@ -378,4 +376,24 @@ export function extendModule<
     L, // ReturnType<SingleFileModule<Props, L, [...PCArr, FormatPatchCommands<NewPC>]>['layoutStruct']>,
     [...PCArr, FormatPatchCommands<NewPC>]
   >
+}
+export function override<
+  Props,
+  L extends LayoutStructTree,
+  PCArr extends PatchCommand[][],
+  NewPC
+>(
+  module: SingleFileModule<Props, L, PCArr>,
+  override: () => OverrideModule<
+    Props,
+    ReturnType<SingleFileModule<Props, L, PCArr>['layoutStruct']>,
+    NewPC
+  >
+) {
+  const newOverride = () => {
+    const p1 = module.override?.() || []
+    const p2 = override()
+    return [...p1, p2]
+  }
+  return newOverride as unknown as SingleFileModule<Props, L, [...PCArr, FormatPatchCommands<NewPC>]>['override']
 }

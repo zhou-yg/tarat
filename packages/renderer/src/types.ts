@@ -46,7 +46,7 @@ export interface PatternStructure {
   [mainSematic: string]: PatternStructureResult
 }
 
-type PC2ArrToOverrideModule<
+export type PC2ArrToOverrideModule<
   Props extends VirtualLayoutJSON['props'],
   L extends LayoutStructTree,
   PC2Arr
@@ -67,6 +67,7 @@ export interface SingleFileModule<
   layoutTree?: () => ConvertToLayoutTreeDraft<
     PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
   >
+  _p?: Props
   _fpc2Arr?: FlatPatchCommandsArr<PC2Arr>
   _pc2Arr?: PC2Arr
   _L?: L

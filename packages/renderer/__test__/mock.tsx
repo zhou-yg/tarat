@@ -21,7 +21,9 @@ import {
   SingleFileModule,
   VirtualLayoutJSON,
   PatchLayoutWithCommands,
-  FlatPatchCommandsArr
+  FlatPatchCommandsArr,
+  override,
+  Assign
 } from '../src/index'
 import { signal } from 'atomic-signal'
 
@@ -449,6 +451,63 @@ function BaseModuleForOverride (): SingleFileModule<BaseModuleForOverrideProps, 
       ]
     }
   }
+}
+
+export function useSingleOverride () {
+  const base = BaseModuleForOverride()
+  const singleOverride = override(base, () => ({
+    patchLayout (props, jsonDraft) {
+      return [
+        {
+          op: CommandOP.addChild,
+          parent: jsonDraft.div,
+          child: <span is-text >text</span> as { type: 'span' } // must type p
+        }
+      ] as const
+    }
+  }))
+  let newMetaObj: {
+    meta?: {
+      props: typeof base['_p'],
+      layoutStruct: typeof base['_L'],
+      patchCommands: [ReturnType<ReturnType<typeof singleOverride>['0']['patchLayout']>],
+    }
+  } = {};
+
+  const m2 = {
+    ...newMetaObj,
+    layout: base.layout,
+    styleRules: base.styleRules,
+    override: singleOverride,
+  }
+
+
+  const m3 = extendModule(m2, () => ({
+    patchLayout (props, root) {
+      return [
+        {
+          op: CommandOP.addChild,
+          parent: root.div.span,
+          child: <text></text> as { type: 'text' } // must type p
+        }
+      ] as const
+    }
+  }));
+  const m4 = extendModule(m3, () => ({
+    patchLayout (props, root) {
+      /** root expect ot be below
+       * (parameter) root: {
+            div: readonly ["div"] & {
+                span: readonly ["div", "span"] & {
+                    span: readonly ["div", "span", "span"];
+                };
+            };
+        }
+       */
+    }
+  }))
+
+  return m2;
 }
 
 export function overrideAtModuleLayer () {

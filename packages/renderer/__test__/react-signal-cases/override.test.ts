@@ -135,6 +135,33 @@ describe('override', () => {
       ]
     })
   })
+
+  it('single override', () => {
+    const module = mock.useSingleOverride()
+    const r = createRenderer(module, { framework: mock.MockRectFramework })
+    const r1 = r.construct({ text: 'override' })
+    const r2 = r.render()
+
+    expect(r2).toEqual({
+      type: 'div',
+      props: {
+        'is-container': 1,
+        style: {
+          color: 'red'
+        }
+      },
+      children: [
+        'i am ',
+        'override',
+        {
+          type: 'span',
+          props: { 'is-text': 1 },
+          children: 'text',
+        }
+      ]    
+    })
+  })
+
   describe('use other module', () => {
     it ('override at module layer', () => {
       const module = mock.overrideAtModuleLayer()
