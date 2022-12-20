@@ -249,7 +249,7 @@ export function getVirtualNodesByPath(
 export enum DraftOperatesEnum {
   insert = 'insert',
   remove = 'remove',
-  replace = 'replace'
+  replace = 'replace' 
 }
 
 const DRAFT_OPERATES = [
@@ -266,6 +266,10 @@ export function applyJSONTreePatches(
 
   for (const patch of patches) {
     const { op, path, value } = patch
+
+    if (value.condition === false) {
+      continue
+    }
     let [current, i] = getVirtualNodesByPath(target, path)
 
     switch (op) {
@@ -647,6 +651,9 @@ function createVirtualNode(child: PatchCommand['child']) {
 }
 
 function doPatchLayoutCommand(cmd: PatchCommand, draft: LayoutTreeProxyDraft) {
+  if (cmd.condition === false) {
+    return
+  }
   let parent = draft
 
   const paths = getPathsFromDraft(cmd.parent)

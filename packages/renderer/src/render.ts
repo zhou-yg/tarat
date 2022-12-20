@@ -51,7 +51,7 @@ class Renderer<
   constructor(
     public module: SingleFileModule<P, L, PCArr>,
     public renderHost: RenderHost,
-    public override?: OverrideModule<P, ReturnType<SingleFileModule<P, L, PCArr>['layoutStruct']>, NewRendererPC>
+    public override?: OverrideModule<P, SingleFileModule<P, L, PCArr>['layoutStruct'], NewRendererPC>
   ) {
     this.createHooksContainer()
   }
@@ -80,7 +80,7 @@ class Renderer<
 
   construct<NewConstructPC>(
     props?: P,
-    override?: OverrideModule<P, ReturnType<SingleFileModule<P, L, [...PCArr, NewRendererPC]>['layoutStruct']>, NewConstructPC>
+    override?: OverrideModule<P, SingleFileModule<P, L, [...PCArr, NewRendererPC]>['layoutStruct'], NewConstructPC>
   ) {
     pushCurrentRenderer(this)
 
@@ -94,7 +94,7 @@ class Renderer<
 
   mount<NewConstructPC>(
     props?: P,
-    override?: OverrideModule<P, ReturnType<SingleFileModule<P, L, [...PCArr, NewRendererPC]>['layoutStruct']>, NewConstructPC>
+    override?: OverrideModule<P, SingleFileModule<P, L, [...PCArr, NewRendererPC]>['layoutStruct'], NewConstructPC>
   ) {
     this.mounted = true
     const mergedOverrides: any = [this.override, override].filter(Boolean)
@@ -113,7 +113,7 @@ export function createRenderer<
 >(
   module: SingleFileModule<P, L, PCArr>,
   renderHost: RenderHost,
-  override?: OverrideModule<P, ReturnType<SingleFileModule<P, L, PCArr>['layoutStruct']>, NewPC>
+  override?: OverrideModule<P, SingleFileModule<P, L, PCArr>['layoutStruct'], NewPC>
 ) {
   const renderer = new Renderer(module, renderHost, override)
 
@@ -288,7 +288,7 @@ export function useModule<
   NewPC,
 >(
   module: SingleFileModule<P, L, PCArr>,
-  override?: OverrideModule<P, ReturnType<SingleFileModule<P, L, PCArr>['layoutStruct']>, NewPC>
+  override?: OverrideModule<P, SingleFileModule<P, L, PCArr>['layoutStruct'], NewPC>
 ) {
   const renderer = getCurrentRenderer()
   if (!renderer) {
@@ -304,7 +304,7 @@ export function useModule<
     props: 
       P & 
       { 
-        override?: OverrideModule<P, ReturnType<SingleFileModule<P, L, [...PCArr, NewPC]>['layoutStruct']>, NewConstructPC>,
+        override?: OverrideModule<P, SingleFileModule<P, L, [...PCArr, NewPC]>['layoutStruct'], NewConstructPC>,
         checkerTypes?: (arg: {
           l: L,
           pcArr: PCArr,
@@ -324,7 +324,7 @@ export function useComponentModule<
   NewPC,
 >(
   module: SingleFileModule<P, L, PCArr>,
-  override?: OverrideModule<P, ReturnType<SingleFileModule<P, L, PCArr>['layoutStruct']>, NewPC>
+  override?: OverrideModule<P, SingleFileModule<P, L, PCArr>['layoutStruct'], NewPC>
 ) {
   const renderer = getCurrentRenderer()
   if (!renderer) {
@@ -355,12 +355,13 @@ export function extendModule<
   Props,
   L extends LayoutStructTree,
   PCArr extends PatchCommand[][],
+  NewProps extends Props,
   NewPC
 >(
   module: SingleFileModule<Props, L, PCArr>,
   override: () => OverrideModule<
-    Props,
-    ReturnType<SingleFileModule<Props, L, PCArr>['layoutStruct']>,
+    NewProps,
+    SingleFileModule<NewProps, L, PCArr>['layoutStruct'],
     NewPC
   >
 ) {
@@ -372,34 +373,39 @@ export function extendModule<
       return [...p1, p2]
     }
   } as unknown as SingleFileModule<
-    Props,
-    L, // ReturnType<SingleFileModule<Props, L, [...PCArr, FormatPatchCommands<NewPC>]>['layoutStruct']>,
+    NewProps,
+    L,
     [...PCArr, FormatPatchCommands<NewPC>]
   >
 }
 export function overrideModule<
-  Props,
   L extends LayoutStructTree,
   PCArr extends PatchCommand[][],
+  Props,
+  NewProps extends Props,
   NewPC
 >(
   module: SingleFileModule<Props, L, PCArr>,
-  override: () => OverrideModule<
-    Props,
-    ReturnType<SingleFileModule<Props, L, PCArr>['layoutStruct']>,
-    NewPC
-  >
+  override: OverrideModule<
+        NewProps,
+        SingleFileModule<Props & NewProps, L, PCArr>['layoutStruct'],
+        NewPC
+      >
 ) {
   const newOverride = () => {
     const p1 = module.override?.() || []
-    const p2 = override()
+    const p2 = override
     return [...p1, p2]
   }
   return {
+    ...module,
     override: newOverride
-  } as unknown as {
-    // "meta" just for typescript type check
-    meta: SingleFileModule<Props, L, [...PCArr, FormatPatchCommands<NewPC>]>['meta']
-    override: SingleFileModule<Props, L, [...PCArr, FormatPatchCommands<NewPC>]>['override']
-  }
+  } as unknown as SingleFileModule<NewProps, L, [...PCArr, FormatPatchCommands<NewPC>]>
+  
+  // {
+  //   // "meta" just for typescript type check
+  //   meta: SingleFileModule<NewProps, L, [...PCArr, FormatPatchCommands<NewPC>]>['meta']
+    
+  //   override: SingleFileModule<NewProps, L, [...PCArr, FormatPatchCommands<NewPC>]>['override']
+  // }    
 }

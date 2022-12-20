@@ -204,7 +204,8 @@ export enum CommandOP {
 export interface PatchCommand {
   readonly op: CommandOP
   readonly parent: readonly LayoutStructTree['type'][]
-  readonly child: LayoutStructTree
+  readonly condition?: boolean
+  readonly child?: LayoutStructTree
 }
 
 export type Assign<U, T> = {} extends U

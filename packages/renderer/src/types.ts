@@ -67,11 +67,12 @@ export interface SingleFileModule<
   layoutTree?: () => ConvertToLayoutTreeDraft<
     PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
   >
+  _layoutDraft?: ConvertToLayoutTreeDraft<PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>>
   _p?: Props
   _fpc2Arr?: FlatPatchCommandsArr<PC2Arr>
   _pc2Arr?: PC2Arr
   _L?: L
-  layoutStruct?: () => PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
+  layoutStruct?: PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
   logic?: (...args: any[]) => Record<string, any>
   layout?: (p?: Props) => VirtualLayoutJSON
   designPattern?: (p?: Props) => PatternStructure | void
@@ -129,8 +130,8 @@ export interface ModuleRenderContainer<
   construct: <NewConstructPC>(
     props?: Props,
     overrides?: [
-      OverrideModule<Props, ReturnType<SingleFileModule<Props, L, [...PCArr, NewRenderPC]>['layoutStruct']>, NewRenderPC>,
-      OverrideModule<Props, ReturnType<SingleFileModule<Props, L, [...PCArr, NewRenderPC, NewRenderPC]>['layoutStruct']>, NewConstructPC>
+      OverrideModule<Props, SingleFileModule<Props, L, [...PCArr, NewRenderPC]>['layoutStruct'], NewRenderPC>,
+      OverrideModule<Props, SingleFileModule<Props, L, [...PCArr, NewRenderPC, NewRenderPC]>['layoutStruct'], NewConstructPC>
     ]
   ) => VirtualLayoutJSON
   getLayout: <L extends LayoutStructTree>(

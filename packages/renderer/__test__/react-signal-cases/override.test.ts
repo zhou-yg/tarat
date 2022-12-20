@@ -138,7 +138,7 @@ describe('override', () => {
   it('single override', () => {
     const module = mock.useSingleOverride()
     const r = createRenderer(module, { framework: mock.MockRectFramework })
-    const r1 = r.construct({ text: 'override' })
+    const r1 = r.construct({ text: 'override2', show: false })
     const r2 = r.render()
 
     expect(r2).toEqual({
@@ -151,12 +151,7 @@ describe('override', () => {
       },
       children: [
         'i am ',
-        'override',
-        {
-          type: 'span',
-          props: { 'is-text': 1 },
-          children: 'text',
-        }
+        'override2'
       ]    
     })
   })

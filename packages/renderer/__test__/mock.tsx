@@ -377,7 +377,7 @@ type BaseBaseL = PrintLayoutStructTree<typeof newModule2['_L']>
 type BasePC2Arr = PrintLayoutStructTree<typeof newModule2['_pc2Arr']>
 type BaseFPC2Arr = PrintLayoutStructTree<typeof newModule2['_fpc2Arr']>
 type BaseL2 = PrintLayoutStructTree<
-  ReturnType<typeof newModule2['layoutStruct']>
+  typeof newModule2['layoutStruct']
 >
 type BaseOverride2 = ReturnType<typeof newModule2['override']>
 type BaseOverride2I0 = ReturnType<
@@ -412,7 +412,7 @@ type BaseBaseL3 = PrintLayoutStructTree<typeof newModule3['_L']>
 type BasePC3Arr = PrintLayoutStructTree<typeof newModule3['_pc2Arr']>
 type BaseFPC3Arr = PrintLayoutStructTree<typeof newModule3['_fpc2Arr']>
 type BaseL3 = PrintLayoutStructTree<
-  ReturnType<typeof newModule3['layoutStruct']>
+  typeof newModule3['layoutStruct']
 >
 type BaseOverride3 = ReturnType<typeof newModule3['override']>
 type BaseOverride3I0 = ReturnType<
@@ -455,11 +455,12 @@ function BaseModuleForOverride (): SingleFileModule<BaseModuleForOverrideProps, 
 
 export function useSingleOverride () {
   const base = BaseModuleForOverride()
-  const singleOverride = overrideModule(base, () => ({
-    patchLayout (props, jsonDraft) {
+  const singleOverride = overrideModule(base, ({
+    patchLayout (props: BaseModuleForOverrideProps & { show?: boolean }, jsonDraft) {
       return [
         {
           op: CommandOP.addChild,
+          condition: props.show,
           parent: jsonDraft.div,
           child: <span is-text >text</span> as { type: 'span' } // must type p
         }
@@ -467,13 +468,7 @@ export function useSingleOverride () {
     }
   }))
 
-  const m2 = {
-    meta: singleOverride.meta,
-    layout: base.layout,
-    styleRules: base.styleRules,
-    override: singleOverride.override,
-  }
-
+  const m2 = singleOverride
 
   const m3 = extendModule(m2, () => ({
     patchLayout (props, root) {
