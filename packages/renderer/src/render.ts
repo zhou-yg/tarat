@@ -28,7 +28,6 @@ import {
   LayoutStructTree,
   MergedPatchCommandsToModule,
   PatchCommand,
-  VLayoutNode
 } from './types-layout'
 
 interface GlobalCurrentRenderer {
@@ -94,94 +93,94 @@ export function createComponent<T extends VNodeComponent2>(func: T) {
   return component
 }
 
-export function h2<
-  T extends string | Function,
-  CT1 extends string | Function = undefined,
-  CT2 extends string | Function = undefined,
-  CT3 extends string | Function = undefined,
-  C11 extends string | Function = undefined,
-  C12 extends string | Function = undefined,
-  C13 extends string | Function = undefined,
-  C21 extends string | Function = undefined,
-  C22 extends string | Function = undefined,
-  C23 extends string | Function = undefined,
-  C31 extends string | Function = undefined,
-  C32 extends string | Function = undefined,
-  C33 extends string | Function = undefined,
-  CB1 = undefined,
-  CB2 = undefined,
-  CB3 = undefined
->(
-  type: T,
-  props?: Record<string, any> | null,
-  c1?: VLayoutNode<CT1, C11, C12, C13> | CB1,
-  c2?: VLayoutNode<CT2, C21, C22, C23> | CB2,
-  c3?: VLayoutNode<CT3, C31, C32, C33> | CB3
-) {
-  if (isVNodeComponent(type)) {
-    const json = (type as any)({
-      ...(props || {})
-    })
-    return json as VLayoutNode<
-      T,
-      CT1,
-      CT2,
-      CT3,
-      C11,
-      C12,
-      C13,
-      C21,
-      C22,
-      C23,
-      C31,
-      C32,
-      C33,
-      CB1,
-      CB2,
-      CB3
-    >
-  }
-  let key: VLayoutNode<string>['key'] = props?.key
-  let children = []
-  if (props?.children) {
-    if (c1) {
-      key = c1
-    }
-    children = props.children
-    delete props.children
-  } else {
-    children = [c1, c2, c3].filter(Boolean)
-  }
-  if (key !== undefined) {
-    props.key = key
-  }
+// export function h2<
+//   T extends string | Function,
+//   CT1 extends string | Function = undefined,
+//   CT2 extends string | Function = undefined,
+//   CT3 extends string | Function = undefined,
+//   C11 extends string | Function = undefined,
+//   C12 extends string | Function = undefined,
+//   C13 extends string | Function = undefined,
+//   C21 extends string | Function = undefined,
+//   C22 extends string | Function = undefined,
+//   C23 extends string | Function = undefined,
+//   C31 extends string | Function = undefined,
+//   C32 extends string | Function = undefined,
+//   C33 extends string | Function = undefined,
+//   CB1 = undefined,
+//   CB2 = undefined,
+//   CB3 = undefined
+// >(
+//   type: T,
+//   props?: Record<string, any> | null,
+//   c1?: VLayoutNode<CT1, C11, C12, C13> | CB1,
+//   c2?: VLayoutNode<CT2, C21, C22, C23> | CB2,
+//   c3?: VLayoutNode<CT3, C31, C32, C33> | CB3
+// ) {
+//   if (isVNodeComponent(type)) {
+//     const json = (type as any)({
+//       ...(props || {})
+//     })
+//     return json as VLayoutNode<
+//       T,
+//       CT1,
+//       CT2,
+//       CT3,
+//       C11,
+//       C12,
+//       C13,
+//       C21,
+//       C22,
+//       C23,
+//       C31,
+//       C32,
+//       C33,
+//       CB1,
+//       CB2,
+//       CB3
+//     >
+//   }
+//   let key: VLayoutNode<string>['key'] = props?.key
+//   let children = []
+//   if (props?.children) {
+//     if (c1) {
+//       key = c1
+//     }
+//     children = props.children
+//     delete props.children
+//   } else {
+//     children = [c1, c2, c3].filter(Boolean)
+//   }
+//   if (key !== undefined) {
+//     props.key = key
+//   }
 
-  const vLayoutNode = {
-    type,
-    flags: VirtualNodeTypeSymbol,
-    props: props || {},
-    children: [c1, c2, c3].filter(Boolean)
-  } as unknown as VLayoutNode<
-    T,
-    CT1,
-    CT2,
-    CT3,
-    C11,
-    C12,
-    C13,
-    C21,
-    C22,
-    C23,
-    C31,
-    C32,
-    C33,
-    CB1,
-    CB2,
-    CB3
-  >
+//   const vLayoutNode = {
+//     type,
+//     flags: VirtualNodeTypeSymbol,
+//     props: props || {},
+//     children: [c1, c2, c3].filter(Boolean)
+//   } as unknown as VLayoutNode<
+//     T,
+//     CT1,
+//     CT2,
+//     CT3,
+//     C11,
+//     C12,
+//     C13,
+//     C21,
+//     C22,
+//     C23,
+//     C31,
+//     C32,
+//     C33,
+//     CB1,
+//     CB2,
+//     CB3
+//   >
 
-  return vLayoutNode
-}
+//   return vLayoutNode
+// }
 
 export function h(
   type: string | Function,
@@ -223,7 +222,6 @@ export function h(
 /**
  * export hooks
  */
-export function createLayout(layoutFn: (...args: any[]) => VirtualLayoutJSON) {}
 
 export function useLogic<T = any>(...args: any[]): T {
   const renderer = getCurrentRenderer()
@@ -270,31 +268,31 @@ export function useModule<
     return subModuleRenderer.construct<NewConstructPC>(rest as ConstructProps, override)
   })
 }
-export function useComponentModule<
-  P extends Record<string, any>,
-  L extends LayoutStructTree,
-  PCArr extends PatchCommand[][],
-  NewPC,
->(
-  module: SingleFileModule<P, L, PCArr>,
-  override?: OverrideModule<P, SingleFileModule<P, L, PCArr>['layoutStruct'], NewPC>
-) {
-  const renderer = getCurrentRenderer()
-  if (!renderer) {
-    throw new Error('useModule must be called in render function')
-  }
-  const subModuleRenderer = createRenderer2({
-    ...renderer.config,
-    module,
-    override,
-  })
+// export function useComponentModule<
+//   P extends Record<string, any>,
+//   L extends LayoutStructTree,
+//   PCArr extends PatchCommand[][],
+//   NewPC,
+// >(
+//   module: SingleFileModule<P, L, PCArr>,
+//   override?: OverrideModule<P, SingleFileModule<P, L, PCArr>['layoutStruct'], NewPC>
+// ) {
+//   const renderer = getCurrentRenderer()
+//   if (!renderer) {
+//     throw new Error('useModule must be called in render function')
+//   }
+//   const subModuleRenderer = createRenderer2({
+//     ...renderer.config,
+//     module,
+//     override,
+//   })
 
-  return (props: P & { override?: OverrideModule }) => {
-    const { override, ...rest } = props
-    subModuleRenderer.construct(rest as P, override)
-    return subModuleRenderer.render()
-  }
-}
+//   return (props: P & { override?: OverrideModule }) => {
+//     const { override, ...rest } = props
+//     subModuleRenderer.construct(rest as P, override)
+//     return subModuleRenderer.render()
+//   }
+// }
 
 export function useLayout<T extends LayoutStructTree>() {
   const renderer = getCurrentRenderer()

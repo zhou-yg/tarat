@@ -1,4 +1,4 @@
-import { clearIdIndex, createRenderer, isVirtualNode, VirtualLayoutJSON } from '../../src'
+import { clearIdIndex, createComponent, createRenderer, isVirtualNode, VirtualLayoutJSON } from '../../src'
 import {
   simpleModule,
   moduleHasMultipleChild,
@@ -14,6 +14,15 @@ describe('render', () => {
 
   afterEach(() => {
     clearIdIndex()
+  })
+
+  it('createComponent', () => {
+    const NewCpt = createComponent(Object.assign(function myCpt () {
+    }, { version: 0 }))
+
+    expect((NewCpt as any).version).toBe(0)
+    expect((NewCpt).name).toBe('myCpt')
+
   })
 
   it('layout use logic', () => {
