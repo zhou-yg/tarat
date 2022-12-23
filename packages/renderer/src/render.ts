@@ -1,8 +1,12 @@
 import {
   ModuleRenderContainer,
+  NormalizeProps,
   OverrideModule,
+  RenderContainer,
   RenderHost,
+  SignalProps,
   SingleFileModule,
+  StateManagementConfig,
   VirtualLayoutJSON,
   VNodeComponent,
   VNodeComponent2
@@ -14,7 +18,10 @@ import {
   VirtualNodeTypeSymbol,
   VNodeComponentSymbol
 } from './utils'
-import { extensionCore } from './extension'
+
+import * as reactSignalManagement from './extensions/stateManagements/react-signal'
+import * as reactRenderContainer from './extensions/frameworks/react'
+
 import {
   BaseDataType,
   FormatPatchCommands,
@@ -24,87 +31,26 @@ import {
   VLayoutNode
 } from './types-layout'
 
-let globalCurrentRenderer: Renderer<any, any, any, any>[] = []
+interface GlobalCurrentRenderer {
+  renderHooksContainer: ModuleRenderContainer<any, any, any, any, any>
+  config: any // TODO
+}
+
+let globalCurrentRenderer: GlobalCurrentRenderer[] = []
 
 function getCurrentRenderer() {
   return last(globalCurrentRenderer)
 }
-function pushCurrentRenderer(renderer: Renderer<any, any, any, any>) {
+function pushCurrentRenderer(renderer: GlobalCurrentRenderer) {
   globalCurrentRenderer.push(renderer)
 }
 function popCurrentRenderer() {
   globalCurrentRenderer.pop()
 }
 
-class Renderer<
-  P extends Record<string, any>,
-  L extends LayoutStructTree,
-  PCArr extends PatchCommand[][],
-  NewRendererPC, // pc at renderer layer
-> {
-  mounted: boolean = false
-
-  renderHooksContainer: ModuleRenderContainer<P, L, PCArr, NewRendererPC> = null
-
-  layoutJSON: VirtualLayoutJSON
-
-  constructor(
-    public module: SingleFileModule<P, L, PCArr>,
-    public renderHost: RenderHost,
-    public override?: OverrideModule<P, SingleFileModule<P, L, PCArr>['layoutStruct'], NewRendererPC>
-  ) {
-    this.createHooksContainer()
-  }
-
-  createHooksContainer() {
-    const { framework } = this.renderHost
-
-    const containerCreator = extensionCore.getContainerCreator(framework.name)
-
-    this.renderHooksContainer = containerCreator(
-      framework.lib,
-      this.module,
-      extensionCore,
-      {
-        useEmotion: this.renderHost.useEmotion
-      }
-    )
-  }
-
-  render() {
-    if (!this.layoutJSON) {
-      return
-    }
-    return this.renderHooksContainer.render(this.layoutJSON)
-  }
-
-  construct<NewConstructPC>(
-    props?: P,
-    override?: OverrideModule<P, SingleFileModule<P, L, [...PCArr, NewRendererPC]>['layoutStruct'], NewConstructPC>
-  ) {
-    pushCurrentRenderer(this)
-
-    let r = this.mount<NewConstructPC>(props, override)
-    this.layoutJSON = r
-
-    popCurrentRenderer()
-
-    return r
-  }
-
-  mount<NewConstructPC>(
-    props?: P,
-    override?: OverrideModule<P, SingleFileModule<P, L, [...PCArr, NewRendererPC]>['layoutStruct'], NewConstructPC>
-  ) {
-    this.mounted = true
-    const mergedOverrides: any = [this.override, override].filter(Boolean)
-    return this.renderHooksContainer.construct<NewConstructPC>(
-      props,
-      mergedOverrides
-    )
-  }
-}
-
+/**
+ * for React-Signal case
+ */
 export function createRenderer<
   P extends Record<string, any>,
   L extends LayoutStructTree,
@@ -115,7 +61,13 @@ export function createRenderer<
   renderHost: RenderHost,
   override?: OverrideModule<P, SingleFileModule<P, L, PCArr>['layoutStruct'], NewPC>
 ) {
-  const renderer = new Renderer(module, renderHost, override)
+  const renderer = createRenderer2<P, L, PCArr, NewPC, NormalizeProps<P>>({
+    module,
+    renderHost,
+    override,
+    stateManagement: reactSignalManagement.config,
+    renderContainerCreator: reactRenderContainer.createReactContainer // @TODO1
+  })
 
   return renderer
 }
@@ -286,6 +238,7 @@ export function useModule<
   L extends LayoutStructTree,
   PCArr extends PatchCommand[][],
   NewPC,
+  ConstructProps,
 >(
   module: SingleFileModule<P, L, PCArr>,
   override?: OverrideModule<P, SingleFileModule<P, L, PCArr>['layoutStruct'], NewPC>
@@ -294,11 +247,11 @@ export function useModule<
   if (!renderer) {
     throw new Error('useModule must be called in render function')
   }
-  const subModuleRenderer = createRenderer<P, L, PCArr, NewPC>(
+  const subModuleRenderer = createRenderer2<P, L, PCArr, NewPC, ConstructProps>({
+    ...renderer.config,
     module,
-    renderer.renderHost,
     override
-  )
+  })
 
   return createComponent(<NewConstructPC>(
     props: 
@@ -314,7 +267,7 @@ export function useModule<
       }
   ) => {
     const { override, ...rest } = props
-    return subModuleRenderer.construct<NewConstructPC>(rest as P, override)
+    return subModuleRenderer.construct<NewConstructPC>(rest as ConstructProps, override)
   })
 }
 export function useComponentModule<
@@ -330,11 +283,11 @@ export function useComponentModule<
   if (!renderer) {
     throw new Error('useModule must be called in render function')
   }
-  const subModuleRenderer = createRenderer(
+  const subModuleRenderer = createRenderer2({
+    ...renderer.config,
     module,
-    renderer.renderHost,
-    override
-  )
+    override,
+  })
 
   return (props: P & { override?: OverrideModule }) => {
     const { override, ...rest } = props
@@ -408,4 +361,65 @@ export function overrideModule<
     
   //   override: SingleFileModule<NewProps, L, [...PCArr, FormatPatchCommands<NewPC>]>['override']
   // }    
+}
+
+export function createRenderer2<
+  P extends Record<string, any>,
+  L extends LayoutStructTree,
+  PCArr2 extends PatchCommand[][],
+  NewRendererPC, // pc at renderer layer
+  ConstructProps,
+>(config: {
+  module: SingleFileModule<P, L, PCArr2>,
+  renderHost: RenderHost,
+  override?: OverrideModule<P, SingleFileModule<P, L, PCArr2>['layoutStruct'], NewRendererPC>
+  renderContainerCreator: RenderContainer<P, L, PCArr2, NewRendererPC, ConstructProps>
+  stateManagement: StateManagementConfig
+}) {
+  const { module, renderHost, override, renderContainerCreator, stateManagement } = config
+
+  const rendererContainer = renderContainerCreator(
+    renderHost.framework.lib,
+    module,
+    stateManagement,
+    {
+      useEmotion: renderHost.useEmotion
+    }
+  )
+
+  let layoutJSON: VirtualLayoutJSON = null
+
+  function construct<NewConstructPC>(
+    props?: ConstructProps,
+    secondOverride?: OverrideModule<P, SingleFileModule<P, L, [...PCArr2, NewRendererPC]>['layoutStruct'], NewConstructPC>
+  ) {
+    pushCurrentRenderer(currentRendererInstance)
+
+    const mergedOverrides: any = [override, secondOverride].filter(Boolean)
+    const r = rendererContainer.construct<NewConstructPC>(
+      props,
+      mergedOverrides
+    )
+    
+    layoutJSON = r
+
+    popCurrentRenderer()
+
+    return r
+  }
+  function render () {
+    if (!layoutJSON) {
+      return
+    }
+    return rendererContainer.render(layoutJSON)
+  }
+  
+  const currentRendererInstance = {
+    renderHooksContainer: rendererContainer,
+    construct,
+    render,
+    config
+  }
+
+  return currentRendererInstance
 }

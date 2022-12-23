@@ -23,7 +23,8 @@ import {
   PatchLayoutWithCommands,
   FlatPatchCommandsArr,
   Assign,
-  overrideModule
+  overrideModule,
+  SignalProps
 } from '../src/index'
 import { signal } from 'atomic-signal'
 
@@ -90,15 +91,15 @@ export function moduleHasMultipleChild(): SingleFileModule<{}, any, []> {
   }
 }
 
-export function layoutUseLogic(): SingleFileModule<{ name: string }, any, []> {
+export function layoutUseLogic(): SingleFileModule<SignalProps<{ name: string }>, any, []> {
   return {
     logic() {
       return { num: 1 }
     },
-    layout(props: { name: string }) {
+    layout(props) {
       const logic = useLogic<{ num: number }>()
       return (
-        <div name={props.name} is-container>
+        <div name={props.name()} is-container>
           {logic.num}
         </div>
       )
@@ -116,7 +117,7 @@ type UseStyleInLayoutStruct = {
 }
 
 export function useStyleInLayout(): SingleFileModule<
-  {},
+  SignalProps<{ name: string }> ,
   UseStyleInLayoutStruct,
   []
 > {
@@ -124,15 +125,15 @@ export function useStyleInLayout(): SingleFileModule<
     logic() {
       return { num: 1 }
     },
-    layout(props: { name: string }) {
+    layout(props) {
       const logic = useLogic<{ num: number }>()
       return (
-        <div name={props.name}>
+        <div name={props.name()}>
           <span>{logic.num}</span>
         </div>
       )
     },
-    styleRules(props: { name: string }) {
+    styleRules(props) {
       const root = useLayout<UseStyleInLayoutStruct>()
       return [
         {
@@ -155,7 +156,7 @@ type UseOtherModule = {
   ]
 }
 
-export function useOtherModule(): SingleFileModule<{}, UseOtherModule, []> {
+export function useOtherModule(): SingleFileModule<SignalProps<{ name: string }>, UseOtherModule, []> {
   return {
     logic() {
       return { num: 1 }
@@ -167,7 +168,7 @@ export function useOtherModule(): SingleFileModule<{}, UseOtherModule, []> {
         <div>
           <span>{logic.num}</span>
 
-          {M2({ name: 'm2' })}
+          {M2({ name: signal('m2') })}
         </div>
       )
     },
@@ -210,7 +211,7 @@ export function useOtherComponentModule(): SingleFileModule<
         <div>
           <span>{logic.num}</span>
 
-          {M2({ name: 'm2' })}
+          {M2({ name: signal('m2') })}
 
           {/* <M2 name="m2" /> */}
         </div>
@@ -247,13 +248,13 @@ export function hasInputInLayout(): SingleFileModule<{}, any, []> {
   }
 }
 
-export function patternHasMultiMatchers(): SingleFileModule<{}, any, []> {
+export function patternHasMultiMatchers(): SingleFileModule<SignalProps<{ v1: boolean; v2: boolean }>, any, []> {
   return {
     layout() {
       return <div is-container>i am container</div>
     },
-    designPattern(props: { v1: boolean; v2: boolean }) {
-      const p = matchPatternMatrix([props.v1, props.v2])({
+    designPattern(props) {
+      const p = matchPatternMatrix([props.v1(), props.v2()])({
         container: {
           backgroundColor: {
             red: [true, false],
@@ -269,13 +270,13 @@ export function patternHasMultiMatchers(): SingleFileModule<{}, any, []> {
   }
 }
 
-export function patternHasMultiMatchers2(): SingleFileModule<{}, any, []> {
+export function patternHasMultiMatchers2(): SingleFileModule<SignalProps<{ v1: boolean }>, any, []> {
   return {
     layout() {
       return <div is-container>i am container</div>
     },
-    designPattern(props: { v1: boolean }) {
-      const p = matchPatternMatrix([props.v1, false, false, false])({
+    designPattern(props) {
+      const p = matchPatternMatrix([props.v1(), false, false, false])({
         container: {
           backgroundColor: {
             red: [],
@@ -318,16 +319,16 @@ export interface LayoutHasTypesStruct {
   ]
 }
 
-export function layoutHasTypes<T extends { name: string }>(): SingleFileModule<
-  { name: string },
+export function layoutHasTypes(): SingleFileModule<
+  SignalProps< { name: string }>,
   LayoutHasTypesStruct,
   [[]]
 > {
   return {
-    layout(props: T) {
+    layout(props) {
       return (
         <div>
-          <div>{props.name}</div>
+          <div>{props.name()}</div>
         </div>
       )
     },
@@ -434,10 +435,10 @@ interface BaseModuleForOverrideLayoutStruct {
     string,
   ]
 }
-function BaseModuleForOverride (): SingleFileModule<BaseModuleForOverrideProps, BaseModuleForOverrideLayoutStruct, []> {
+function BaseModuleForOverride (): SingleFileModule<SignalProps<BaseModuleForOverrideProps>, BaseModuleForOverrideLayoutStruct, []> {
   return {
     layout(props) {
-      return <div is-container>i am {props.text}</div>
+      return <div is-container>i am {props.text()}</div>
     },
     styleRules (props, root) {
       return [
@@ -456,11 +457,11 @@ function BaseModuleForOverride (): SingleFileModule<BaseModuleForOverrideProps, 
 export function useSingleOverride () {
   const base = BaseModuleForOverride()
   const singleOverride = overrideModule(base, ({
-    patchLayout (props: BaseModuleForOverrideProps & { show?: boolean }, jsonDraft) {
+    patchLayout (props: SignalProps< BaseModuleForOverrideProps & { show?: boolean }>, jsonDraft) {
       return [
         {
           op: CommandOP.addChild,
-          condition: props.show,
+          condition: props.show(),
           parent: jsonDraft.div,
           child: <span is-text >text</span> as { type: 'span' } // must type p
         }
@@ -526,7 +527,7 @@ export function overrideAtModuleLayer () {
 }
 
 export function overrideAtUseModule ():
- SingleFileModule<{ m2Text: string }, { type: 'div' }, []>
+ SingleFileModule<SignalProps<{ m2Text: string }>, { type: 'div' }, []>
 {
   const m2 = overrideAtModuleLayer()
 
@@ -556,7 +557,7 @@ export function overrideAtUseModule ():
 }
 
 export function overrideAtUseModuleAndRender ():
- SingleFileModule<{ m2Text: string }, { type: 'div' }, []>
+ SingleFileModule<SignalProps<{ m2Text: string }>, { type: 'div' }, []>
 {
   const m2 = overrideAtModuleLayer()
 

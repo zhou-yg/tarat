@@ -1,10 +1,13 @@
-import { ModuleRenderContainer, OverrideModule, SingleFileModule, VirtualLayoutJSON } from "../../types";
+import { ModuleRenderContainer, OverrideModule, SingleFileModule, StateManagementConfig, VirtualLayoutJSON } from "../../types";
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
-import { isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern, SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeClassNameFromProps, renderHTMLProp, runOverrides } from '../../utils'
-import { ExtensionCore } from "../../extension";
-import { LayoutStructTree, ConvertToLayoutTreeDraft } from "../../types-layout";
+import {
+  isVirtualNode, buildLayoutNestedObj, unstable_serialize, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern,
+  SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeFromProps, renderHTMLProp, runOverrides } from '../../utils'
+
+import { LayoutStructTree, ConvertToLayoutTreeDraft, PatchCommand } from "../../types-layout";
+import { NormalizeProps } from "@/packages/renderer/dist/renderer";
 
 type ArgResultMap = Map<string, any>
 const driverWeakMap = new Map<Driver, ArgResultMap>()
@@ -38,10 +41,14 @@ function filterPatternSematicProps(props?: any) {
   return obj
 }
 
-export function createReactContainer (
+export function createReactContainer<
+  P extends Record<string, any>,
+  L extends LayoutStructTree,
+  PCArr extends PatchCommand[][],
+>(
   React: any,
-  module: SingleFileModule<any, any, any>,
-  extensionCore: ExtensionCore,
+  module: SingleFileModule<P, L, PCArr>,
+  stateManagement: StateManagementConfig,
   options?: { useEmotion: boolean }
 ) {
   // shallow copy so that can mark cache in module
@@ -51,9 +58,9 @@ export function createReactContainer (
   const moduleConfig = module.config?.() || {}
   const moduleOverrides = module.override?.() || []
 
-  const stateManagement = extensionCore.match('react', moduleConfig.logicLib?.name)
-  
   const runReactLogic = stateManagement?.runLogic.bind(null, React, module.logic)
+
+  const convertProps = stateManagement?.covertProps || (<T>(props: T) => props)
 
   function initLogic (props?: any) {
     let cache: ModuleCache = module[cacheSymbol]
@@ -124,21 +131,27 @@ export function createReactContainer (
     return React.createElement(...elementArgs)
   }
   
-  function construct (props?: any, overrides?: OverrideModule<any, any, any>[]) {
+  function construct<NewConstructPC, NewRenderPC>(props?: NormalizeProps<P>, overrides?: [
+    OverrideModule<P, SingleFileModule<P, L, [...PCArr, NewRenderPC]>['layoutStruct'], NewRenderPC>,
+    OverrideModule<P, SingleFileModule<P, L, [...PCArr, NewRenderPC, NewConstructPC]>['layoutStruct'], NewConstructPC>
+  ]) {
     if (!props) {
-      props = {}
+      props = {} as any
     }
+    /** maybe Signal */
+    const convertedProps: P = convertProps(props) as unknown as P
+
     initLogic(props)
 
-    const { proxyHandler } = getLayoutFromModule(props)
+    const { proxyHandler } = getLayoutFromModule(convertedProps)
     if (proxyHandler) {
       // inject & keep reference
-      const rules = module.styleRules?.(props, proxyHandler.draft)
+      const rules = module.styleRules?.(convertedProps, proxyHandler.draft)
       if (rules) {
         assignRules(proxyHandler.draft, rules)
       }
 
-      runOverrides([...moduleOverrides, ...overrides], props, proxyHandler.draft)
+      runOverrides([...moduleOverrides, ...overrides], convertedProps, proxyHandler.draft)
       // console.log('[moduleOverride, ...overrides: ', moduleOverrides, overrides);
       // const mergedOverride = mergeOverrideModules([moduleOverride, ...overrides])
       // if (mergedOverride.layout) {
@@ -147,9 +160,10 @@ export function createReactContainer (
 
       let newJSON = proxyHandler.apply()
       
-      newJSON = mergeClassNameFromProps(newJSON, props)
+      // assign top attributes to root Node
+      newJSON = mergeFromProps(newJSON, props, ['className', 'id', 'style'])
 
-      const patternResult = module.designPattern?.(props)
+      const patternResult = module.designPattern?.(convertedProps)
       if (patternResult) {
         newJSON = assignPattern(newJSON, patternResult, options.useEmotion)
       }

@@ -21,6 +21,7 @@ export const config: StateManagementConfig = {
   ],
   runLogic: runReactLogic,
   transform,
+  covertProps: convertArgsToSignal
 }
 
 function transform (json: VirtualLayoutJSON) {
@@ -32,19 +33,23 @@ function transform (json: VirtualLayoutJSON) {
         // if support two binding calling
         if (
           isSignal(value) &&
-          key === 'value' && 
+          (key === 'value' || key === 'checked')&& 
           node.type === 'input'
         ) {
+
+          const eventType = key === 'value' ? 'onInput' : 'onChange'
+
           const fns: ((...args: any[]) => void)[] = [
             (e: { target: { value: number | string } }) => {
-              value(e.target.value)
+              console.log('e.target[key]: ', e.target[key]);
+              value(e.target[key])
             },
           ]
-          if (props.onInput && isFunction(props.onInput)) {
-            fns.push(props.onInput)
+          if (props[eventType] && isFunction(props[eventType])) {
+            fns.push(props[eventType])
           }
-          props.value = value()
-          props.onInput = function reactSignalTransformOnInput (e: { target: { value: number | string } }) {
+          props[key] = value()
+          props[eventType] = function reactSignalTransformOnEventType (e: { target: { value: number | string, checked: boolean } }) {
             fns.forEach(fn => {
               fn(e)
             })

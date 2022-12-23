@@ -135,10 +135,12 @@ type Booleanish = boolean | "true" | "false";
 type Numberish = number | string;
 
 export interface HTMLAttributes extends EventHandlers<Events> {
+  // tarat-specific Attributes
   key?: any;
   _html?: string
   children?: any
   name?: string
+  readOnly?: boolean
 
 
   className?: any;
@@ -359,7 +361,7 @@ export interface InputHTMLAttributes extends HTMLAttributes {
   autocomplete?: string;
   autofocus?: Booleanish;
   capture?: boolean | "user" | "environment"; // https://www.w3.org/tr/html-media-capture/#the-capture-attribute
-  checked?: Booleanish | any[]; // for IDE v-model multi-checkbox support
+  checked?: Booleanish | any[] | StateSignal<boolean> | ComputedSignal<boolean>; // for IDE v-model multi-checkbox support
   crossorigin?: string;
   disabled?: Booleanish;
   form?: string;

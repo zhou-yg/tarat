@@ -39,9 +39,9 @@ export class ExtensionCore {
     return firstMatchedResult
   }
 
-  containerCreators = new Map<string, RenderContainer<any, any, any, any>>()
+  containerCreators = new Map<string, RenderContainer<any, any, any, any, any>>()
 
-  getContainerCreator(frameworkName: string): RenderContainer<any, any, any, any> {
+  getContainerCreator(frameworkName: string): RenderContainer<any, any, any, any, any> {
     const containerCreator = this.containerCreators.get(frameworkName)
     if (!containerCreator) {
       throw new Error(`No container found for framework: ${frameworkName}`)
@@ -51,7 +51,7 @@ export class ExtensionCore {
 
   addContainerCreator(
     frameworkName: string,
-    container: RenderContainer<any, any, any, any>
+    container: RenderContainer<any, any, any, any, any>
   ) {
     this.containerCreators.set(frameworkName, container)
   }

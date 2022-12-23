@@ -17,18 +17,21 @@ import {
   BaseDataType
 } from './types-layout'
 
-export function mergeClassNameFromProps(
+export function mergeFromProps(
   json: VirtualLayoutJSON,
-  props: Record<string, any>
+  props: Record<string, any>,
+  keys: string[]
 ) {
-  const { className } = props
-  if (className) {
-    if (json.props.className) {
-      json.props.className = `${json.props.className} ${className}`
-    } else {
-      json.props.className = className
+  keys.forEach(key => {
+    const val = props[key]
+    if (val) {
+      if (json.props[key]) {
+        json.props[key] = `${json.props[key]} ${val}`
+      } else {
+        json.props[key] = val
+      }
     }
-  }
+  })
   return json
 }
 
