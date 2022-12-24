@@ -1,4 +1,4 @@
-import PropTypes from '../../src/lib/propTypes'
+import { PropTypes, typeFlagSymbol, SignalFlag } from '../../src/lib/propTypes'
 
 function resetWarningCache() {
   jest.resetModules();
@@ -77,6 +77,11 @@ function typeCheckFail(declaration, value, expectedMessage) {
 }
 
 describe('Primitive Types', () => {
+  it('type flags', () => {
+    expect(PropTypes.signal[typeFlagSymbol]).toEqual(SignalFlag)
+    expect(PropTypes.signal.isRequired[typeFlagSymbol]).toEqual(SignalFlag)
+  })
+
   it('should warn for invalid strings', () => {
     typeCheckFail(
       PropTypes.string,

@@ -9,8 +9,9 @@ import {
   Computed,
   CurrentRunnerScope, Driver, getNamespace, IHookContext, isSignal, Runner, signal, State, StateSignal
 } from 'atomic-signal'
-import { SignalProps, StateManagementConfig, VirtualLayoutJSON } from '../../types'
+import { PropTypeValidator, SignalProps, StateManagementConfig, VirtualLayoutJSON } from '../../types'
 import { isFunction, last, traverse, traverseLayoutTree } from '../../utils'
+import { SignalFlag, typeFlagSymbol } from '../../lib/propTypes'
 
 export const config: StateManagementConfig = {
   matches: [
@@ -77,19 +78,22 @@ interface ICacheDriver<T extends Driver> {
   signalProps: Record<string, StateSignal<any> | Function>
 }
 
-export function convertToSignal<T extends Record<string, any>> (args: T, ignoreKeys = ['children']): SignalProps<T> {
+export function convertToSignal<T extends Record<string, any>> (
+  props: T,
+  propTypes?: Record<string, PropTypeValidator>
+): SignalProps<T> {
   const signalArgs = {}
-  Object.entries(args || {}).forEach(([key, value]) => {
-    if (ignoreKeys.includes(key)) return
-    
-    if (isSignal(value)) {
-      signalArgs[key] = value
+  Object.entries(props || {}).forEach(([key, value]) => {
+    const propType = propTypes?.[key]
+
+    if (
+      propType?.[typeFlagSymbol] === SignalFlag &&
+      !isSignal(value) &&
+      !isFunction(value)
+    ) {
+      signalArgs[key] = signal(value)
     } else {
-      if (isFunction(value)) {
-        signalArgs[key] = value
-      } else {
-        signalArgs[key] = signal(value)
-      }
+      signalArgs[key] = value
     }
   })
   return signalArgs as SignalProps<T>

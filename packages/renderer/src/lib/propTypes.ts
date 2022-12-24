@@ -1,12 +1,12 @@
 /**
  * fork from https://github.com/facebook/prop-types
  */
-
 import { isSignal } from "atomic-signal";
 
+export const SignalFlag = 'Signal'
 export const typeFlagSymbol = Symbol.for('renderTypeFlag');
 
-export default {
+export const PropTypes = {
   array: createPrimitiveTypeChecker('array'),
   bigint: createPrimitiveTypeChecker('bigint'),
   bool: createPrimitiveTypeChecker('boolean'),
@@ -106,7 +106,7 @@ function PropTypeError(message: string, data?: any) {
 
 var ANONYMOUS = '<<anonymous>>';
 
-function createChainableTypeChecker(validate: Function) {
+function createChainableTypeChecker(validate: Function): ((...args: any[]) => any) & { isRequired: (...args: any[]) => any } {
   function checkType(
     isRequired: boolean,
     props: Record<string, any>,
@@ -133,7 +133,9 @@ function createChainableTypeChecker(validate: Function) {
 
   var chainedCheckType = checkType.bind(null, false);
   chainedCheckType.isRequired = checkType.bind(null, true);
+
   chainedCheckType[typeFlagSymbol] = validate[typeFlagSymbol]
+  chainedCheckType.isRequired[typeFlagSymbol] = validate[typeFlagSymbol]
 
   return chainedCheckType;
 }
@@ -175,7 +177,7 @@ function createSignalTypeChecker() {
     return null;
   }
   
-  validate[typeFlagSymbol] = 'Signal';
+  validate[typeFlagSymbol] = SignalFlag;
 
   return createChainableTypeChecker(validate);
 }

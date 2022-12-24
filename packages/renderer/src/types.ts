@@ -55,7 +55,7 @@ export type PC2ArrToOverrideModule<
   : PC2Arr
 
 export interface PropTypeValidator {
-  (): void
+  (...args: any[]): any
 }
 
 export interface SingleFileModule<
@@ -173,7 +173,7 @@ export interface StateManagementConfig {
     args: Parameters<T>
   ) => ReturnType<T>
   transform?: (json: VirtualLayoutJSON) => VirtualLayoutJSON
-  covertProps?: (props: any) => any
+  covertProps?: (props: any, propTypes?: Record<string, PropTypeValidator>) => any
 }
 
 export type RenderContainer<

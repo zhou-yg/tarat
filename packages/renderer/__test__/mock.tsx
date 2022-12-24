@@ -24,7 +24,8 @@ import {
   FlatPatchCommandsArr,
   Assign,
   overrideModule,
-  SignalProps
+  SignalProps,
+  PropTypes
 } from '../src/index'
 import { signal } from 'atomic-signal'
 
@@ -93,6 +94,9 @@ export function moduleHasMultipleChild(): SingleFileModule<{}, any, []> {
 
 export function layoutUseLogic(): SingleFileModule<SignalProps<{ name: string }>, any, []> {
   return {
+    propTypes: {
+      name: PropTypes.signal.isRequired,
+    },
     logic() {
       return { num: 1 }
     },
@@ -122,6 +126,9 @@ export function useStyleInLayout(): SingleFileModule<
   []
 > {
   return {
+    propTypes: {
+      name: PropTypes.signal.isRequired,
+    },
     logic() {
       return { num: 1 }
     },
@@ -250,6 +257,10 @@ export function hasInputInLayout(): SingleFileModule<{}, any, []> {
 
 export function patternHasMultiMatchers(): SingleFileModule<SignalProps<{ v1: boolean; v2: boolean }>, any, []> {
   return {
+    propTypes: {
+      v1: PropTypes.signal.isRequired,
+      v2: PropTypes.signal.isRequired,
+    },
     layout() {
       return <div is-container>i am container</div>
     },
@@ -272,6 +283,9 @@ export function patternHasMultiMatchers(): SingleFileModule<SignalProps<{ v1: bo
 
 export function patternHasMultiMatchers2(): SingleFileModule<SignalProps<{ v1: boolean }>, any, []> {
   return {
+    propTypes: {
+      v1: PropTypes.signal.isRequired,
+    },
     layout() {
       return <div is-container>i am container</div>
     },
@@ -325,6 +339,9 @@ export function layoutHasTypes(): SingleFileModule<
   [[]]
 > {
   return {
+    propTypes: {
+      name: PropTypes.signal.isRequired,
+    },
     layout(props) {
       return (
         <div>
@@ -437,6 +454,9 @@ interface BaseModuleForOverrideLayoutStruct {
 }
 function BaseModuleForOverride (): SingleFileModule<SignalProps<BaseModuleForOverrideProps>, BaseModuleForOverrideLayoutStruct, []> {
   return {
+    propTypes: {
+      text: PropTypes.signal.isRequired
+    },
     layout(props) {
       return <div is-container>i am {props.text()}</div>
     },
@@ -457,11 +477,11 @@ function BaseModuleForOverride (): SingleFileModule<SignalProps<BaseModuleForOve
 export function useSingleOverride () {
   const base = BaseModuleForOverride()
   const singleOverride = overrideModule(base, ({
-    patchLayout (props: SignalProps< BaseModuleForOverrideProps & { show?: boolean }>, jsonDraft) {
+    patchLayout (props: SignalProps< BaseModuleForOverrideProps> & { show?: boolean }, jsonDraft) {
       return [
         {
           op: CommandOP.addChild,
-          condition: props.show(),
+          condition: props.show,
           parent: jsonDraft.div,
           child: <span is-text >text</span> as { type: 'span' } // must type p
         }

@@ -57,7 +57,7 @@ export function createReactContainer<
 
   const moduleConfig = module.config?.() || {}
   const moduleOverrides = module.override?.() || []
-
+  const modulePropTypes = module.propTypes
   const runReactLogic = stateManagement?.runLogic.bind(null, React, module.logic)
 
   const convertProps = stateManagement?.covertProps || (<T>(props: T) => props)
@@ -139,7 +139,7 @@ export function createReactContainer<
       props = {} as any
     }
     /** maybe Signal */
-    const convertedProps: P = convertProps(props) as unknown as P
+    const convertedProps: P = convertProps(props, modulePropTypes) as unknown as P
 
     initLogic(props)
 
