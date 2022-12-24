@@ -369,8 +369,10 @@ importers:
       '@rollup/plugin-node-resolve': ^13.3.0
       '@rollup/plugin-replace': ^4.0.0
       '@rollup/plugin-typescript': ^6.1.0
+      '@types/prop-types': ^15.7.5
       atomic-signal: workspace:*
       csstype: ^3.1.1
+      prop-types: ^15.8.1
       rollup: ^2.74.1
       rollup-plugin-dts: ^4.2.2
       rollup-plugin-typescript2: ^0.31.2
@@ -379,8 +381,10 @@ importers:
       tslib: ^2.4.0
     dependencies:
       '@emotion/css': 11.10.5_@babel+core@7.19.1
+      '@types/prop-types': 15.7.5
       atomic-signal: link:../signal
       csstype: 3.1.1
+      prop-types: 15.8.1
     devDependencies:
       '@jsdevtools/version-bump-prompt': 6.1.0
       '@rollup/plugin-alias': 3.1.9_rollup@2.79.0

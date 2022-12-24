@@ -9,8 +9,8 @@ import {
   Computed,
   CurrentRunnerScope, Driver, getNamespace, IHookContext, isSignal, Runner, signal, State, StateSignal
 } from 'atomic-signal'
-import { StateManagementConfig, VirtualLayoutJSON } from '../../types'
-import { isFunction, last, traverse, traverseLayoutTree, unstable_serialize } from '../../utils'
+import { SignalProps, StateManagementConfig, VirtualLayoutJSON } from '../../types'
+import { isFunction, last, traverse, traverseLayoutTree } from '../../utils'
 
 export const config: StateManagementConfig = {
   matches: [
@@ -21,7 +21,7 @@ export const config: StateManagementConfig = {
   ],
   runLogic: runReactLogic,
   transform,
-  covertProps: convertArgsToSignal
+  covertProps: convertToSignal
 }
 
 function transform (json: VirtualLayoutJSON) {
@@ -77,9 +77,11 @@ interface ICacheDriver<T extends Driver> {
   signalProps: Record<string, StateSignal<any> | Function>
 }
 
-function convertArgsToSignal (args: Record<string, any> = {}) {
-  const signalArgs: Record<string, StateSignal<any> | Function> = {}
-  Object.entries(args).forEach(([key, value]) => {
+export function convertToSignal<T extends Record<string, any>> (args: T, ignoreKeys = ['children']): SignalProps<T> {
+  const signalArgs = {}
+  Object.entries(args || {}).forEach(([key, value]) => {
+    if (ignoreKeys.includes(key)) return
+    
     if (isSignal(value)) {
       signalArgs[key] = value
     } else {
@@ -90,7 +92,7 @@ function convertArgsToSignal (args: Record<string, any> = {}) {
       }
     }
   })
-  return signalArgs
+  return signalArgs as SignalProps<T>
 }
 
 const scopeSymbol = Symbol.for('@NewRendererReactScope')
@@ -100,7 +102,7 @@ function runReactLogic<T extends Driver>(react: any, hook: T, props: Parameters<
   const init = useRef(null) as { current: ICacheDriver<T> | null }
 
   if (!init.current) {
-    const signalProps = convertArgsToSignal(props[0])
+    const signalProps = convertToSignal(props[0])
 
     let ssrContext: IHookContext[] = []
 

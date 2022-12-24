@@ -1,5 +1,4 @@
 import type * as CSS from 'csstype'
-import type { ExtensionCore } from './extension'
 import type { ProxyLayoutHandler } from './utils'
 import type { StateSignal } from 'atomic-signal'
 import {
@@ -12,7 +11,8 @@ import {
   PatchLayout,
   PatchLayoutWithCommands,
   FlatPatchCommandsArr,
-  BaseDataType
+  BaseDataType,
+  Assign
 } from './types-layout'
 
 // const root = {
@@ -54,6 +54,10 @@ export type PC2ArrToOverrideModule<
   ? [OverrideModule<Props, L, F>, ...PC2ArrToOverrideModule<Props, L, R>]
   : PC2Arr
 
+export interface PropTypeValidator {
+  (): void
+}
+
 export interface SingleFileModule<
   Props extends VirtualLayoutJSON['props'],
   L extends LayoutStructTree,
@@ -83,6 +87,7 @@ export interface SingleFileModule<
     p?: Props,
     rootDraft?: ConvertToLayoutTreeDraft<PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>>
   ) => StyleRule[] | void
+  propTypes?: Record<string, PropTypeValidator>
   config?: (...args: any[]) => ModuleConfig
   override?: () => PC2ArrToOverrideModule<Props, L, PC2Arr>
 }
@@ -185,7 +190,7 @@ export type RenderContainer<
     options?: { useEmotion: boolean }
   ) => ModuleRenderContainer<P, L, PCArr, NewPC, ConstructProps>
 
-export type SignalProps<T extends Object> = {
+export type SignalProps<T extends Record<string, any>> = {
   [P in keyof T]: T[P] extends (...args: any[]) => any
     ? T[P]
     : StateSignal<T[P]>
