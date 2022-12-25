@@ -6,7 +6,8 @@ import {
   OverrideModule,
   StateManagementMatch,
   PatternStructureResult,
-  LayoutTreeDraft
+  LayoutTreeDraft,
+  PropTypeValidator
 } from './types'
 import { deepClone } from './lib/deepClone'
 import { css } from '@emotion/css'
@@ -16,6 +17,7 @@ import {
   PatchCommand,
   BaseDataType
 } from './types-layout'
+import { typeDefaultValueFlagSymbol } from './lib/propTypes'
 
 export { isFunction } from './lib/serialize'
 
@@ -254,7 +256,7 @@ export function getVirtualNodesByPath(
 export enum DraftOperatesEnum {
   insert = 'insert',
   remove = 'remove',
-  replace = 'replace' 
+  replace = 'replace'
 }
 
 const DRAFT_OPERATES = [
@@ -554,7 +556,7 @@ function createVirtualNode(child: PatchCommand['child']) {
     props: (child as any).props || {},
     flags: VirtualNodeTypeSymbol,
     type: child.type,
-    children: child.children,
+    children: child.children
   }
 }
 
@@ -593,10 +595,31 @@ export function runOverrides(
 
     if (override.patchLayout) {
       const patchLayoutCommands = override.patchLayout(props, draft)
-  
+
       patchLayoutCommands.forEach(cmd => {
         doPatchLayoutCommand(cmd, draft)
       })
     }
   })
+}
+
+export function assignDefaultValueByPropTypes<T extends Record<string, any>>(
+  props: T,
+  propTypes?: Record<string, PropTypeValidator>
+): T {
+  if (!propTypes) {
+    return props
+  }
+
+  const r: Record<string, any> = {}
+  Object.keys(propTypes).forEach(key => {
+    if (props[key] === undefined) {
+      const validatorValue = propTypes?.[key]?.[typeDefaultValueFlagSymbol]
+      if (validatorValue !== undefined) {
+        r[key] = validatorValue
+      }
+    }
+  })
+
+  return Object.assign({}, props, r)
 }

@@ -104,9 +104,9 @@ const scopeSymbol = Symbol.for('@NewRendererReactScope')
 function runReactLogic<T extends Driver>(react: any, hook: T, props: Parameters<T>) {
   const { useRef, useEffect, useState } = react
   const init = useRef(null) as { current: ICacheDriver<T> | null }
+  const signalProps = props[0]
 
   if (!init.current) {
-    const signalProps = convertToSignal(props[0])
 
     let ssrContext: IHookContext[] = []
 
@@ -153,14 +153,15 @@ function runReactLogic<T extends Driver>(react: any, hook: T, props: Parameters<
   useEffect(() => {
     if (init.current) {
       const { signalProps } = init.current
+      console.log('signalProps: ', signalProps);
 
-      Object.entries(props[0] || {}).forEach(([key, value]) => {
-        if (!isFunction(value)) { 
+      Object.entries(signalProps[0] || {}).forEach(([key, value]) => {
+        if (!isFunction(value) && isSignal(signalProps[key] as any)) { 
           signalProps[key](value)
         }
       })
     }
-  }, [props[0]])
+  }, [signalProps[0]])
 
   // confirm only run once in React18 with strict mode or in development
   // const didMount = useRef(false)
@@ -171,6 +172,7 @@ function runReactLogic<T extends Driver>(react: any, hook: T, props: Parameters<
 
     init.current.scope.activate()
     const unListen = init.current.scope.onUpdate(() => {
+      console.log('init.current.result: ', init.current.result);
       setHookResult({ ...init.current.result })
     })
 

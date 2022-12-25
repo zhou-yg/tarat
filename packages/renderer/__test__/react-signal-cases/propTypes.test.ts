@@ -1,4 +1,4 @@
-import { PropTypes, typeFlagSymbol, SignalFlag } from '../../src/lib/propTypes'
+import { PropTypes, typeFlagSymbol, SignalFlag, typeDefaultValueFlagSymbol } from '../../src/index'
 
 function resetWarningCache() {
   jest.resetModules();
@@ -78,8 +78,24 @@ function typeCheckFail(declaration, value, expectedMessage) {
 
 describe('Primitive Types', () => {
   it('type flags', () => {
-    expect(PropTypes.signal[typeFlagSymbol]).toEqual(SignalFlag)
-    expect(PropTypes.signal.isRequired[typeFlagSymbol]).toEqual(SignalFlag)
+    const s1 = PropTypes.signal
+    const s1R = PropTypes.signal.isRequired
+
+    expect(s1[typeFlagSymbol]).toEqual(SignalFlag)
+    expect(s1R[typeFlagSymbol]).toEqual(SignalFlag)
+
+    const d1 = PropTypes.signal.isRequired.default(0)
+    const d2 = PropTypes.signal.default(1)
+
+    expect(d1[typeFlagSymbol]).toEqual(SignalFlag)
+    expect(d2[typeFlagSymbol]).toEqual(SignalFlag)
+  })
+
+  it('type default value', () => {
+    const d1 = PropTypes.signal.isRequired.default(0)
+    const d2 = PropTypes.signal.default(1)
+    expect(d1[typeDefaultValueFlagSymbol]).toEqual(0)
+    expect(d2[typeDefaultValueFlagSymbol]).toEqual(1)
   })
 
   it('should warn for invalid strings', () => {

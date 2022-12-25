@@ -59,13 +59,13 @@ export interface Events {
   onClick: MouseEvent;
   onContextmenu: MouseEvent;
   onDblclick: MouseEvent;
-  onMousedown: MouseEvent;
-  onMouseenter: MouseEvent;
-  onMouseleave: MouseEvent;
-  onMousemove: MouseEvent;
-  onMouseout: MouseEvent;
-  onMouseover: MouseEvent;
-  onMouseup: MouseEvent;
+  onMouseDown: MouseEvent;
+  onMouseEnter: MouseEvent;
+  onMouseLeave: MouseEvent;
+  onMouseMove: MouseEvent;
+  onMouseOut: MouseEvent;
+  onMouseOver: MouseEvent;
+  onMouseUp: MouseEvent;
 
   // media events
   onAbort: Event;
@@ -117,9 +117,9 @@ export interface Events {
   onWheel: WheelEvent;
 
   // animation events
-  onAnimationstart: AnimationEvent;
-  onAnimationend: AnimationEvent;
-  onAnimationiteration: AnimationEvent;
+  onAnimationStart: AnimationEvent;
+  onAnimationEnd: AnimationEvent;
+  onAnimationIteration: AnimationEvent;
 
   // transition events
   onTransitionend: TransitionEvent;
@@ -360,6 +360,7 @@ export interface InputHTMLAttributes extends HTMLAttributes {
   alt?: string;
   autocomplete?: string;
   autofocus?: Booleanish;
+  autoFocus?: Booleanish;
   capture?: boolean | "user" | "environment"; // https://www.w3.org/tr/html-media-capture/#the-capture-attribute
   checked?: Booleanish | any[] | StateSignal<boolean> | ComputedSignal<boolean>; // for IDE v-model multi-checkbox support
   crossorigin?: string;

@@ -356,28 +356,27 @@ expectType<PatchLayoutWithCommandListV1Display>({
   ]
 } as const)
 
-
 // flat commands array
 type PatchArrFromTestCaseModules = [
-  [], 
+  [],
   [
     {
-      readonly op: CommandOP.addChild;
-      readonly parent: readonly ["div"];
+      readonly op: CommandOP.addChild
+      readonly parent: readonly ['div']
       readonly child: {
-          readonly type: "p";
-          readonly children: readonly ["123"];
-      };
+        readonly type: 'p'
+        readonly children: readonly ['123']
+      }
     }
-  ], 
+  ],
   [
     {
-      readonly op: CommandOP.addChild;
-      readonly parent: readonly ["div", "p"];
+      readonly op: CommandOP.addChild
+      readonly parent: readonly ['div', 'p']
       readonly child: {
-          readonly type: "text";
-          readonly children: readonly ["456"];
-      };
+        readonly type: 'text'
+        readonly children: readonly ['456']
+      }
     }
   ]
 ]
@@ -387,16 +386,16 @@ expectType<FlatArray>([
     op: CommandOP.addChild,
     parent: ['div'],
     child: {
-        type: 'p',
-        children: ['123']
+      type: 'p',
+      children: ['123']
     }
   },
   {
     op: CommandOP.addChild,
     parent: ['div', 'p'],
     child: {
-        type: 'text',
-        children: ['456'],
+      type: 'text',
+      children: ['456']
     }
   }
 ] as const)
@@ -494,4 +493,3 @@ expectType<FLDisplay>({
     }
   ]
 } as const)
-

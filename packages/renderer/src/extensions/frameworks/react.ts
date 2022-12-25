@@ -7,7 +7,7 @@ import {
   SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeFromProps, renderHTMLProp, runOverrides } from '../../utils'
 
 import { LayoutStructTree, ConvertToLayoutTreeDraft, PatchCommand } from "../../types-layout";
-import { NormalizeProps } from "@/packages/renderer/dist/renderer";
+import { NormalizeProps } from '../../types';
 
 type ArgResultMap = Map<string, any>
 const driverWeakMap = new Map<Driver, ArgResultMap>()
@@ -141,7 +141,7 @@ export function createReactContainer<
     /** maybe Signal */
     const convertedProps: P = convertProps(props, modulePropTypes) as unknown as P
 
-    initLogic(props)
+    initLogic(convertedProps)
 
     const { proxyHandler } = getLayoutFromModule(convertedProps)
     if (proxyHandler) {
@@ -184,7 +184,8 @@ export function createReactContainer<
   }
 
   function getLayout<T extends LayoutStructTree> (props?: any) {
-    const { proxyHandler } = getLayoutFromModule(props)
+    const convertedProps: P = convertProps(props, modulePropTypes) as unknown as P   
+    const { proxyHandler } = getLayoutFromModule(convertedProps)
     return proxyHandler?.draft as ConvertToLayoutTreeDraft<T>
   }
 

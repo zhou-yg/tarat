@@ -64,14 +64,16 @@ export interface SingleFileModule<
   PC2Arr
 > {
   meta?: {
-    props: Props,
-    layoutStruct: L,
+    props: Props
+    layoutStruct: L
     patchCommands: PC2Arr
   }
   layoutTree?: () => ConvertToLayoutTreeDraft<
     PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
   >
-  _layoutDraft?: ConvertToLayoutTreeDraft<PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>>
+  _layoutDraft?: ConvertToLayoutTreeDraft<
+    PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
+  >
   _p?: Props
   _fpc2Arr?: FlatPatchCommandsArr<PC2Arr>
   _pc2Arr?: PC2Arr
@@ -81,11 +83,15 @@ export interface SingleFileModule<
   layout?: (p?: Props) => VirtualLayoutJSON
   designPattern?: (
     p?: Props,
-    rootDraft?: ConvertToLayoutTreeDraft<PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>>
+    rootDraft?: ConvertToLayoutTreeDraft<
+      PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
+    >
   ) => PatternStructure | void
   styleRules?: (
     p?: Props,
-    rootDraft?: ConvertToLayoutTreeDraft<PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>>
+    rootDraft?: ConvertToLayoutTreeDraft<
+      PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
+    >
   ) => StyleRule[] | void
   propTypes?: Record<string, PropTypeValidator>
   config?: (...args: any[]) => ModuleConfig
@@ -133,15 +139,27 @@ export interface ModuleRenderContainer<
   L extends LayoutStructTree,
   PCArr extends PatchCommand[][],
   NewRenderPC,
-  ConstructProps,
+  ConstructProps
 > {
   runLogic: (...args: any[]) => Record<string, any>
   render: (json: VirtualLayoutJSON) => FrameworkVirtualNode
   construct: <NewConstructPC>(
     props?: ConstructProps,
     overrides?: [
-      OverrideModule<Props, SingleFileModule<Props, L, [...PCArr, NewRenderPC]>['layoutStruct'], NewRenderPC>,
-      OverrideModule<Props, SingleFileModule<Props, L, [...PCArr, NewRenderPC, NewConstructPC]>['layoutStruct'], NewConstructPC>
+      OverrideModule<
+        Props,
+        SingleFileModule<Props, L, [...PCArr, NewRenderPC]>['layoutStruct'],
+        NewRenderPC
+      >,
+      OverrideModule<
+        Props,
+        SingleFileModule<
+          Props,
+          L,
+          [...PCArr, NewRenderPC, NewConstructPC]
+        >['layoutStruct'],
+        NewConstructPC
+      >
     ]
   ) => VirtualLayoutJSON
   getLayout: <L extends LayoutStructTree>(
@@ -155,7 +173,11 @@ export interface OverrideModule<
   PC = []
 > {
   layout?: (props: Props, layout: LayoutTreeProxyDraft) => void
-  patchLayout?: (props: Props, layout: ConvertToLayoutTreeDraft<L>, types?: { l: L, pc: PC }) => PC
+  patchLayout?: (
+    props: Props,
+    layout: ConvertToLayoutTreeDraft<L>,
+    types?: { l: L; pc: PC }
+  ) => PC
 }
 
 type Func = (...args: any[]) => any
@@ -173,7 +195,10 @@ export interface StateManagementConfig {
     args: Parameters<T>
   ) => ReturnType<T>
   transform?: (json: VirtualLayoutJSON) => VirtualLayoutJSON
-  covertProps?: (props: any, propTypes?: Record<string, PropTypeValidator>) => any
+  covertProps?: (
+    props: any,
+    propTypes?: Record<string, PropTypeValidator>
+  ) => any
 }
 
 export type RenderContainer<
@@ -181,14 +206,13 @@ export type RenderContainer<
   L extends LayoutStructTree,
   PCArr extends PatchCommand[][],
   NewPC,
-  ConstructProps,
-> = 
-  (
-    framework: any,
-    module: SingleFileModule<P, L, PCArr>,
-    stateManagement: StateManagementConfig,
-    options?: { useEmotion: boolean }
-  ) => ModuleRenderContainer<P, L, PCArr, NewPC, ConstructProps>
+  ConstructProps
+> = (
+  framework: any,
+  module: SingleFileModule<P, L, PCArr>,
+  stateManagement: StateManagementConfig,
+  options?: { useEmotion: boolean }
+) => ModuleRenderContainer<P, L, PCArr, NewPC, ConstructProps>
 
 export type SignalProps<T extends Record<string, any>> = {
   [P in keyof T]: T[P] extends (...args: any[]) => any
@@ -205,4 +229,3 @@ export type VNodeComponent = (
 ) => VirtualLayoutJSON & {}
 
 export type VNodeComponent2 = (...args: any[]) => any
-

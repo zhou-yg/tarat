@@ -49,21 +49,21 @@ import {
 // error
 
 interface BaseModuleL2 {
-  type: 'div',
+  type: 'div'
   readonly children: readonly [
     string,
     {
-      type: 'p',
+      type: 'p'
     }
   ]
 }
 type NewPC2 = {
-  readonly op: CommandOP.addChild;
-  readonly parent: readonly ["p"];
+  readonly op: CommandOP.addChild
+  readonly parent: readonly ['p']
   readonly child: {
-      readonly type: 'text';
-      readonly children: readonly ['123'];
-  };
+    readonly type: 'text'
+    readonly children: readonly ['123']
+  }
 }
 
 type NewLError = DoPatchCommand<BaseModuleL2, NewPC2>

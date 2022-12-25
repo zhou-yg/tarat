@@ -5,6 +5,7 @@ import { isSignal } from "atomic-signal";
 
 export const SignalFlag = 'Signal'
 export const typeFlagSymbol = Symbol.for('renderTypeFlag');
+export const typeDefaultValueFlagSymbol = Symbol.for('typeDefaultValueFlagSymbol');
 
 export const PropTypes = {
   array: createPrimitiveTypeChecker('array'),
@@ -106,7 +107,43 @@ function PropTypeError(message: string, data?: any) {
 
 var ANONYMOUS = '<<anonymous>>';
 
-function createChainableTypeChecker(validate: Function): ((...args: any[]) => any) & { isRequired: (...args: any[]) => any } {
+function createChainableTypeDefault (validate: any) {
+
+  function defaultValue (
+    value: any,
+  ) {
+
+    validateWithDefault[typeDefaultValueFlagSymbol] = value
+    validateWithDefault[typeFlagSymbol] = validate[typeFlagSymbol]
+
+    function validateWithDefault(
+      props: Record<string, any>,
+      propName: string,
+      componentName: string,
+      location: string,
+      propFullName: string,
+    ) {
+      return validate(props, propName, componentName, location, propFullName);
+    }
+
+    return validateWithDefault
+  }
+  validate.default = defaultValue
+  validate.default[typeFlagSymbol] = validate[typeFlagSymbol]
+
+  validate.isRequired.default = defaultValue
+  validate.isRequired.default[typeFlagSymbol] = validate[typeFlagSymbol]
+
+  return validate
+}
+
+function createChainableTypeChecker(validate: Function): 
+  ((...args: any[]) => any) &
+  { 
+    isRequired: ((...args: any[]) => any) & { default: ((...args: any[]) => any) },
+    default: ((...args: any[]) => any)
+  } 
+{
   function checkType(
     isRequired: boolean,
     props: Record<string, any>,
@@ -137,7 +174,7 @@ function createChainableTypeChecker(validate: Function): ((...args: any[]) => an
   chainedCheckType[typeFlagSymbol] = validate[typeFlagSymbol]
   chainedCheckType.isRequired[typeFlagSymbol] = validate[typeFlagSymbol]
 
-  return chainedCheckType;
+  return createChainableTypeDefault(chainedCheckType);
 }
 
 function createPrimitiveTypeChecker(expectedType: string) {

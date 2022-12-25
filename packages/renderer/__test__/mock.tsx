@@ -92,10 +92,14 @@ export function moduleHasMultipleChild(): SingleFileModule<{}, any, []> {
   }
 }
 
-export function layoutUseLogic(): SingleFileModule<SignalProps<{ name: string }>, any, []> {
+export function layoutUseLogic(): SingleFileModule<
+  SignalProps<{ name: string }>,
+  any,
+  []
+> {
   return {
     propTypes: {
-      name: PropTypes.signal.isRequired,
+      name: PropTypes.signal.isRequired
     },
     logic() {
       return { num: 1 }
@@ -121,13 +125,13 @@ type UseStyleInLayoutStruct = {
 }
 
 export function useStyleInLayout(): SingleFileModule<
-  SignalProps<{ name: string }> ,
+  SignalProps<{ name: string }>,
   UseStyleInLayoutStruct,
   []
 > {
   return {
     propTypes: {
-      name: PropTypes.signal.isRequired,
+      name: PropTypes.signal.isRequired
     },
     logic() {
       return { num: 1 }
@@ -163,7 +167,11 @@ type UseOtherModule = {
   ]
 }
 
-export function useOtherModule(): SingleFileModule<SignalProps<{ name: string }>, UseOtherModule, []> {
+export function useOtherModule(): SingleFileModule<
+  SignalProps<{ name: string }>,
+  UseOtherModule,
+  []
+> {
   return {
     logic() {
       return { num: 1 }
@@ -255,11 +263,15 @@ export function hasInputInLayout(): SingleFileModule<{}, any, []> {
   }
 }
 
-export function patternHasMultiMatchers(): SingleFileModule<SignalProps<{ v1: boolean; v2: boolean }>, any, []> {
+export function patternHasMultiMatchers(): SingleFileModule<
+  SignalProps<{ v1: boolean; v2: boolean }>,
+  any,
+  []
+> {
   return {
     propTypes: {
       v1: PropTypes.signal.isRequired,
-      v2: PropTypes.signal.isRequired,
+      v2: PropTypes.signal.isRequired
     },
     layout() {
       return <div is-container>i am container</div>
@@ -281,10 +293,14 @@ export function patternHasMultiMatchers(): SingleFileModule<SignalProps<{ v1: bo
   }
 }
 
-export function patternHasMultiMatchers2(): SingleFileModule<SignalProps<{ v1: boolean }>, any, []> {
+export function patternHasMultiMatchers2(): SingleFileModule<
+  SignalProps<{ v1: boolean }>,
+  any,
+  []
+> {
   return {
     propTypes: {
-      v1: PropTypes.signal.isRequired,
+      v1: PropTypes.signal.isRequired
     },
     layout() {
       return <div is-container>i am container</div>
@@ -334,13 +350,13 @@ export interface LayoutHasTypesStruct {
 }
 
 export function layoutHasTypes(): SingleFileModule<
-  SignalProps< { name: string }>,
+  SignalProps<{ name: string }>,
   LayoutHasTypesStruct,
   [[]]
 > {
   return {
     propTypes: {
-      name: PropTypes.signal.isRequired,
+      name: PropTypes.signal.isRequired
     },
     layout(props) {
       return (
@@ -394,9 +410,7 @@ type BaseLT2DP = BaseLT2['div']['p']
 type BaseBaseL = PrintLayoutStructTree<typeof newModule2['_L']>
 type BasePC2Arr = PrintLayoutStructTree<typeof newModule2['_pc2Arr']>
 type BaseFPC2Arr = PrintLayoutStructTree<typeof newModule2['_fpc2Arr']>
-type BaseL2 = PrintLayoutStructTree<
-  typeof newModule2['layoutStruct']
->
+type BaseL2 = PrintLayoutStructTree<typeof newModule2['layoutStruct']>
 type BaseOverride2 = ReturnType<typeof newModule2['override']>
 type BaseOverride2I0 = ReturnType<
   ReturnType<typeof newModule2['override']>['0']['patchLayout']
@@ -429,9 +443,7 @@ type BaseLT3 = typeof newModule3['layoutTree']
 type BaseBaseL3 = PrintLayoutStructTree<typeof newModule3['_L']>
 type BasePC3Arr = PrintLayoutStructTree<typeof newModule3['_pc2Arr']>
 type BaseFPC3Arr = PrintLayoutStructTree<typeof newModule3['_fpc2Arr']>
-type BaseL3 = PrintLayoutStructTree<
-  typeof newModule3['layoutStruct']
->
+type BaseL3 = PrintLayoutStructTree<typeof newModule3['layoutStruct']>
 type BaseOverride3 = ReturnType<typeof newModule3['override']>
 type BaseOverride3I0 = ReturnType<
   ReturnType<typeof newModule3['override']>['0']['patchLayout']
@@ -447,12 +459,14 @@ interface BaseModuleForOverrideProps {
   text: string
 }
 interface BaseModuleForOverrideLayoutStruct {
-  type: 'div',
-  children: [
-    string,
-  ]
+  type: 'div'
+  children: [string]
 }
-function BaseModuleForOverride (): SingleFileModule<SignalProps<BaseModuleForOverrideProps>, BaseModuleForOverrideLayoutStruct, []> {
+function BaseModuleForOverride(): SingleFileModule<
+  SignalProps<BaseModuleForOverrideProps>,
+  BaseModuleForOverrideLayoutStruct,
+  []
+> {
   return {
     propTypes: {
       text: PropTypes.signal.isRequired
@@ -460,7 +474,7 @@ function BaseModuleForOverride (): SingleFileModule<SignalProps<BaseModuleForOve
     layout(props) {
       return <div is-container>i am {props.text()}</div>
     },
-    styleRules (props, root) {
+    styleRules(props, root) {
       return [
         {
           target: root.div,
@@ -474,36 +488,39 @@ function BaseModuleForOverride (): SingleFileModule<SignalProps<BaseModuleForOve
   }
 }
 
-export function useSingleOverride () {
+export function useSingleOverride() {
   const base = BaseModuleForOverride()
-  const singleOverride = overrideModule(base, ({
-    patchLayout (props: SignalProps< BaseModuleForOverrideProps> & { show?: boolean }, jsonDraft) {
+  const singleOverride = overrideModule(base, {
+    patchLayout(
+      props: SignalProps<BaseModuleForOverrideProps> & { show?: boolean },
+      jsonDraft
+    ) {
       return [
         {
           op: CommandOP.addChild,
           condition: props.show,
           parent: jsonDraft.div,
-          child: <span is-text >text</span> as { type: 'span' } // must type p
+          child: (<span is-text>text</span>) as { type: 'span' } // must type p
         }
       ] as const
     }
-  }))
+  })
 
   const m2 = singleOverride
 
   const m3 = extendModule(m2, () => ({
-    patchLayout (props, root) {
+    patchLayout(props, root) {
       return [
         {
           op: CommandOP.addChild,
           parent: root.div.span,
-          child: <text></text> as { type: 'text' } // must type p
+          child: (<text></text>) as { type: 'text' } // must type p
         }
       ] as const
     }
-  }));
+  }))
   const m4 = extendModule(m3, () => ({
-    patchLayout (props, root) {
+    patchLayout(props, root) {
       /** root expect ot be below
        * (parameter) root: {
             div: readonly ["div"] & {
@@ -516,23 +533,23 @@ export function useSingleOverride () {
     }
   }))
 
-  return m2;
+  return m2
 }
 
-export function overrideAtModuleLayer () {
+export function overrideAtModuleLayer() {
   const m2 = extendModule(BaseModuleForOverride(), () => ({
-    patchLayout (props, jsonDraft) {
+    patchLayout(props, jsonDraft) {
       return [
         {
           op: CommandOP.addChild,
           parent: jsonDraft.div,
-          child: <p></p> as { type: 'p' } // must type p
+          child: (<p></p>) as { type: 'p' } // must type p
         }
       ] as const
     }
   }))
   const m3 = extendModule(m2, () => ({
-    patchLayout (props, jsonDraft) {
+    patchLayout(props, jsonDraft) {
       return [
         {
           op: CommandOP.addChild,
@@ -543,20 +560,22 @@ export function overrideAtModuleLayer () {
     }
   }))
 
-  return m2;
+  return m2
 }
 
-export function overrideAtUseModule ():
- SingleFileModule<SignalProps<{ m2Text: string }>, { type: 'div' }, []>
-{
+export function overrideAtUseModule(): SingleFileModule<
+  SignalProps<{ m2Text: string }>,
+  { type: 'div' },
+  []
+> {
   const m2 = overrideAtModuleLayer()
 
   type pc2Arr = typeof m2['_pc2Arr']
 
   return {
-    layout (props) {
+    layout(props) {
       const UsedM2 = useModule(m2, {
-        patchLayout (props, jsonDraft) {
+        patchLayout(props, jsonDraft) {
           return [
             {
               op: CommandOP.addChild,
@@ -566,41 +585,46 @@ export function overrideAtUseModule ():
           ]
         }
       })
-      
+
       return (
-        <usingModule className="at-module" >
-          <UsedM2 text={props.m2Text} ></UsedM2>
+        <usingModule className="at-module">
+          <UsedM2 text={props.m2Text}></UsedM2>
         </usingModule>
       )
     }
   }
 }
 
-export function overrideAtUseModuleAndRender ():
- SingleFileModule<SignalProps<{ m2Text: string }>, { type: 'div' }, []>
-{
+export function overrideAtUseModuleAndRender(): SingleFileModule<
+  SignalProps<{ m2Text: string }>,
+  { type: 'div' },
+  []
+> {
   const m2 = overrideAtModuleLayer()
 
   type pc2Arr = typeof m2['_pc2Arr']
 
   return {
-    layout (props) {
+    layout(props) {
       const UsedM2 = useModule(m2, {
-        patchLayout (props, jsonDraft) {
+        patchLayout(props, jsonDraft) {
           return [
             {
               op: CommandOP.addChild,
               parent: jsonDraft.div.p,
-              child: <text>123</text> as unknown as { readonly type: 'text', readonly children: readonly ['123'] }
+              child: (<text>123</text>) as unknown as {
+                readonly type: 'text'
+                readonly children: readonly ['123']
+              }
             }
           ] as const
         }
       })
-      
+
       return (
-        <usingModule className="at-module" >
+        <usingModule className="at-module">
           <UsedM2
-            text={props.m2Text} 
+            text={props.m2Text}
             checkerTypes={({ l, pcArr, newPC }) => {
               type L = typeof l
               type LDisplay = PrintLayoutStructTree<L>
@@ -609,12 +633,14 @@ export function overrideAtUseModuleAndRender ():
               type FPC = FlatPatchCommandsArr<[...PCArr, PC]>
               type NewL = PatchLayoutWithCommands<L, FPC>
               type NewLDisplay = PrintLayoutStructTree<NewL>
-              type NewD = ConvertToLayoutTreeDraft<PatchLayoutWithCommands<L, FPC>>
+              type NewD = ConvertToLayoutTreeDraft<
+                PatchLayoutWithCommands<L, FPC>
+              >
             }}
             override={{
-              patchLayout (props, jsonDraft, types) {
+              patchLayout(props, jsonDraft, types) {
                 type Draft = typeof jsonDraft
-                type Types = PrintLayoutStructTree< typeof types.l>
+                type Types = PrintLayoutStructTree<typeof types.l>
                 type Types2 = typeof types
                 return [
                   {
@@ -624,11 +650,10 @@ export function overrideAtUseModuleAndRender ():
                   }
                 ]
               }
-            }} >
-          </UsedM2>
+            }}
+          ></UsedM2>
         </usingModule>
       )
     }
   }
 }
-
