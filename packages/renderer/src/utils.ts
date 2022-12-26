@@ -19,6 +19,8 @@ import {
 } from './types-layout'
 import { typeDefaultValueFlagSymbol } from './lib/propTypes'
 
+// (window as any).ecss = css;
+
 export { isFunction } from './lib/serialize'
 
 export function mergeFromProps(

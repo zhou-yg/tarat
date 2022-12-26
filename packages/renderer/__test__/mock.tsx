@@ -25,7 +25,8 @@ import {
   Assign,
   overrideModule,
   SignalProps,
-  PropTypes
+  PropTypes,
+  HOVER
 } from '../src/index'
 import { signal } from 'atomic-signal'
 
@@ -654,6 +655,31 @@ export function overrideAtUseModuleAndRender(): SingleFileModule<
           ></UsedM2>
         </usingModule>
       )
+    }
+  }
+}
+
+export function moduleHasNewDesignPatterns (): SingleFileModule<{ name: string }, any, any> {
+  return {
+    layout () {
+      return (
+        <div  is-container>
+
+        </div>
+      )
+    },
+    designPatterns () {
+      return [
+        [HOVER],
+        {
+          container: {
+            backgroundColor: {
+              ['red']: ['*', true],
+              ['blue']: ['*', false]
+            },
+          }
+        }
+      ]
     }
   }
 }

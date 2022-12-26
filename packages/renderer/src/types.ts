@@ -87,6 +87,7 @@ export interface SingleFileModule<
       PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
     >
   ) => PatternStructure | void
+  designPatterns?: () => any
   styleRules?: (
     p?: Props,
     rootDraft?: ConvertToLayoutTreeDraft<

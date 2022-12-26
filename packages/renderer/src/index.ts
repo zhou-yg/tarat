@@ -7,6 +7,7 @@ export * from './types'
 export * from './types-layout'
 export * from './utils'
 export * from './lib/propTypes'
+export * from './pattern'
 
 export default function () {
   return {}
