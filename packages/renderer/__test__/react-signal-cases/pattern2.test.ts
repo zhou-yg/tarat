@@ -102,4 +102,25 @@ describe('pattern2', () => {
       expect(clsObj.container.length).toEqual(4)
     })
   })
+
+  it('new pattern module', () => {
+    const module = mock.moduleHasNewDesignPatterns();
+    const r = createRenderer(module, {
+      framework: mock.MockRectFramework
+    })
+    const r2 = r.construct()
+    const r3 = r.render()
+
+    expect(r3).toEqual({
+      type: 'div',
+      props: {
+        'is-container': 1,
+        selected: true,
+        disabled: false,
+        className: 'css-9q5arm css-eq2hm3',
+        'data-selecteddisabled': '10'
+      },
+      children: undefined
+    })
+  })
 })

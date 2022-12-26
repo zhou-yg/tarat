@@ -63,7 +63,7 @@ export function assignRules(draft: LayoutTreeProxyDraft, rules: StyleRule[]) {
  */
 export const SEMATIC_RELATION_IS = 'is'
 export const SEMATIC_RELATION_HAS = 'has'
-function checkSematic(sematic: string, props: VirtualLayoutJSON['props']) {
+export function checkSematic(sematic: string, props: VirtualLayoutJSON['props']) {
   let result = false
   const kvArr = Object.entries(props)
   for (const [k, v] of kvArr) {

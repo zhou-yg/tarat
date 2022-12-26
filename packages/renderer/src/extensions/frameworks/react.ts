@@ -8,6 +8,7 @@ import {
 
 import { LayoutStructTree, ConvertToLayoutTreeDraft, PatchCommand } from "../../types-layout";
 import { NormalizeProps } from '../../types';
+import { assignDeclarationPatterns } from "../../pattern";
 
 type ArgResultMap = Map<string, any>
 const driverWeakMap = new Map<Driver, ArgResultMap>()
@@ -166,6 +167,15 @@ export function createReactContainer<
       const patternResult = module.designPattern?.(convertedProps)
       if (patternResult) {
         newJSON = assignPattern(newJSON, patternResult, options.useEmotion)
+      }
+
+      const declarationPatterns = module.designPatterns?.(convertedProps)
+      if (declarationPatterns) {
+        if (Array.isArray(declarationPatterns)) {
+          newJSON = assignDeclarationPatterns(newJSON, declarationPatterns)
+        } else {
+          // TODO
+        }
       }
 
       /** modify layout json */

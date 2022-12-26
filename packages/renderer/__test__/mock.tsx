@@ -26,7 +26,9 @@ import {
   overrideModule,
   SignalProps,
   PropTypes,
-  HOVER
+  HOVER,
+  SELECTED,
+  DISABLED
 } from '../src/index'
 import { signal } from 'atomic-signal'
 
@@ -663,19 +665,18 @@ export function moduleHasNewDesignPatterns (): SingleFileModule<{ name: string }
   return {
     layout () {
       return (
-        <div  is-container>
-
+        <div  is-container selected={true} disabled={false} >
         </div>
       )
     },
     designPatterns () {
       return [
-        [HOVER],
+        [HOVER, SELECTED, DISABLED],
         {
           container: {
             backgroundColor: {
-              ['red']: ['*', true],
-              ['blue']: ['*', false]
+              ['red']: ['*', 1, 0],
+              ['blue']: ['*', 0, 1]
             },
           }
         }

@@ -140,7 +140,9 @@ export interface HTMLAttributes extends EventHandlers<Events> {
   _html?: string
   children?: any
   name?: string
-  readOnly?: boolean
+  readOnly?: Booleanish
+  selected?: Booleanish
+  disabled?: Booleanish
 
 
   className?: any;
