@@ -4,6 +4,50 @@ import * as mock from '../mock'
 describe('pattern2', () => {
   describe ('basic utils', () => {
     it ('constructCSSObj', () => {
+      const matrix: PatternMatrix2 = [
+        [HOVER, SELECTED],
+        {
+          container: {
+            color: {
+              black: [
+                ['*', 1],
+                [1, 0]
+              ],
+            },
+          }
+        }
+      ]
+      const objs = constructCSSObj(matrix)
+      expect(objs).toEqual(    [
+          {
+            "attr": [
+              [
+                "selected",
+                1,
+              ],
+            ],
+            "pseudo": undefined,
+            "sematic": "container",
+            "style": {
+              "color": "black",
+            },
+          },
+          {
+            "attr": [
+              [
+                "selected",
+                0,
+              ],
+            ],
+            "pseudo": "hover",
+            "sematic": "container",
+            "style": {
+              "color": "black",
+            },
+          },
+        ])
+    })
+    it('constructCSSObj', () => {
       console.error = jest.fn()
 
       const matrix: PatternMatrix2 = [
@@ -11,8 +55,14 @@ describe('pattern2', () => {
         {
           container: {
             color: {
-              red: [[1, 1, 1]],
+              black: [],
+              red: [
+                [1, 1, 1],
+              ],
               blue: [0, 1, 0],
+            },
+            fontSize: {
+              '12px': ['*', '*', '*'],
             }
           }
         }
@@ -22,6 +72,12 @@ describe('pattern2', () => {
 
       expect(console.error).toBeCalledTimes(1)
       expect(objs).toEqual([
+        {
+          attr: [],
+          style: { color: 'black' },
+          sematic: 'container',
+          pseudo: undefined
+        },
         {
           attr: [[SELECTED, 1]],
           style: { color: 'red' },
@@ -34,19 +90,34 @@ describe('pattern2', () => {
           pseudo: ACTIVE,
           sematic: 'container',
         },
+        {
+          attr: [],
+          style: { fontSize: '12px' },
+          sematic: 'container',
+          pseudo: undefined
+        },
+        {
+          attr: [],
+          style: { fontSize: '12px', color: 'black' },
+          sematic: 'container',
+        },
       ])
     })
 
-    it ('mergeStyleObjs', () => {
+    it('mergeStyleObjs', () => {
       const matrix: PatternMatrix2 = [
         [HOVER, ACTIVE, SELECTED],
         {
           container: {
             color: {
-              red: [[1, 0, 1]],
+              red: [
+                [],
+                [1, 0, 1]
+              ],
               blue: [0, 1, 0],
             },
             fontSize: {
+              '24px': [],
               '12px': [[1, 0, '*']],
               '6px': [0, 1, 0],
               '0px': [1,0,'*'] // cover '12px'
@@ -56,15 +127,22 @@ describe('pattern2', () => {
       ]
 
       const objs = constructCSSObj(matrix)
+      // console.log('objs: ', objs);
       const mergedObjs = mergeStyleObjs(objs)
       
       expect(mergedObjs).toEqual([
+        {
+          attr: [],
+          style: { fontSize: '24px', color: 'red' },
+          sematic: 'container'
+        },
         {
           attr: [[SELECTED, 1]],
           style: { color: 'red' },
           pseudo: HOVER,
           sematic: 'container',
         },
+        
         {
           attr: [[SELECTED, 0]],
           style: { color: 'blue', fontSize: '6px' },
@@ -117,7 +195,9 @@ describe('pattern2', () => {
         'is-container': 1,
         selected: true,
         disabled: false,
-        className: 'css-9q5arm css-eq2hm3',
+        className: 'css-1u2kj87 css-pqhwqk',
+        'data-disabled': '0',
+        'data-selected': '1',
         'data-selecteddisabled': '10'
       },
       children: undefined

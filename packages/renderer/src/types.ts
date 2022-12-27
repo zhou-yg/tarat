@@ -14,7 +14,7 @@ import {
   BaseDataType,
   Assign
 } from './types-layout'
-import { PatternMatrix2, TypePatternMatrix2Map } from './pattern'
+import { PatternMatrix2 } from './pattern'
 
 // const root = {
 //   div: {
@@ -88,7 +88,7 @@ export interface SingleFileModule<
       PatchLayoutWithCommands<L, FlatPatchCommandsArr<PC2Arr>>
     >
   ) => PatternStructure | void
-  designPatterns?: (p?: Props) => PatternMatrix2 | TypePatternMatrix2Map
+  designPatterns?: (p?: Props) => PatternMatrix2
   styleRules?: (
     p?: Props,
     rootDraft?: ConvertToLayoutTreeDraft<

@@ -153,7 +153,6 @@ function runReactLogic<T extends Driver>(react: any, hook: T, props: Parameters<
   useEffect(() => {
     if (init.current) {
       const { signalProps } = init.current
-      console.log('signalProps: ', signalProps);
 
       Object.entries(signalProps[0] || {}).forEach(([key, value]) => {
         if (!isFunction(value) && isSignal(signalProps[key] as any)) { 

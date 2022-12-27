@@ -1,23 +1,36 @@
 import { css } from '@emotion/css'
 import { VirtualLayoutJSON } from './types'
-import { checkSematic, traverseLayoutTree } from './utils'
+import { camelToLine, checkSematic, traverseLayoutTree } from './utils'
 
 export const HOVER = 'hover'
 export const ACTIVE = 'active'
 export const FOCUS = 'focus'
 export const DISABLED = 'disabled'
 export const SELECTED = 'selected'
+export const CSS = {
+  HOVER,
+  ACTIVE,
+  FOCUS,
+}
+export const ATTR = {
+  DISABLED,
+  SELECTED,
+}
 
-function isPseudo (k: any): k is string {
+function isBuiltinTag (tag: string): tag is 'hover' | 'active' | 'focus' | 'selected' | 'disabled' {
+  return isPseudo(tag) || isAttr(tag)
+}
+
+function isPseudo (k: any): k is 'hover' | 'active' | 'focus' {
   return [HOVER, ACTIVE, FOCUS].includes(k)
 }
 
-function isAttr (k: any): k is string {
+function isAttr (k: any): k is 'selected' | 'disabled' {
   return [DISABLED, SELECTED].includes(k)
 }
 
-function mapBooleanToNumber (b: boolean) {
-  return b === true ? 1 : 0
+function mapBooleanToNumber (b: any): number {
+  return b === true || b === 1 ? 1 : 0
 }
 
 type MatrixConstraint<T> = 
@@ -28,7 +41,7 @@ type MatrixConstraint<T> =
 type PatternVisionSematic = 'container' | 'text' | 'filltext' | 'decoration'
 
 export type PatternMatrix2 = [
-  string[],
+  any[], // any constraits
   Record<string, {
     [cssProp: string]: {
       [cssValue: string]: ((1 | 0 | '*') | (1 | 0 | '*')[])[]
@@ -36,12 +49,12 @@ export type PatternMatrix2 = [
   }>
 ]
 
-export type TypePatternMatrix2Map = {
-  [propName: string]: {
-    value: string | string[]
-    pattern: PatternMatrix2
-  }[]
-}
+// export type TypePatternMatrix2Map = {
+//   [propName: string]: {
+//     value: string | string[]
+//     pattern: PatternMatrix2
+//   }[]
+// }
 
 interface PatternCSSObj {
   attr: (string | number)[][],
@@ -73,82 +86,117 @@ export function mergeStyleObjs (cssObjs: PatternCSSObj[]) {
   return [...map.values()]
 }
 
+function pushAttr(attr: PatternCSSObj['attr'], item: PatternCSSObj['attr']['0']) {
+  if (!attr.some(arr => arr[0] === item[0])) {
+    attr.push(item)
+  }
+}
+
 export function constructCSSObj (matrix: PatternMatrix2) {
   const [constraints, rules] = matrix
 
   const cssObjs: PatternCSSObj[] = []
 
   Object.entries(rules).forEach(([sematic, cssMatrix]) => {
+    
+    const commonStyle: PatternCSSObj['style'] = {}
+
     Object.entries(cssMatrix).forEach(([cssProp, cssMatrix]) => {
       Object.entries(cssMatrix).forEach(([cssValue, matches]) => {
-        const cssObj: PatternCSSObj = {
-          attr: [],
-          style: {},
-          sematic,
-        }
-        const attrMatches: (string|number)[][] = []
-        
-        matches.forEach((match, i) => {
-          if (Array.isArray(match)) {
-            const arr = match.map((v, i2) => {
-              if (v !== '*') {
-                return [constraints[i2], v]
-              }
-            }).filter(Boolean);
 
-            attrMatches.push(...arr)
-          } else {
+        function newCSSObj (valueArr: (0 | 1 | '*')[]) {
+          const cssObj: PatternCSSObj = {
+            attr: [],
+            style: {},
+            sematic,
+          }
+
+          if (matches.length === 0 || matches.every(v => v === '*')) {
+            commonStyle[cssProp] = cssValue
+          }
+
+          const attrMatches: (string|number)[][] = []  
+          valueArr.forEach((match, i) => {
             if (match !== '*') {
-              attrMatches.push([constraints[i], match])
+              pushAttr(attrMatches, [constraints[i], mapBooleanToNumber(match)])
             }
-          } 
-        })
+          })
+          const pseudos = attrMatches.filter(([attrOrPseudo, val]) => {
+            return isPseudo(attrOrPseudo) && val !== 0
+          }).map(arr => arr[0]) as string[]
+  
+          const attrMatchesWithoutPseudo = attrMatches.filter(([attrOrPseudo, val]) => {
+            return !isPseudo(attrOrPseudo)
+          })
+  
+          if (pseudos.length > 1) {
+            console.error(`[createPatternCSS] only one pseudo is allowed, but received ${pseudos}`)
+          }
+          cssObj.pseudo = pseudos[0]
+          cssObj.attr = attrMatchesWithoutPseudo
+          cssObj.style[cssProp] = cssValue
 
-        const pseudos = attrMatches.filter(([attrOrPseudo, val]) => {
-          return isPseudo(attrOrPseudo) && val !== 0
-        }).map(arr => arr[0]) as string[]
-
-        const attrMatchesWithoutPseudo = attrMatches.filter(([attrOrPseudo, val]) => {
-          return !isPseudo(attrOrPseudo)
-        })
-
-        if (pseudos.length > 1) {
-          console.error(`[createPatternCSS] only one pseudo is allowed, but received ${pseudos}`)
+          return cssObj
         }
-        cssObj.pseudo = pseudos[0]
-        cssObj.attr = attrMatchesWithoutPseudo
-        cssObj.style[cssProp] = cssValue
-
-        cssObjs.push(cssObj)
+        
+        if (Array.isArray(matches[0])) {
+          matches.forEach((match, i) => {
+            if (Array.isArray(match)) {
+              const cssObj = newCSSObj(match)
+              cssObjs.push(cssObj)
+            }
+          })
+        } else {
+          const cssObj = newCSSObj(matches as any)
+          cssObjs.push(cssObj)
+        }
       })
     })
+    if (Object.keys(commonStyle).length > 0) {
+      cssObjs.push({
+        attr: [],
+        style: commonStyle,
+        sematic,
+      })
+    }
   })
 
   return cssObjs
 }
 
+
+
 const AttributeSelectorPrefix = 'data-'
 
 function generateCSSIntoSematic (cssObjs: PatternCSSObj[]) {
   const sematicMap: Record<string, string[]> = {}
-  cssObjs.forEach(cssObj => {
+  cssObjs.forEach((cssObj, i) => {
+    
     const { attr, pseudo, style, sematic } = cssObj
-    const attributeSelector = attr.reduce((acc, [attr, val]) => {
+    const attributeSelector =  attr.reduce((acc, [attr, val]) => {
       acc[0] += String(attr)
       acc[1] += String(val)
       return acc
-    }, [AttributeSelectorPrefix, '']).join('=')
+    }, [AttributeSelectorPrefix, ''])
+
+    const attributeSelectorText = attr.length > 0 ? `[${attributeSelector[0]}="${attributeSelector[1]}"]` : ''
 
     const styleText = Object.entries(style).map(([k, v]) => {
-      return `${k}: ${v};`
+      return `${camelToLine(k)}: ${v};`
     }).join('')
-
+    
     const pseudoSelector = pseudo ? `:${pseudo}` : ''
 
     const cls = css`
-    & [${attributeSelector}]${pseudoSelector} {
+    &${attributeSelectorText}${pseudoSelector}{
       ${styleText}
     }`
+
+    const r = `
+    & ${attributeSelectorText} ${pseudoSelector} {
+      ${styleText}
+    }`
+    // console.log(`i=${i} s=${cssObj.sematic}`, cssObj, cls, r)
     
     const old = sematicMap[sematic]
     if (old) {
@@ -179,7 +227,7 @@ export function assignDeclarationPatterns (
   patternMatrix: PatternMatrix2
 ) {
   // const source = deepClone(json)
-  const source = json
+  const source = Object.assign({}, json)
 
   const attributeConstraints = patternMatrix[0].filter(isAttr)
 
@@ -197,10 +245,12 @@ export function assignDeclarationPatterns (
         }
 
         const attributeSelector: [string, string[], number[]] = [AttributeSelectorPrefix, [], []]
+        const singleProps: [string, number][] = []
         attributeConstraints.forEach(attr => {
           if (attr in props) {
             attributeSelector[1].push(attr)
             attributeSelector[2].push(mapBooleanToNumber(props[attr]))
+            singleProps.push([attr, mapBooleanToNumber(props[attr])])
           }
         })
         if (attributeSelector[1].length > 0) {
@@ -211,6 +261,9 @@ export function assignDeclarationPatterns (
 
           props[newProp] = attributeSelector[2].join('')
         }
+        singleProps.forEach(([attr, val]) => {
+          props[`${AttributeSelectorPrefix}${attr}`] = String(val)
+        })
       }
     }
   })

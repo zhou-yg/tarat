@@ -83,7 +83,7 @@ export function checkSematic(sematic: string, props: VirtualLayoutJSON['props'])
   return result
 }
 
-function camelToLine(str: string) {
+export function camelToLine(str: string) {
   return str.replace(/([A-Z])/g, '-$1').toLowerCase()
 }
 
@@ -618,7 +618,7 @@ export function assignDefaultValueByPropTypes<T extends Record<string, any>>(
     if (props[key] === undefined) {
       const validatorValue = propTypes?.[key]?.[typeDefaultValueFlagSymbol]
       if (validatorValue !== undefined) {
-        r[key] = validatorValue
+        r[key] = typeof validatorValue === 'function' ? validatorValue() : validatorValue
       }
     }
   })

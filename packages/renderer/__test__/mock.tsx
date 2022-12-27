@@ -671,7 +671,7 @@ export function moduleHasNewDesignPatterns (): SingleFileModule<{ name: string }
     },
     designPatterns () {
       return [
-        [HOVER, SELECTED, DISABLED],
+        [HOVER, 'selected', 'disabled'],
         {
           container: {
             backgroundColor: {
