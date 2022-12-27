@@ -634,6 +634,12 @@ export interface WebViewHTMLAttributes extends HTMLAttributes {
 
 export interface SVGAttributes
   extends EventHandlers<Events> {
+  key?: any;
+  _html?: string
+  children?: any
+  readOnly?: Booleanish
+  selected?: Booleanish
+  disabled?: Booleanish
   /**
    * SVG Styling Attributes
    * @see https://www.w3.org/TR/SVG/styling.html#ElementSpecificStyling
