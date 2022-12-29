@@ -152,15 +152,19 @@ function runReactLogic<T extends Driver>(react: any, hook: T, props: Parameters<
 
   useEffect(() => {
     if (init.current) {
-      const { signalProps } = init.current
+      const { signalProps: signalPropsRef } = init.current
 
-      Object.entries(signalProps[0] || {}).forEach(([key, value]) => {
-        if (!isFunction(value) && isSignal(signalProps[key] as any)) { 
-          signalProps[key](value)
+      Object.entries(signalProps || {}).forEach(([key, value]) => {
+        if (isSignal(signalPropsRef[key] as any)) { 
+          if (isSignal(value)) {
+            signalPropsRef[key](value())
+          } else if (!isFunction(value)) {
+            signalPropsRef[key](value)
+          }
         }
       })
     }
-  }, [signalProps[0]])
+  }, [signalProps])
 
   // confirm only run once in React18 with strict mode or in development
   // const didMount = useRef(false)
@@ -171,7 +175,6 @@ function runReactLogic<T extends Driver>(react: any, hook: T, props: Parameters<
 
     init.current.scope.activate()
     const unListen = init.current.scope.onUpdate(() => {
-      console.log('init.current.result: ', init.current.result);
       setHookResult({ ...init.current.result })
     })
 

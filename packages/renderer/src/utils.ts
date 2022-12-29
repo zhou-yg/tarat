@@ -1,3 +1,4 @@
+import { isSignal } from 'atomic-signal'
 import {
   VirtualLayoutJSON,
   LayoutTreeProxyDraft,
@@ -618,6 +619,9 @@ export function assignDefaultValueByPropTypes<T extends Record<string, any>>(
     if (props[key] === undefined) {
       const validatorValue = propTypes?.[key]?.[typeDefaultValueFlagSymbol]
       if (validatorValue !== undefined) {
+        if (isSignal(validatorValue)) {
+          console.error(`[propTypes] props.${key} is return a signal directly, it maybe cause some unexpected error.`)
+        }
         r[key] = typeof validatorValue === 'function' ? validatorValue() : validatorValue
       }
     }

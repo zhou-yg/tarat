@@ -44,7 +44,7 @@ export type PatternMatrix2 = [
   any[], // any constraits
   Record<string, {
     [cssProp: string]: {
-      [cssValue: string]: ((1 | 0 | '*') | (1 | 0 | '*')[])[]
+      [cssValue: string]: ((1 | 0 | '*' | boolean) | (1 | 0 | '*' | boolean)[])[]
     }
   }>
 ]
@@ -104,7 +104,7 @@ export function constructCSSObj (matrix: PatternMatrix2) {
     Object.entries(cssMatrix).forEach(([cssProp, cssMatrix]) => {
       Object.entries(cssMatrix).forEach(([cssValue, matches]) => {
 
-        function newCSSObj (valueArr: (0 | 1 | '*')[]) {
+        function newCSSObj (valueArr: (0 | 1 | '*' | boolean)[]) {
           const cssObj: PatternCSSObj = {
             attr: [],
             style: {},
