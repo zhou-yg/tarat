@@ -4,7 +4,7 @@ import {
 } from 'atomic-signal'
 import {
   isVirtualNode, buildLayoutNestedObj, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern,
-  SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeFromProps, renderHTMLProp, runOverrides } from '../../utils'
+  SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeFromProps, renderHTMLProp, runOverrides, shouldNotRender } from '../../utils'
 
 import { LayoutStructTree, ConvertToLayoutTreeDraft, PatchCommand } from "../../types-layout";
 import { NormalizeProps } from '../../types';
@@ -117,6 +117,11 @@ export function createReactContainer<
     if (!isVirtualNode(json)) {
       return json
     }
+
+    if (shouldNotRender(json)) {
+      return null
+    }
+
     let children = json.children
     let elementArgs = [json.type, filterPatternSematicProps(json.props)]
 

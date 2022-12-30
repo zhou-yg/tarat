@@ -12,6 +12,8 @@ import {
   VNodeComponent2
 } from './types'
 
+import { signal } from 'atomic-signal'
+
 import {
   assignDefaultValueByPropTypes,
   isVNodeComponent,
@@ -438,7 +440,7 @@ export function createRenderer2<
   )
 
   let layoutJSON: VirtualLayoutJSON = null
-
+  let defaultProps: VirtualLayoutJSON['props'] = null
   function construct<NewConstructPC>(
     props?: ConstructProps,
     secondOverride?: OverrideModule<
@@ -449,9 +451,13 @@ export function createRenderer2<
   ) {
     pushCurrentRenderer(currentRendererInstance)
 
+    if (!defaultProps) {
+      defaultProps = assignDefaultValueByPropTypes({}, module.propTypes)
+    }
+
     const mergedOverrides: any = [override, secondOverride].filter(Boolean)
 
-    const newProps = assignDefaultValueByPropTypes(props, module.propTypes)
+    const newProps = Object.assign({}, defaultProps, props)
 
     const r = rendererContainer.construct<NewConstructPC>(
       newProps,

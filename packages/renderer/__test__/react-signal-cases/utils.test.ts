@@ -12,7 +12,14 @@ import {
   DraftOperatesEnum,
   h,
   getVirtualNodesByPath,
+  PropTypes,
+  assignDeclarationPatterns,
+  assignDefaultValueByPropTypes,
 } from '../../src'
+import {
+  isSignal,
+  signal,
+} from 'atomic-signal'
 
 describe('utils', () => {
 
@@ -359,5 +366,15 @@ describe('utils', () => {
     
     expect(result2[0].length).toEqual(1)
     expect(result2[0][0]).toEqual(h('div', { id: 1 }, 1))
+  })
+  it ('assignDefaultValueByPropTypes', () => {
+    const pt = {
+      value: PropTypes.signal.default(() => signal(0)),
+      value2: PropTypes.signal.isRequired.default(() => signal(1))
+    }
+    const defaultProps: any = assignDefaultValueByPropTypes({}, pt)
+
+    expect(isSignal(defaultProps.value)).toEqual(true)
+    expect(isSignal(defaultProps.value2)).toEqual(true)
   })
 })

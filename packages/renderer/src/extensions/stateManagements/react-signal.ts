@@ -7,7 +7,7 @@
 import {
   after,
   Computed,
-  CurrentRunnerScope, Driver, getNamespace, IHookContext, isSignal, Runner, signal, State, StateSignal
+  CurrentRunnerScope, Driver, getNamespace, IHookContext, isSignal, Runner, Signal, signal, State, StateSignal
 } from 'atomic-signal'
 import { PropTypeValidator, SignalProps, StateManagementConfig, VirtualLayoutJSON } from '../../types'
 import { isFunction, last, traverse, traverseLayoutTree } from '../../utils'
@@ -42,7 +42,6 @@ function transform (json: VirtualLayoutJSON) {
 
           const fns: ((...args: any[]) => void)[] = [
             (e: { target: { value: number | string } }) => {
-              console.log('e.target[key]: ', e.target[key]);
               value(e.target[key])
             },
           ]
@@ -139,9 +138,16 @@ function runReactLogic<T extends Driver>(react: any, hook: T, props: Parameters<
     let unListenCallbacks: Function[] = []
     if (init.current) {
       const { signalProps } = init.current
-      const deps = Object.values(signalProps).filter((v: any) => isSignal(v)) as StateSignal<any>[]
+      const deps = Object.values(signalProps).filter((v: any) => isSignal(v)) as Signal<any>[]
+      let waitCount = 0
       const unListen = after(() => {
-        updatePropsCount((v: number) => v + 1)
+        waitCount++
+        Promise.resolve().then(() => {
+          if (waitCount > 0) {
+            waitCount = 0
+            updatePropsCount((v: number) => v + 1)
+          }
+        })
       }, deps)
       unListenCallbacks.push(unListen)
     }

@@ -617,15 +617,22 @@ export function assignDefaultValueByPropTypes<T extends Record<string, any>>(
   const r: Record<string, any> = {}
   Object.keys(propTypes).forEach(key => {
     if (props[key] === undefined) {
-      const validatorValue = propTypes?.[key]?.[typeDefaultValueFlagSymbol]
-      if (validatorValue !== undefined) {
-        if (isSignal(validatorValue)) {
+      const defaultValue = propTypes?.[key]?.[typeDefaultValueFlagSymbol]
+      if (defaultValue !== undefined) {
+        if (isSignal(defaultValue)) {
           console.error(`[propTypes] props.${key} is return a signal directly, it maybe cause some unexpected error.`)
         }
-        r[key] = typeof validatorValue === 'function' ? validatorValue() : validatorValue
+        r[key] = typeof defaultValue === 'function' ? defaultValue() : defaultValue
       }
     }
   })
 
   return Object.assign({}, props, r)
+}
+
+ 
+export function shouldNotRender (json: VirtualLayoutJSON) {
+  return typeof json?.type === 'function' ||
+    json?.props?.if === false ||
+    json?.props?.if === null
 }
