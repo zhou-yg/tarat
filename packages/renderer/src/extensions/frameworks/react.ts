@@ -4,7 +4,7 @@ import {
 } from 'atomic-signal'
 import {
   isVirtualNode, buildLayoutNestedObj, proxyLayoutJSON, ProxyLayoutHandler, assignRules, assignPattern,
-  SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeFromProps, renderHTMLProp, runOverrides, shouldNotRender } from '../../utils'
+  SEMATIC_RELATION_HAS, SEMATIC_RELATION_IS, mergeFromProps, renderHTMLProp, runOverrides, shouldNotRender, assignDefaultValueByPropTypes } from '../../utils'
 
 import { LayoutStructTree, ConvertToLayoutTreeDraft, PatchCommand } from "../../types-layout";
 import { NormalizeProps } from '../../types';
@@ -144,6 +144,12 @@ export function createReactContainer<
     if (!props) {
       props = {} as any
     }
+    const defaultPropsRef = React.useRef(null)
+    if (!defaultPropsRef.current) {
+      defaultPropsRef.current = assignDefaultValueByPropTypes({}, module.propTypes)
+    }
+    props = Object.assign({}, defaultPropsRef.current, props)
+
     /** maybe Signal */
     const convertedProps: P = convertProps(props, modulePropTypes) as unknown as P
 

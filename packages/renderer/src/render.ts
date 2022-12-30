@@ -50,6 +50,7 @@ function popCurrentRenderer() {
   globalCurrentRenderer.pop()
 }
 
+export const createRSRender = createRenderer
 /**
  * for React-Signal case
  */
@@ -390,13 +391,6 @@ export function overrideModule<
     L,
     [...PCArr, FormatPatchCommands<NewPC>]
   >
-
-  // {
-  //   // "meta" just for typescript type check
-  //   meta: SingleFileModule<NewProps, L, [...PCArr, FormatPatchCommands<NewPC>]>['meta']
-
-  //   override: SingleFileModule<NewProps, L, [...PCArr, FormatPatchCommands<NewPC>]>['override']
-  // }
 }
 
 export function createRenderer2<
@@ -440,7 +434,7 @@ export function createRenderer2<
   )
 
   let layoutJSON: VirtualLayoutJSON = null
-  let defaultProps: VirtualLayoutJSON['props'] = null
+
   function construct<NewConstructPC>(
     props?: ConstructProps,
     secondOverride?: OverrideModule<
@@ -451,16 +445,10 @@ export function createRenderer2<
   ) {
     pushCurrentRenderer(currentRendererInstance)
 
-    if (!defaultProps) {
-      defaultProps = assignDefaultValueByPropTypes({}, module.propTypes)
-    }
-
     const mergedOverrides: any = [override, secondOverride].filter(Boolean)
 
-    const newProps = Object.assign({}, defaultProps, props)
-
     const r = rendererContainer.construct<NewConstructPC>(
-      newProps,
+      props,
       mergedOverrides
     )
 
