@@ -177,7 +177,8 @@ describe('pattern2', () => {
       ]
       const clsObj = createPatternCSS(matrix)
 
-      expect(clsObj.container.length).toEqual(4)
+      expect(clsObj.container.replace(/\s/g, ''))
+        .toEqual(`&[data-selected="1"]:hover{color:red;}&[data-selected="0"]{color:blue;}&:hover{font-size:0px;}&[data-selected="0"]:active{font-size:6px;}`)
     })
   })
 
@@ -195,7 +196,7 @@ describe('pattern2', () => {
         'is-container': 1,
         selected: true,
         disabled: false,
-        className: 'css-1u2kj87 css-pqhwqk',
+        className: 'css-1fqgltn',
         'data-disabled': '0',
         'data-selected': '1',
         'data-selecteddisabled': '10'

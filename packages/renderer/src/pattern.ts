@@ -169,10 +169,14 @@ export function constructCSSObj (matrix: PatternMatrix2) {
 const AttributeSelectorPrefix = 'data-'
 
 function generateCSSIntoSematic (cssObjs: PatternCSSObj[]) {
-  const sematicMap: Record<string, string[]> = {}
+  const sematicMap: Record<string, string> = {}
   cssObjs.forEach((cssObj, i) => {
-    
     const { attr, pseudo, style, sematic } = cssObj
+
+
+    const old = sematicMap[sematic]
+
+
     const attributeSelector =  attr.reduce((acc, [attr, val]) => {
       acc[0] += String(attr)
       acc[1] += String(val)
@@ -187,23 +191,20 @@ function generateCSSIntoSematic (cssObjs: PatternCSSObj[]) {
     
     const pseudoSelector = pseudo ? `:${pseudo}` : ''
 
-    const cls = css`
-    &${attributeSelectorText}${pseudoSelector}{
-      ${styleText}
-    }`
+    const clsText = `
+      ${old || ''}
+      &${attributeSelectorText}${pseudoSelector}{
+        ${styleText}
+      }
+    `
 
-    const r = `
-    & ${attributeSelectorText} ${pseudoSelector} {
-      ${styleText}
-    }`
+    // const r = `
+    // & ${attributeSelectorText} ${pseudoSelector} {
+    //   ${styleText}
+    // }`
     // console.log(`i=${i} s=${cssObj.sematic}`, cssObj, cls, r)
     
-    const old = sematicMap[sematic]
-    if (old) {
-      old.push(cls)
-    } else {
-      sematicMap[sematic] = [cls]
-    }
+    sematicMap[sematic] = clsText
   })
   return sematicMap
 }
@@ -237,7 +238,8 @@ export function assignDeclarationPatterns (
     const { props } = node
     for (const sematic in pattern) {
       if (checkSematic(sematic, props)) {
-        const cls = pattern[sematic].join(' ')
+        const clsText = pattern[sematic]
+        const cls = css`${clsText}`
         if (props.className) {
           props.className = `${props.className} ${cls}`
         } else {
