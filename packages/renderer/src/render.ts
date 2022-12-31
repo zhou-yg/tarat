@@ -277,6 +277,7 @@ export function useModule<
       }
     ) => {
       const { override, ...rest } = props
+
       return subModuleRenderer.construct<NewConstructPC>(
         rest as ConstructProps,
         override
@@ -321,6 +322,7 @@ export function useComponentModule<
     }
   ) => {
     const { override, ...rest } = props
+
     subModuleRenderer.construct<NewConstructPC>(
       rest as ConstructProps,
       override

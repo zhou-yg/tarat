@@ -630,9 +630,9 @@ export function assignDefaultValueByPropTypes<T extends Record<string, any>>(
   return Object.assign({}, props, r)
 }
 
- 
+export const ShouldRenderAttr = 'if'
 export function shouldNotRender (json: VirtualLayoutJSON) {
-  return typeof json?.type === 'function' ||
+  return typeof json?.type !== 'function' &&(
     json?.props?.if === false ||
-    json?.props?.if === null
+    json?.props?.if === null)
 }
