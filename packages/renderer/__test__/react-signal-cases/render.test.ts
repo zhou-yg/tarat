@@ -8,6 +8,7 @@ import {
   useOtherModule,
   hasInputInLayout,
   insideVNodeComponent,
+  otherOtherComponentModule,
 } from '../mock'
 
 describe('render', () => {
@@ -55,30 +56,6 @@ describe('render', () => {
     })
   })
 
-  it('layout use other module', () => {
-    const rr = createRenderer(useOtherModule(), {
-      framework: MockRectFramework
-    })
-    const rr2 = rr.construct()
-    const rr3 = rr.render()
-
-    expect(rr3).toEqual({
-      type: 'div',
-      props: { style: { color: 'red' } },
-      children: [
-        {
-          type: 'span',
-          props: {},
-          children: 1,
-        },
-        {
-          type: 'div',
-          props: { name: 'm2', 'is-container': 1 },
-          children: 1,        
-        }
-      ]
-    })
-  })
 
   it('auto add input handler', () => {
     const rr = createRenderer(hasInputInLayout(), {
@@ -106,6 +83,57 @@ describe('render', () => {
         props: {},
         children: ['value is ',  '123'],
       }
+    })
+  })
+  describe('use Module', () => {
+
+    it('layout use other module', () => {
+      const rr = createRenderer(useOtherModule(), {
+        framework: MockRectFramework
+      })
+      const rr2 = rr.construct()
+      const rr3 = rr.render()
+  
+      expect(rr3).toEqual({
+        type: 'div',
+        props: { style: { color: 'red' } },
+        children: [
+          {
+            type: 'span',
+            props: {},
+            children: 1,
+          },
+          {
+            type: 'div',
+            props: { name: 'm2', 'is-container': 1 },
+            children: 1,        
+          }
+        ]
+      })
+    })
+
+    it('modify other component module', () => {
+      const rr = createRenderer(otherOtherComponentModule(), {
+        framework: MockRectFramework
+      })
+      const rr2 = rr.construct()
+      const rr3 = rr.render()
+
+      expect(rr3).toEqual({
+        type: 'div',
+        props: {},
+        children: {
+          type: 'div',
+          props: {
+            name: 'm2',
+            ['is-container']: 1,
+            style: {
+              fontSize: '12px'
+            }
+          },
+          children: 1,
+        }
+      })
     })
   })
 })

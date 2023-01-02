@@ -62,8 +62,10 @@ export interface PropTypeValidator {
 export interface SingleFileModule<
   Props extends VirtualLayoutJSON['props'],
   L extends LayoutStructTree,
-  PC2Arr
+  PC2Arr,
+  ModuleName
 > {
+  name?: ModuleName
   meta?: {
     props: Props
     layoutStruct: L
@@ -141,7 +143,8 @@ export interface ModuleRenderContainer<
   L extends LayoutStructTree,
   PCArr extends PatchCommand[][],
   NewRenderPC,
-  ConstructProps
+  ConstructProps,
+  ModuleName
 > {
   runLogic: (...args: any[]) => Record<string, any>
   render: (json: VirtualLayoutJSON) => FrameworkVirtualNode
@@ -150,7 +153,12 @@ export interface ModuleRenderContainer<
     overrides?: [
       OverrideModule<
         Props,
-        SingleFileModule<Props, L, [...PCArr, NewRenderPC]>['layoutStruct'],
+        SingleFileModule<
+          Props,
+          L,
+          [...PCArr, NewRenderPC],
+          ModuleName
+        >['layoutStruct'],
         NewRenderPC
       >,
       OverrideModule<
@@ -158,7 +166,8 @@ export interface ModuleRenderContainer<
         SingleFileModule<
           Props,
           L,
-          [...PCArr, NewRenderPC, NewConstructPC]
+          [...PCArr, NewRenderPC, NewConstructPC],
+          ModuleName
         >['layoutStruct'],
         NewConstructPC
       >
@@ -168,12 +177,28 @@ export interface ModuleRenderContainer<
     props?: Props
   ) => ConvertToLayoutTreeDraft<L>
 }
+export enum DraftOperatesEnum {
+  insert = 'insert',
+  remove = 'remove',
+  replace = 'replace'
+}
+
+export interface DraftPatch {
+  op:
+    | DraftOperatesEnum.insert
+    | DraftOperatesEnum.replace
+    | DraftOperatesEnum.remove // | 'add' | 'remove'
+  path: string[]
+  value: any
+}
 
 export interface OverrideModule<
   Props extends VirtualLayoutJSON['props'] = unknown,
   L extends LayoutStructTree = any,
   PC = []
 > {
+  patches?: DraftPatch[]
+  patchRules?: (props: Props, layout: LayoutTreeProxyDraft) => StyleRule[]
   layout?: (props: Props, layout: LayoutTreeProxyDraft) => void
   patchLayout?: (
     props: Props,
@@ -208,13 +233,14 @@ export type RenderContainer<
   L extends LayoutStructTree,
   PCArr extends PatchCommand[][],
   NewPC,
-  ConstructProps
+  ConstructProps,
+  ModuleName
 > = (
   framework: any,
-  module: SingleFileModule<P, L, PCArr>,
+  module: SingleFileModule<P, L, PCArr, ModuleName>,
   stateManagement: StateManagementConfig,
   options?: { useEmotion: boolean }
-) => ModuleRenderContainer<P, L, PCArr, NewPC, ConstructProps>
+) => ModuleRenderContainer<P, L, PCArr, NewPC, ConstructProps, ModuleName>
 
 export type SignalProps<T extends Record<string, any>> = {
   [P in keyof T]: T[P] extends (...args: any[]) => any

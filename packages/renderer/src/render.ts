@@ -19,7 +19,8 @@ import {
   isVNodeComponent,
   last,
   VirtualNodeTypeSymbol,
-  VNodeComponentSymbol
+  VNodeComponentSymbol,
+  VNodeFunctionComponentSymbol
 } from './utils'
 
 import * as reactSignalManagement from './extensions/stateManagements/react-signal'
@@ -34,7 +35,7 @@ import {
 } from './types-layout'
 
 interface GlobalCurrentRenderer {
-  renderHooksContainer: ModuleRenderContainer<any, any, any, any, any>
+  renderHooksContainer: ModuleRenderContainer<any, any, any, any, any, string>
   config: any // TODO
 }
 
@@ -58,17 +59,25 @@ export function createRenderer<
   P extends Record<string, any>,
   L extends LayoutStructTree,
   PCArr extends PatchCommand[][],
-  NewPC
+  NewPC,
+  ModuleName
 >(
-  module: SingleFileModule<P, L, PCArr>,
+  module: SingleFileModule<P, L, PCArr, ModuleName>,
   renderHost: RenderHost,
   override?: OverrideModule<
     P,
-    SingleFileModule<P, L, PCArr>['layoutStruct'],
+    SingleFileModule<P, L, PCArr, ModuleName>['layoutStruct'],
     NewPC
   >
 ) {
-  const renderer = createRenderer2<P, L, PCArr, NewPC, NormalizeProps<P>>({
+  const renderer = createRenderer2<
+    P,
+    L,
+    PCArr,
+    NewPC,
+    NormalizeProps<P>,
+    ModuleName
+  >({
     module,
     renderHost,
     override,
@@ -98,6 +107,22 @@ export function createComponent<T extends VNodeComponent2>(func: T) {
   Object.keys(func).forEach(key => {
     component[key] = func[key]
   })
+  return component
+}
+function createFunctionComponent<T extends VNodeComponent2>(func: T, name: string) {
+
+  function component(...args: Parameters<T>): ReturnType<VNodeComponent> {
+    return func.apply(null, args)
+  }
+  Object.defineProperty(component, 'name', {
+    get() {
+      return name || 'Unknown function component'
+    }
+  })
+  Object.keys(func).forEach(key => {
+    component[key] = func[key]
+  })
+  component[VNodeFunctionComponentSymbol] = true
   return component
 }
 
@@ -244,12 +269,13 @@ export function useModule<
   L extends LayoutStructTree,
   PCArr extends PatchCommand[][],
   NewPC,
-  ConstructProps
+  ConstructProps,
+  ModuleName
 >(
-  module: SingleFileModule<P, L, PCArr>,
+  module: SingleFileModule<P, L, PCArr, ModuleName>,
   override?: OverrideModule<
     P,
-    SingleFileModule<P, L, PCArr>['layoutStruct'],
+    SingleFileModule<P, L, PCArr, ModuleName>['layoutStruct'],
     NewPC
   >
 ) {
@@ -257,20 +283,77 @@ export function useModule<
   if (!renderer) {
     throw new Error('useModule must be called in render function')
   }
-  const subModuleRenderer = createRenderer2<P, L, PCArr, NewPC, ConstructProps>(
-    {
-      ...renderer.config,
-      module,
-      override
-    }
-  )
+  const subModuleRenderer = createRenderer2<
+    P,
+    L,
+    PCArr,
+    NewPC,
+    ConstructProps,
+    ModuleName
+  >({
+    ...renderer.config,
+    module,
+    override
+  })
 
   return createComponent(
     <NewConstructPC>(
       props: P & {
         override?: OverrideModule<
           P,
-          SingleFileModule<P, L, [...PCArr, NewPC]>['layoutStruct'],
+          SingleFileModule<P, L, [...PCArr, NewPC], ModuleName>['layoutStruct'],
+          NewConstructPC
+        >
+        checkerTypes?: (arg: { l: L; pcArr: PCArr; newPC: NewPC }) => void
+      }
+    ) => {
+      const { override, ...rest } = props
+
+      return subModuleRenderer.construct<NewConstructPC>(
+        rest as ConstructProps,
+        override
+      )
+    }
+  )
+}
+export function useComposeModule<
+  P extends Record<string, any>,
+  L extends LayoutStructTree,
+  PCArr extends PatchCommand[][],
+  NewPC,
+  ConstructProps,
+  ModuleName
+>(
+  module: SingleFileModule<P, L, PCArr, ModuleName>,
+  override?: OverrideModule<
+    P,
+    SingleFileModule<P, L, PCArr, ModuleName>['layoutStruct'],
+    NewPC
+  >
+) {
+  const renderer = getCurrentRenderer()
+  if (!renderer) {
+    throw new Error('useModule must be called in render function')
+  }
+  const subModuleRenderer = createRenderer2<
+    P,
+    L,
+    PCArr,
+    NewPC,
+    ConstructProps,
+    ModuleName
+  >({
+    ...renderer.config,
+    module,
+    override
+  })
+
+  return createComponent(
+    <NewConstructPC>(
+      props: P & {
+        override?: OverrideModule<
+          P,
+          SingleFileModule<P, L, [...PCArr, NewPC], ModuleName>['layoutStruct'],
           NewConstructPC
         >
         checkerTypes?: (arg: { l: L; pcArr: PCArr; newPC: NewPC }) => void
@@ -290,12 +373,13 @@ export function useComponentModule<
   L extends LayoutStructTree,
   PCArr extends PatchCommand[][],
   NewPC,
-  ConstructProps
+  ConstructProps,
+  ModuleName
 >(
-  module: SingleFileModule<P, L, PCArr>,
+  module: SingleFileModule<P, L, PCArr, ModuleName>,
   override?: OverrideModule<
     P,
-    SingleFileModule<P, L, PCArr>['layoutStruct'],
+    SingleFileModule<P, L, PCArr, ModuleName>['layoutStruct'],
     NewPC
   >
 ) {
@@ -303,19 +387,24 @@ export function useComponentModule<
   if (!renderer) {
     throw new Error('useModule must be called in render function')
   }
-  const subModuleRenderer = createRenderer2<P, L, PCArr, NewPC, ConstructProps>(
-    {
-      ...renderer.config,
-      module,
-      override
-    }
-  )
+  const subModuleRenderer = createRenderer2<
+    P,
+    L,
+    PCArr,
+    NewPC,
+    ConstructProps,
+    ModuleName
+  >({
+    ...renderer.config,
+    module,
+    override
+  })
 
-  return <NewConstructPC>(
+  return createFunctionComponent(<NewConstructPC>(
     props: P & {
       override?: OverrideModule<
         P,
-        SingleFileModule<P, L, [...PCArr, NewPC]>['layoutStruct'],
+        SingleFileModule<P, L, [...PCArr, NewPC], ModuleName>['layoutStruct'],
         NewConstructPC
       >
       checkerTypes?: (arg: { l: L; pcArr: PCArr; newPC: NewPC }) => void
@@ -328,7 +417,7 @@ export function useComponentModule<
       override
     )
     return subModuleRenderer.render()
-  }
+  }, String(module.name))
 }
 
 export function useLayout<T extends LayoutStructTree>() {
@@ -344,12 +433,13 @@ export function extendModule<
   L extends LayoutStructTree,
   PCArr extends PatchCommand[][],
   NewProps extends Props,
-  NewPC
+  NewPC,
+  ModuleName
 >(
-  module: SingleFileModule<Props, L, PCArr>,
+  module: SingleFileModule<Props, L, PCArr, ModuleName>,
   override: () => OverrideModule<
     NewProps,
-    SingleFileModule<NewProps, L, PCArr>['layoutStruct'],
+    SingleFileModule<NewProps, L, PCArr, ModuleName>['layoutStruct'],
     NewPC
   >
 ) {
@@ -363,7 +453,8 @@ export function extendModule<
   } as unknown as SingleFileModule<
     NewProps,
     L,
-    [...PCArr, FormatPatchCommands<NewPC>]
+    [...PCArr, FormatPatchCommands<NewPC>],
+    ModuleName
   >
 }
 export function overrideModule<
@@ -371,12 +462,13 @@ export function overrideModule<
   PCArr extends PatchCommand[][],
   Props,
   NewProps extends Props,
-  NewPC
+  NewPC,
+  ModuleName
 >(
-  module: SingleFileModule<Props, L, PCArr>,
+  module: SingleFileModule<Props, L, PCArr, ModuleName>,
   override: OverrideModule<
     NewProps,
-    SingleFileModule<Props & NewProps, L, PCArr>['layoutStruct'],
+    SingleFileModule<Props & NewProps, L, PCArr, ModuleName>['layoutStruct'],
     NewPC
   >
 ) {
@@ -391,7 +483,8 @@ export function overrideModule<
   } as unknown as SingleFileModule<
     NewProps,
     L,
-    [...PCArr, FormatPatchCommands<NewPC>]
+    [...PCArr, FormatPatchCommands<NewPC>],
+    ModuleName
   >
 }
 
@@ -400,13 +493,14 @@ export function createRenderer2<
   L extends LayoutStructTree,
   PCArr2 extends PatchCommand[][],
   NewRendererPC, // pc at renderer layer
-  ConstructProps
+  ConstructProps,
+  ModuleName
 >(config: {
-  module: SingleFileModule<P, L, PCArr2>
+  module: SingleFileModule<P, L, PCArr2, ModuleName>
   renderHost: RenderHost
   override?: OverrideModule<
     P,
-    SingleFileModule<P, L, PCArr2>['layoutStruct'],
+    SingleFileModule<P, L, PCArr2, ModuleName>['layoutStruct'],
     NewRendererPC
   >
   renderContainerCreator: RenderContainer<
@@ -414,7 +508,8 @@ export function createRenderer2<
     L,
     PCArr2,
     NewRendererPC,
-    ConstructProps
+    ConstructProps,
+    ModuleName
   >
   stateManagement: StateManagementConfig
 }) {
@@ -425,6 +520,12 @@ export function createRenderer2<
     renderContainerCreator,
     stateManagement
   } = config
+
+  if (module.name && /^[a-z]/.test(String(module.name))) {
+    throw new Error(
+      `First char of module name must be uppercase, but got ${module.name}.`
+    )
+  }
 
   const rendererContainer = renderContainerCreator(
     renderHost.framework.lib,
@@ -441,7 +542,12 @@ export function createRenderer2<
     props?: ConstructProps,
     secondOverride?: OverrideModule<
       P,
-      SingleFileModule<P, L, [...PCArr2, NewRendererPC]>['layoutStruct'],
+      SingleFileModule<
+        P,
+        L,
+        [...PCArr2, NewRendererPC],
+        ModuleName
+      >['layoutStruct'],
       NewConstructPC
     >
   ) {

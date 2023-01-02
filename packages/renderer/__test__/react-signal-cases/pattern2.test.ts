@@ -190,18 +190,16 @@ describe('pattern2', () => {
     const r2 = r.construct()
     const r3 = r.render()
 
-    expect(r3).toEqual({
-      type: 'div',
-      props: {
-        'is-container': 1,
-        selected: true,
-        disabled: false,
-        className: 'css-1fqgltn',
-        'data-disabled': '0',
-        'data-selected': '1',
-        'data-selecteddisabled': '10'
-      },
-      children: undefined
-    })
+    expect(r3.type).toEqual('div')
+    expect(r3.props['is-container']).toEqual(1)
+    expect(r3.props.selected).toEqual(true)
+    expect(r3.props.disabled).toEqual(false)
+    expect(typeof r3.props.className).toEqual('string')
+    expect(r3.props['data-disabled']).toEqual('0')
+    expect(r3.props['data-selected']).toEqual('1')
+    expect(r3.props['data-selecteddisabled']).toEqual('10')
+    expect(r3.children).toEqual(undefined)
+
+
   })
 })

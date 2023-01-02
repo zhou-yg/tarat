@@ -1,4 +1,4 @@
-import { ModuleRenderContainer, OverrideModule, SingleFileModule, StateManagementConfig, VirtualLayoutJSON } from "../../types";
+import { ModuleRenderContainer, OverrideModule, PC2ArrToOverrideModule, SingleFileModule, StateManagementConfig, VirtualLayoutJSON } from "../../types";
 import {
   CurrentRunnerScope, Driver, getNamespace, IHookContext, Runner
 } from 'atomic-signal'
@@ -46,9 +46,10 @@ export function createReactContainer<
   P extends Record<string, any>,
   L extends LayoutStructTree,
   PCArr extends PatchCommand[][],
+  ModuleName
 >(
   React: any,
-  module: SingleFileModule<P, L, PCArr>,
+  module: SingleFileModule<P, L, PCArr, ModuleName>,
   stateManagement: StateManagementConfig,
   options?: { useEmotion: boolean }
 ) {
@@ -56,7 +57,6 @@ export function createReactContainer<
   module = {...module}
   const cacheSymbol = Symbol('cacheSymbol')
 
-  const moduleConfig = module.config?.() || {}
   const moduleOverrides = module.override?.() || []
   const modulePropTypes = module.propTypes
   const runReactLogic = stateManagement?.runLogic.bind(null, React, module.logic)
@@ -121,6 +121,9 @@ export function createReactContainer<
     if (shouldNotRender(json)) {
       return null
     }
+    /**
+     * it's danger
+     */
     if (ShouldRenderAttr in json?.props) {
       delete json.props[ShouldRenderAttr]
     }
@@ -141,8 +144,8 @@ export function createReactContainer<
   }
   
   function construct<NewConstructPC, NewRenderPC>(props?: NormalizeProps<P>, overrides?: [
-    OverrideModule<P, SingleFileModule<P, L, [...PCArr, NewRenderPC]>['layoutStruct'], NewRenderPC>,
-    OverrideModule<P, SingleFileModule<P, L, [...PCArr, NewRenderPC, NewConstructPC]>['layoutStruct'], NewConstructPC>
+    OverrideModule<P, SingleFileModule<P, L, [...PCArr, NewRenderPC], ModuleName>['layoutStruct'], NewRenderPC>,
+    OverrideModule<P, SingleFileModule<P, L, [...PCArr, NewRenderPC, NewConstructPC], ModuleName>['layoutStruct'], NewConstructPC>
   ]) {
     if (!props) {
       props = {} as any
@@ -166,12 +169,19 @@ export function createReactContainer<
         assignRules(proxyHandler.draft, rules)
       }
 
-      runOverrides([...moduleOverrides, ...overrides], convertedProps, proxyHandler.draft)
+      const allOverrideModules = [...moduleOverrides, ...overrides] as unknown as OverrideModule<any, any, any>[]
+
+      runOverrides(allOverrideModules, convertedProps, proxyHandler.draft);
+      
       // console.log('[moduleOverride, ...overrides: ', moduleOverrides, overrides);
       // const mergedOverride = mergeOverrideModules([moduleOverride, ...overrides])
       // if (mergedOverride.layout) {
       //   mergedOverride.layout?.(props, proxyHandler.draft)
       // }
+
+      allOverrideModules.forEach(override => {
+        proxyHandler.append(override.patches)
+      })
 
       let newJSON = proxyHandler.apply()
       

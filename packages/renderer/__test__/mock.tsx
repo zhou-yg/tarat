@@ -28,7 +28,11 @@ import {
   PropTypes,
   HOVER,
   SELECTED,
-  DISABLED
+  DISABLED,
+  useComposeModule,
+  useComponentModule,
+  UseComponent,
+  UseModule
 } from '../src/index'
 import { signal } from 'atomic-signal'
 
@@ -50,6 +54,12 @@ export const MockRectFramework = {
       props: Record<string, any> | null,
       ...children: MockReactElement[]
     ): MockReactElement {
+      if (typeof type === 'function') {
+        if (children.length > 0) {
+          props.children = children.length === 1 ? children[0] : children
+        }
+        return type(props)
+      }
       return {
         // $$typeof: Symbol.for('react.element'),
         type,
@@ -68,7 +78,7 @@ export const MockRectFramework = {
   }
 }
 
-export function simpleModule(): SingleFileModule<{}, any, []> {
+export function simpleModule(): SingleFileModule<{}, any, [], 'unknown'> {
   return {
     logic() {
       return {}
@@ -79,7 +89,12 @@ export function simpleModule(): SingleFileModule<{}, any, []> {
   }
 }
 
-export function moduleHasMultipleChild(): SingleFileModule<{}, any, []> {
+export function moduleHasMultipleChild(): SingleFileModule<
+  {},
+  any,
+  [],
+  'unknown'
+> {
   return {
     logic() {
       return {}
@@ -94,13 +109,18 @@ export function moduleHasMultipleChild(): SingleFileModule<{}, any, []> {
     }
   }
 }
-
+type LayoutUseLogicLayout = {
+  type: 'div'
+}
+type LayoutUseLogicFileModule = ReturnType<typeof layoutUseLogic>
 export function layoutUseLogic(): SingleFileModule<
   SignalProps<{ name: string }>,
-  any,
-  []
+  LayoutUseLogicLayout,
+  [],
+  'LayoutUseLogic'
 > {
   return {
+    name: 'LayoutUseLogic',
     propTypes: {
       name: PropTypes.signal.isRequired
     },
@@ -130,7 +150,8 @@ type UseStyleInLayoutStruct = {
 export function useStyleInLayout(): SingleFileModule<
   SignalProps<{ name: string }>,
   UseStyleInLayoutStruct,
-  []
+  [],
+  'unknown'
 > {
   return {
     propTypes: {
@@ -173,7 +194,8 @@ type UseOtherModule = {
 export function useOtherModule(): SingleFileModule<
   SignalProps<{ name: string }>,
   UseOtherModule,
-  []
+  [],
+  'unknown'
 > {
   return {
     logic() {
@@ -181,7 +203,7 @@ export function useOtherModule(): SingleFileModule<
     },
     layout() {
       const logic = useLogic<{ num: number }>()
-      const M2 = useModule(layoutUseLogic())
+      const M2 = useComposeModule(layoutUseLogic())
       return (
         <div>
           <span>{logic.num}</span>
@@ -204,6 +226,42 @@ export function useOtherModule(): SingleFileModule<
   }
 }
 
+export function otherOtherComponentModule(): SingleFileModule<
+  {},
+  {
+    type: 'div'
+    children: [UseModule<LayoutUseLogicFileModule>]
+  },
+  [],
+  'unknown'
+> {
+  return {
+    layout() {
+      const M2 = useComponentModule(layoutUseLogic(), {
+        patchLayout(props, layout, types) {
+          return []
+        },
+      })
+
+      return (
+        <div>
+          <M2 name={signal('m2')} />
+        </div>
+      )
+    },
+    styleRules(p, rootDraft) {
+      return [
+        {
+          target: rootDraft.div.LayoutUseLogic.div,
+          style: {
+            fontSize: '12px'
+          }
+        }
+      ]
+    }
+  }
+}
+
 type UseOtherComponentModule = {
   type: 'div'
   children: [
@@ -216,7 +274,8 @@ type UseOtherComponentModule = {
 export function useOtherComponentModule(): SingleFileModule<
   {},
   UseOtherComponentModule,
-  []
+  [],
+  'unknown'
 > {
   return {
     logic() {
@@ -249,7 +308,7 @@ export function useOtherComponentModule(): SingleFileModule<
   }
 }
 
-export function hasInputInLayout(): SingleFileModule<{}, any, []> {
+export function hasInputInLayout(): SingleFileModule<{}, any, [], 'unknown'> {
   return {
     logic() {
       const num = signal(0)
@@ -269,7 +328,8 @@ export function hasInputInLayout(): SingleFileModule<{}, any, []> {
 export function patternHasMultiMatchers(): SingleFileModule<
   SignalProps<{ v1: boolean; v2: boolean }>,
   any,
-  []
+  [],
+  'unknown'
 > {
   return {
     propTypes: {
@@ -299,7 +359,8 @@ export function patternHasMultiMatchers(): SingleFileModule<
 export function patternHasMultiMatchers2(): SingleFileModule<
   SignalProps<{ v1: boolean }>,
   any,
-  []
+  [],
+  'unknown'
 > {
   return {
     propTypes: {
@@ -355,7 +416,8 @@ export interface LayoutHasTypesStruct {
 export function layoutHasTypes(): SingleFileModule<
   SignalProps<{ name: string }>,
   LayoutHasTypesStruct,
-  [[]]
+  [[]],
+  'unknown'
 > {
   return {
     propTypes: {
@@ -468,7 +530,8 @@ interface BaseModuleForOverrideLayoutStruct {
 function BaseModuleForOverride(): SingleFileModule<
   SignalProps<BaseModuleForOverrideProps>,
   BaseModuleForOverrideLayoutStruct,
-  []
+  [],
+  'unknown'
 > {
   return {
     propTypes: {
@@ -569,7 +632,8 @@ export function overrideAtModuleLayer() {
 export function overrideAtUseModule(): SingleFileModule<
   SignalProps<{ m2Text: string }>,
   { type: 'div' },
-  []
+  [],
+  'unknown'
 > {
   const m2 = overrideAtModuleLayer()
 
@@ -601,7 +665,8 @@ export function overrideAtUseModule(): SingleFileModule<
 export function overrideAtUseModuleAndRender(): SingleFileModule<
   SignalProps<{ m2Text: string }>,
   { type: 'div' },
-  []
+  [],
+  'unknown'
 > {
   const m2 = overrideAtModuleLayer()
 
@@ -661,15 +726,17 @@ export function overrideAtUseModuleAndRender(): SingleFileModule<
   }
 }
 
-export function moduleHasNewDesignPatterns (): SingleFileModule<{ name: string }, any, any> {
+export function moduleHasNewDesignPatterns(): SingleFileModule<
+  { name: string },
+  any,
+  any,
+  'unknown'
+> {
   return {
-    layout () {
-      return (
-        <div  is-container selected={true} disabled={false} >
-        </div>
-      )
+    layout() {
+      return <div is-container selected={true} disabled={false}></div>
     },
-    designPatterns () {
+    designPatterns() {
       return [
         [HOVER, 'selected', 'disabled'],
         {
@@ -677,7 +744,7 @@ export function moduleHasNewDesignPatterns (): SingleFileModule<{ name: string }
             backgroundColor: {
               ['red']: ['*', 1, 0],
               ['blue']: ['*', 0, 1]
-            },
+            }
           }
         }
       ]

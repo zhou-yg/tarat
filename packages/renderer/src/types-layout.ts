@@ -357,3 +357,18 @@ export type FlatPatchCommandsArr<T> = T extends readonly [infer F, ...infer R]
     ? [F, ...R]
     : []
   : []
+
+export type UseComponent<Name, Layout extends LayoutStructTree> = {
+  readonly type: Name
+  readonly children: [Layout]
+}
+
+export type UseModule<
+  SingleFileModule extends {
+    readonly name?: string
+    readonly layoutStruct?: LayoutStructTree
+  }
+> = {
+  readonly type: SingleFileModule['name']
+  readonly children: readonly [SingleFileModule['layoutStruct']]
+}

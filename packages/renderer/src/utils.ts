@@ -8,7 +8,9 @@ import {
   StateManagementMatch,
   PatternStructureResult,
   LayoutTreeDraft,
-  PropTypeValidator
+  PropTypeValidator,
+  DraftOperatesEnum,
+  DraftPatch
 } from './types'
 import { deepClone } from './lib/deepClone'
 import { css } from '@emotion/css'
@@ -64,7 +66,10 @@ export function assignRules(draft: LayoutTreeProxyDraft, rules: StyleRule[]) {
  */
 export const SEMATIC_RELATION_IS = 'is'
 export const SEMATIC_RELATION_HAS = 'has'
-export function checkSematic(sematic: string, props: VirtualLayoutJSON['props']) {
+export function checkSematic(
+  sematic: string,
+  props: VirtualLayoutJSON['props']
+) {
   let result = false
   const kvArr = Object.entries(props)
   for (const [k, v] of kvArr) {
@@ -201,13 +206,13 @@ export function isVirtualNode(node: any): node is VirtualLayoutJSON {
   )
 }
 
-export interface DraftPatch {
-  op:
-    | DraftOperatesEnum.insert
-    | DraftOperatesEnum.replace
-    | DraftOperatesEnum.remove // | 'add' | 'remove'
-  path: string[]
-  value: any
+
+
+/**
+ * uppercase path means it is a Module Component
+ */
+function isFunctionComponentPath (path: string | number) {
+  return /^[A-Z]/.test(String(path))
 }
 
 const ExportPropKey = 'props'
@@ -223,12 +228,17 @@ export function getVirtualNodesByPath(
   let current = [source]
   let i = 0
   for (; i < path.length; i++) {
-    const tag = path[i]
+    const type = path[i]
+
+    if (isFunctionComponentPath(type)) {
+      current = current.filter(n => isVNodeFunctionComponent(n) && n.type.name === type)
+      break
+    }
 
     const newCurrent: VirtualLayoutJSON[] = []
     for (const node of current) {
       if (isVirtualNode(node)) {
-        if (node.type === tag) {
+        if (node.type === type) {
           newCurrent.push(node)
         }
       }
@@ -238,7 +248,14 @@ export function getVirtualNodesByPath(
     }
     const nextType = path[i + 1]
     const nextChildren = newCurrent
-      .map(n => n.children.filter(n => isVirtualNode(n) && n.type === nextType))
+      .map(n => n.children.filter(n => {
+        if (isVirtualNode(n)) {
+          if (isVNodeFunctionComponent(n)) {
+            return n.type.name === nextType
+          }
+          return n.type === nextType
+        }
+      }))
       .flat() as VirtualLayoutJSON[]
     if (nextChildren.length === 0) {
       break
@@ -256,11 +273,7 @@ export function getVirtualNodesByPath(
  * }
  */
 
-export enum DraftOperatesEnum {
-  insert = 'insert',
-  remove = 'remove',
-  replace = 'replace'
-}
+
 
 const DRAFT_OPERATES = [
   DraftOperatesEnum.insert,
@@ -268,6 +281,63 @@ const DRAFT_OPERATES = [
   DraftOperatesEnum.replace
 ]
 
+export function isFunctionVNode (node: VirtualLayoutJSON) {
+  return typeof node.type === 'function'
+}
+
+
+function assignPatchToNode (
+  current: VirtualLayoutJSON[],
+  i: number,
+  patch: DraftPatch
+) {
+  const { op, path, value } = patch
+
+  switch (op) {
+    case DraftOperatesEnum.replace:
+      const restKeys = path.slice(i + 1)
+      current.forEach(node => {
+        set(node, restKeys, value)
+      })
+      break
+    case DraftOperatesEnum.insert:
+      current.forEach(node => {
+        if (node.children) {
+          node.children = [].concat(node.children).concat(value)
+        } else {
+          node.children = [value]
+        }
+      })
+      break
+    case DraftOperatesEnum.remove:
+      break
+  }
+}
+function mergeConstructOverrideToNode (
+  nodes: VirtualLayoutJSON[],
+  i: number,
+  patch: DraftPatch
+) {
+  const { op, path, value } = patch
+  const newPath = path.slice(i + 1)
+  
+  const newPatch = {
+    ...patch,
+    path: newPath
+  }
+  nodes.forEach(n => {
+    if (!n.props) {
+      n.props = {}
+    }
+    if (n.props.override?.patches) {
+      n.props.override.patches.push(newPatch)
+    } else {
+      n.props.override = Object.assign(n.props.override || {}, {
+        patches: [newPatch]
+      })
+    }
+  })
+}
 export function applyJSONTreePatches(
   source: VirtualLayoutJSON,
   patches: DraftPatch[]
@@ -280,26 +350,14 @@ export function applyJSONTreePatches(
     if (value.condition === false) {
       continue
     }
+
     let [current, i] = getVirtualNodesByPath(target, path)
 
-    switch (op) {
-      case DraftOperatesEnum.replace:
-        const restKeys = path.slice(i + 1)
-        current.forEach(node => {
-          set(node, restKeys, value)
-        })
-        break
-      case DraftOperatesEnum.insert:
-        current.forEach(node => {
-          if (node.children) {
-            node.children = [].concat(node.children).concat(value)
-          } else {
-            node.children = [value]
-          }
-        })
-        break
-      case DraftOperatesEnum.remove:
-        break
+    if (isVNodeFunctionComponent(current[0])) {
+      // console.log('isVNodeFunctionComponent current: ', current, i);
+      mergeConstructOverrideToNode(current, i, patch)
+    } else {
+      assignPatchToNode(current, i, patch)
     }
   }
 
@@ -405,12 +463,16 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
     return newObj
   }
 
+  function appendPatches (ps: DraftPatch[] = []) {
+    patches.push(...ps)
+  }
+
   // 此处的类型应该根据 layout 结构生成得出，但这里是通用方法，无法精确取得类型
   const draftJSON = createProxy(jsonTree)
 
   return {
-    patches,
     draft: draftJSON,
+    append: appendPatches,
     apply: applyPatches
   }
 }
@@ -548,8 +610,12 @@ export function get(obj: any, path: string | (number | string)[]) {
   return base[key]
 }
 export const VNodeComponentSymbol = Symbol('VNodeComponentSymbol')
+export const VNodeFunctionComponentSymbol = Symbol('VNodeFunctionComponentSymbol')
 export function isVNodeComponent(target: any) {
-  return target && !!target[VNodeComponentSymbol]
+  return !!(target?.[VNodeComponentSymbol])
+}
+export function isVNodeFunctionComponent(target: any): target is { type: Function } {
+  return !!(target?.type?.[VNodeFunctionComponentSymbol])
 }
 
 function createVirtualNode(child: PatchCommand['child']) {
@@ -587,7 +653,7 @@ function doPatchLayoutCommand(cmd: PatchCommand, draft: LayoutTreeProxyDraft) {
 }
 
 export function runOverrides(
-  overrides: OverrideModule<any, { type: string }, PatchCommand[]>[],
+  overrides: OverrideModule<any, any, any>[],
   props: Record<string, any>,
   draft: LayoutTreeProxyDraft
 ) {
@@ -599,9 +665,11 @@ export function runOverrides(
     if (override.patchLayout) {
       const patchLayoutCommands = override.patchLayout(props, draft)
 
-      patchLayoutCommands.forEach(cmd => {
+      patchLayoutCommands?.forEach?.(cmd => {
         doPatchLayoutCommand(cmd, draft)
       })
+    }
+    if (override.patchRules) {
     }
   })
 }
@@ -620,9 +688,12 @@ export function assignDefaultValueByPropTypes<T extends Record<string, any>>(
       const defaultValue = propTypes?.[key]?.[typeDefaultValueFlagSymbol]
       if (defaultValue !== undefined) {
         if (isSignal(defaultValue)) {
-          console.error(`[propTypes] props.${key} is return a signal directly, it maybe cause some unexpected error.`)
+          console.error(
+            `[propTypes] props.${key} is return a signal directly, it maybe cause some unexpected error.`
+          )
         }
-        r[key] = typeof defaultValue === 'function' ? defaultValue() : defaultValue
+        r[key] =
+          typeof defaultValue === 'function' ? defaultValue() : defaultValue
       }
     }
   })
@@ -631,8 +702,9 @@ export function assignDefaultValueByPropTypes<T extends Record<string, any>>(
 }
 
 export const ShouldRenderAttr = 'if'
-export function shouldNotRender (json: VirtualLayoutJSON) {
-  return typeof json?.type !== 'function' &&(
-    json?.props?.if === false ||
-    json?.props?.if === null)
+export function shouldNotRender(json: VirtualLayoutJSON) {
+  return (
+    typeof json?.type !== 'function' &&
+    (json?.props?.if === false || json?.props?.if === null)
+  )
 }
