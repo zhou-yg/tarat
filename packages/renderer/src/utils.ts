@@ -663,7 +663,7 @@ export function runOverrides(
     override.layout?.(props, draft)
 
     if (override.patchLayout) {
-      const patchLayoutCommands = override.patchLayout(props, draft)
+      const patchLayoutCommands: PatchCommand[] = override.patchLayout(props, draft)
 
       patchLayoutCommands?.forEach?.(cmd => {
         doPatchLayoutCommand(cmd, draft)

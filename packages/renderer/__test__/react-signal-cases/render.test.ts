@@ -9,6 +9,7 @@ import {
   hasInputInLayout,
   insideVNodeComponent,
   otherOtherComponentModule,
+  patchDeepComposeComponent,
 } from '../mock'
 
 describe('render', () => {
@@ -132,6 +133,36 @@ describe('render', () => {
             }
           },
           children: 1,
+        }
+      })
+    })
+    it('patchLayout into inside', () => {
+      const rr = createRenderer(patchDeepComposeComponent(), {
+        framework: MockRectFramework
+      })
+      const rr2 = rr.construct()
+      const rr3 = rr.render()
+      
+      expect(rr3).toEqual({
+        type: 'div',
+        props: {},
+        children: {
+          type: 'div',
+          props: {
+            name: 'm2',
+            ['is-container']: 1,
+            style: {
+              fontSize: '12px'
+            }
+          },
+          children: [
+            1,
+            {
+              type: 'span',
+              props: {},
+              children: 'deep'
+            }
+          ],
         }
       })
     })

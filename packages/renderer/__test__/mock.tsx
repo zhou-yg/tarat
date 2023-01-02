@@ -238,7 +238,7 @@ export function otherOtherComponentModule(): SingleFileModule<
   return {
     layout() {
       const M2 = useComponentModule(layoutUseLogic(), {
-        patchLayout(props, layout, types) {
+        patchLayout(props, layout) {
           return []
         },
       })
@@ -260,6 +260,21 @@ export function otherOtherComponentModule(): SingleFileModule<
       ]
     }
   }
+}
+export function patchDeepComposeComponent () {
+  const NewModule = extendModule(otherOtherComponentModule(), () => ({
+    patchLayout(props, layout) {
+      return [
+        {
+          parent: layout.div.LayoutUseLogic.div,
+          op: CommandOP.addChild,
+          child: <span>deep</span> as { type: 'span' }
+        }
+      ] as const
+    }
+  }))
+  
+  return NewModule
 }
 
 type UseOtherComponentModule = {

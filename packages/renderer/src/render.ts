@@ -495,24 +495,25 @@ export function createRenderer2<
   NewRendererPC, // pc at renderer layer
   ConstructProps,
   ModuleName
->(config: {
-  module: SingleFileModule<P, L, PCArr2, ModuleName>
-  renderHost: RenderHost
-  override?: OverrideModule<
-    P,
-    SingleFileModule<P, L, PCArr2, ModuleName>['layoutStruct'],
-    NewRendererPC
-  >
-  renderContainerCreator: RenderContainer<
-    P,
-    L,
-    PCArr2,
-    NewRendererPC,
-    ConstructProps,
-    ModuleName
-  >
-  stateManagement: StateManagementConfig
-}) {
+>(
+  config: {
+    module: SingleFileModule<P, L, PCArr2, ModuleName>
+    renderHost: RenderHost
+    override?: OverrideModule<
+      P,
+      SingleFileModule<P, L, PCArr2, ModuleName>['layoutStruct'],
+      NewRendererPC
+    >
+    renderContainerCreator: RenderContainer<
+      P,
+      L,
+      PCArr2,
+      NewRendererPC,
+      ConstructProps,
+      ModuleName
+    >
+    stateManagement: StateManagementConfig
+  }) {
   const {
     module,
     renderHost,

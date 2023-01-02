@@ -57,7 +57,6 @@ export function createReactContainer<
   module = {...module}
   const cacheSymbol = Symbol('cacheSymbol')
 
-  const moduleOverrides = module.override?.() || []
   const modulePropTypes = module.propTypes
   const runReactLogic = stateManagement?.runLogic.bind(null, React, module.logic)
 
@@ -169,15 +168,12 @@ export function createReactContainer<
         assignRules(proxyHandler.draft, rules)
       }
 
+      const moduleOverrides = module.override?.() || []
+
       const allOverrideModules = [...moduleOverrides, ...overrides] as unknown as OverrideModule<any, any, any>[]
+      // console.log('allOverrideModules: ', allOverrideModules[0]?.patchLayout.toString());
 
       runOverrides(allOverrideModules, convertedProps, proxyHandler.draft);
-      
-      // console.log('[moduleOverride, ...overrides: ', moduleOverrides, overrides);
-      // const mergedOverride = mergeOverrideModules([moduleOverride, ...overrides])
-      // if (mergedOverride.layout) {
-      //   mergedOverride.layout?.(props, proxyHandler.draft)
-      // }
 
       allOverrideModules.forEach(override => {
         proxyHandler.append(override.patches)
