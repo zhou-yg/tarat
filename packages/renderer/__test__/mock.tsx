@@ -766,3 +766,22 @@ export function moduleHasNewDesignPatterns(): SingleFileModule<
     }
   }
 }
+
+export function overridePatchRules() {
+  const base = layoutHasTypes()
+  const newModule = extendModule(base, () => ({
+    patchRules(props: SignalProps<{ name: string }> & { show: boolean }, root) {
+      return [
+        {
+          target: root.div.div,
+          condition: props.show,
+          style: {
+            color: 'green'
+          }
+        }
+      ]
+    }
+  }))
+
+  return newModule
+}

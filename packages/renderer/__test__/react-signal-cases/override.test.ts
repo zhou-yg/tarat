@@ -1,5 +1,7 @@
 import { CommandOP, createRenderer, extendModule, h, isVirtualNode, LayoutStructTree, VirtualLayoutJSON } from '../../src'
 import * as mock from '../mock'
+import { overridePatchRules } from '../mock'
+import { signal } from 'atomic-signal'
 
 describe('override', () => {
 
@@ -260,6 +262,27 @@ describe('override', () => {
           ]    
         }
       })
+    })
+  })
+
+  it('patch style rules', () => {
+    const rr = createRenderer(overridePatchRules(), { framework: mock.MockRectFramework })
+    const r1 = rr.construct({ name: 'patch style rules', show: true })
+    const r2 = rr.render()
+    expect(r2).toEqual({
+      type: 'div',
+      props: {
+        style: {
+          color: 'red'
+        }
+      },
+      children: {
+        type: 'div',
+        props: {
+          style: { color: 'green' }
+        },
+        children: 'patch style rules'
+      }
     })
   })
 })

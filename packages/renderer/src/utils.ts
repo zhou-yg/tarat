@@ -670,6 +670,8 @@ export function runOverrides(
       })
     }
     if (override.patchRules) {
+      const rules = override.patchRules(props, draft)
+      assignRules(draft, rules)
     }
   })
 }
