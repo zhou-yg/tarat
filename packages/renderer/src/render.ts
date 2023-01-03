@@ -264,58 +264,59 @@ export function useLogic<T = any>(...args: any[]): T {
   return renderer.renderHooksContainer.runLogic(...args) as T
 }
 
-export function useModule<
-  P extends Record<string, any>,
-  L extends LayoutStructTree,
-  PCArr extends PatchCommand[][],
-  NewPC,
-  ConstructProps,
-  ModuleName
->(
-  module: SingleFileModule<P, L, PCArr, ModuleName>,
-  override?: OverrideModule<
-    P,
-    SingleFileModule<P, L, PCArr, ModuleName>['layoutStruct'],
-    NewPC
-  >
-) {
-  const renderer = getCurrentRenderer()
-  if (!renderer) {
-    throw new Error('useModule must be called in render function')
-  }
-  const subModuleRenderer = createRenderer2<
-    P,
-    L,
-    PCArr,
-    NewPC,
-    ConstructProps,
-    ModuleName
-  >({
-    ...renderer.config,
-    module,
-    override
-  })
+export const useModule = useComponentModule
+// export function useModule<
+//   P extends Record<string, any>,
+//   L extends LayoutStructTree,
+//   PCArr extends PatchCommand[][],
+//   NewPC,
+//   ConstructProps,
+//   ModuleName
+// >(
+//   module: SingleFileModule<P, L, PCArr, ModuleName>,
+//   override?: OverrideModule<
+//     P,
+//     SingleFileModule<P, L, PCArr, ModuleName>['layoutStruct'],
+//     NewPC
+//   >
+// ) {
+//   const renderer = getCurrentRenderer()
+//   if (!renderer) {
+//     throw new Error('useModule must be called in render function')
+//   }
+//   const subModuleRenderer = createRenderer2<
+//     P,
+//     L,
+//     PCArr,
+//     NewPC,
+//     ConstructProps,
+//     ModuleName
+//   >({
+//     ...renderer.config,
+//     module,
+//     override
+//   })
 
-  return createComponent(
-    <NewConstructPC>(
-      props: P & {
-        override?: OverrideModule<
-          P,
-          SingleFileModule<P, L, [...PCArr, NewPC], ModuleName>['layoutStruct'],
-          NewConstructPC
-        >
-        checkerTypes?: (arg: { l: L; pcArr: PCArr; newPC: NewPC }) => void
-      }
-    ) => {
-      const { override, ...rest } = props
+//   return createComponent(
+//     <NewConstructPC>(
+//       props: P & {
+//         override?: OverrideModule<
+//           P,
+//           SingleFileModule<P, L, [...PCArr, NewPC], ModuleName>['layoutStruct'],
+//           NewConstructPC
+//         >
+//         checkerTypes?: (arg: { l: L; pcArr: PCArr; newPC: NewPC }) => void
+//       }
+//     ) => {
+//       const { override, ...rest } = props
 
-      return subModuleRenderer.construct<NewConstructPC>(
-        rest as ConstructProps,
-        override
-      )
-    }
-  )
-}
+//       return subModuleRenderer.construct<NewConstructPC>(
+//         rest as ConstructProps,
+//         override
+//       )
+//     }
+//   )
+// }
 export function useComposeModule<
   P extends Record<string, any>,
   L extends LayoutStructTree,

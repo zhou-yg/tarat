@@ -298,7 +298,7 @@ export function useOtherComponentModule(): SingleFileModule<
     },
     layout() {
       const logic = useLogic<{ num: number }>()
-      const M2 = useModule(layoutUseLogic())
+      const M2 = useComposeModule(layoutUseLogic())
       return (
         <div>
           <span>{logic.num}</span>
@@ -656,7 +656,7 @@ export function overrideAtUseModule(): SingleFileModule<
 
   return {
     layout(props) {
-      const UsedM2 = useModule(m2, {
+      const UsedM2 = useComposeModule(m2, {
         patchLayout(props, jsonDraft) {
           return [
             {
@@ -689,7 +689,7 @@ export function overrideAtUseModuleAndRender(): SingleFileModule<
 
   return {
     layout(props) {
-      const UsedM2 = useModule(m2, {
+      const UsedM2 = useComposeModule(m2, {
         patchLayout(props, jsonDraft) {
           return [
             {
