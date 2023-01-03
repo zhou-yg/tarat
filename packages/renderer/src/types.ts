@@ -207,7 +207,7 @@ export interface OverrideModule<
   ) => PC
 }
 
-type Func = (...args: any[]) => any
+export type Func = (...args: any[]) => any
 
 export interface StateManagementMatch {
   renderFramework: string
