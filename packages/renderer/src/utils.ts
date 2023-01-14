@@ -206,12 +206,10 @@ export function isVirtualNode(node: any): node is VirtualLayoutJSON {
   )
 }
 
-
-
 /**
  * uppercase path means it is a Module Component
  */
-function isFunctionComponentPath (path: string | number) {
+function isFunctionComponentPath(path: string | number) {
   return /^[A-Z]/.test(String(path))
 }
 
@@ -231,7 +229,9 @@ export function getVirtualNodesByPath(
     const type = path[i]
 
     if (isFunctionComponentPath(type)) {
-      current = current.filter(n => isVNodeFunctionComponent(n) && n.type.name === type)
+      current = current.filter(
+        n => isVNodeFunctionComponent(n) && n.type.name === type
+      )
       break
     }
 
@@ -248,14 +248,16 @@ export function getVirtualNodesByPath(
     }
     const nextType = path[i + 1]
     const nextChildren = newCurrent
-      .map(n => n.children.filter(n => {
-        if (isVirtualNode(n)) {
-          if (isVNodeFunctionComponent(n)) {
-            return n.type.name === nextType
+      .map(n =>
+        n.children.filter(n => {
+          if (isVirtualNode(n)) {
+            if (isVNodeFunctionComponent(n)) {
+              return n.type.name === nextType
+            }
+            return n.type === nextType
           }
-          return n.type === nextType
-        }
-      }))
+        })
+      )
       .flat() as VirtualLayoutJSON[]
     if (nextChildren.length === 0) {
       break
@@ -273,20 +275,17 @@ export function getVirtualNodesByPath(
  * }
  */
 
-
-
 const DRAFT_OPERATES = [
   DraftOperatesEnum.insert,
   DraftOperatesEnum.remove,
   DraftOperatesEnum.replace
 ]
 
-export function isFunctionVNode (node: VirtualLayoutJSON) {
+export function isFunctionVNode(node: VirtualLayoutJSON) {
   return typeof node.type === 'function'
 }
 
-
-function assignPatchToNode (
+function assignPatchToNode(
   current: VirtualLayoutJSON[],
   i: number,
   patch: DraftPatch
@@ -313,14 +312,14 @@ function assignPatchToNode (
       break
   }
 }
-function mergeConstructOverrideToNode (
+function mergeConstructOverrideToNode(
   nodes: VirtualLayoutJSON[],
   i: number,
   patch: DraftPatch
 ) {
   const { op, path, value } = patch
   const newPath = path.slice(i + 1)
-  
+
   const newPatch = {
     ...patch,
     path: newPath
@@ -463,7 +462,7 @@ export function proxyLayoutJSON(json: VirtualLayoutJSON) {
     return newObj
   }
 
-  function appendPatches (ps: DraftPatch[] = []) {
+  function appendPatches(ps: DraftPatch[] = []) {
     patches.push(...ps)
   }
 
@@ -610,12 +609,16 @@ export function get(obj: any, path: string | (number | string)[]) {
   return base[key]
 }
 export const VNodeComponentSymbol = Symbol('VNodeComponentSymbol')
-export const VNodeFunctionComponentSymbol = Symbol('VNodeFunctionComponentSymbol')
+export const VNodeFunctionComponentSymbol = Symbol(
+  'VNodeFunctionComponentSymbol'
+)
 export function isVNodeComponent(target: any) {
-  return !!(target?.[VNodeComponentSymbol])
+  return !!target?.[VNodeComponentSymbol]
 }
-export function isVNodeFunctionComponent(target: any): target is { type: Function } {
-  return !!(target?.type?.[VNodeFunctionComponentSymbol])
+export function isVNodeFunctionComponent(
+  target: any
+): target is { type: Function } {
+  return !!target?.type?.[VNodeFunctionComponentSymbol]
 }
 
 function createVirtualNode(child: PatchCommand['child']) {
@@ -663,7 +666,10 @@ export function runOverrides(
     override.layout?.(props, draft)
 
     if (override.patchLayout) {
-      const patchLayoutCommands: PatchCommand[] = override.patchLayout(props, draft)
+      const patchLayoutCommands: PatchCommand[] = override.patchLayout(
+        props,
+        draft
+      )
 
       patchLayoutCommands?.forEach?.(cmd => {
         doPatchLayoutCommand(cmd, draft)

@@ -5,9 +5,6 @@
   "main": "./dist/renderer.js",
   "module": "./dist/renderer.esm.js",
   "types": "./dist/renderer.d.ts",
-  "bin": {
-    "tarat-render": "./dist/renderer-cli.js"
-  },
   "scripts": {
     "tsd": "tsd",
     "watch-unit": "jest --watch -- __test__/core/context.test.ts",

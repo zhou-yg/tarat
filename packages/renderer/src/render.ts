@@ -109,8 +109,10 @@ export function createComponent<T extends VNodeComponent2>(func: T) {
   })
   return component
 }
-function createFunctionComponent<T extends VNodeComponent2>(func: T, name: string) {
-
+function createFunctionComponent<T extends VNodeComponent2>(
+  func: T,
+  name: string
+) {
   function component(...args: Parameters<T>): ReturnType<VNodeComponent> {
     return func.apply(null, args)
   }
@@ -401,24 +403,28 @@ export function useComponentModule<
     override
   })
 
-  return createFunctionComponent(<NewConstructPC>(
-    props: P & {
-      override?: OverrideModule<
-        P,
-        SingleFileModule<P, L, [...PCArr, NewPC], ModuleName>['layoutStruct'],
-        NewConstructPC
-      >
-      checkerTypes?: (arg: { l: L; pcArr: PCArr; newPC: NewPC }) => void
-    }
-  ) => {
-    const { override, ...rest } = props
+  return createFunctionComponent(
+    <NewConstructPC>(
+      props: P & {
+        override?: OverrideModule<
+          P,
+          SingleFileModule<P, L, [...PCArr, NewPC], ModuleName>['layoutStruct'],
+          NewConstructPC
+        >
+        checkerTypes?: (arg: { l: L; pcArr: PCArr; newPC: NewPC }) => void
+        key?: any
+      }
+    ) => {
+      const { override, ...rest } = props
 
-    subModuleRenderer.construct<NewConstructPC>(
-      rest as ConstructProps,
-      override
-    )
-    return subModuleRenderer.render()
-  }, String(module.name))
+      subModuleRenderer.construct<NewConstructPC>(
+        rest as ConstructProps,
+        override
+      )
+      return subModuleRenderer.render()
+    },
+    String(module.name)
+  )
 }
 
 export function useLayout<T extends LayoutStructTree>() {
@@ -496,25 +502,24 @@ export function createRenderer2<
   NewRendererPC, // pc at renderer layer
   ConstructProps,
   ModuleName
->(
-  config: {
-    module: SingleFileModule<P, L, PCArr2, ModuleName>
-    renderHost: RenderHost
-    override?: OverrideModule<
-      P,
-      SingleFileModule<P, L, PCArr2, ModuleName>['layoutStruct'],
-      NewRendererPC
-    >
-    renderContainerCreator: RenderContainer<
-      P,
-      L,
-      PCArr2,
-      NewRendererPC,
-      ConstructProps,
-      ModuleName
-    >
-    stateManagement: StateManagementConfig
-  }) {
+>(config: {
+  module: SingleFileModule<P, L, PCArr2, ModuleName>
+  renderHost: RenderHost
+  override?: OverrideModule<
+    P,
+    SingleFileModule<P, L, PCArr2, ModuleName>['layoutStruct'],
+    NewRendererPC
+  >
+  renderContainerCreator: RenderContainer<
+    P,
+    L,
+    PCArr2,
+    NewRendererPC,
+    ConstructProps,
+    ModuleName
+  >
+  stateManagement: StateManagementConfig
+}) {
   const {
     module,
     renderHost,
