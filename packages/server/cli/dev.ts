@@ -5,14 +5,16 @@ import chalk from 'chalk'
 import {
   IConfig,
   readConfig,
-  createDevServer,
+  http,
   composeSchema,
   composeDriver,
   buildEntryServer, buildDrivers, buildServerRoutes,
   generateHookDeps,
   emptyDirectory, logFrame, tryMkdir, time, buildModelIndexes,
-  generateClientRoutes
+  generateClientRoutes,
 } from "../src/";
+
+import * as desktop from '../desktopSrc/indexDesktop'
 
 export async function buildEverything (c: IConfig) {
   
@@ -210,66 +212,6 @@ async function startCompile (c: IConfig) {
   await buildEverything(c)
 
   watchEverything(c)
-
-  // const watchTarget = [
-  //   path.join(c.cwd, c.appDirectory),
-  //   path.join(c.cwd, c.driversDirectory),
-  //   path.join(c.cwd, c.viewsDirectory),
-  // ]
-
-  // const watcher = chokidar.watch(watchTarget, {
-  //   persistent: true,
-  //   ignoreInitial: true,
-  //   awaitWriteFinish: {
-  //     stabilityThreshold: 100,
-  //     pollInterval: 100,
-  //   },
-  // })
-  // const watcher2 = chokidar.watch([
-  //   path.join(c.cwd, c.modelsDirectory, c.targetSchemaPrisma)
-  // ], {
-  //   persistent: true,
-  //   ignoreInitial: true,
-  //   awaitWriteFinish: {
-  //     stabilityThreshold: 100,
-  //     pollInterval: 100,
-  //   },
-  // })
-
-  // watcher2.on('change', path => {
-  //   buildModelIndexes(c).then(() => {
-  //     logFrame(`build modelIndexes end. cost ${chalk.green(cost())} sec`)
-  //   })  
-  // })
-
-  // watcher
-  //   .on('error', console.error)
-  //   .on('change', (path) => {
-  //     if (/(\.css|\.less|\.scss)$/.test(path)) {
-  //       return
-  //     }
-
-  //     const cost = time()
-  //     logFrame(`[change] re-run compiling from "${path}"`)
-  //     readConfig({ cwd: c.cwd }).then(newConfig => {
-  //       return buildEverything(newConfig)
-  //     }).then(() => {
-  //       logFrame(`[change] comipling ${chalk.green(cost())} sec`)
-  //     })
-  //   })
-  //   .on('add', (path) => {
-  //     logFrame(`[add] ${chalk.green('re-run compiling')}  from "${path}"`)
-  //     readConfig({ cwd: c.cwd }).then(newConfig => {
-  //       buildEverything(newConfig)
-  //     })
-  //   })
-  //   .on('unlink', (path) => {
-  //     logFrame(`[unlink] ${chalk.red('re-run compiling')}  from "${path}"`)
-  //     readConfig({ cwd: c.cwd }).then(newConfig => {
-  //       buildEverything(newConfig)
-  //     })
-  //   })
-
 }
 
 export default async (cwd: string) => {
@@ -284,5 +226,13 @@ export default async (cwd: string) => {
   
   await startCompile(config)
 
-  await createDevServer(config)
+  console.log('config.platform: ', config.platform);
+  switch (config.platform) {
+    case 'browser': 
+      await http.createDevServer(config)
+      break;
+    case 'desktop':
+      await desktop.createDevClient(config);
+      break;
+  }
 }

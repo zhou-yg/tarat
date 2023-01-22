@@ -47,6 +47,8 @@
     "@emotion/styled": "^11.10.4",
     "@mui/icons-material": "^5.10.9",
     "@mui/material": "^5.10.9",
-    "date-fns": "^2.28.0"
+    "date-fns": "^2.28.0",
+    "electron": "^22.0.3",
+    "react-router-dom": "^6.3.0"
   }
 }

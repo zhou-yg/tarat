@@ -20,7 +20,12 @@ function matchHookName (p: string) {
   }
 }
 
-export function wrapCtx (ctx: any) {
+export function wrapCtx (ctx: {
+  cookies: {
+    set: any
+    get: any
+  }
+}) {
   return {
     cookies: {
       set (name: any, value: any) {

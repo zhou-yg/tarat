@@ -9,6 +9,9 @@ import type { JSONSchemaForNPMPackageJsonFiles } from '@schemastore/package'
 const { merge } = l
 
 export const defaultConfig = () => ({
+  //
+  platform: 'web', // 'desktop'
+
   // client about
   viewsDirectory: 'views', // in tarat the display unit maybe page or component, they should belong to "views"
   driversDirectory: 'drivers',
@@ -60,6 +63,7 @@ export const defaultConfig = () => ({
 })
 
 export type IDefaultConfig = ReturnType<typeof defaultConfig> & {
+  platform: 'browser' | 'desktop'
   cjsDirectory: 'cjs',
   esmDirectory: 'esm',
   model?: {

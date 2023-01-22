@@ -23,11 +23,18 @@ export default [
   },
   {
     plugins: [
-      dts()
+      json(),
+      tsPlugin({
+        clean: true,
+        tsconfig: './tsconfig.json',
+      }),
+      commonjs(),     
     ],
-    input: "src/index.ts",
-    output: [
-      { file: "dist/cli/index.d.ts", format: "es" }
-    ],
+    input: 'src/indexDesktop.ts',
+    output: {
+      file: 'dist/indexDesktop.js',
+      format: 'commonjs',
+      sourcemap: true,     
+    }
   }
 ]

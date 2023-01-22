@@ -40,7 +40,8 @@ function buildAndWatch (name) {
     { 
       cwd: targetPath,
       stdio: ['pipe', process.stdout, process.stderr]
-  })
+    }
+  )
 
   const watcher = chokidar.watch([join(targetPath, 'dist')], {
     persistent: true,

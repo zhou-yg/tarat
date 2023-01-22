@@ -1,3 +1,6 @@
+/**
+ * run in Node.js runtime
+ */
 import Application from "koa";
 import koaBody from 'koa-body'
 import cors from '@koa/cors'

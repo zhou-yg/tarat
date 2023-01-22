@@ -4,6 +4,7 @@ import rimraf from 'rimraf'
 import { IViewConfig } from './config'
 import os from "os";
 import { BM, isEqual } from "tarat/core";
+import { spawn } from 'child_process';
 
 export function loadJSON (f: string) {
   return JSON.parse(fs.readFileSync(f).toString())
@@ -168,4 +169,43 @@ export function readFiles (dir: string, ext: string = '') {
     }
   })
   return files
+}
+
+export type ConnectModelMiddlewareContext = {
+  [k: string]: any
+}
+
+export type ConnectModelMiddleware = (ctx: ConnectModelMiddlewareContext, next: () => Promise<void>) => Promise<void>
+
+export function connectModel () {
+  const middlewareArr: ConnectModelMiddleware[] = []
+  return {
+    use (fn: ConnectModelMiddleware, options?: {
+      enforce?: 'pre'
+    }) {
+      if (options?.enforce === 'pre') {
+        middlewareArr.unshift(fn)
+      } else {
+        middlewareArr.push(fn)
+      }
+    },
+    start (ctx: ConnectModelMiddlewareContext = {}) {
+      const tail = (ctx: ConnectModelMiddlewareContext) => null
+
+      const composedChain = middlewareArr.reduceRight((current, prev) => {
+        return (ctx) => {
+          return prev(ctx, current.bind(null, ctx))
+        }
+      }, tail) as (ctx: ConnectModelMiddlewareContext) => Promise<void>
+
+      return composedChain(ctx)
+    }
+  }
+}
+
+export function startElectronProcess () {
+  spawn('electron', [], {
+    cwd: '',
+    stdio: ['pipe', process.stdout, process.stderr]
+  })  
 }

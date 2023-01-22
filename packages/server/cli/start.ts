@@ -1,6 +1,6 @@
 import {
   readConfig,
-  createServer
+  http
 } from "../src";
 
 export default async function start (cwd: string) {
@@ -11,5 +11,5 @@ export default async function start (cwd: string) {
 
   config.pointFiles = config.buildPointFiles
 
-  await createServer(config)
+  await http.createServer(config)
 }

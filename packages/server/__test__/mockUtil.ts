@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 
 import * as path from 'path'
 import {
   readConfig,
-  createDevServer
+  http
 } from '../src'
 
 export function readMock (n: string) {
@@ -30,7 +30,7 @@ export async function startTestServer () {
     cwd,
   })
 
-  const app = await createDevServer(config)
+  const app = await http.createDevServer(config)
 
   return app
 }
