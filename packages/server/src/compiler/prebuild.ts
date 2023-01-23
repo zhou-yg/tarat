@@ -373,10 +373,10 @@ export async function buildServerRoutes(c: IConfig) {
       cache: false,
       input: autoGenerateServerRoutes,
       plugins: myPlugins,
-      external: ['tarat/core', 'tarat/connect'],
+      external: ['tarat/core', 'tarat/connect', 'react', '@mui/material'],
     },
     output: {
-      file: distServerRoutes,
+      file: distServerRoutes,      
       format: 'commonjs',
     }
   }
@@ -403,7 +403,6 @@ export async function buildEntryServer (c: IConfig) {
       output: {
         file: distEntry,
         format: 'commonjs',
-
       },
     }
 

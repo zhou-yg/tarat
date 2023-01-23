@@ -219,6 +219,11 @@ export default async (cwd: string) => {
     cwd,
   })
 
+
+  global.React18 = require('react')
+  console.log('global.React: ', global.React);
+  console.log('global.React: ', global.React === global.React18);
+
   await Promise.all([
     composeSchema(config),
     composeDriver(config)  

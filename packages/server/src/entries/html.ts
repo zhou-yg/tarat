@@ -56,6 +56,7 @@ export async function renderPage (ctx: PageContext, config: IConfig) {
   const routerLocation = ctx.location
 
   const chain = startdReactiveChain('[renderWithDriverContext first]')
+
   const appEntry = renderWithDriverContext(
     entryFunctionModule(
       routesEntryModule({
