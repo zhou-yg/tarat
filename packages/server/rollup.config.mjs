@@ -30,9 +30,9 @@ export default [
       }),
       commonjs(),     
     ],
-    input: 'src/indexDesktop.ts',
+    input: 'desktopSrc/desktop.ts',
     output: {
-      file: 'dist/indexDesktop.js',
+      file: 'dist/desktop.js',
       format: 'commonjs',
       sourcemap: true,     
     }

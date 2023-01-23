@@ -3,30 +3,38 @@
  */
 import electron from 'electron'
 import { IConfig } from '../src/config';
-import { connectModel } from '../src/util';
+import { connectModel, getDefaultRoute } from '../src/util';
 
 const { app, BrowserWindow } = electron
-console.log('electron: ', electron);
-console.log('electron.app: ', electron.app);
 
-function createWindow () {
+function createWindow (winOptions: {
+  site: string
+}) {
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
   })
-  mainWindow.loadURL('https://baidu.com')
+  mainWindow.loadURL(winOptions.site)
 }
 
 function setupClient (c: IConfig) {
 
   const client = connectModel()
 
+  const defaultView = getDefaultRoute(c.pages)
+
+  const winOption = {
+    site: `http://localhost:${c.port}/${defaultView}`
+  }
+
   client.use(async (ctx, next) => {
-    console.log('app: ', app);
     await app.whenReady()
+
+    createWindow(winOption)
+
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow()
+        createWindow(winOption)
       }
     })
     app.on('window-all-closed', () => {
@@ -50,7 +58,35 @@ export async function createDevClient (c: IConfig) {
   client.start()
 }
 
-const isDev = process.env.RUN_MODE === 'development'
-
-if (isDev) {
+function start (c: IConfig) {
+  const isDev = process.env.RUN_MODE === 'development'
+  if (isDev) {
+    createDevClient(c)
+  } else {
+  }  
 }
+
+
+type ProcessPayload = 
+  | { type: 'config', data: IConfig }
+
+
+let data = ''
+process.stdin.on('data', (d) => {
+  data += d
+})
+process.stdin.on('end', () => {
+  const receiveData = data
+  data = ''
+  try {
+    const payload: ProcessPayload = JSON.parse(receiveData)
+
+    switch (payload.type) {
+      case 'config':
+        start(payload.data)
+        break
+    }
+  } catch (e) {
+    console.error('[receive data]:', e)
+  }
+})

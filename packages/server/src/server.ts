@@ -21,7 +21,7 @@ import { IConfig } from "./config";
 import getPort, { makeRange as portNumbers } from "get-port";
 
 import pureDevCache from "./middlewares/pureDevCache";
-import { getAddress, getDefeaultRoute, logFrame } from "./util";
+import { getAddress, getDefaultRoute, logFrame } from "./util";
 import path, { join } from "path";
 
 export function setupBasicServer (c: IConfig) {
@@ -41,13 +41,9 @@ export function setupBasicServer (c: IConfig) {
 
 async function startApp(app: Application, c: IConfig) {
 
-  const port = await getPort({
-    port: c.port ? c.port : process.env.PORT ? Number(process.env.PORT) : portNumbers(9000, 9100)
-  })
+  const port = c.port
 
   app.listen(port)
-
-  // const defaultView = getDefeaultRoute(c.pages)
 
   let address = getAddress()
   
@@ -65,8 +61,6 @@ async function startApp(app: Application, c: IConfig) {
 
     ${allList}
   `)
-
-  return app
 }
 
 export async function createDevServer (c: IConfig) {  
@@ -120,7 +114,7 @@ export async function createDevServer (c: IConfig) {
     vite,
   }))
 
-  startApp(app, c)
+  await startApp(app, c)
 }
 
 

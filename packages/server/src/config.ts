@@ -7,6 +7,7 @@ import chalk from 'chalk'
 import { findDependencies } from './config/deps'
 import type { JSONSchemaForNPMPackageJsonFiles } from '@schemastore/package'
 const { merge } = l
+import getPort, { makeRange as portNumbers } from "get-port";
 
 export const defaultConfig = () => ({
   //
@@ -329,8 +330,13 @@ export async function readConfig (arg: {
 
   const routesTree = defineRoutesTree(pages)
 
+  const port = await getPort({
+    port: config.port ? config.port : process.env.PORT ? Number(process.env.PORT) : portNumbers(9000, 9100)
+  })
+
   return {
     ...config,
+    port,
     appRootFile,
     routesTree,
     pacakgeJSON,

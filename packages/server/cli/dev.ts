@@ -14,7 +14,7 @@ import {
   generateClientRoutes,
 } from "../src/";
 
-import * as desktop from '../desktopSrc/indexDesktop'
+import * as desktop from '../desktopSrc'
 
 export async function buildEverything (c: IConfig) {
   
@@ -227,9 +227,11 @@ export default async (cwd: string) => {
   await startCompile(config)
 
   console.log('config.platform: ', config.platform);
+
+  await http.createDevServer(config)
+
   switch (config.platform) {
     case 'browser': 
-      await http.createDevServer(config)
       break;
     case 'desktop':
       await desktop.createDevClient(config);

@@ -30,7 +30,7 @@ export function tryMkdir(dir: string) {
   !fs.existsSync(dir) && fs.mkdirSync(dir)
 }
 
-export function getDefeaultRoute (pages: IViewConfig[]) {
+export function getDefaultRoute (pages: IViewConfig[]) {
   let root: IViewConfig = pages[0]
   pages.forEach(p => {
     const p1 = p.path.split('/')
@@ -208,4 +208,9 @@ export function startElectronProcess () {
     cwd: '',
     stdio: ['pipe', process.stdout, process.stderr]
   })  
+}
+
+
+export function resolveLib (cwd: string, lib: string) {
+  return path.join(cwd, 'node_modules/tarat', lib)
 }

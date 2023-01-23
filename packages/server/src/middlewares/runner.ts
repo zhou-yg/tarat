@@ -69,7 +69,7 @@ export default function taratMiddleware (args: {
 
         // driver has double nested output structure
         const BMPath = join(pointFiles.outputServerDriversDir, driver.relativeDir, `${driverName}.js`)
-        console.log(readFileSync(BMPath, 'utf-8').toString())
+
         const BM = require(BMPath).default
 
         const driverNamespace = getNamespace(BM)
