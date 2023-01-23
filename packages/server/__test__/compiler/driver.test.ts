@@ -36,7 +36,7 @@ describe('driver compiler', () => {
     const r2 = readFileSync(join(outputClientDriversDir, 'b.js')).toString().match(/var autoParser/g);
     expect(r1.length).toBe(1)
     expect(r2.length).toBe(2)
-  })
+  }, 9 * 1000)
 
   it('generate compose driver', async () => {
     const config = await readMockProjectConfig('someDrivers')

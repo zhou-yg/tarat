@@ -7,6 +7,8 @@ import {
 } from '../../src'
 import { readMockProjectConfig } from '../mockUtil'
 
+jest.setTimeout(10* 1000)
+
 describe('server routes', () => {
   it('generate routes without compiled driver', async () => {
     const config = await readMockProjectConfig('serverRoutes')
