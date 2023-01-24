@@ -2956,7 +2956,10 @@ function updateCache<T>(key: string, options: ICacheOptions<T>) {
     currentRunnerScope!.runnerContext.initialData![currentIndex]?.[2]
 
   if (initialValue !== undefined) {
-    hook._internalValue = initialValue
+    /**
+     * cache can not figure out null and undefined
+     */
+    hook._internalValue = initialValue === null ? CacheInitialSymbol : initialValue
     if (timestamp) {
       hook.modifiedTimstamp = timestamp
     }
