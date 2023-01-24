@@ -302,10 +302,17 @@ export async function generateClientRoutes(c: IConfig) {
     rootEnd: appRootFile?.name ? `</${rootName}>` : ''
   }
 
+  const modelIndexesJSON = path.join(c.cwd, c.modelsDirectory, c.schemaIndexes)
+  let modelIndexes = '{}'
+  if (fs.existsSync(modelIndexesJSON)) {
+    modelIndexes = fs.readFileSync(modelIndexesJSON).toString()
+  }
+
   const routesStr2 = routesClientTemplate({
     ...rootAppInfo,
     imports: importsWithAbsolutePathClient,
-    routes: r
+    routes: r,
+    modelIndexes
   })
   // generate for vite.js so that this file doesn't need to be compiled to js
   fs.writeFileSync(autoGenerateClientRoutes, prettier.format(routesStr2, { parser: 'babel' }))

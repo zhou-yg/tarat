@@ -60,6 +60,7 @@ export async function createDevClient (c: IConfig) {
 
 function start (c: IConfig) {
   const isDev = process.env.RUN_MODE === 'development'
+  console.log('isDev: ', isDev);
   if (isDev) {
     createDevClient(c)
   } else {
@@ -74,12 +75,14 @@ type ProcessPayload =
 let data = ''
 process.stdin.on('data', (d) => {
   data += d
+  console.error('[receive data]:', d.length)
 })
 process.stdin.on('end', () => {
   const receiveData = data
   data = ''
   try {
     const payload: ProcessPayload = JSON.parse(receiveData)
+    console.log('[receive payload]: ', payload.type);
 
     switch (payload.type) {
       case 'config':
@@ -87,6 +90,6 @@ process.stdin.on('end', () => {
         break
     }
   } catch (e) {
-    console.error('[receive data]:', e)
+    console.error('[receive data error]:', e)
   }
 })

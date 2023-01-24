@@ -9,12 +9,15 @@ import {
   BrowserRouter,
 } from "react-router-dom"
 import { clientRuntime, RenderDriver, DriverContext } from 'tarat/connect'
+import { registerModelIndexes } from 'tarat/connect'
 
 <% if (rootPath) { %>
 import <%= rootName %> from '<%= rootPath %>'
 <% } %>
 
 <%- imports %>
+
+registerModelIndexes(<%- modelIndexes %>)
 
 clientRuntime({
   framework: React,
