@@ -1,3 +1,0 @@
-[submodule "packages/signal"]
-	path = packages/signal
-	url = git@github.com:zhou-yg/atomic-signal.git
