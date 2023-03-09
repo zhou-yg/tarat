@@ -1,7 +1,7 @@
 {
   "name": "tarat-project",
   "version": "0.0.1",
-  "description": "maybe a useless simple busness description DSL for frontend and serverless",
+  "description": "maybe a useless simple business description DSL for frontend and serverless",
   "main": "index.js",
   "directories": {
     "doc": "doc"
