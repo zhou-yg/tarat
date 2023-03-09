@@ -1,4 +1,4 @@
 module.exports = {
   ts: true,
-  platform: 'desktop'
+  // platform: 'desktop'
 } 

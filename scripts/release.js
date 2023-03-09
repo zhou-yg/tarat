@@ -3,17 +3,14 @@ const { join, resolve, parse, relative } = require('path')
 const { spawn, exec } = require('child_process')
 const chalk = require('chalk')
 const { existsSync, mkdirSync, readFileSync, fstat, readdirSync, writeFileSync } = require('fs')
-const rimraf = require('rimraf')
-const inquirer = require('inquirer')
-const { versionBump } = require('@jsdevtools/version-bump-prompt/lib/version-bump')
 const { loadJSON, replaceTaratModuleImport, mergeDeps, distDir } = require('./utils')
 
 const SHOULD_RELEASE = !!process.env.RELEASE
 console.log('SHOULD_RELEASE: ', SHOULD_RELEASE);
 
 const packagesPath = join(__dirname, '../packages/')
-const taratModule = join(packagesPath, 'tarat')
-const coreModule = join(packagesPath, 'core')
+// const taratModule = join(packagesPath, 'tarat')
+// const coreModule = join(packagesPath, 'core')
 const connectModule = join(packagesPath, 'connect')
 const serverModule = join(packagesPath, 'server')
 
@@ -30,38 +27,32 @@ function build(cwd) {
   console.log(`start building ${chalk.green(cwd)} \n`)
 
   return new Promise((resolve, reject) => {
-    exec('npm run build', {
-      cwd
-    }, (error, stdout, stderr) => {
-      if (error) {
-        reject(error)
-      } else {
-        console.log(stdout?.toString())
-        if (stderr) {
-          console.error('error:' + chalk.red(stderr.toString()))
-        }
-        console.log(`\nend building`)
+    const instance = spawn('npm', ['run', 'build'], {
+      cwd,
+      stdio: [process.stdin, process.stdout, process.stderr]
+    })
+    instance.on('exit', () => {
+      console.log(`\nend building`)
 
-        // 复制文件
-        cp(
-          '-r',
-          join(cwd, distDir, '*'),
-          join(taratModule));
+      // 复制文件
+      cp(
+        '-r',
+        join(cwd, distDir, '*'),
+        join(taratModule));
 
-        // 替换文件内模块
-        replaceTaratModuleImport(cwd, distDir)
-        // 合并依赖
-        mergeDeps(cwd)
+      // 替换文件内模块
+      replaceTaratModuleImport(cwd, distDir)
+      // 合并依赖
+      mergeDeps(cwd)
 
-        resolve()
-      }
-    })  
+      resolve()
+    })
   })
 }
 
 function publish () {
   return new Promise(resolve => {
-    console.log('npm pulibsh');
+    console.log('npm publish');
     exec(`npm publish`, { cwd: taratModule }, (err, stdout) => {
       if (err) {
         throw err
