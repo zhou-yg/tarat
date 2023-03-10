@@ -1,9 +1,11 @@
 import {
-  IHookContext, Runner, getPlugin, IDiff, debuggerLog, startdReactiveChain,
+  IHookContext,
+  getPlugin, IDiff, debuggerLog, startdReactiveChain,
   stopReactiveChain,
-  getNamespace
-} from 'tarat/core'
-import { parseWithUndef, stringifyWithUndef } from 'tarat/connect'
+  getNamespace,
+  ModelRunner
+} from '@polymita/signal-model'
+import { parseWithUndef, stringifyWithUndef } from '@polymita/connect'
 import { join } from 'path'
 import Application from 'koa'
 import type { IConfig, IServerHookConfig } from '../config'
@@ -84,7 +86,7 @@ export default function taratMiddleware (args: {
 
         const c: IHookContext = typeof body === 'string' ? parseWithUndef(body) : body;
 
-        let runner = new Runner(BM, {
+        let runner = new ModelRunner(BM, {
           beleiveContext: false,
           modelIndexes,
         })

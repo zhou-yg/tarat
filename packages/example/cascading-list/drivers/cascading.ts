@@ -4,7 +4,7 @@ import {
   prisma,
   state,
   writePrisma
-} from 'tarat/core'
+} from '@polymita/signal-model'
 import rename from './rename'
 import indexes from '@/models/indexes.json'
 

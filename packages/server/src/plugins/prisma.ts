@@ -1,4 +1,4 @@
-import { loadPlugin } from 'tarat/core'
+import { loadPlugin } from '@polymita/signal-model'
 import { join } from 'path'
 import { IConfig } from '../config'
 import * as prismaInternals from '@prisma/internals'

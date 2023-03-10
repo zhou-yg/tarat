@@ -4,7 +4,7 @@ import {
   prisma,
   state,
   writePrisma
-} from 'tarat/core'
+} from '@polymita/signal-model'
 
 export default function single() {
   const name = state('init')

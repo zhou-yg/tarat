@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useTarat } from 'tarat/connect'
+import { useSignal } from '@polymita/connect/react'
 import Cascading from '../../views/cascading'
 import cascadingHook, { Folder } from '@/drivers/cascading'
 
@@ -7,7 +7,7 @@ import NewFolders from '@/views/folder'
 import NewItems from '@/views/item'
 
 export default function Main () {
-  const cascading = useTarat(cascadingHook)
+  const cascading = useSignal(cascadingHook)
 
   return (
     <div>

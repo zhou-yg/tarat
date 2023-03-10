@@ -1,8 +1,9 @@
 import * as fs from 'fs'
 import { IConfig } from "../config"
-import { RenderDriver, renderWithDriverContext, } from 'tarat/connect'
-import { CurrentRunnerScope, debuggerLog, getPlugin, startdReactiveChain } from "tarat/core";
+import { RenderDriver, ReactAdaptor } from '@polymita/connect/react'
+import { RunnerModelScope, debuggerLog, getPlugin, startdReactiveChain } from "@polymita/signal-model";
 import { renderToString } from 'react-dom/server'
+import React from 'react'
 import chalk from 'chalk'
 
 export interface PageContext {
@@ -30,6 +31,8 @@ export function wrapCtx (ctx: PageContext) {
 
 export async function renderPage (ctx: PageContext, config: IConfig) {
 
+  const reactRenderDriver = ReactAdaptor(React)
+  
   const { distServerRoutes, distEntryJS, distEntryCSS, distServerRoutesCSS } = config.pointFiles
 
   let entryFunctionModule = (doc: React.ReactElement) => doc
@@ -38,14 +41,26 @@ export async function renderPage (ctx: PageContext, config: IConfig) {
   }
   const routesEntryModule = require(distServerRoutes).default
 
-  const driver = new RenderDriver()
-  driver.mode = 'collect'
+  // const driver = new RenderDriver()
+  // driver.mode = 'collect'
+
+  const routerLocation = ctx.location
+
+  const chain = startdReactiveChain('[renderWithDriverContext first]')
+
+  const appRootEntry = reactRenderDriver.getRoot(
+    entryFunctionModule(
+      routesEntryModule({
+        location: routerLocation
+      })
+    )
+  )
 
   let cancelGlobalRunning = () => {}
 
   console.log('[before driver.onPush] : ');
 
-  driver.onPush(scope => {
+  appRootEntry.driver.onPush(scope => {
 
     getPlugin('GlobalRunning').setCurrent(scope, wrapCtx(ctx))
     cancelGlobalRunning = () => {
@@ -53,30 +68,16 @@ export async function renderPage (ctx: PageContext, config: IConfig) {
     }
   })
 
-  const routerLocation = ctx.location
-
-  const chain = startdReactiveChain('[renderWithDriverContext first]')
-
-  const appEntry = renderWithDriverContext(
-    entryFunctionModule(
-      routesEntryModule({
-        location: routerLocation
-      })
-    ),
-    driver,
-  )
-
   debuggerLog(true)
 
   console.log('[before renderToString] first ');
-  const html = renderToString(appEntry.root)
+  const html = renderToString(appRootEntry)
 
-  appEntry.cancelAdaptor()
-  driver.pushListener = undefined
+  appRootEntry.driver.pushListener = undefined
   cancelGlobalRunning()
 
-  let allRunedHook: CurrentRunnerScope<any>[] = []
-  for (const BMArr of driver.BMValuesMap.values()) {
+  let allRunedHook: RunnerModelScope<any>[] = []
+  for (const BMArr of appRootEntry.driver.BMValuesMap.values()) {
     allRunedHook = allRunedHook.concat(BMArr)
   }
   await Promise.all(allRunedHook.map((scope) => {
@@ -89,17 +90,16 @@ export async function renderPage (ctx: PageContext, config: IConfig) {
 
   const st = Date.now()
 
-  driver.switchToServerConsumeMode()
+  appRootEntry.driver.switchToServerConsumeMode()
 
   const chain2 = startdReactiveChain('[renderWithDriverContext second]')
 
-  const appEntryUpdate = renderWithDriverContext(
+  const appEntryUpdate = reactRenderDriver.getUpdateRoot(
     entryFunctionModule(
       routesEntryModule({
         location: routerLocation
       })
     ),
-    driver,
   )
 
   const html2 = renderToString(appEntryUpdate.root)
@@ -116,7 +116,7 @@ export async function renderPage (ctx: PageContext, config: IConfig) {
   console.log(`[${routerLocation}] is end. second rendering cost ${chalk.blue(cost)} ms \n ---`)
 
   return {
-    driver,
+    driver: reactRenderDriver.driver,
     html,
     html2,
     css,

@@ -21,7 +21,9 @@ export async function buildClientRoutes (c: IConfig) {
     target: 'browser',
     alias: {
       'tarat/core': 'tarat/core.client.esm',
-      'tarat/connect': 'tarat/connect.client.esm'
+      'tarat/connect': 'tarat/connect.client.esm',
+      '@polymita/signal-model': '@polymita/signal-model/signal-model.client.esm',
+      '@polymita/connect': '@polymita/connect/connect.client.esm',
     },
     runtime: 'client'
   }, c)
@@ -83,7 +85,11 @@ export async function buildViews (c: IConfig) {
                 target: 'unit',
               }, c),
             ],
-            external: [...externalDrivers, 'tarat/core', 'tarat/connect']  // use other external parameter types will conflict with auto-external plugins
+            external: [
+              ...externalDrivers,
+              'tarat/core', 'tarat/connect',
+              '@polymita/signal-model', '@polymita/connect'
+            ]  // use other external parameter types will conflict with auto-external plugins
           },
           output: {
             file: outputJS,

@@ -4,7 +4,7 @@ import { compile } from 'ejs'
 import * as fs from 'fs'
 import * as path from 'path'
 import { ViteDevServer } from "vite";
-import { CurrentRunnerScope, IHookContext } from "tarat/core";
+import { IHookContext, RunnerModelScope } from "@polymita/signal-model";
 import { matchRoute } from "../config/routes";
 import { renderPage } from "../entries/html";
 
@@ -49,7 +49,7 @@ function transformIndexHtml (html: string, c: IConfig) {
       );
       if (r) {
         for (const v of r.driver.BMValuesMap) {
-          context[v[0]] = v[1].map((scope: CurrentRunnerScope<any>) => scope.createBaseContext())
+          context[v[0]] = v[1].map((scope: RunnerModelScope<any>) => scope.createBaseContext())
         }
         ssrHTML = r.html2
       }

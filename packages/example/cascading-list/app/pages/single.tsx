@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import * as immer from 'immer'
 import singleDriver from '@/drivers/single'
-import { DriverContext, useTarat } from 'tarat/connect'
+import { useSignal } from '@polymita/connect/react'
 
 let myName = 'my'
 
@@ -20,14 +20,8 @@ export default function Main () {
   }
 
   const [s, setS] = useState(ref.current)
-  const single = useTarat(singleDriver)
+  const single = useSignal(singleDriver)
 
-  const context = useContext(DriverContext)
-  if (context) {
-    console.log('has context')
-  } else {
-    console.log('no context')
-  }
   console.log('single.name(): ', single.name());
   console.log('single.name(): ', s.name, s.time);
 

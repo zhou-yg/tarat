@@ -1,4 +1,4 @@
-import { CurrentRunnerScope, IRunningContext, loadPlugin } from 'tarat/core'
+import { CurrentRunnerScope, IRunningContext, loadPlugin } from '@polymita/signal-model'
 import { join } from 'path'
 
 let currentRunningMap: Map<CurrentRunnerScope, IRunningContext> = new Map()

@@ -101,6 +101,10 @@ export async function createDevServer (c: IConfig) {
           find: 'tarat/connect',
           replacement: 'tarat/connect.client.esm.js',
         },
+        {
+          find: '@polymita/connect',
+          replacement: '@polymita/connect/connect.client.esm.js',
+        },
       ]
     }
   })

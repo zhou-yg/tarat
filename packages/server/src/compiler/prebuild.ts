@@ -380,7 +380,10 @@ export async function buildServerRoutes(c: IConfig) {
       cache: false,
       input: autoGenerateServerRoutes,
       plugins: myPlugins,
-      external: ['tarat/core', 'tarat/connect', 'react', '@mui/material'],
+      external: [
+        'tarat/core', 'tarat/connect',
+        '@polymita/signal-model', '@polymita/connect',
+        'react', '@mui/material'],
     },
     output: {
       file: distServerRoutes,      
