@@ -11,12 +11,12 @@ import type {
   VariableDeclarator
 } from 'estree'
 
-import { hookFactoryFeatures, THookDeps } from 'tarat/core'
 import {
-  hasSourceHookFactoryNames,
+  hookFactoryFeatures,
+  THookDeps,
   hookFactoryNames,
   initiativeComputeHookFactoryNames
-} from 'tarat/core'
+} from '@polymita/signal-model'
 
 const composeName = 'compose'
 

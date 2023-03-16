@@ -3,7 +3,7 @@ import * as path from 'path'
 import rimraf from 'rimraf'
 import { IViewConfig } from './config'
 import os from "os";
-import { BM, isEqual } from "tarat/core";
+import { BM, isEqual } from "@polymita/signal-model";
 import { spawn } from 'child_process';
 
 export function loadJSON (f: string) {

@@ -1,6 +1,6 @@
 import * as prismaInternals from '@prisma/internals'
 import acorn, { parse as acornParse } from 'acorn'
-import { hookFactoryFeatures, set } from 'tarat/core'
+import { hookFactoryFeatures, modelHookFactoryFeatures, set } from '@polymita/signal-model'
 import * as walk from 'acorn-walk'
 import { IConfig, IViewConfig } from "../config";
 import * as fs from 'fs'
@@ -622,7 +622,7 @@ async function esbuildDrivers (
   let cacheFilesByPlugin: string[] = []
   if (env === 'client') {
     buildOptions.plugins.push(
-      clearFunctionBodyEsbuildPlugin(outputDir, hookFactoryFeatures.serverOnly, cacheFilesByPlugin)
+      clearFunctionBodyEsbuildPlugin(outputDir, modelHookFactoryFeatures.serverOnly, cacheFilesByPlugin)
     )
   }
 
