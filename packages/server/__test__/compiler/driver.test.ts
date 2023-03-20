@@ -7,12 +7,6 @@ import {
   buildDrivers, readConfig, readFiles, traverse, traverseDir,
   composeDriver
 } from "../../src"
-import {
-  createClientBundlePack,
-  commonDriverNode,
-  generateDepsNode,
-  createDriverPipelineNode, 
-  formatDriverNode} from "../../src/compiler2"
 import { readMockProjectConfig } from "../mockUtil"
 
 jest.setTimeout(10 * 1000)

@@ -6,7 +6,7 @@ import {
 
 import { readFileSync, unlinkSync, writeFileSync } from 'fs'
 import { driverFilesMap } from '../mockUtil'
-import { hookFactoryFeatures } from 'tarat/core'
+import { modelHookFactoryFeatures } from '@polymita/signal-model'
 
 describe('compile driver result', () => {
 
@@ -110,7 +110,7 @@ describe('compile driver result', () => {
       const r = `
         const m = prisma('xx',${removedFunctionBodyPlaceholder}, [])
       `
-      const r0 = removeFunctionBody(code, hookFactoryFeatures.serverOnly)
+      const r0 = removeFunctionBody(code, modelHookFactoryFeatures.serverOnly)
       expect(r0).toBe(code)
     })
     it('generate with complex generics', () => {

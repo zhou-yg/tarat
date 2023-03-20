@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import { IConfig } from "../config"
-import { RenderDriver, ReactAdaptor } from '@polymita/connect/react'
+import { RenderDriver, ReactAdaptor } from '@polymita/connect/dist/react'
 import { RunnerModelScope, debuggerLog, getPlugin, startdReactiveChain } from "@polymita/signal-model";
 import { renderToString } from 'react-dom/server'
 import React from 'react'

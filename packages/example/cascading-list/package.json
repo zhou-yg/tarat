@@ -55,8 +55,8 @@
     "@emotion/styled": "^11.10.4",
     "@mui/icons-material": "^5.10.9",
     "@mui/material": "^5.10.9",
-    "@polymita/connect": "^0.0.1",
-    "@polymita/signal-model": "^0.0.1",
+    "@polymita/connect": "file:/Users/zhouyunge/Documents/polymita-runtime/packages/connect",
+    "@polymita/signal-model": "file:/Users/zhouyunge/Documents/polymita-runtime/packages/signal-model",
     "date-fns": "^2.28.0",
     "electron": "^22.0.3",
     "react-router-dom": "^6.3.0"
