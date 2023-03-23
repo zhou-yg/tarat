@@ -592,7 +592,7 @@ async function esbuildDrivers (
     bundle?: boolean,
   },
 ) {
-  const { drivers, ts, pacakgeJSON, cwd, pointFiles } = config
+  const { drivers, ts, packageJSON, cwd, pointFiles } = config
   const { bundle, format, env } = options
 
   const buildOptions: esbuild.BuildOptions = {
@@ -602,9 +602,9 @@ async function esbuildDrivers (
      */
     bundle,
     external: bundle ? [
-      ...Object.keys(pacakgeJSON.dependencies || {}),
-      ...Object.keys(pacakgeJSON.devDependencies || {}),
-      ...Object.keys(pacakgeJSON.peerDependencies || {}),
+      ...Object.keys(packageJSON.dependencies || {}),
+      ...Object.keys(packageJSON.devDependencies || {}),
+      ...Object.keys(packageJSON.peerDependencies || {}),
       'drivers/*',
       'tarat',
       'node:*',

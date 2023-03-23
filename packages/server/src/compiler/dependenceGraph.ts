@@ -49,7 +49,7 @@ export function injectDeps (c: IConfig, targetFile: string) {
   const code = fs.readFileSync(targetFile).toString()
   const parsed = path.parse(targetFile)
 
-  const moduleName = c.pacakgeJSON?.name
+  const moduleName = c.packageJSON?.name
 
   const depsJSONPath = path.join(c.pointFiles.outputDriversDir, `${parsed.name}.deps.json`)
 

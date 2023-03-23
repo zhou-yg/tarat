@@ -290,8 +290,8 @@ export async function readConfig (arg: {
     merge(config, configInFile)
   }
 
-  const pacakgeJSONPath = path.join(cwd, 'package.json')
-  const pacakgeJSON: null | JSONSchemaForNPMPackageJsonFiles = fs.existsSync(pacakgeJSONPath) ? loadJSON(pacakgeJSONPath) : null
+  const packageJSONPath = path.join(cwd, 'package.json')
+  const packageJSON: null | JSONSchemaForNPMPackageJsonFiles = fs.existsSync(packageJSONPath) ? loadJSON(packageJSONPath) : null
 
   const viewsDirectory = path.join(cwd, config.viewsDirectory)
   const driversDirectory = path.join(cwd, config.driversDirectory)
@@ -324,7 +324,7 @@ export async function readConfig (arg: {
   // default to "dev"
   const pointFiles = isProd ? buildPointFiles : devPointFiles
 
-  const dependencyModules = findDependencies(cwd, pacakgeJSON)
+  const dependencyModules = findDependencies(cwd, packageJSON)
 
   const appRootFile = getAppRootFile(cwd, config)
 
@@ -339,7 +339,7 @@ export async function readConfig (arg: {
     port,
     appRootFile,
     routesTree,
-    pacakgeJSON,
+    packageJSON,
     isProd,
     entryCSS,
     pointFiles,
