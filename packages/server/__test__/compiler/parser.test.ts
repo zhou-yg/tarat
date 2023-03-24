@@ -114,7 +114,6 @@ describe('parser', () => {
     const code = mockUtil.readMock(BM)
 
     const deps = parse(code)
-    console.log('deps: ', deps.writeModelDriver.deps);
 
     expect(deps).toEqual({
       writeModelDriver: {

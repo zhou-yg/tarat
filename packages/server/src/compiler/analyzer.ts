@@ -12,7 +12,7 @@ import type {
 } from 'estree'
 
 import {
-  hookFactoryFeatures,
+  modelHookFactoryFeatures,
   THookDeps,
   hookFactoryNames,
   initiativeComputeHookFactoryNames
@@ -309,12 +309,12 @@ function collectCallerWithAncestor (BMNode: TBMNode, scope: IScopeMap) {
 
           const fromValidParentCallExpression =
             ancestor[ancestor.length - 2]?.type === 'CallExpression' &&
-            hookFactoryFeatures.withSource.includes((ancestor[ancestor.length - 2] as any).callee.name)
+            modelHookFactoryFeatures.withSource.includes((ancestor[ancestor.length - 2] as any).callee.name)
 
           if (
             parentCallerHook &&
             parentCallerHook.callee.type === 'Identifier' &&
-            hookFactoryFeatures.withSource.includes(parentCallerHook.callee.name) &&
+            modelHookFactoryFeatures.withSource.includes(parentCallerHook.callee.name) &&
             fromValidParentCallExpression
           ) {
             const parentCaller = findInScopeMap(scope, parentCallerHook)
