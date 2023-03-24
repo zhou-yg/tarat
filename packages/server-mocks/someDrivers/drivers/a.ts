@@ -1,7 +1,7 @@
 import {
   inputComputeInServer,
   state
-} from 'tarat/core'
+} from '@polymita/signal-model'
 
 export default function a () {
 

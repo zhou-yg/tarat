@@ -2,7 +2,7 @@ import {
   compose,
   computed,
   inputComputeInServer
-} from 'tarat/core'
+} from '@polymita/signal-model'
 
 import a from './a'
 
