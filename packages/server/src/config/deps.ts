@@ -19,7 +19,7 @@ export function findDependencies (cwd: string, pkgJSON: null | JSONSchemaForNPMP
       const r1 = !!loadJSON(pkg).tarat
       return r1
     } else {
-      logFrame(chalk.red(`dependency module "${moduleName}" hasnt installed`))
+      // logFrame(chalk.red(`dependency module "${moduleName}" hasnt installed`))
     }
   })
 

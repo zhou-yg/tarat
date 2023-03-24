@@ -22,6 +22,7 @@ describe('server routes', () => {
 
     expect(existsSync(serverRoutesFile + ext)).toBeTruthy()
     // compiled file
+    console.log('serverRoutesFile+js: ', serverRoutesFile + '.js');
     expect(existsSync(serverRoutesFile + '.js')).toBeTruthy()
 
     // compiled file content

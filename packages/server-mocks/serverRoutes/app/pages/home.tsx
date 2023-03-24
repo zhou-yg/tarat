@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { useTarat } from 'tarat/connect'
+import { useSignal } from '@polymita/connect/react'
 import a from '../../drivers/a'
 
 export default function Main () {
-  const aHook = useTarat(a)
+  const aHook = useSignal(a)
 
   return (
     <div>

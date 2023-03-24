@@ -3,7 +3,7 @@ import {
   compose,
   computed,
   inputComputeInServer
-} from 'tarat/core'
+} from '@polymita/signal-model'
 
 export default function a () {
   const s1 = state(0)

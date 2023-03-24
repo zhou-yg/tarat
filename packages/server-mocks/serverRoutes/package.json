@@ -1,6 +1,8 @@
 {
   "name": "server-routes",
   "dependencies": {
+    "@polymita/connect": "workspace:*",
+    "@polymita/signal-model": "workspace:*",
     "@prisma/client": "^4.2.1",
     "@types/lodash": "^4.14.182",
     "@types/node": "^18.6.2",
