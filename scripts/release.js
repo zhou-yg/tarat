@@ -9,10 +9,10 @@ const SHOULD_RELEASE = !!process.env.RELEASE
 console.log('SHOULD_RELEASE: ', SHOULD_RELEASE);
 
 const packagesPath = join(__dirname, '../packages/')
-// const taratModule = join(packagesPath, 'tarat')
-// const coreModule = join(packagesPath, 'core')
-const connectModule = join(packagesPath, 'connect')
+const taratModule = join(packagesPath, 'tarat')
 const serverModule = join(packagesPath, 'server')
+// const coreModule = join(packagesPath, 'core')
+// const connectModule = join(packagesPath, 'connect')
 
 const PKG = 'package.json'
 
@@ -91,25 +91,29 @@ function upgradePatch(dirPath) {
 
 console.time('release tarat')
 
-build(coreModule)
-  .then(() => {
-    return build(connectModule)
-  }).then(() => {
-    return build(serverModule)
-  }).then(() => {
-    if (SHOULD_RELEASE) {
-      upgradePatch(taratModule)
-      commit().then(() => {
-        return publish()
-      }).then(() => {
-        console.timeEnd('release tarat')
-      })
-      // return versionBump({
-      //   cwd: taratModule
-      // }).then(() => {
-      //   return commit()
-      // }).then(() => {
-      //   return publish()
-      // })
-    }
-  })
+// build(coreModule)
+//   .then(() => {
+//     return build(connectModule)
+//   }).then(() => {
+//     return build(serverModule)
+//   }).then(() => {
+//     if (SHOULD_RELEASE) {
+//       upgradePatch(taratModule)
+//       commit().then(() => {
+//         return publish()
+//       }).then(() => {
+//         console.timeEnd('release tarat')
+//       })
+//     }
+//   })
+
+build(serverModule).then(() => {
+  if (SHOULD_RELEASE) {
+    upgradePatch(taratModule)
+    commit().then(() => {
+      return publish()
+    }).then(() => {
+      console.timeEnd('release tarat')
+    })
+  }
+});
