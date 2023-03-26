@@ -8,8 +8,11 @@ import {
   Route,
   BrowserRouter,
 } from "react-router-dom"
-import { clientRuntime, RenderDriver, DriverContext } from '@polymita/connect'
-import { registerModelIndexes } from '@polymita/connect'
+import { preset } from '@polymita/signal-model'
+import {
+  RenderDriver,
+  registerModelIndexes } from '@polymita/connect'
+import { setHookAdaptor } from '@polymita/connect/dist/react'
 
 <% if (rootPath) { %>
 import <%= rootName %> from '<%= rootPath %>'
@@ -19,10 +22,8 @@ import <%= rootName %> from '<%= rootPath %>'
 
 registerModelIndexes(<%- modelIndexes %>)
 
-clientRuntime({
-  framework: React,
-  name: 'react'
-})
+preset.clientRuntime()
+const TopContext = setHookAdaptor(React)
 
 function _TaratRootApplication({
   location
@@ -32,7 +33,7 @@ function _TaratRootApplication({
   driver.switchToClientConsumeMode();
   
   return (
-    <DriverContext.Provider value={driver}>
+    <TopContext.Provider value={driver}>
       <BrowserRouter>
         <%- rootStart %>
         <Routes>
@@ -40,7 +41,7 @@ function _TaratRootApplication({
         </Routes>  
         <%- rootEnd %>
       </BrowserRouter>
-    </DriverContext.Provider>
+    </TopContext.Provider>
   );
 }
 
