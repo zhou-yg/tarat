@@ -90,20 +90,8 @@ export async function createDevServer (c: IConfig) {
       extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx', '.json'],
       alias: [
         {
-          find: '@',
+          find: '@/',
           replacement: c.cwd,
-        },
-        {
-          find: 'tarat/core',
-          replacement: 'tarat/core.client.esm.js',
-        },
-        {
-          find: 'tarat/connect',
-          replacement: 'tarat/dist/connect.client.esm.js',
-        },
-        {
-          find: '@polymita/connect',
-          replacement: '@polymita/connect/dist/connect.client.esm.js',
         },
       ]
     }
