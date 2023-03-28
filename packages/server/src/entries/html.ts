@@ -60,7 +60,7 @@ export async function renderPage (ctx: PageContext, config: IConfig) {
 
   console.log('[before driver.onPush] : ');
 
-  appRootEntry.driver.onPush(scope => {
+  reactRenderDriver.driver.onPush(scope => {
 
     getPlugin('GlobalRunning').setCurrent(scope, wrapCtx(ctx))
     cancelGlobalRunning = () => {
@@ -73,11 +73,11 @@ export async function renderPage (ctx: PageContext, config: IConfig) {
   console.log('[before renderToString] first ');
   const html = renderToString(appRootEntry)
 
-  appRootEntry.driver.pushListener = undefined
+  reactRenderDriver.driver.pushListener = undefined
   cancelGlobalRunning()
 
   let allRunedHook: RunnerModelScope<any>[] = []
-  for (const BMArr of appRootEntry.driver.BMValuesMap.values()) {
+  for (const BMArr of reactRenderDriver.driver.BMValuesMap.values()) {
     allRunedHook = allRunedHook.concat(BMArr)
   }
   await Promise.all(allRunedHook.map((scope) => {
@@ -90,7 +90,7 @@ export async function renderPage (ctx: PageContext, config: IConfig) {
 
   const st = Date.now()
 
-  appRootEntry.driver.switchToServerConsumeMode()
+  reactRenderDriver.driver.switchToServerConsumeMode()
 
   const chain2 = startdReactiveChain('[renderWithDriverContext second]')
 
