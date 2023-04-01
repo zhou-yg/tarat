@@ -11,6 +11,9 @@ import {
 } from "react-router-dom/server"
 
 import { registerModelIndexes } from '@polymita/connect'
+import { setHookAdaptor } from '@polymita/connect/dist/react'
+
+setHookAdaptor(React)
 
 <%- entryCSSPath %>
 
