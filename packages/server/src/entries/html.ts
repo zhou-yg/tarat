@@ -104,7 +104,7 @@ export async function renderPage (ctx: PageContext, config: IConfig) {
     ),
   )
 
-  const html2 = renderToString(appEntryUpdate.root)
+  const html2 = renderToString(appEntryUpdate)
 
   chain2.stop()
   chain2.print()

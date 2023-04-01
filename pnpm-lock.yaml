@@ -652,7 +652,7 @@ importers:
       react-dom: ^18.1.0
       react-router-dom: ^6.7.0
       tailwindcss: ^3.1.8
-      tarat: '*'
+      tarat: workspace:*
       tslib: ^2.4.0
     dependencies:
       '@polymita/connect': link:../../polymita-runtime/packages/connect
@@ -675,6 +675,8 @@ importers:
 
   packages/server-mocks/someDrivers:
     specifiers:
+      '@polymita/connect': workspace:*
+      '@polymita/signal-model': workspace:*
       '@prisma/client': ^4.2.1
       '@types/lodash': ^4.14.182
       '@types/node': ^18.6.2
@@ -688,10 +690,12 @@ importers:
       react-dom: ^18.1.0
       react-router-dom: ^6.7.0
       tailwindcss: ^3.1.8
-      tarat: '*'
-      tarat-cascading-list: '*'
+      tarat: workspace:*
+      tarat-cascading-list: workspace:*
       tslib: ^2.4.0
     dependencies:
+      '@polymita/connect': link:../../polymita-runtime/packages/connect
+      '@polymita/signal-model': link:../../polymita-runtime/packages/signal-model
       '@prisma/client': registry.npmmirror.com/@prisma/client/4.3.1_prisma@4.11.0
       '@types/lodash': registry.npmmirror.com/@types/lodash/4.14.191
       '@types/node': registry.npmmirror.com/@types/node/18.15.6
@@ -715,6 +719,7 @@ importers:
       '@babel/preset-react': ^7.18.6
       '@jest/test-sequencer': ^28.1.3
       '@koa/cors': ^3.3.0
+      '@polymita/signal': ^0.0.13
       '@prisma/internals': ^4.0.0
       '@prisma/sdk': ^4.0.0
       '@remix-run/router': ^1.0.1
@@ -748,6 +753,7 @@ importers:
       get-port: 5.1.1
       immer: ^9.0.14
       inquirer: 8.2.4
+      jest: ^28.1.0
       jsx-transform: ^2.4.1
       koa: ^2.13.4
       koa-body: ^5.0.0
@@ -781,6 +787,7 @@ importers:
       '@babel/preset-react': registry.npmmirror.com/@babel/preset-react/7.18.6
       '@jest/test-sequencer': registry.npmmirror.com/@jest/test-sequencer/28.1.3
       '@koa/cors': registry.npmmirror.com/@koa/cors/3.4.3
+      '@polymita/signal': registry.npmmirror.com/@polymita/signal/0.0.13_rollup@2.79.1
       '@prisma/internals': registry.npmmirror.com/@prisma/internals/4.11.0
       '@prisma/sdk': registry.npmmirror.com/@prisma/sdk/4.0.0
       '@remix-run/router': registry.npmmirror.com/@remix-run/router/1.4.0
@@ -814,6 +821,7 @@ importers:
       get-port: registry.npmmirror.com/get-port/5.1.1
       immer: registry.npmmirror.com/immer/9.0.21
       inquirer: registry.npmmirror.com/inquirer/8.2.4
+      jest: registry.npmmirror.com/jest/28.1.3_@types+node@18.15.6
       jsx-transform: registry.npmmirror.com/jsx-transform/2.4.1
       koa: registry.npmmirror.com/koa/2.14.1
       koa-body: registry.npmmirror.com/koa-body/5.0.0
@@ -2838,6 +2846,23 @@ packages:
     name: '@opentelemetry/semantic-conventions'
     version: 1.10.1
     engines: {node: '>=14'}
+    dev: false
+
+  registry.npmmirror.com/@polymita/signal/0.0.13_rollup@2.79.1:
+    resolution: {integrity: sha512-6/Ye2oMbAwEyIJ+DAuWa0HlyqSUAWCVW0h7Qaf42fdHx3oeXV/cqI9/MFcRsrtEAb98eaFapDuD/t0e5JyZ4cw==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@polymita/signal/-/signal-0.0.13.tgz}
+    id: registry.npmmirror.com/@polymita/signal/0.0.13
+    name: '@polymita/signal'
+    version: 0.0.13
+    dependencies:
+      '@jest/test-sequencer': registry.npmmirror.com/@jest/test-sequencer/28.1.3
+      '@types/jest': registry.npmmirror.com/@types/jest/29.5.0
+      eventemitter3: registry.npmmirror.com/eventemitter3/4.0.7
+      immer: registry.npmmirror.com/immer/9.0.21
+      rollup-plugin-dts: registry.npmmirror.com/rollup-plugin-dts/4.2.3_rollup@2.79.1
+      tslib: registry.npmmirror.com/tslib/2.5.0
+    transitivePeerDependencies:
+      - rollup
+      - typescript
     dev: false
 
   registry.npmmirror.com/@popperjs/core/2.11.6:
