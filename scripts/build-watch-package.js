@@ -8,7 +8,7 @@ const { mergeDeps, replaceTaratModuleImport } = require('./utils')
 const packagesPath = join(__dirname, '../packages/')
 const taratModule = join(packagesPath, 'tarat')
 
-const names = ['server', 'core', 'connect']
+const names = ['server']; // ['server', 'core', 'connect']
 
 const modules = names.map(n => join(taratModule, n))
 

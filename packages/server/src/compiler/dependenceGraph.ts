@@ -95,15 +95,9 @@ export function generateHookDeps (c: IConfig) {
     outputServerDriversDir,
     outputDriversDir,
   } = c.pointFiles
-  const {
-    esmDirectory,
-    cjsDirectory
-  } = c
 
   const driversDir = outputDriversDir
  
-  const sourceCodeDir = path.join(c.cwd, c.driversDirectory)
-
   fs.readdirSync(driversDir).forEach(f => {
     const compiledFile = path.join(driversDir, f)
     const name = f.replace(/\.js$/, '')

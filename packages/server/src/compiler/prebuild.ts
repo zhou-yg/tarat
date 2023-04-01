@@ -315,7 +315,7 @@ export async function generateClientRoutes(c: IConfig) {
     modelIndexes
   })
   // generate for vite.js so that this file doesn't need to be compiled to js
-  fs.writeFileSync(autoGenerateClientRoutes, prettier.format(routesStr2, { parser: 'babel' }))
+  fs.writeFileSync(autoGenerateClientRoutes, prettier.format(routesStr2, { parser: 'typescript' }))
 }
 export async function buildServerRoutes(c: IConfig) {
   const {
@@ -363,7 +363,7 @@ export async function buildServerRoutes(c: IConfig) {
     routes: r,
     modelIndexes
   })
-  fs.writeFileSync(autoGenerateServerRoutes, prettier.format(routesStr, { parser: 'babel' }))
+  fs.writeFileSync(autoGenerateServerRoutes, prettier.format(routesStr, { parser: 'typescript' }))
 
 
   const myPlugins = getPlugins({
@@ -705,19 +705,14 @@ export async function driversType(c: IConfig, outputDir: string) {
   return generateFiles
 }
 
+/**
+ * 将 @/drivers 编译到 dist/drivers
+ */
 export async function transformCommonDriver (c: IConfig) {
   const {
-    outputClientDriversDir,
-    outputServerDriversDir,
     outputDriversDir,
   } = c.pointFiles
-  const {
-    esmDirectory,
-    cjsDirectory,
-    composeDriversDirectory
-  } = c
 
-  // 1.must build source dir first prevent to traverse below children dir 
   const inputs = c.drivers.filter(({ filePath }) => /\.(ts|js|mjs)$/.test(filePath)).map(({ filePath }) => filePath)
   await esbuildDrivers(c, inputs, outputDriversDir, { format: 'esm' })
 
@@ -726,6 +721,8 @@ export async function transformCommonDriver (c: IConfig) {
 
 /**
  * for server side running
+ * 将 @/drivers 分布编译到2份产物, dist/server, dist/client 
+ * 生成ts声明文件
  */
 export async function buildDrivers (c: IConfig) {
   const {
@@ -734,11 +731,6 @@ export async function buildDrivers (c: IConfig) {
     outputServerDriversESMDir,
     outputDriversDir,
   } = c.pointFiles
-  const {
-    esmDirectory,
-    cjsDirectory,
-    composeDriversDirectory
-  } = c
 
   await transformCommonDriver(c)
 

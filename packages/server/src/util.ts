@@ -5,6 +5,7 @@ import { IViewConfig } from './config'
 import os from "os";
 import { BM, isEqual } from "@polymita/signal-model";
 import { spawn } from 'child_process';
+import chalk from 'chalk';
 
 export function loadJSON (f: string) {
   return JSON.parse(fs.readFileSync(f).toString())
@@ -48,7 +49,7 @@ export function getDefaultRoute (pages: IViewConfig[]) {
 }
 
 export function logFrame (content: string, length = 100) {
-  const lineArr = new Array(length).fill('-')  
+  const lineArr = new Array(9).fill('-')  
   const line2 = lineArr.join('')
 
   const title = ' tarat '
@@ -61,13 +62,7 @@ export function logFrame (content: string, length = 100) {
   
   const padLen = length - 4
 
-  return console.log(
-    [
-      line1,
-      ...(rows?.map(s => `| ${s}`) || []),
-      line2
-    ].join('\n')
-  )
+  return console.log(`${chalk.blue('tarat')}: `, content);
 }
 
 export function getAddress() {

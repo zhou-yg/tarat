@@ -5,6 +5,7 @@ import { RunnerModelScope, debuggerLog, getPlugin, startdReactiveChain } from "@
 import { renderToString } from 'react-dom/server'
 import React from 'react'
 import chalk from 'chalk'
+import { logFrame } from '../util';
 
 export interface PageContext {
   cookies: {
@@ -39,6 +40,7 @@ export async function renderPage (ctx: PageContext, config: IConfig) {
   if (fs.existsSync(distEntryJS)) {
     entryFunctionModule = require(distEntryJS).default
   }
+  logFrame(`distServerRoutes:${distServerRoutes}`)
   const routesEntryModule = require(distServerRoutes).default
 
   // const driver = new RenderDriver()

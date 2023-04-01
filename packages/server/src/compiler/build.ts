@@ -2,7 +2,6 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { IConfig } from "../config";
 import { loadJSON, traverseDir } from '../util';
-import viewTailwind from './plugins/rollup-plugin-view-tailwind';
 import { build, IBuildOption, getPlugins } from "./prebuild";
 
 

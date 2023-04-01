@@ -9,6 +9,7 @@
   "scripts": {
     "build:doc": "node scripts/build-doc.mjs",
     "build:all": "node scripts/release.js",
+    "build": "node scripts/release.js",
     "build:eg": "PUBLISH=false node scripts/build-examples.js",
     "release": "RELEASE=true node scripts/release.js",
     "release:eg": "node scripts/build-examples.js",
