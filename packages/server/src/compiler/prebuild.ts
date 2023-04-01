@@ -383,6 +383,7 @@ export async function buildServerRoutes(c: IConfig) {
       external: [
         '@polymita/signal-model',
         '@polymita/connect',
+        '@polymita/connect/dist/react',
         'react',
         '@mui/material'
       ],
