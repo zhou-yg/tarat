@@ -132,7 +132,7 @@ function watchByConfig (cwd: string, config: IWatcherConfig[]) {
     const { watcher, name, event } = wc
     watcher.on(event, (path) => {
       if (/(\.css|\.less|\.scss)$/.test(path)) {
-        logFrame(`[${name}.${event}] ingored by "${path}"`)
+        logFrame(`[${name}.${event}] ignored by "${path}"`)
         return
       }
       logFrame(`[${name}.${event}] trigger by "${path}"`)
@@ -154,6 +154,7 @@ function watchEverything (c: IConfig) {
   ]
   const viewsGroup = [
     path.join(c.cwd, c.viewsDirectory),
+    path.join(c.cwd, c.modulesDirectory),
   ]
   const driversGroup = [
     path.join(c.cwd, c.driversDirectory),

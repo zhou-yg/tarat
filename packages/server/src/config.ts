@@ -20,6 +20,7 @@ export const defaultConfig = () => ({
   modelsDirectory: 'models',
   appDirectory: 'app',
   pageDirectory: 'pages',
+  modulesDirectory: 'modules', // for polymita module dir
 
   publicDirectory: 'public',
 
