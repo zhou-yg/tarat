@@ -29,7 +29,7 @@ export async function buildEverything (c: IConfig) {
     logFrame(`build drivers end. cost ${chalk.green(cost())} sec`)
   })
 
-  // must executeafter driver building
+  // must execute after driver building
   await Promise.all([
     buildServerRoutes(c).then(() => {
       logFrame(`build routes(server) end. cost ${chalk.green(cost())} sec`)
@@ -81,7 +81,7 @@ function watchByConfig (cwd: string, config: IWatcherConfig[]) {
 
   const eventCalbackLastWaiter = new Map<FSWatcher, Map<string, true>>()
   
-  function existsLastWaiterAndCallback (wc: IWatcherConfig, newConfig: IConfig) {
+  async function existsLastWaiterAndCallback (wc: IWatcherConfig, newConfig: IConfig) {
     const { watcher, name, event, callbacks } = wc
     const queue = eventCalbackLastWaiter.get(watcher) || new Map()
     const hasLastWaiter = queue.get(event) || false
@@ -90,29 +90,31 @@ function watchByConfig (cwd: string, config: IWatcherConfig[]) {
 
     if (hasLastWaiter) {
       queue.set(event, false)
-      readConfig({ cwd }).then(newConfig => {
-        existsLastWaiterAndCallback(wc, newConfig)
-      })
+      /**
+       * 有新加了文件没监听到，需要重新读下配置
+       */
+      const newConfig = await readConfig({ cwd });
+      existsLastWaiterAndCallback(wc, newConfig)
     } else {
       state.set(event, true)
       const cost = time()
       if (wc.callbackMode === 'sequence') {
-        callbacks.reduce((p, cb) => {
+        await callbacks.reduce((p, cb) => {
           return p.then(() => cb(newConfig))
-        }, Promise.resolve()).then(() => {
-          logFrame(`[${name}.${event}] end. cost ${chalk.green(cost())} sec`)
-          state.set(event, false)
-        })
+        }, Promise.resolve());
+
+        logFrame(`[${name}.${event}] end. cost ${chalk.green(cost())} sec`)
+        state.set(event, false)
       } else {
-        Promise.all(callbacks.map(cb => cb(newConfig))).then(() => {
-          logFrame(`[${name}.${event}] end. cost ${chalk.green(cost())} sec`)
-          state.set(event, false)
-        })
+        await Promise.all(callbacks.map(cb => cb(newConfig)));
+
+        logFrame(`[${name}.${event}] end. cost ${chalk.green(cost())} sec`)
+        state.set(event, false)
       }
     }
   }
 
-  function executeCallbacks (wc: IWatcherConfig) {
+  async function executeCallbacks (wc: IWatcherConfig) {
     const { watcher, name, event } = wc
 
     const state = eventCallbackRunningState.get(watcher) || new Map()
@@ -123,9 +125,8 @@ function watchByConfig (cwd: string, config: IWatcherConfig[]) {
       queue.set(event, true)
       return
     }
-    readConfig({ cwd }).then(newConfig => {
-      existsLastWaiterAndCallback(wc, newConfig)
-    })
+    const newConfig = await readConfig({ cwd });
+    existsLastWaiterAndCallback(wc, newConfig)
   }
 
   config.forEach((wc) => {
@@ -219,7 +220,6 @@ export default async (cwd: string) => {
   const config = await readConfig({
     cwd,
   })
-
 
   global.React18 = require('react')
   console.log('global.React: ', global.React);

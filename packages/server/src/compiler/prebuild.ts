@@ -78,16 +78,9 @@ function getPostCssConfigPath (c: IConfig) {
 }
 
 export async function build (c: IConfig, op: IBuildOption) {
-
-  let bundle: RollupBuild | undefined
-  try {
-    bundle = await rollup(op.input)
-    await generateOutput(c, bundle, op.output)
-  } catch (e) {
-    console.error(e)
-  } finally {
-    await bundle?.close()
-  }
+  const bundle = await rollup(op.input)
+  await generateOutput(c, bundle, op.output)
+  await bundle?.close()
 }
 
 async function generateOutput(c: IConfig, bundle: RollupBuild, op: IBuildOption['output']) {
