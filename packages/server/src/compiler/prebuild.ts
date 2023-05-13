@@ -629,11 +629,19 @@ async function esbuildDrivers (
 
   await esbuild.build(buildOptions)
 
-  cacheFilesByPlugin.forEach(f => fs.unlink(f, e => {
-    if (e) {
-      throw e
+  cacheFilesByPlugin.forEach(f => {
+    /**
+     * maybe deleted by another tarat process
+     */
+    if (fs.existsSync(f)) {
+      fs.unlink(f, e => {
+        if (e) {
+          throw e
+        }
+      })
     }
-  }))
+  });
+  cacheFilesByPlugin = []
 
   if (fs.existsSync(outputDir)) {
     traverseDir(outputDir, (obj) => {

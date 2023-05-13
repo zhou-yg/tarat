@@ -92,8 +92,11 @@ function getSourceReferrenceType (source: IParsedSchemaStruct, targetProp: strin
   return type
 }
 
+/**
+ * some npm module name start with "@", which is not valid for prisma model name
+ */
 export function transformModelName(str: string) {
-  return str.replace(/\/|@|-/g, '_')
+  return str.replace(/^@/, '').replace(/\/|@|-/g, '_')
 }
 
 async function generateNewSchema (c: IConfig, schemaContentArr: IPrismaFile[], enhanceJSON?: IEnhancement) {
