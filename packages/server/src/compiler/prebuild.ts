@@ -6,7 +6,7 @@ import { IConfig, IViewConfig } from "../config";
 import * as fs from 'fs'
 import * as path from 'path'
 import { compile, name } from 'ejs'
-import { AcornNode, InputOptions, ModuleFormat, OutputOptions, Plugin, rollup, RollupBuild } from 'rollup' 
+import { watch as rollupWatch, InputOptions, ModuleFormat, OutputOptions, Plugin, rollup, RollupBuild, RollupWatchOptions } from 'rollup' 
 import resolve from '@rollup/plugin-node-resolve';
 import { babel  } from '@rollup/plugin-babel';
 import json from '@rollup/plugin-json'
@@ -27,7 +27,6 @@ import { ArrowFunctionExpression, CallExpression, FunctionExpression, Identifier
 import { traverse, last } from '../util';
 import aliasDriverRollupPlugin from './plugins/rollup-plugin-alias-driver';
 import { removeFunctionBody } from './ast';
-import esModuleInterop from 'rollup-plugin-es-module-interop'
 import { findDependentPrisma, readCurrentPrisma, readExsitPrismaPart, transformModelName } from './compose';
 import { upperFirst } from 'lodash';
 import { generateHookDeps } from './dependenceGraph';
@@ -310,11 +309,10 @@ export async function generateClientRoutes(c: IConfig) {
   // generate for vite.js so that this file doesn't need to be compiled to js
   fs.writeFileSync(autoGenerateClientRoutes, prettier.format(routesStr2, { parser: 'typescript' }))
 }
-export async function buildServerRoutes(c: IConfig) {
+
+export async function generateServerRoutes(c: IConfig) {
   const {
     autoGenerateServerRoutes,
-    distServerRoutes,
-    distServerRoutesCSS
   } = c.pointFiles
 
   const {
@@ -357,7 +355,56 @@ export async function buildServerRoutes(c: IConfig) {
     modelIndexes
   })
   fs.writeFileSync(autoGenerateServerRoutes, prettier.format(routesStr, { parser: 'typescript' }))
+}
 
+export function watchServerRoutes(c: IConfig) {
+  const {
+    autoGenerateServerRoutes,
+    distServerRoutes,
+    distServerRoutesCSS
+  } = c.pointFiles
+
+  const myPlugins = getPlugins({
+    css: distServerRoutesCSS,
+    mode: 'dev',
+    runtime: 'server',
+  }, c)
+  /**
+   * compile routes.server to js
+   * routes.client doesnt need becase of vite
+   */
+  const inputOptions: RollupWatchOptions = {
+    input: autoGenerateServerRoutes,
+    plugins: myPlugins,
+    external: [
+      '@polymita/signal-model',
+      '@polymita/connect',
+      '@polymita/connect/dist/react',
+      'react',
+      '@mui/material'
+    ],
+    output: {
+      file: distServerRoutes,      
+      format: 'commonjs',
+    }
+  }
+  
+  const watcher = rollupWatch(inputOptions)
+  watcher.on('change', (id, { event }) => {
+    console.log('rollup watcher change ', event, id,)
+  })
+  watcher.on('restart', () => {
+    console.log('rollup watcher restart')
+  })
+  return watcher
+}
+
+export async function buildServerRoutes(c: IConfig) {
+  const {
+    autoGenerateServerRoutes,
+    distServerRoutes,
+    distServerRoutesCSS
+  } = c.pointFiles
 
   const myPlugins = getPlugins({
     css: distServerRoutesCSS,
@@ -370,7 +417,6 @@ export async function buildServerRoutes(c: IConfig) {
    */
   const inputOptions: IBuildOption = {
     input: {
-      cache: false,
       input: autoGenerateServerRoutes,
       plugins: myPlugins,
       external: [
@@ -386,7 +432,6 @@ export async function buildServerRoutes(c: IConfig) {
       format: 'commonjs',
     }
   }
-
   await build(c, inputOptions)
 }
 

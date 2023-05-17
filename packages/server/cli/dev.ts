@@ -12,6 +12,8 @@ import {
   generateHookDeps,
   emptyDirectory, logFrame, tryMkdir, time, buildModelIndexes,
   generateClientRoutes,
+  generateServerRoutes,
+  watchServerRoutes,
 } from "../src/";
 
 import * as desktop from '../desktopSrc'
@@ -29,13 +31,19 @@ export async function buildEverything (c: IConfig) {
     logFrame(`build drivers end. cost ${chalk.green(cost())} sec`)
   })
 
+  await Promise.all([
+    generateClientRoutes(c).then(() => {
+      logFrame(`generate routes(client) end. cost ${chalk.green(cost())} sec`)
+    }),
+    generateServerRoutes(c).then(() => {
+      logFrame(`generate routes(server) end. cost ${chalk.green(cost())} sec`)
+    })
+  ])
+
   // must execute after driver building
   await Promise.all([
     buildServerRoutes(c).then(() => {
       logFrame(`build routes(server) end. cost ${chalk.green(cost())} sec`)
-    }),
-    generateClientRoutes(c).then(() => {
-      logFrame(`generate routes(client) end. cost ${chalk.green(cost())} sec`)
     }),
     buildEntryServer(c).then(() => {
       logFrame(`build entryServer end. cost ${chalk.green(cost())} sec`)
@@ -171,7 +179,7 @@ function watchEverything (c: IConfig) {
       watcher: appWatcher,
       name: 'app',
       event: 'change',
-      callbacks: [buildServerRoutes]
+      callbacks: [generateServerRoutes]
     },
     {
       watcher: appWatcher,
@@ -189,18 +197,20 @@ function watchEverything (c: IConfig) {
       watcher: viewsWatcher,
       name: 'views',
       event: 'change',
-      callbacks: [buildServerRoutes]
+      callbacks: [generateServerRoutes]
     },
     {
       watcher: driversWatcher,
       name: 'drivers',
       event: 'change',
       callbackMode: 'sequence',
-      callbacks: [buildDrivers, buildServerRoutes],
+      callbacks: [buildDrivers, generateServerRoutes],
     }
   ]
 
   watchByConfig(c.cwd, config)
+
+  watchServerRoutes(c);
 }
 
 async function startCompile (c: IConfig) {
