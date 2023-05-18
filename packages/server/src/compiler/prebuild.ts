@@ -385,7 +385,7 @@ export function watchServerRoutes(c: IConfig) {
     ],
     output: {
       file: distServerRoutes,      
-      exports: 'auto',
+      exports: 'named',
       format: 'commonjs',
     }
   }
