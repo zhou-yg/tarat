@@ -365,7 +365,7 @@ export function watchServerRoutes(c: IConfig) {
   } = c.pointFiles
 
   const myPlugins = getPlugins({
-    css: distServerRoutesCSS,
+    css: `${c.routesServer}.css`,
     mode: 'dev',
     runtime: 'server',
   }, c)
