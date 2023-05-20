@@ -14,9 +14,11 @@ import {
   generateClientRoutes,
   generateServerRoutes,
   watchServerRoutes,
+  getEntryFile,
 } from "../src/";
 
 import * as desktop from '../desktopSrc'
+import rimraf from 'rimraf';
 
 export async function buildEverything (c: IConfig) {
   
@@ -42,9 +44,9 @@ export async function buildEverything (c: IConfig) {
 
   // must execute after driver building
   await Promise.all([
-    buildServerRoutes(c).then(() => {
-      logFrame(`build routes(server) end. cost ${chalk.green(cost())} sec`)
-    }),
+    // buildServerRoutes(c).then(() => {
+    //   logFrame(`build routes(server) end. cost ${chalk.green(cost())} sec`)
+    // }),
     buildEntryServer(c).then(() => {
       logFrame(`build entryServer end. cost ${chalk.green(cost())} sec`)
     })
@@ -158,8 +160,13 @@ function watchByConfig (cwd: string, config: IWatcherConfig[]) {
 }
 
 function watchEverything (c: IConfig) {
+  const serverEntry = getEntryFile(c)
+
   const appGroup = [
     path.join(c.cwd, c.appDirectory), // -> client routes
+  ]
+  const appServerEntry = [
+    path.join(c.cwd, c.appDirectory, serverEntry.file),
   ]
   const viewsGroup = [
     path.join(c.cwd, c.viewsDirectory),
@@ -171,6 +178,7 @@ function watchEverything (c: IConfig) {
   ]
 
   const appWatcher = chokidar.watch(appGroup, chokidarOptions())
+  const entryServerWatcher = chokidar.watch(appServerEntry, chokidarOptions())
   const viewsWatcher = chokidar.watch(viewsGroup, chokidarOptions())
   const driversWatcher = chokidar.watch(driversGroup, chokidarOptions())
 
@@ -194,6 +202,29 @@ function watchEverything (c: IConfig) {
       callbacks: [generateClientRoutes]
     },
     {
+      watcher: entryServerWatcher,
+      name: 'entryServer',
+      event: 'change',
+      callbacks: [buildEntryServer]
+    },
+    {
+      watcher: entryServerWatcher,
+      name: 'entryServer',
+      event: 'add',
+      callbacks: [buildEntryServer]
+    },
+    {
+      watcher: entryServerWatcher,
+      name: 'entryServer',
+      event: 'unlink',
+      callbacks: [
+        async (c: IConfig) => {
+          const { distEntryJS }  = c.pointFiles
+          rimraf.sync(distEntryJS)
+        }
+      ]
+    },
+    {
       watcher: viewsWatcher,
       name: 'views',
       event: 'change',
@@ -210,7 +241,7 @@ function watchEverything (c: IConfig) {
 
   watchByConfig(c.cwd, config)
 
-  watchServerRoutes(c);
+  // watchServerRoutes(c);
 }
 
 async function startCompile (c: IConfig) {

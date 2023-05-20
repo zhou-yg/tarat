@@ -132,3 +132,5 @@ packages/tarat/*
 !packages/tarat/README.md
 
 .DS_Store
+
+local-*.sh

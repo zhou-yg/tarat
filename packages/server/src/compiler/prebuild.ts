@@ -167,7 +167,7 @@ export function getPlugins (input: {
 }
 
 
-function getEntryFile (c: IConfig) {
+export function getEntryFile (c: IConfig) {
   let f = path.join(c.cwd, c.appDirectory, c.entryServer)
 
   const tsx = '.tsx'
@@ -441,29 +441,34 @@ export async function buildEntryServer (c: IConfig) {
   const r = getEntryFile(c)
   
   if (r?.file) {
-    const { distEntryJS: distEntry, distEntryCSS: distEntryCss }  = c.pointFiles
+    const { distEntryJS: distEntry }  = c.pointFiles
 
-    const inputOptions: IBuildOption = {
-      input: {
-        input: r.file,
-        plugins: getPlugins({
-          mode: 'dev',
-          css: distEntryCss,
-          runtime: 'server'
-        }, c),
-      },
-      output: {
-        file: distEntry,
-        format: 'commonjs',
-      },
-    }
+    // const inputOptions: IBuildOption = {
+    //   input: {
+    //     input: r.file,
+    //     plugins: getPlugins({
+    //       mode: 'dev',
+    //       css: distEntryCss,
+    //       runtime: 'server'
+    //     }, c),
+        
+    //   },
+    //   output: {
+    //     file: distEntry,
+    //     format: 'commonjs',
+    //   },
+    // }
 
-    await build(c, inputOptions)
+    // await build(c, inputOptions)
 
-    return {
-      entry: distEntry,
-      css: distEntryCss
-    }
+    await esbuild.build({
+      entryPoints: [r.file],
+      bundle: false,
+      outfile: distEntry,
+      platform: 'node',
+      treeShaking: true,
+      format: 'cjs',
+    })
   }
 }
 
@@ -659,6 +664,7 @@ async function esbuildDrivers (
     plugins: [
       aliasAtCodeToCwd(cwd)
     ],
+
   }
 
   let cacheFilesByPlugin: string[] = []
