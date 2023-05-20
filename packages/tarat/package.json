@@ -1,8 +1,8 @@
 {
   "name": "tarat",
-  "version": "0.0.84",
+  "version": "0.0.85",
   "description": "a super fast application framework",
-  "bin": {  
+  "bin": {
     "tarat": "./cli/index.js"
   },
   "exports": {

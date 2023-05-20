@@ -241,7 +241,7 @@ function watchEverything (c: IConfig) {
 
   watchByConfig(c.cwd, config)
 
-  // watchServerRoutes(c);
+  watchServerRoutes(c);
 }
 
 async function startCompile (c: IConfig) {
