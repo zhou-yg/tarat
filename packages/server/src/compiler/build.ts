@@ -83,10 +83,12 @@ export async function buildViews (c: IConfig) {
             ],
             external: [
               ...externalDrivers,
-              'tarat/core', 'tarat/connect',
+              '@polymita/signal',
               '@polymita/signal-model',
+              '@polymita/renderer',
               '@polymita/connect',
-              '@polymita/connect/dist/react'
+              '@polymita/connect/dist/react',
+              'polymita'
             ]  // use other external parameter types will conflict with auto-external plugins
           },
           output: {
