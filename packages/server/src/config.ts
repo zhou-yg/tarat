@@ -192,7 +192,6 @@ function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) 
   const outputAppServerDir = path.join(outputServerDir, config.appDirectory)
   const outputAppClientDir = path.join(outputClientDir, config.appDirectory)
 
-
   return {
     outputDir, 
     outputClientDir,
@@ -202,10 +201,11 @@ function getOutputFiles (config: IDefaultConfig, cwd:string, outputDir: string) 
     outputModelSchema: path.join(outputDir, config.modelsDirectory, config.targetSchemaPrisma),
     modelEnhanceFile: path.join(cwd, config.modelsDirectory, config.modelEnhance),
     modelTargetFile: path.join(cwd, config.modelsDirectory, config.targetSchemaPrisma),
-    // views
+    // views/modules/drivers
     outputViewsDir: path.join(outputDir, config.viewsDirectory),
     outputDriversDir: path.join(outputDir, config.driversDirectory),
-
+    outputModulesDir: path.join(outputDir, config.modulesDirectory),
+    
     /** server */
 
     // app

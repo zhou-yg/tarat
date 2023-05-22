@@ -3,7 +3,7 @@ import * as path from 'path'
 import { IConfig } from "../config";
 import { loadJSON, traverseDir } from '../util';
 import { build, IBuildOption, getPlugins } from "./prebuild";
-
+import * as esbuild from 'esbuild';
 
 export async function buildClientRoutes (c: IConfig) {
   const {
@@ -103,4 +103,35 @@ export async function buildViews (c: IConfig) {
     }
   })
   await Promise.all(queue)
+}
+
+export async function buildModules(c: IConfig) {
+  const { outputModulesDir } = c.pointFiles;
+  const originalModulesDir = path.join(c.cwd, c.modulesDirectory);
+
+  const moduleFiles: string[] = []
+
+  traverseDir(originalModulesDir, f => {
+    const wholePath = path.join(originalModulesDir, f.file)
+    if (f.isDir) {
+      if (!fs.existsSync(wholePath)) {
+        fs.mkdirSync(wholePath)
+      }
+    } else if (/\.(j|t)sx$/.test(f.file)) {
+      moduleFiles.push(f.file)
+    }
+  })
+
+  await esbuild.build({
+    entryPoints: moduleFiles,
+    bundle: true,
+    outdir: outputModulesDir,
+    format: 'esm',
+    splitting: true,
+    external: [
+      '@polymita/renderer',
+      '@polymita/signal-model',
+      '@polymita/signal',
+    ]
+  })
 }
