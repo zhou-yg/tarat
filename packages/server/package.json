@@ -16,6 +16,7 @@
   ],
   "scripts": {
     "wu": "sh scripts/compiler-unit.sh",
+    "test": "jest",
     "test-unit": "jest",
     "test-ci": "TEST=CI jest",
     "build": "rm -rf dist/ && node scripts/build.mjs",
