@@ -48,7 +48,12 @@ export async function buildViews (c: IConfig) {
 
   const queue: Promise<void>[] = []
 
-  const originDirverDir = path.join(c.cwd, c.driversDirectory)
+  const originDriverDir = path.join(c.cwd, c.driversDirectory)
+  const externalDrivers = fs.existsSync(originDriverDir) ? fs.readdirSync(originDriverDir).map(f => {
+    return path.join(c.cwd, c.driversDirectory, f)
+  }) : []
+
+  const entryViewFiles: string[] = []
 
   traverseDir(originalViewsDir, f => {
     const wholePath = path.join(originalViewsDir, f.file)
@@ -57,52 +62,65 @@ export async function buildViews (c: IConfig) {
         fs.mkdirSync(wholePath)
       }
     } else if (/\.(j|t)sx$/.test(f.file)) {
-      queue.push(new Promise<void>(async resolve => {
-        const file = f.file
-        const parsed = path.parse(file)
+      entryViewFiles.push(wholePath)
 
-        const relativePath = path.relative(originalViewsDir, f.dir)
+      // queue.push(new Promise<void>(async resolve => {
+      //   const file = f.file
+      //   const parsed = path.parse(file)
 
-        const input = path.join(originalViewsDir, relativePath, file)
-        const outputJS = path.join(outputViewsDir, relativePath, `${parsed.name}.js`)
-        const outputCSS = path.join(outputViewsDir, relativePath, `${parsed.name}.css`)
+      //   const relativePath = path.relative(originalViewsDir, f.dir)
+
+      //   const input = path.join(originalViewsDir, relativePath, file)
+      //   const outputJS = path.join(outputViewsDir, relativePath, `${parsed.name}.js`)
+      //   const outputCSS = path.join(outputViewsDir, relativePath, `${parsed.name}.css`)
   
-        const externalDrivers = fs.existsSync(originDirverDir) ? fs.readdirSync(originDirverDir).map(f => {
-          return path.join(c.cwd, c.driversDirectory, f)
-        }) : []
   
-        const op: IBuildOption = {
-          input: {
-            input,
-            plugins: [
-              ...getPlugins({
-                css: outputCSS,
-                mode: 'build',
-                target: 'unit',
-              }, c),
-            ],
-            external: [
-              ...externalDrivers,
-              '@polymita/signal',
-              '@polymita/signal-model',
-              '@polymita/renderer',
-              '@polymita/connect',
-              '@polymita/connect/dist/react',
-              'polymita'
-            ]  // use other external parameter types will conflict with auto-external plugins
-          },
-          output: {
-            file: outputJS,
-            format: 'esm'
-          }
-        }
-        await build(c, op)
+      //   const op: IBuildOption = {
+      //     input: {
+      //       input,
+      //       plugins: [
+      //         ...getPlugins({
+      //           css: outputCSS,
+      //           mode: 'build',
+      //           target: 'unit',
+      //         }, c),
+      //       ],
+      //       external: [
+      //         ...externalDrivers,
+      //         '@polymita/signal',
+      //         '@polymita/signal-model',
+      //         '@polymita/renderer',
+      //         '@polymita/connect',
+      //         '@polymita/connect/dist/react',
+      //         'polymita',
+      //         'polymita/*',
+      //         // 'react',
+      //         // 'react-dom'
+      //       ]  // use other external parameter types will conflict with auto-external plugins
+      //     },
+      //     output: {
+      //       file: outputJS,
+      //       format: 'esm'
+      //     }
+      //   }
+      //   await build(c, op)
 
-        resolve()
-      }))
+      //   resolve()
+      // }))
     }
   })
-  await Promise.all(queue)
+
+  await esbuild.build({
+    entryPoints: entryViewFiles,
+    bundle: true,
+    outdir: outputViewsDir,
+    format: 'esm',
+    splitting: true,
+    external: [
+      ...generateExternal(c),
+      ...externalDrivers,
+    ]
+  })  
 }
 
 export async function buildModules(c: IConfig) {
@@ -129,10 +147,27 @@ export async function buildModules(c: IConfig) {
     format: 'esm',
     splitting: true,
     external: [
-      '@polymita/renderer',
-      '@polymita/signal-model',
-      '@polymita/signal',
-      'polymita'
+      ...generateExternal(c)
     ]
   })
+}
+
+/**
+ * auto generate externals for esbuild
+ */
+export function generateExternal (c: IConfig) {
+  const { packageJSON } = c;
+
+  const internalPackages = [
+    '@polymita/*',
+    'polymita',
+  ];
+
+  if (packageJSON.peerDependencies) {
+    internalPackages.push(
+      ...Object.keys(packageJSON.peerDependencies),
+    );
+  }
+
+  return internalPackages;
 }

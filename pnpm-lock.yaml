@@ -639,6 +639,7 @@ importers:
     specifiers:
       '@polymita/connect': workspace:*
       '@polymita/renderer': workspace:*
+      '@polymita/signal': workspace:*
       '@polymita/signal-model': workspace:*
       '@prisma/client': ^4.2.1
       '@types/lodash': ^4.14.182
@@ -650,8 +651,6 @@ importers:
       lodash: ^4.17.21
       polymita: '*'
       prisma: ^4.2.1
-      react: ^18.1.0
-      react-dom: ^18.1.0
       react-router-dom: ^6.7.0
       tailwindcss: ^3.1.8
       tarat: workspace:*
@@ -660,6 +659,7 @@ importers:
     dependencies:
       '@polymita/connect': link:../../polymita-runtime/packages/connect
       '@polymita/renderer': link:../../polymita-runtime/packages/renderer
+      '@polymita/signal': link:../../polymita-runtime/packages/signal
       '@polymita/signal-model': link:../../polymita-runtime/packages/signal-model
       '@prisma/client': 4.3.1_prisma@4.11.0
       '@types/lodash': 4.14.191
@@ -669,11 +669,9 @@ importers:
       immer: 9.0.21
       less: 4.1.3
       lodash: 4.17.21
-      polymita: 0.2.0_ox4oy6dbwmconqjwvln2vdxvsy
+      polymita: 0.2.0_z6hymdidj5ykgm5gbdbmez2t6e
       prisma: 4.11.0
-      react: 18.2.0
-      react-dom: 18.2.0_react@18.2.0
-      react-router-dom: 6.9.0_biqbaboplfbrettd7655fr4n2y
+      react-router-dom: 6.9.0
       tailwindcss: 3.2.7
       tarat: link:../../tarat
       tarat-cascading-list: link:../../example/cascading-list
@@ -1907,7 +1905,7 @@ packages:
     engines: {node: '>=6'}
     optional: true
 
-  /polymita/0.2.0_ox4oy6dbwmconqjwvln2vdxvsy:
+  /polymita/0.2.0_z6hymdidj5ykgm5gbdbmez2t6e:
     resolution: {integrity: sha512-umUezJkJpOU+StRR+PHZXacq3oAl0dM/N8V1BX+skZsswDN0AzXjHRSlxCuEzByjbt7PA1bP5ZLwyYpSTUPhHQ==}
     peerDependencies:
       '@polymita/renderer': ^2.0.4
@@ -1916,6 +1914,7 @@ packages:
     dependencies:
       '@ant-design/icons-svg': 4.2.1
       '@polymita/renderer': link:packages/polymita-runtime/packages/renderer
+      '@polymita/signal': link:packages/polymita-runtime/packages/signal
       '@polymita/signal-model': link:packages/polymita-runtime/packages/signal-model
       '@types/jest': 29.5.0
       '@types/node': 18.15.6
@@ -2026,21 +2025,11 @@ packages:
     engines: {node: '>=10'}
     dev: false
 
-  /react-dom/18.2.0_react@18.2.0:
-    resolution: {integrity: sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==}
-    peerDependencies:
-      react: ^18.2.0
-    dependencies:
-      loose-envify: 1.4.0
-      react: 18.2.0
-      scheduler: 0.23.0
-    dev: false
-
   /react-is/18.2.0:
     resolution: {integrity: sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==}
     dev: false
 
-  /react-router-dom/6.9.0_biqbaboplfbrettd7655fr4n2y:
+  /react-router-dom/6.9.0:
     resolution: {integrity: sha512-/seUAPY01VAuwkGyVBPCn1OXfVbaWGGu4QN9uj0kCPcTyNYgL1ldZpxZUpRU7BLheKQI4Twtl/OW2nHRF1u26Q==}
     engines: {node: '>=14'}
     peerDependencies:
@@ -2048,19 +2037,16 @@ packages:
       react-dom: '>=16.8'
     dependencies:
       '@remix-run/router': 1.4.0
-      react: 18.2.0
-      react-dom: 18.2.0_react@18.2.0
-      react-router: 6.9.0_react@18.2.0
+      react-router: 6.9.0
     dev: false
 
-  /react-router/6.9.0_react@18.2.0:
+  /react-router/6.9.0:
     resolution: {integrity: sha512-51lKevGNUHrt6kLuX3e/ihrXoXCa9ixY/nVWRLlob4r/l0f45x3SzBvYJe3ctleLUQQ5fVa4RGgJOTH7D9Umhw==}
     engines: {node: '>=14'}
     peerDependencies:
       react: '>=16.8'
     dependencies:
       '@remix-run/router': 1.4.0
-      react: 18.2.0
     dev: false
 
   /react/18.2.0:
@@ -2110,12 +2096,6 @@ packages:
   /sax/1.2.4:
     resolution: {integrity: sha512-NqVDv9TpANUjFm0N8uM5GxL36UgKi9/atZw+x7YFnQ8ckwFGKrl4xX4yWtrey3UJm5nP1kUbnYgLopqWNSRhWw==}
     optional: true
-
-  /scheduler/0.23.0:
-    resolution: {integrity: sha512-CtuThmgHNg7zIZWAXi3AsyIzA3n4xx7aNyjwC2VJldO2LMVDhFK+63xGqq6CsJH4rTAt6/M+N4GhZiDYPx9eUw==}
-    dependencies:
-      loose-envify: 1.4.0
-    dev: false
 
   /semver/5.7.1:
     resolution: {integrity: sha512-sauaDf/PZdVgrLTNYHRtpXa1iRiKcaebiKQ1BJdpQlWH2lCvexQdX55snPFyK7QzpudqbCI0qXFfOasHdyNDGQ==}
