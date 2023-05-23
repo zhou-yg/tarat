@@ -117,8 +117,8 @@ export async function buildModules(c: IConfig) {
       if (!fs.existsSync(wholePath)) {
         fs.mkdirSync(wholePath)
       }
-    } else if (/\.(j|t)sx$/.test(f.file)) {
-      moduleFiles.push(f.file)
+    } else if (/\.(j|t)s(x?)$/.test(f.file)) {
+      moduleFiles.push(wholePath)
     }
   })
 
@@ -132,6 +132,7 @@ export async function buildModules(c: IConfig) {
       '@polymita/renderer',
       '@polymita/signal-model',
       '@polymita/signal',
+      'polymita'
     ]
   })
 }
