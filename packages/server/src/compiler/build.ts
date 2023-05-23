@@ -63,50 +63,6 @@ export async function buildViews (c: IConfig) {
       }
     } else if (/\.(j|t)sx$/.test(f.file)) {
       entryViewFiles.push(wholePath)
-
-      // queue.push(new Promise<void>(async resolve => {
-      //   const file = f.file
-      //   const parsed = path.parse(file)
-
-      //   const relativePath = path.relative(originalViewsDir, f.dir)
-
-      //   const input = path.join(originalViewsDir, relativePath, file)
-      //   const outputJS = path.join(outputViewsDir, relativePath, `${parsed.name}.js`)
-      //   const outputCSS = path.join(outputViewsDir, relativePath, `${parsed.name}.css`)
-  
-  
-      //   const op: IBuildOption = {
-      //     input: {
-      //       input,
-      //       plugins: [
-      //         ...getPlugins({
-      //           css: outputCSS,
-      //           mode: 'build',
-      //           target: 'unit',
-      //         }, c),
-      //       ],
-      //       external: [
-      //         ...externalDrivers,
-      //         '@polymita/signal',
-      //         '@polymita/signal-model',
-      //         '@polymita/renderer',
-      //         '@polymita/connect',
-      //         '@polymita/connect/dist/react',
-      //         'polymita',
-      //         'polymita/*',
-      //         // 'react',
-      //         // 'react-dom'
-      //       ]  // use other external parameter types will conflict with auto-external plugins
-      //     },
-      //     output: {
-      //       file: outputJS,
-      //       format: 'esm'
-      //     }
-      //   }
-      //   await build(c, op)
-
-      //   resolve()
-      // }))
     }
   })
 

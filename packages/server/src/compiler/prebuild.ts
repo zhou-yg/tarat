@@ -378,10 +378,13 @@ export function watchServerRoutes(c: IConfig) {
     plugins: myPlugins,
     external: [
       '@polymita/signal-model',
+      '@polymita/signal',
+      '@polymita/renderer',
       '@polymita/connect',
       '@polymita/connect/dist/react',
       'react',
-      '@mui/material'
+      '@mui/material',
+      'polymita'
     ],
     output: {
       file: distServerRoutes,      
@@ -422,10 +425,13 @@ export async function buildServerRoutes(c: IConfig) {
       plugins: myPlugins,
       external: [
         '@polymita/signal-model',
+        '@polymita/signal',
+        '@polymita/renderer',
         '@polymita/connect',
         '@polymita/connect/dist/react',
         'react',
-        '@mui/material'
+        '@mui/material',
+        'polymita',
       ],
     },
     output: {
