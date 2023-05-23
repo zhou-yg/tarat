@@ -3,7 +3,8 @@ import { join } from 'path'
 import { prepareDir } from '../../cli/dev'
 import {
   buildDrivers,
-  buildServerRoutes
+  buildServerRoutes,
+  generateServerRoutes
 } from '../../src'
 import { readMockProjectConfig } from '../mockUtil'
 
@@ -14,6 +15,7 @@ describe('server routes', () => {
     const config = await readMockProjectConfig('serverRoutes')
     prepareDir(config)
 
+    await generateServerRoutes(config);
     await buildServerRoutes(config)
 
     const { outputAppServerDir, outputAppClientDir } = config.pointFiles
@@ -22,7 +24,6 @@ describe('server routes', () => {
 
     expect(existsSync(serverRoutesFile + ext)).toBeTruthy()
     // compiled file
-    console.log('serverRoutesFile+js: ', serverRoutesFile + '.js');
     expect(existsSync(serverRoutesFile + '.js')).toBeTruthy()
 
     // compiled file content
@@ -33,7 +34,10 @@ describe('server routes', () => {
     const config = await readMockProjectConfig('serverRoutes')
     prepareDir(config)
 
-    await buildDrivers(config)
+    await Promise.all([
+      buildDrivers(config),
+      generateServerRoutes(config)
+    ])
     await buildServerRoutes(config)
 
     const { outputAppServerDir, outputAppClientDir } = config.pointFiles
