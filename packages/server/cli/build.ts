@@ -12,6 +12,7 @@ import {
   generateHookDeps,
   logFrame,
   time,
+  buildModules,
 } from "../src/"
 import { buildEverything, prepareDir } from "./dev"
 
@@ -58,6 +59,9 @@ export default async (cwd: string) => {
     }),
     buildViews(config).then(() => {
       logFrame((`build ${chalk.green('views')} end. cost ${chalk.green(cost2())} seconds`))    
+    }),
+    buildModules(config).then(() => {
+      logFrame((`build ${chalk.green('modules')} end. cost ${chalk.green(cost2())} seconds`))
     }),
   ])
 
