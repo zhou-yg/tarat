@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { IConfig } from "../config";
 import { loadJSON, traverseDir } from '../util';
-import { build, IBuildOption, getPlugins } from "./prebuild";
+import { build, IBuildOption, getPlugins, getTSConfigPath, buildDTS } from "./prebuild";
 import * as esbuild from 'esbuild';
 
 export async function buildClientRoutes (c: IConfig) {
@@ -102,10 +102,27 @@ export async function buildModules(c: IConfig) {
     outdir: outputModulesDir,
     format: 'esm',
     splitting: true,
+    tsconfig: getTSConfigPath(c.cwd),
     external: [
       ...generateExternal(c)
     ]
   })
+}
+/**
+ * generate modules/*.d.ts
+ */
+export function generateModuleTypes (c: IConfig) {
+  const { outputModulesDir } = c.pointFiles;
+  const { modules } = c;
+
+  const moduleFiles: [string, string][] = []
+  
+  modules.forEach(f => {
+    const outPath = path.join(outputModulesDir, f.relativeFile.replace(/\.ts(x?)$/, '.d.ts'))
+    moduleFiles.push([f.path, outPath])
+  })
+  
+  return Promise.all(moduleFiles.map(([input, output]) => buildDTS(c, input, output)))
 }
 
 /**

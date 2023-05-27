@@ -1,6 +1,5 @@
 import * as path from 'path'
 import * as fs from 'fs'
-import { last } from '../util'
 
 export interface IViewConfig {
   /**
@@ -22,8 +21,11 @@ export interface IViewConfig {
   index?: boolean
   // file absolute path relative to current project
   file: string
+  // file absolute path relative to root
+  filePath: string
 
   dir: boolean
+  isDir: boolean
 
   dynamic: boolean
 }
@@ -41,12 +43,14 @@ function defineView (viewDir: string, file: string, name: string, parent?: IView
     parentId: parent?.id || '',
     path: file.replace(/\.\w+/, ''),
     file,
+    filePath: currentFileOrDirPath,
     name: name.replace(/\.\w+/, ''),
     index: isIndexFlagn(file),
     dir: fs.lstatSync(currentFileOrDirPath).isDirectory(),
+    isDir: fs.lstatSync(currentFileOrDirPath).isDirectory(),
     dynamic: /^\:/.test(name)
   }
-  if (current.dir) {
+  if (current.isDir) {
     const childConfigs = readViews(viewDir, file, current)
     configs.push(...childConfigs)
   }

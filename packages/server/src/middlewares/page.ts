@@ -1,11 +1,11 @@
 import Application from "koa";
-import { IConfig, IViewConfig } from "../config";
+import { IConfig } from "../config";
 import { compile } from 'ejs'
 import * as fs from 'fs'
 import * as path from 'path'
 import { ViteDevServer } from "vite";
 import { IHookContext, RunnerModelScope } from "@polymita/signal-model";
-import { matchRoute } from "../config/routes";
+import { IViewConfig, matchRoute } from "../config/routes";
 import { renderPage } from "../entries/html";
 
 const templateFile = './pageTemplate.ejs'

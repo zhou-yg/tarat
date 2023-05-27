@@ -2,12 +2,14 @@ import * as path from 'path'
 import * as fs from 'fs'
 import l from 'lodash'
 import { defineRoutesTree, readViews } from './config/routes'
-import { isFileEmpty, loadJSON, logFrame } from './util'
+import { IFile, isFileEmpty, loadJSON, logFrame, traverseDir } from './util'
 import chalk from 'chalk'
 import { findDependencies } from './config/deps'
 import type { JSONSchemaForNPMPackageJsonFiles } from '@schemastore/package'
 const { merge } = l
 import getPort, { makeRange as portNumbers } from "get-port";
+
+export { IViewConfig } from './config/routes'
 
 export const defaultConfig = () => ({
   //
@@ -75,32 +77,6 @@ export type IDefaultConfig = ReturnType<typeof defaultConfig> & {
 
 
 const configFile = 'tarat.config.js'
-
-export interface IViewConfig {
-  /**
-   * The unique id for this route, named like its `file` but without the
-   * extension. So `app/routes/gists/$username.jsx` will have an `id` of
-   * `routes/gists/$username`.
-   */
-  id: string
-  parentId: string
-  /**
-   * The path this route uses to match on the URL pathname.
-   */
-  path: string
-  /**
-   * single file name without file extension
-   */
-  name: string
-
-  index?: boolean
-  // file absolute path relative to current project
-  file: string
-
-  dir: boolean
-
-  dynamic: boolean
-}
 
 function readPages (viewDir: string, dir: string) {
   const pages = readViews(viewDir, dir)
@@ -278,6 +254,17 @@ function getAppRootFile (cwd: string, c: IDefaultConfig) {
   }
 }
 
+function readdirDepth (dir: string) {
+  const files: IFile[] = []
+  traverseDir(dir, (f) => {
+    if (!f.isDir) {
+      files.push(f)
+    }
+  })
+
+  return files
+}
+
 export async function readConfig (arg: {
   cwd: string,
   isProd?: boolean
@@ -298,13 +285,17 @@ export async function readConfig (arg: {
   const driversDirectory = path.join(cwd, config.driversDirectory)
   const appDirectory = path.join(cwd, config.appDirectory)
   const pagesDirectory = path.join(appDirectory, config.pageDirectory)
+  const modulesDirectory = path.join(cwd, config.modulesDirectory)
 
   const views = readViews(viewsDirectory, '/')
   views.forEach(c => {
     c.file = path.join('./', config.viewsDirectory, c.file)
   })
+  // polymita modules
+  const modules = readdirDepth(modulesDirectory)
 
   const pages = readPages(pagesDirectory, '/')
+
   // complement page file with page directory
   pages.forEach(c => {
     c.file = path.join('./', config.appDirectory, config.pageDirectory, c.file)
@@ -316,6 +307,7 @@ export async function readConfig (arg: {
       relativeDir: path.relative(driversDirectory, d.dir)
     }
   })
+
 
   const entryCSS = readEntryCSS(path.join(cwd, config.appDirectory, config.entry))
 
@@ -351,5 +343,6 @@ export async function readConfig (arg: {
     views,
     pages,
     dependencyModules,
+    modules,
   }
 }

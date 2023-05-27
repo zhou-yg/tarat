@@ -3,11 +3,11 @@ import fs from 'node:fs'
 import {
   buildModules, traverseDir,
   buildViews,
+  generateModuleTypes,
 } from '../../src'
 import { readMockProjectConfig } from '../mockUtil'
 
 describe('compile module', () => {
-
   it('compile modules', async () => {
     const c = await readMockProjectConfig('hasModules')
 
@@ -26,6 +26,18 @@ describe('compile module', () => {
 
       expect(fs.existsSync(outputJS)).toBeTruthy()
     })
+  })
+
+  it('generate module types', async () => {
+    const c = await readMockProjectConfig('hasModules')
+    await generateModuleTypes(c)
+
+    const dir = c.pointFiles.outputModulesDir
+    const filesInDir = fs.readdirSync(dir).filter(f => f.endsWith('.d.ts'))
+    expect(filesInDir.length).toBe(1)
+    
+    const dtsContent = fs.readFileSync(path.join(dir, filesInDir[0]), 'utf-8')
+    expect(/declare const name: "AddSource";/.test(dtsContent)).toBeTruthy()
   })
 
   it('compile views', async () => {

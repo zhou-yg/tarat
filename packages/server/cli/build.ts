@@ -1,9 +1,9 @@
 import chalk from 'chalk'
-import { fstat } from 'fs'
 import * as path from 'path'
 import * as fs from 'fs'
 import { cp } from "shelljs"
 import {
+  generateModuleTypes,
   composeSchema,
   composeDriver,
   readConfig,
@@ -63,6 +63,9 @@ export default async (cwd: string) => {
     buildModules(config).then(() => {
       logFrame((`build ${chalk.green('modules')} end. cost ${chalk.green(cost2())} seconds`))
     }),
+    generateModuleTypes(config).then(() => {
+      logFrame((`build ${chalk.green('modules')} end. cost ${chalk.green(cost2())} seconds`))
+    })
   ])
 
   logFrame((`build end. cost ${chalk.green(allCost())} seconds`))

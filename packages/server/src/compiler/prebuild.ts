@@ -718,7 +718,7 @@ async function esbuildDrivers (
   }
 }
 
-function buildDTS (c: IConfig, filePath: string, outputFile: string) {
+export function buildDTS (c: IConfig, filePath: string, outputFile: string) {
   const tsconfigPath = getTSConfigPath(c.cwd)
   const json = loadJSON(tsconfigPath)
 
@@ -726,7 +726,9 @@ function buildDTS (c: IConfig, filePath: string, outputFile: string) {
     input: {
       input: filePath,
       plugins: [
-        dts()
+        dts({
+          compilerOptions: json,
+        })
       ]
     },
     output: {

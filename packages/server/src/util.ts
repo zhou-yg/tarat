@@ -86,13 +86,26 @@ export function isFileEmpty (code: string) {
   return code.replace(/\n/g, '').trim().length === 0
 }
 
-interface IFile {
+export interface IFile {
   isDir: boolean
+  /**
+   * absolute path
+   */
   path: string
+  /**
+   * file name with ext
+   */
   file: string
+  /**
+   * absolute parent directory path
+   */
   dir: string
+  /**
+   * relative path for first argument
+   */
+  relativeFile: string
 }
-export function traverseDir (dir: string, callback: (f: IFile) => void) {
+export function traverseDir (dir: string, callback: (f: IFile) => void, relativeBase = '') {
   const files = fs.readdirSync(dir)
   files.forEach(f => {
     const p = path.join(dir, f)
@@ -101,10 +114,11 @@ export function traverseDir (dir: string, callback: (f: IFile) => void) {
       isDir,
       dir,
       file: f,
+      relativeFile: path.join(relativeBase, f),
       path: p
     })
     if (isDir) {
-      traverseDir(p, callback)
+      traverseDir(p, callback, path.join(relativeBase, f))
     }
   })
 }
