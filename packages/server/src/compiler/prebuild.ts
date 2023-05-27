@@ -728,7 +728,12 @@ export function buildDTS (c: IConfig, filePath: string, outputFile: string) {
       plugins: [
         dts({
           compilerOptions: json,
-        })
+        }),
+        rollupAlias({
+          entries: {
+            '@': c.cwd,
+          }
+        }),
       ]
     },
     output: {
