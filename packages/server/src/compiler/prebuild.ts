@@ -487,8 +487,8 @@ export function replaceImportDriverPath (
   format: esbuild.Format,
   env: 'client' | 'server',
 ) {
-  const reg = /from (?:'|")([\w\/-]*)(?:'|")/g
-  const reg2 = /require\((?:'|")([\w\/-]*)(?:'|")/g
+  const reg = /from (?:'|")([@\w\/-]*)(?:'|")/g
+  const reg2 = /require\((?:'|")([@\w\/-]*)(?:'|")/g
 
   const { dependencyModules, buildDirectory, driversDirectory } = config
 
