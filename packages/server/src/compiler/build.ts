@@ -108,6 +108,24 @@ export async function buildModules(c: IConfig) {
     ]
   })
 }
+
+export async function esbuildServerRoutes(c: IConfig) {
+  const {
+    autoGenerateServerRoutes,
+    distServerRoutes,
+    distServerRoutesCSS
+  } = c.pointFiles
+
+  await esbuild.build({
+    entryPoints: [autoGenerateServerRoutes],
+    outfile: distServerRoutes,
+    format: 'cjs',
+    bundle: true,
+    external: [
+      ...generateExternal(c),
+    ]
+  })
+}
 /**
  * generate modules/*.d.ts
  */
@@ -142,5 +160,7 @@ export function generateExternal (c: IConfig) {
     );
   }
 
+  console.log('internalPackages: ', internalPackages);
+  
   return internalPackages;
 }

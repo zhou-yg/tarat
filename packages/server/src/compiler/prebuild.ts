@@ -357,6 +357,24 @@ export async function generateServerRoutes(c: IConfig) {
   fs.writeFileSync(autoGenerateServerRoutes, prettier.format(routesStr, { parser: 'typescript' }))
 }
 
+export function contextServerRoutes(c: IConfig) {
+  const {
+    autoGenerateServerRoutes,
+    distServerRoutes,
+  } = c.pointFiles
+
+  let ctxPromise = esbuild.context({
+    entryPoints: [autoGenerateServerRoutes],
+    outfile: distServerRoutes,
+  });
+
+  return () => {
+    ctxPromise.then(ctx => {
+      ctx.rebuild()
+    })
+  }
+}
+
 export function watchServerRoutes(c: IConfig) {
   const {
     autoGenerateServerRoutes,

@@ -15,6 +15,7 @@ import {
   generateServerRoutes,
   watchServerRoutes,
   getEntryFile,
+  contextServerRoutes,
 } from "../src/";
 
 import * as desktop from '../desktopSrc'
@@ -242,6 +243,8 @@ function watchEverything (c: IConfig) {
   watchByConfig(c.cwd, config)
 
   watchServerRoutes(c);
+
+  const rebuild = contextServerRoutes(c)
 }
 
 async function startCompile (c: IConfig) {

@@ -255,6 +255,9 @@ function getAppRootFile (cwd: string, c: IDefaultConfig) {
 }
 
 function readdirDepth (dir: string) {
+  if (!fs.existsSync(dir)) {
+    return []
+  }
   const files: IFile[] = []
   traverseDir(dir, (f) => {
     if (!f.isDir) {
