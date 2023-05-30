@@ -15,12 +15,12 @@
     "lodash": "^4.17.21",
     "prisma": "^4.2.1",
     "tailwindcss": "^3.1.8",
-    "tarat": "workspace:*",
     "tarat-cascading-list": "workspace:*",
     "tslib": "^2.4.0",
     "polymita": "*"
   },
   "devDependencies": {
+    "tarat": "workspace:*",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-router-dom": "^6.7.0"

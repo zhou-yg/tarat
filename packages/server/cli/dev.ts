@@ -83,7 +83,7 @@ interface IWatcherConfig {
   watcher: chokidar.FSWatcher
   name: string
   event: 'add' | 'change' | 'error' | 'unlink'
-  callbacks: ((c: IConfig) => Promise<void>)[]
+  callbacks: (((c: IConfig) => Promise<void>) | (() => void))[]
   callbackMode?: 'cocurrent' | 'sequence'
 }
 
@@ -182,6 +182,9 @@ function watchEverything (c: IConfig) {
   const entryServerWatcher = chokidar.watch(appServerEntry, chokidarOptions())
   const viewsWatcher = chokidar.watch(viewsGroup, chokidarOptions())
   const driversWatcher = chokidar.watch(driversGroup, chokidarOptions())
+  const serverRoutesWatcher = chokidar.watch(c.pointFiles.autoGenerateServerRoutes, chokidarOptions())
+
+  const rebuildServerRoutes = contextServerRoutes(c)
 
   const config: IWatcherConfig[] = [
     {
@@ -237,14 +240,18 @@ function watchEverything (c: IConfig) {
       event: 'change',
       callbackMode: 'sequence',
       callbacks: [buildDrivers, generateServerRoutes],
+    },
+    {
+      watcher: serverRoutesWatcher,
+      name: 'serverRoutes',
+      event: 'change',
+      callbacks: [rebuildServerRoutes]
     }
   ]
 
   watchByConfig(c.cwd, config)
 
-  watchServerRoutes(c);
-
-  const rebuild = contextServerRoutes(c)
+  // watchServerRoutes(c);
 }
 
 async function startCompile (c: IConfig) {

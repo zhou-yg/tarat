@@ -150,6 +150,10 @@ export function generateExternal (c: IConfig) {
   const { packageJSON } = c;
 
   const internalPackages = [
+    '@polymita/connect',
+    '@polymita/signal-model',
+    '@polymita/renderer',
+    '@polymita/signal',
     '@polymita/*',
     'polymita',
   ];
@@ -160,7 +164,5 @@ export function generateExternal (c: IConfig) {
     );
   }
 
-  console.log('internalPackages: ', internalPackages);
-  
   return internalPackages;
 }

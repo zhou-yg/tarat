@@ -1,6 +1,6 @@
 {
   "name": "tarat",
-  "version": "0.0.91",
+  "version": "0.0.92",
   "description": "a super fast application framework",
   "bin": {
     "tarat": "./cli/index.js"
@@ -69,7 +69,7 @@
     "chokidar": "^3.5.3",
     "ejs": "^3.1.8",
     "electron": "^22.0.3",
-    "esbuild": "^0.14.43",
+    "esbuild": "^0.17.19",
     "esbuild-plugin-alias": "^0.2.1",
     "eventemitter3": "^4.0.7",
     "execa": "6.x.x",
