@@ -185,8 +185,15 @@ function watchEverything (c: IConfig) {
   const serverRoutesWatcher = chokidar.watch(c.pointFiles.autoGenerateServerRoutes, chokidarOptions())
 
   const rebuildServerRoutes = contextServerRoutes(c)
+  // rebuildServerRoutes()
 
   const config: IWatcherConfig[] = [
+    // {
+    //   watcher: serverRoutesWatcher,
+    //   name: 'serverRoutes',
+    //   event: 'change',
+    //   callbacks: [rebuildServerRoutes]
+    // },
     {
       watcher: appWatcher,
       name: 'app',
@@ -241,12 +248,6 @@ function watchEverything (c: IConfig) {
       callbackMode: 'sequence',
       callbacks: [buildDrivers, generateServerRoutes],
     },
-    {
-      watcher: serverRoutesWatcher,
-      name: 'serverRoutes',
-      event: 'change',
-      callbacks: [rebuildServerRoutes]
-    }
   ]
 
   watchByConfig(c.cwd, config)

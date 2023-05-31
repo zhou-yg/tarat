@@ -4,6 +4,7 @@ import { IConfig } from "../config";
 import { loadJSON, traverseDir } from '../util';
 import { build, IBuildOption, getPlugins, getTSConfigPath, buildDTS } from "./prebuild";
 import * as esbuild from 'esbuild';
+import esbuildPluginPostcss from './plugins/esbuild-plugin-postcss';
 
 export async function buildClientRoutes (c: IConfig) {
   const {
@@ -115,12 +116,15 @@ export async function esbuildServerRoutes(c: IConfig) {
     distServerRoutes,
     distServerRoutesCSS
   } = c.pointFiles
-
+  
   await esbuild.build({
     entryPoints: [autoGenerateServerRoutes],
     outfile: distServerRoutes,
     format: 'cjs',
     bundle: true,
+    plugins: [
+      esbuildPluginPostcss({ cwd: c.cwd })
+    ],
     external: [
       ...generateExternal(c),
     ]

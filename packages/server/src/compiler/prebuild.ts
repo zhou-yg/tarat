@@ -30,6 +30,7 @@ import { removeFunctionBody } from './ast';
 import { findDependentPrisma, readCurrentPrisma, readExsitPrismaPart, transformModelName } from './compose';
 import { upperFirst } from 'lodash';
 import { generateHookDeps } from './dependenceGraph';
+import esbuildPostcss from 'esbuild-plugin-postcss'
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -366,6 +367,12 @@ export function contextServerRoutes(c: IConfig) {
   let ctxPromise = esbuild.context({
     entryPoints: [autoGenerateServerRoutes],
     outfile: distServerRoutes,
+    format: 'cjs',
+    plugins: [
+      esbuildPostcss({
+        root: c.cwd
+      }),
+    ]
   });
 
   return () => {
