@@ -30,7 +30,7 @@ import { removeFunctionBody } from './ast';
 import { findDependentPrisma, readCurrentPrisma, readExsitPrismaPart, transformModelName } from './compose';
 import { upperFirst } from 'lodash';
 import { generateHookDeps } from './dependenceGraph';
-import esbuildPostcss from 'esbuild-plugin-postcss'
+import esbuildPluginPostcss from './plugins/esbuild-plugin-postcss';
 
 const templateFile = './routesTemplate.ejs'
 const templateFilePath = path.join(__dirname, templateFile)
@@ -368,16 +368,20 @@ export function contextServerRoutes(c: IConfig) {
     entryPoints: [autoGenerateServerRoutes],
     outfile: distServerRoutes,
     format: 'cjs',
+    bundle: true,
     plugins: [
-      esbuildPostcss({
-        root: c.cwd
+      esbuildPluginPostcss({
+        cwd: c.cwd
       }),
+    ],
+    external: [
+      ...generateExternal(c),
     ]
   });
 
-  return () => {
-    ctxPromise.then(ctx => {
-      ctx.rebuild()
+  return async () => {
+    return ctxPromise.then(ctx => {
+      return ctx.rebuild()
     })
   }
 }
@@ -937,4 +941,28 @@ export async function buildModelIndexes(c: IConfig) {
      */
     fs.writeFileSync(schemaIndexesFile, JSON.stringify(mergedObj, null, 2))
   }
+}
+
+/**
+ * auto generate externals for esbuild
+ */
+export function generateExternal (c: IConfig) {
+  const { packageJSON } = c;
+
+  const internalPackages = [
+    '@polymita/connect',
+    '@polymita/signal-model',
+    '@polymita/renderer',
+    '@polymita/signal',
+    '@polymita/*',
+    'polymita',
+  ];
+
+  if (packageJSON.peerDependencies) {
+    internalPackages.push(
+      ...Object.keys(packageJSON.peerDependencies),
+    );
+  }
+
+  return internalPackages;
 }

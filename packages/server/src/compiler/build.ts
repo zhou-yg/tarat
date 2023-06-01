@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { IConfig } from "../config";
 import { loadJSON, traverseDir } from '../util';
-import { build, IBuildOption, getPlugins, getTSConfigPath, buildDTS } from "./prebuild";
+import { build, IBuildOption, getPlugins, getTSConfigPath, buildDTS, generateExternal } from "./prebuild";
 import * as esbuild from 'esbuild';
 import esbuildPluginPostcss from './plugins/esbuild-plugin-postcss';
 
@@ -147,26 +147,3 @@ export function generateModuleTypes (c: IConfig) {
   return Promise.all(moduleFiles.map(([input, output]) => buildDTS(c, input, output)))
 }
 
-/**
- * auto generate externals for esbuild
- */
-export function generateExternal (c: IConfig) {
-  const { packageJSON } = c;
-
-  const internalPackages = [
-    '@polymita/connect',
-    '@polymita/signal-model',
-    '@polymita/renderer',
-    '@polymita/signal',
-    '@polymita/*',
-    'polymita',
-  ];
-
-  if (packageJSON.peerDependencies) {
-    internalPackages.push(
-      ...Object.keys(packageJSON.peerDependencies),
-    );
-  }
-
-  return internalPackages;
-}
