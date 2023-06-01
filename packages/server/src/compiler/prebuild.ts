@@ -951,10 +951,11 @@ export function generateExternal (c: IConfig) {
 
   const internalPackages = [
     '@polymita/connect',
+    '@polymita/connect/dist/react',
     '@polymita/signal-model',
     '@polymita/renderer',
     '@polymita/signal',
-    '@polymita/*',
+    // '@polymita/*',
     'polymita',
   ];
 
