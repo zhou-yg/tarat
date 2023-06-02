@@ -956,7 +956,7 @@ export function generateExternal (c: IConfig) {
     '@polymita/renderer',
     '@polymita/signal',
     // '@polymita/*',
-    'polymita',
+    // 'polymita',
   ];
 
   if (packageJSON.peerDependencies) {
