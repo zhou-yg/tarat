@@ -166,9 +166,9 @@ function watchEverything (c: IConfig) {
   const appGroup = [
     path.join(c.cwd, c.appDirectory), // -> client routes
   ]
-  const appServerEntry = [
+  const appServerEntry = serverEntry?.file ? [
     path.join(c.cwd, c.appDirectory, serverEntry.file),
-  ]
+  ] : []
   const viewsGroup = [
     path.join(c.cwd, c.viewsDirectory),
     path.join(c.cwd, c.modulesDirectory),
