@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import { IConfig } from "../config"
-import { RenderDriver, ReactAdaptor } from '@polymita/connect/dist/react'
+import { ReactAdaptor } from '@polymita/connect'
 import { RunnerModelScope, debuggerLog, getPlugin, startdReactiveChain } from "@polymita/signal-model";
 import { renderToString } from 'react-dom/server'
 import React from 'react'
@@ -42,9 +42,6 @@ export async function renderPage (ctx: PageContext, config: IConfig) {
   }
   logFrame(`distServerRoutes:${distServerRoutes}`)
   const routesEntryModule = require(distServerRoutes).default
-
-  // const driver = new RenderDriver()
-  // driver.mode = 'collect'
 
   const routerLocation = ctx.location
 

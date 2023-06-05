@@ -67,13 +67,12 @@ export const defaultConfig = () => ({
 })
 
 export type IDefaultConfig = ReturnType<typeof defaultConfig> & {
-  platform: 'browser' | 'desktop'
   cjsDirectory: 'cjs',
   esmDirectory: 'esm',
   model?: {
     engine: 'prisma' | 'er'
   }
-}
+} & UserCustomConfig
 
 
 const configFile = 'tarat.config.js'
@@ -268,6 +267,12 @@ function readdirDepth (dir: string) {
   return files
 }
 
+interface UserCustomConfig {
+  platform: 'browser' | 'desktop'
+  ts?: boolean
+  debugLog?: boolean
+}
+
 export async function readConfig (arg: {
   cwd: string,
   isProd?: boolean
@@ -277,7 +282,7 @@ export async function readConfig (arg: {
 
   let config = defaultConfig() as IDefaultConfig
   if (fs.existsSync(configFileInPath)) {
-    const configInFile = require(configFileInPath)
+    const configInFile: UserCustomConfig = require(configFileInPath)
     merge(config, configInFile)
   }
 

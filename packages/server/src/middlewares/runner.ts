@@ -105,7 +105,7 @@ export default function taratMiddleware (args: {
         chain1.stop()
         chain1.print()
 
-        // debuggerLog(true)
+        debuggerLog(config.debugLog)
 
         const chain2 = startdReactiveChain(`${driverName}:call(${c.index})`)
 

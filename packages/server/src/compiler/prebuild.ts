@@ -410,7 +410,6 @@ export function watchServerRoutes(c: IConfig) {
       '@polymita/signal',
       '@polymita/renderer',
       '@polymita/connect',
-      '@polymita/connect/dist/react',
       'react',
       '@mui/material',
       'polymita'
@@ -457,7 +456,6 @@ export async function buildServerRoutes(c: IConfig) {
         '@polymita/signal',
         '@polymita/renderer',
         '@polymita/connect',
-        '@polymita/connect/dist/react',
         'react',
         '@mui/material',
         'polymita',
@@ -951,7 +949,6 @@ export function generateExternal (c: IConfig) {
 
   const internalPackages = [
     '@polymita/connect',
-    '@polymita/connect/dist/react',
     '@polymita/signal-model',
     '@polymita/renderer',
     '@polymita/signal',
